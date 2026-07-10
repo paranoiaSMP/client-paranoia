@@ -56,16 +56,19 @@ export function App() {
         const [latestNews, status] = await Promise.all([fetchNews(), fetchServerStatus()]);
 
         setConfig(remoteConfig);
-        if (remoteConfig.supportedMinecraftVersions.length > 0) {
-          setMinecraftVersion(remoteConfig.supportedMinecraftVersions[0]);
+        const firstVersion = remoteConfig.supportedMinecraftVersions[0];
+        if (firstVersion) {
+          setMinecraftVersion(firstVersion);
         }
 
-        if (remoteConfig.profileTypes.length > 0) {
-          setProfileType(remoteConfig.profileTypes[0].id);
+        const firstProfileType = remoteConfig.profileTypes[0];
+        if (firstProfileType) {
+          setProfileType(firstProfileType.id);
         }
 
-        if (remoteConfig.graphicsModes.length > 0) {
-          setGraphicsMode(remoteConfig.graphicsModes[0].id);
+        const firstGraphicsMode = remoteConfig.graphicsModes[0];
+        if (firstGraphicsMode) {
+          setGraphicsMode(firstGraphicsMode.id);
         }
 
         setProfiles(existingProfiles);
