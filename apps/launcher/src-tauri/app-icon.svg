@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Paranoia Client">
+  <rect width="512" height="512" rx="112" fill="#6d28d9"/>
+  <rect x="56" y="56" width="400" height="400" rx="88" fill="#1f113a" opacity="0.28"/>
+  <path fill="#ffffff" d="M169 134h96c70 0 117 37 117 96 0 60-47 97-117 97h-49v51h-47V134zm47 148h44c40 0 66-19 66-52 0-31-26-50-66-50h-44v102z"/>
+</svg>
