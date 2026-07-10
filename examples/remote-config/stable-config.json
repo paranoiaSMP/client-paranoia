@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseChannel": "stable",
+  "supportedMinecraftVersions": ["1.21.11", "1.21.10", "1.21.8", "1.20.6"],
+  "profileTypes": [
+    {
+      "id": "pvp",
+      "label": "PvP",
+      "description": "Preset orienté competitif"
+    },
+    {
+      "id": "survival",
+      "label": "Survie",
+      "description": "Preset orienté progression"
+    },
+    {
+      "id": "classic",
+      "label": "Classic",
+      "description": "Experience Vanilla++"
+    }
+  ],
+  "graphicsModes": [
+    {
+      "id": "performance",
+      "label": "Performance",
+      "description": "FPS max"
+    },
+    {
+      "id": "balanced",
+      "label": "Equilibre",
+      "description": "Compromis qualite/performance"
+    },
+    {
+      "id": "beauty",
+      "label": "Beaute",
+      "description": "Qualite visuelle"
+    }
+  ]
+}

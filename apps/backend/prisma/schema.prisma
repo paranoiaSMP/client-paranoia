@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String   @id @default(uuid())
+  microsoftId       String   @unique
+  minecraftUuid     String   @unique
+  minecraftUsername String
+  skinUrl           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model LauncherProfile {
+  id                String   @id @default(uuid())
+  accountId         String
+  name              String
+  minecraftVersion  String
+  profileTypeId     String
+  graphicsModeId    String
+  favorite          Boolean  @default(false)
+  ramMb             Int      @default(4096)
+  resolution        String   @default("1920x1080")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model SecurityEvent {
+  id          String   @id @default(uuid())
+  accountId   String?
+  eventType   String
+  severity    String
+  payload     Json
+  createdAt   DateTime @default(now())
+}

@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-07-08T00:00:00Z",
+  "rules": [
+    {
+      "id": "blocked-dll-injection-tools",
+      "severity": "high",
+      "windowsProcessNames": ["x64dbg.exe", "cheatengine.exe"],
+      "action": "flag"
+    },
+    {
+      "id": "tampered-mod-hash",
+      "severity": "critical",
+      "action": "block-launch"
+    }
+  ]
+}

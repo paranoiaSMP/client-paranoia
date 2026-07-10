@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paranoia.gg/schema/remote-config.schema.json",
+  "title": "Paranoia Remote Configuration",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "releaseChannel",
+    "supportedMinecraftVersions",
+    "profileTypes",
+    "graphicsModes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "releaseChannel": {
+      "type": "string",
+      "enum": ["stable", "beta"]
+    },
+    "supportedMinecraftVersions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "profileTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "graphicsModes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

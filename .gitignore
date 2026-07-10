@@ -1,0 +1,27 @@
+# Node
+node_modules/
+dist/
+coverage/
+.pnpm-store/
+
+# Tauri / Rust
+target/
+**/*.rs.bk
+
+# Java / Gradle
+.gradle/
+build/
+out/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/*.code-workspace

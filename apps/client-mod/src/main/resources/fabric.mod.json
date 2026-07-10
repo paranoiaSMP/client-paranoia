@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "paranoia_client",
+  "version": "0.1.0",
+  "name": "Paranoia Client",
+  "description": "Premium Fabric client with modular HUD and remote cosmetics",
+  "authors": ["Paranoia Team"],
+  "contact": {
+    "homepage": "https://paranoia.gg"
+  },
+  "license": "Proprietary",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "gg.paranoia.client.ParanoiaClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

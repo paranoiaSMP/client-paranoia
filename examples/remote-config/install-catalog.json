@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "entries": [
+    {
+      "minecraftVersion": "1.21.11",
+      "profileTypeId": "pvp",
+      "graphicsModeId": "performance",
+      "fabricLoaderVersion": "0.16.10",
+      "requiredJavaMajor": 21,
+      "artifacts": [
+        {
+          "id": "sodium",
+          "kind": "mod",
+          "fileName": "sodium-fabric-0.6.0.jar",
+          "downloadUrl": "https://cdn.paranoia.gg/mods/sodium-fabric-0.6.0.jar",
+          "sha256": "TODO_SHA256",
+          "size": 1843200,
+          "targetPath": "mods/sodium-fabric-0.6.0.jar"
+        },
+        {
+          "id": "lithium",
+          "kind": "mod",
+          "fileName": "lithium-fabric-0.13.1.jar",
+          "downloadUrl": "https://cdn.paranoia.gg/mods/lithium-fabric-0.13.1.jar",
+          "sha256": "TODO_SHA256",
+          "size": 742000,
+          "targetPath": "mods/lithium-fabric-0.13.1.jar"
+        }
+      ]
+    },
+    {
+      "minecraftVersion": "1.21.11",
+      "profileTypeId": "pvp",
+      "graphicsModeId": "beauty",
+      "fabricLoaderVersion": "0.16.10",
+      "requiredJavaMajor": 21,
+      "artifacts": [
+        {
+          "id": "iris",
+          "kind": "mod",
+          "fileName": "iris-fabric-1.8.5.jar",
+          "downloadUrl": "https://cdn.paranoia.gg/mods/iris-fabric-1.8.5.jar",
+          "sha256": "TODO_SHA256",
+          "size": 2331000,
+          "targetPath": "mods/iris-fabric-1.8.5.jar"
+        },
+        {
+          "id": "cinematic-shader-pack",
+          "kind": "shader",
+          "fileName": "cinematic-shader-v4.zip",
+          "downloadUrl": "https://cdn.paranoia.gg/shaders/cinematic-shader-v4.zip",
+          "sha256": "TODO_SHA256",
+          "size": 12400000,
+          "targetPath": "shaderpacks/cinematic-shader-v4.zip"
+        }
+      ]
+    }
+  ]
+}
