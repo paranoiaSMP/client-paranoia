@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm exec vite",
-    "build": "pnpm exec tsc -b && pnpm exec vite build",
+    "build": "pnpm exec tsc --noEmit && pnpm exec vite build",
     "preview": "pnpm exec vite preview",
     "tauri": "pnpm exec tauri",
     "typecheck": "tsc --noEmit",

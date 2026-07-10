@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.PARANOIA_API_BASE_URL) ||
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_PARANOIA_API_BASE_URL) ||
   "http://localhost:8080";
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
