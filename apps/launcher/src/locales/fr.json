@@ -18,9 +18,9 @@
       "auth_launch_error": "Impossible de lancer la connexion."
     },
     "home": {
-      "welcome": "Welcome back,",
-      "guest": "Invité",
-      "jumpBackIn": "Jump back in",
+      "welcome": "Heureux de te revoir,",
+      "guest": "Voyageur",
+      "jumpBackIn": "Prêt à reprendre l'aventure ?",
       "play": "JOUER",
       "no_profiles": "Aucun profil configuré.",
       "create_profile": "Créer un profil",

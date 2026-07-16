@@ -1,14 +1,1 @@
-[
-  {
-    "id": "d348eb37-80d7-4059-b455-e249c940b962",
-    "favorite": true,
-    "createdAt": "2026-07-16T13:01:47.042Z",
-    "updatedAt": "2026-07-16T13:01:49.765Z",
-    "name": "Mon profil",
-    "minecraftVersion": "1.21.11",
-    "profileTypeId": "pvp",
-    "graphicsModeId": "performance",
-    "ramMb": 4096,
-    "resolution": "1920x1080"
-  }
-]
+[]
