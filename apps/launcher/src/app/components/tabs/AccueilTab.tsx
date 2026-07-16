@@ -49,7 +49,7 @@ export function AccueilTab({
         {/* HERO BANNER (Profil principal) */}
         <div className="relative w-full h-[380px] rounded-2xl overflow-hidden shadow-2xl border border-[#2a2a2c] flex flex-col items-center justify-center group bg-[#0a0a0c]">
           {/* Image de fond générée */}
-          <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[15s] group-hover:scale-110" style={{ backgroundImage: "url('/hero-bg.png')" }}></div>
+          <div className="absolute inset-0 bg-cover bg-bottom transition-transform duration-[15s] group-hover:scale-110" style={{ backgroundImage: "url('/hero-bg.png')" }}></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-black/30 to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80"></div>
           
