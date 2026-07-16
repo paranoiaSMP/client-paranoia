@@ -27,7 +27,7 @@ export function AccueilTab({
   const mainProfile = profiles.length > 0 ? profiles[0] : null;
 
   return (
-    <div className="max-w-[1400px] w-full mx-auto animate-in fade-in duration-500 flex flex-col xl:flex-row gap-8">
+    <div className="max-w-[1400px] w-full mx-auto animate-in fade-in duration-500 flex flex-col gap-8">
       
       {/* COLONNE GAUCHE (Contenu Principal) */}
       <div className="flex-1 flex flex-col gap-6 overflow-hidden">
@@ -139,36 +139,6 @@ export function AccueilTab({
         </div>
 
       </div>
-
-      {/* COLONNE DROITE (Sidebar sociale & infos) */}
-      <div className="w-full xl:w-80 shrink-0 flex flex-col gap-6">
-        
-        {/* Panneau Amis */}
-        <div className="bg-[#151517] border border-[#2a2a2c] rounded-2xl p-5 shadow-lg flex-1 min-h-[300px] flex flex-col">
-          <h2 className="text-sm font-black text-white mb-4 uppercase tracking-wider flex items-center justify-between">
-            Amis <span className="text-[10px] bg-[#2a2a2c] px-2 py-0.5 rounded text-[#8888a0] font-bold">0 online</span>
-          </h2>
-          <div className="flex-1 border border-[#2a2a2c] border-dashed rounded-xl flex flex-col items-center justify-center text-center p-6 bg-[#0a0a0c]/50">
-             <Users className="w-10 h-10 text-[#2a2a2c] mb-3" />
-             <p className="text-sm text-[#8888a0] font-medium">Personne en ligne pour le moment.</p>
-             <p className="text-[10px] text-[#4a4a4c] mt-2 uppercase tracking-widest">Connecte-toi pour inviter</p>
-          </div>
-        </div>
-
-        {/* Panneau Discord */}
-        <div className="bg-gradient-to-br from-[#5865F2]/20 to-[#151517] border border-[#5865F2]/30 rounded-2xl p-6 relative overflow-hidden group cursor-pointer shadow-lg hover:border-[#5865F2]/60 transition-all duration-300 transform hover:-translate-y-1">
-           <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-[#5865F2]/20 rounded-full blur-3xl group-hover:bg-[#5865F2]/40 transition-all duration-500"></div>
-           <MessageSquare className="w-8 h-8 text-[#5865F2] mb-4 relative z-10 group-hover:scale-110 transition-transform" />
-           <h3 className="text-xl font-black text-white mb-2 relative z-10">Rejoins le Discord</h3>
-           <p className="text-xs text-[#8888a0] relative z-10 leading-relaxed">Viens discuter avec la communauté, trouver des coéquipiers et suivre les annonces.</p>
-           
-           <div className="mt-5 flex items-center gap-2 text-[#5865F2] text-xs font-bold uppercase tracking-wider relative z-10 group-hover:translate-x-2 transition-transform duration-300">
-             Rejoindre le serveur <span className="text-lg leading-none">›</span>
-           </div>
-        </div>
-
-      </div>
-
     </div>
   );
 }
