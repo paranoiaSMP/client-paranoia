@@ -101,7 +101,7 @@ export function ProfilsTab({
                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-bg.png')" }}></div>
                <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
                <div className="absolute bottom-3 left-3 right-3 text-[10px] font-bold text-white/50 tracking-widest uppercase">
-                 NEW ADVENTURE EXPERIENCES
+                 {selectedProfile.profileTypeId} PROFILE
                </div>
              </div>
              
@@ -110,12 +110,12 @@ export function ProfilsTab({
                 <div className="w-8 h-8 rounded-lg bg-[#2a2a2c] flex items-center justify-center">
                   <Pickaxe className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-xl font-black text-white">Minecraft {selectedProfile.minecraftVersion}</h3>
+                <h3 className="text-xl font-black text-white">{selectedProfile.name}</h3>
              </div>
              
              {/* Description */}
              <p className="text-xs text-[#8888a0] leading-relaxed">
-               The "Bountiful Update" is the name given to the release of version {selectedProfile.minecraftVersion}. This update includes many new features.
+               Profil de jeu configuré pour la version {selectedProfile.minecraftVersion} avec le chargeur {selectedProfile.profileTypeId}. Ce profil est prêt à être lancé.
              </p>
              
              {/* Badge Global */}
