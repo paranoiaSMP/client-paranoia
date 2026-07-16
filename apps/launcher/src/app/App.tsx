@@ -1,30 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
+import { invoke } from '@tauri-apps/api/core';
+import { Pickaxe } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
 import type {
-  GraphicsModeDefinition,
   LauncherProfile,
   MicrosoftAccount,
   NewsItem,
-  ProfileTypeDefinition,
-  RemoteConfiguration,
-  ServerStatus
+  RemoteConfiguration
 } from "@paranoia/contracts";
+
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
-import {
-  createProfile,
-  deleteProfile,
-  duplicateProfile,
-  exportProfile,
-  favoriteProfile,
-  importProfile,
-  listProfiles,
-  updateProfile
-} from "../shared/api/profilesClient";
+import { createProfile, deleteProfile, favoriteProfile, importProfile, listProfiles } from "../shared/api/profilesClient";
 import { completeMicrosoftCallback, getMicrosoftAuthorizeUrl } from "../shared/api/authClient";
-import { fetchNews, fetchServerStatus } from "../shared/api/launcherInfoClient";
+import { fetchNews } from "../shared/api/launcherInfoClient";
+
+import { Sidebar } from "./components/Sidebar";
+import { TopBar } from "./components/TopBar";
+import { AccueilTab } from "./components/tabs/AccueilTab";
+import { ProfilsTab } from "./components/tabs/ProfilsTab";
+import { ParametresTab } from "./components/tabs/ParametresTab";
+import { ProfileCreation } from "./components/ProfileCreation";
 
 type SetupStep = 1 | 2 | 3 | 4 | 5;
 
+type DetectedProfile = {
+  id: string;
+  label: string;
+  options_path: string;
+  launcher: string;
+};
+
 export function App() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<SetupStep>(1);
   const [connected, setConnected] = useState(false);
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
@@ -40,8 +48,35 @@ export function App() {
   const [account, setAccount] = useState<MicrosoftAccount | null>(null);
   const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
   const [importJson, setImportJson] = useState("");
+  const [activeTab, setActiveTab] = useState<"accueil" | "profils" | "parametres">("accueil");
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [importSettings, setImportSettings] = useState(false);
+  const [keybindSource, setKeybindSource] = useState("auto");
+  const [detectedProfiles, setDetectedProfiles] = useState<DetectedProfile[]>([]);
+  const [importOptions, setImportOptions] = useState({
+    keybinds: true,
+    sensitivity: true,
+    graphics: false
+  });
+
+  useEffect(() => {
+    if (importSettings && detectedProfiles.length === 0) {
+      invoke<DetectedProfile[]>("get_detected_profiles")
+        .then((res) => {
+          setDetectedProfiles(res);
+        })
+        .catch((err) => console.error("Erreur de détection des profils :", err));
+    }
+  }, [importSettings, detectedProfiles.length]);
+
+  useEffect(() => {
+    if (profiles.length > 0 && !selectedProfileId) {
+      const p = profiles[0];
+      if (p) setSelectedProfileId(p.id);
+    }
+  }, [profiles, selectedProfileId]);
 
   useEffect(() => {
     async function bootstrap() {
@@ -53,35 +88,27 @@ export function App() {
           listProfiles()
         ]);
 
-        const [latestNews, status] = await Promise.all([fetchNews(), fetchServerStatus()]);
+        const latestNews = await fetchNews();
 
         setConfig(remoteConfig);
         const firstVersion = remoteConfig.supportedMinecraftVersions[0];
-        if (firstVersion) {
-          setMinecraftVersion(firstVersion);
-        }
+        if (firstVersion) setMinecraftVersion(firstVersion);
 
         const firstProfileType = remoteConfig.profileTypes[0];
-        if (firstProfileType) {
-          setProfileType(firstProfileType.id);
-        }
+        if (firstProfileType) setProfileType(firstProfileType.id);
 
         const firstGraphicsMode = remoteConfig.graphicsModes[0];
-        if (firstGraphicsMode) {
-          setGraphicsMode(firstGraphicsMode.id);
-        }
+        if (firstGraphicsMode) setGraphicsMode(firstGraphicsMode.id);
 
         setProfiles(existingProfiles);
         setSetupComplete(existingProfiles.length > 0);
         setNews(latestNews);
-        setServerStatus(status);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Unknown bootstrap error");
+        setError(e instanceof Error ? e.message : t("app.error_load"));
       } finally {
         setLoading(false);
       }
     }
-
     bootstrap();
   }, []);
 
@@ -91,9 +118,7 @@ export function App() {
       const code = params.get("code");
       const state = params.get("state");
 
-      if (!code || !state) {
-        return;
-      }
+      if (!code || !state) return;
 
       try {
         setConnectingMicrosoft(true);
@@ -104,12 +129,11 @@ export function App() {
         setConnected(true);
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Microsoft callback failed");
+        setError(e instanceof Error ? e.message : t("topbar.auth_error"));
       } finally {
         setConnectingMicrosoft(false);
       }
     }
-
     tryHandleAuthCallback();
   }, []);
 
@@ -122,7 +146,7 @@ export function App() {
       window.location.assign(authorizeUrl);
     } catch (e) {
       setConnectingMicrosoft(false);
-      setError(e instanceof Error ? e.message : "Unable to start Microsoft auth");
+      setError(e instanceof Error ? e.message : t("topbar.auth_launch_error"));
     }
   }
 
@@ -131,7 +155,7 @@ export function App() {
     setAccount({
       id: "local-dev",
       minecraftUuid: "00000000000000000000000000000000",
-      minecraftUsername: "LocalDev",
+      minecraftUsername: "DEV",
       skinUrl: "",
       accessToken: "local-dev-token",
       refreshToken: "local-dev-refresh",
@@ -139,14 +163,8 @@ export function App() {
     });
   }
 
-  const selectedType = useMemo(
-    () => config?.profileTypes.find((x) => x.id === profileType),
-    [config, profileType]
-  );
-  const selectedGraphics = useMemo(
-    () => config?.graphicsModes.find((x) => x.id === graphicsMode),
-    [config, graphicsMode]
-  );
+  const selectedType = useMemo(() => config?.profileTypes.find((x) => x.id === profileType), [config, profileType]);
+  const selectedGraphics = useMemo(() => config?.graphicsModes.find((x) => x.id === graphicsMode), [config, graphicsMode]);
 
   async function handleInstall() {
     try {
@@ -173,8 +191,10 @@ export function App() {
       setProfiles(refreshedProfiles);
       setSetupComplete(true);
       setInstallState("done");
+      setIsCreatingProfile(false);
+      setStep(1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown install error");
+      setError(e instanceof Error ? e.message : t("wizard.install_fail"));
       setInstallState("idle");
     }
   }
@@ -184,324 +204,123 @@ export function App() {
     setProfiles(await listProfiles());
   }
 
-  async function handleDuplicateProfile(profileId: string) {
-    await duplicateProfile(profileId);
-    setProfiles(await listProfiles());
-  }
-
   async function handleFavoriteProfile(profileId: string) {
     await favoriteProfile(profileId);
     setProfiles(await listProfiles());
   }
 
-  async function handleRenameProfile(profile: LauncherProfile) {
-    const nextName = window.prompt("Nouveau nom du profil", profile.name)?.trim();
-    if (!nextName || nextName === profile.name) {
-      return;
-    }
-
-    await updateProfile(profile.id, { name: nextName });
-    setProfiles(await listProfiles());
-  }
-
-  async function handleExportProfile(profileId: string) {
-    const data = await exportProfile(profileId);
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${data.name.replace(/\s+/g, "-").toLowerCase()}-profile.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
   async function handleImportProfile() {
-    const parsed = JSON.parse(importJson) as Partial<LauncherProfile>;
-    if (
-      !parsed.name ||
-      !parsed.minecraftVersion ||
-      !parsed.profileTypeId ||
-      !parsed.graphicsModeId ||
-      !parsed.ramMb ||
-      !parsed.resolution
-    ) {
-      throw new Error("JSON import invalide: champs requis manquants");
+    try {
+      const parsed = JSON.parse(importJson) as Partial<LauncherProfile>;
+      if (!parsed.name || !parsed.minecraftVersion || !parsed.profileTypeId || !parsed.graphicsModeId || !parsed.ramMb || !parsed.resolution) {
+        throw new Error(t("settings.import_error"));
+      }
+      await importProfile({
+        name: parsed.name,
+        minecraftVersion: parsed.minecraftVersion,
+        profileTypeId: parsed.profileTypeId,
+        graphicsModeId: parsed.graphicsModeId,
+        ramMb: parsed.ramMb,
+        resolution: parsed.resolution
+      });
+      setImportJson("");
+      setProfiles(await listProfiles());
+      setActiveTab("profils");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("settings.import_format_error"));
     }
-
-    await importProfile({
-      name: parsed.name,
-      minecraftVersion: parsed.minecraftVersion,
-      profileTypeId: parsed.profileTypeId,
-      graphicsModeId: parsed.graphicsModeId,
-      ramMb: parsed.ramMb,
-      resolution: parsed.resolution
-    });
-
-    setImportJson("");
-    setProfiles(await listProfiles());
   }
 
-  if (loading) {
-    return <div className="app-shell">Chargement de la configuration distante...</div>;
-  }
-
-  if (!config) {
-    return <div className="app-shell">Impossible de charger le launcher.</div>;
-  }
-
-  if (setupComplete) {
+  if (loading || !config) {
     return (
-      <div className="app-shell">
-        <header className="topbar">
-          <h1>Paranoia Client</h1>
-          <p>Gestion des profils</p>
-        </header>
-
-        <main className="glass-card">
-          <div className="dashboard-row">
-            <section className="dashboard-tile">
-              <h3>Statut serveur</h3>
-              {serverStatus ? (
-                <>
-                  <p>
-                    {serverStatus.online ? "En ligne" : "Hors ligne"} • {serverStatus.pingMs} ms
-                  </p>
-                  <p>
-                    Joueurs: {serverStatus.playerCount}/{serverStatus.maxPlayers}
-                  </p>
-                </>
-              ) : (
-                <p>Indisponible</p>
-              )}
-            </section>
-
-            <section className="dashboard-tile">
-              <h3>Actualites</h3>
-              {news.length === 0 && <p>Aucune actualite.</p>}
-              {news.slice(0, 2).map((item) => (
-                <article key={item.id}>
-                  <strong>{item.title}</strong>
-                  <p>{item.excerpt}</p>
-                </article>
-              ))}
-            </section>
-          </div>
-
-          <h2>Profils installes</h2>
-          {profiles.length === 0 && <p>Aucun profil pour le moment.</p>}
-          <section className="import-box">
-            <h3>Importer un profil (JSON)</h3>
-            <textarea
-              value={importJson}
-              onChange={(event) => setImportJson(event.target.value)}
-              placeholder='{"name":"PvP", "minecraftVersion":"1.21.11", ...}'
-            />
-            <button
-              onClick={async () => {
-                try {
-                  await handleImportProfile();
-                } catch (e) {
-                  setError(e instanceof Error ? e.message : "Import profile failed");
-                }
-              }}
-            >
-              Importer
-            </button>
-          </section>
-
-          <div className="profile-grid">
-            {profiles.map((profile) => (
-              <article className="profile-card" key={profile.id}>
-                <h3>{profile.name}</h3>
-                <p>
-                  {profile.minecraftVersion} • {profile.profileTypeId} • {profile.graphicsModeId}
-                </p>
-                <p>
-                  RAM: {profile.ramMb} MB • Resolution: {profile.resolution}
-                </p>
-                {profile.favorite && <div className="badge">Favori</div>}
-                <div className="row-actions">
-                  <button onClick={() => handleFavoriteProfile(profile.id)}>Favori</button>
-                  <button onClick={() => handleRenameProfile(profile)}>Renommer</button>
-                  <button onClick={() => handleDuplicateProfile(profile.id)}>Dupliquer</button>
-                  <button onClick={() => handleExportProfile(profile.id)}>Exporter</button>
-                  <button className="danger" onClick={() => handleDeleteProfile(profile.id)}>
-                    Supprimer
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <footer className="wizard-footer">
-            <button
-              className="primary"
-              onClick={() => {
-                setSetupComplete(false);
-                setStep(1);
-              }}
-            >
-              Creer un nouveau profil
-            </button>
-          </footer>
-        </main>
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0f]">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <Pickaxe className="w-16 h-16 text-accent-purple-dark animate-bounce" strokeWidth={2.5} />
+          <span className="text-white/60 tracking-widest text-sm uppercase font-outfit">{t("app.loading")}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <h1>Paranoia Client</h1>
-        <p>First Setup</p>
-      </header>
+    <div className="h-screen w-full flex overflow-hidden">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="glass-card">
-        <StepIndicator step={step} />
-        {error && <div className="state-error">{error}</div>}
+      <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-transparent">
+        <TopBar 
+          connected={connected} 
+          account={account} 
+          connectingMicrosoft={connectingMicrosoft} 
+          onConnectMicrosoft={handleMicrosoftConnect} 
+          onLocalDevContinue={handleLocalDevContinue} 
+        />
 
-        {step === 1 && (
-          <section>
-            <h2>Connexion Microsoft</h2>
-            <p>La connexion Microsoft est obligatoire avant utilisation du launcher.</p>
-            <button className="primary" onClick={handleMicrosoftConnect} disabled={connectingMicrosoft}>
-              {connectingMicrosoft ? "Connexion en cours..." : "Connecter le compte Microsoft"}
-            </button>
-            <button className="ghost" onClick={handleLocalDevContinue}>
-              Continuer en mode local (dev)
-            </button>
-            {connected && (
-              <div className="state-ok">
-                Connecte: {account?.minecraftUsername ?? "profil"} ({account?.minecraftUuid ?? "uuid"})
-              </div>
-            )}
-          </section>
-        )}
-
-        {step === 2 && (
-          <section>
-            <h2>Version Minecraft</h2>
-            <label className="field-label" htmlFor="profile-name">
-              Nom du profil
-            </label>
-            <input
-              id="profile-name"
-              className="text-input"
-              value={profileName}
-              onChange={(e) => setProfileName(e.target.value)}
-              placeholder="Ex: PvP Ranked"
+        <div className="flex-1 overflow-y-auto p-8">
+          {activeTab === "accueil" && (
+            <AccueilTab 
+              account={account}
+              profiles={profiles}
+              connected={connected}
+              installState={installState}
+              news={news}
+              setSelectedProfileId={setSelectedProfileId}
+              setActiveTab={setActiveTab}
             />
-            <select value={minecraftVersion} onChange={(e) => setMinecraftVersion(e.target.value)}>
-              {config.supportedMinecraftVersions.map((version) => (
-                <option key={version} value={version}>
-                  {version}
-                </option>
-              ))}
-            </select>
-          </section>
-        )}
+          )}
 
-        {step === 3 && (
-          <section>
-            <h2>Type de profil</h2>
-            <p>Les packs installes proviennent uniquement de la config distante.</p>
-            <OptionCards
-              value={profileType}
-              options={config.profileTypes}
-              onSelect={setProfileType}
+          {activeTab === "profils" && (
+            <>
+              {!isCreatingProfile ? (
+                <ProfilsTab 
+                  profiles={profiles}
+                  selectedProfileId={selectedProfileId}
+                  setSelectedProfileId={setSelectedProfileId}
+                  isCreatingProfile={isCreatingProfile}
+                  setIsCreatingProfile={setIsCreatingProfile}
+                  onFavorite={handleFavoriteProfile}
+                  onDelete={handleDeleteProfile}
+                />
+              ) : (
+                <ProfileCreation 
+                  step={step as number}
+                  setStep={setStep as any}
+                  connected={connected}
+                  error={error}
+                  profileName={profileName}
+                  setProfileName={setProfileName}
+                  minecraftVersion={minecraftVersion}
+                  setMinecraftVersion={setMinecraftVersion}
+                  config={config}
+                  importSettings={importSettings}
+                  setImportSettings={setImportSettings}
+                  keybindSource={keybindSource}
+                  setKeybindSource={setKeybindSource}
+                  detectedProfiles={detectedProfiles}
+                  importOptions={importOptions}
+                  setImportOptions={setImportOptions}
+                  profileType={profileType}
+                  setProfileType={setProfileType}
+                  graphicsMode={graphicsMode}
+                  setGraphicsMode={setGraphicsMode}
+                  selectedType={selectedType}
+                  selectedGraphics={selectedGraphics}
+                  handleInstall={handleInstall}
+                  installState={installState}
+                />
+              )}
+            </>
+          )}
+
+          {activeTab === "parametres" && (
+            <ParametresTab 
+              importJson={importJson}
+              setImportJson={setImportJson}
+              handleImportProfile={handleImportProfile}
+              error={error}
             />
-          </section>
-        )}
-
-        {step === 4 && (
-          <section>
-            <h2>Mode graphique</h2>
-            <p>Le launcher applique la configuration distante choisie.</p>
-            <OptionCards
-              value={graphicsMode}
-              options={config.graphicsModes}
-              onSelect={setGraphicsMode}
-            />
-          </section>
-        )}
-
-        {step === 5 && (
-          <section>
-            <h2>Recapitulatif d installation</h2>
-            <ul>
-              <li>Version: {minecraftVersion}</li>
-              <li>Type: {selectedType?.label ?? "-"}</li>
-              <li>Graphique: {selectedGraphics?.label ?? "-"}</li>
-              <li>Assets: Minecraft, Fabric, Java si necessaire, mods, shaders, packs, configs</li>
-            </ul>
-            <button
-              className="primary"
-              onClick={handleInstall}
-              disabled={installState === "running" || profileName.trim().length === 0}
-            >
-              {installState === "running" ? "Installation en cours..." : "Installer maintenant"}
-            </button>
-          </section>
-        )}
-
-        <footer className="wizard-footer">
-          <button disabled={step === 1} onClick={() => setStep((step - 1) as SetupStep)}>
-            Retour
-          </button>
-          <button
-            className="primary"
-            disabled={(step === 1 && !connected) || step === 5}
-            onClick={() => setStep((step + 1) as SetupStep)}
-          >
-            Suivant
-          </button>
-        </footer>
+          )}
+        </div>
       </main>
-    </div>
-  );
-}
-
-function StepIndicator({ step }: { step: SetupStep }) {
-  const labels = ["Connexion", "Version", "Type", "Graphique", "Installation"];
-
-  return (
-    <div className="steps">
-      {labels.map((label, index) => {
-        const current = index + 1;
-        const active = current === step;
-        const done = current < step;
-        return (
-          <div key={label} className={`step ${active ? "active" : ""} ${done ? "done" : ""}`}>
-            <span>{current}</span>
-            <small>{label}</small>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function OptionCards({
-  value,
-  options,
-  onSelect
-}: {
-  value: string;
-  options: Array<ProfileTypeDefinition | GraphicsModeDefinition>;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="option-grid">
-      {options.map((option) => (
-        <button
-          key={option.id}
-          onClick={() => onSelect(option.id)}
-          className={`option-card ${value === option.id ? "selected" : ""}`}
-        >
-          <h3>{option.label}</h3>
-          <p>{option.description}</p>
-        </button>
-      ))}
     </div>
   );
 }

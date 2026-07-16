@@ -1,0 +1,83 @@
+{
+  "translation": {
+    "app": {
+      "loading": "Chargement...",
+      "generation": "Génération du monde...",
+      "error_load": "Erreur de chargement. Vérifie ta connexion."
+    },
+    "sidebar": {
+      "home": "Accueil",
+      "profiles": "Profils",
+      "settings": "Réglages"
+    },
+    "topbar": {
+      "devMode": "Dev Mode",
+      "connect": "S'identifier",
+      "connecting": "Connexion...",
+      "auth_error": "La connexion Microsoft a échoué. On réessaie ?",
+      "auth_launch_error": "Impossible de lancer la connexion."
+    },
+    "home": {
+      "welcome": "Welcome back,",
+      "guest": "Invité",
+      "jumpBackIn": "Jump back in",
+      "play": "JOUER",
+      "no_profiles": "Aucun profil configuré.",
+      "create_profile": "Créer un profil",
+      "discover": "Découvrir",
+      "news_badge": "À la une",
+      "launching": "Lancement de"
+    },
+    "profiles": {
+      "title": "Vos Profils",
+      "subtitle": "Gérez vos configurations de jeu.",
+      "cancel": "Annuler",
+      "new": "Nouveau Profil",
+      "empty_title": "Oups, c'est bien vide par ici !",
+      "empty_subtitle": "Commence par créer un profil pour pouvoir jouer.",
+      "create_btn": "Créer un profil",
+      "favorite": "Mettre en favori"
+    },
+    "settings": {
+      "title": "Sous le capot",
+      "subtitle": "Attention à ce que tu touches ici.",
+      "import_title": "Importer un profil",
+      "import_desc": "Colle le code JSON qu'on t'a passé pour voler la configuration de quelqu'un d'autre.",
+      "import_validate": "Valider l'import",
+      "import_error": "JSON invalide : il manque des infos pour ce profil !",
+      "import_format_error": "Erreur d'import, le format est chelou.",
+      "language": "Langue"
+    },
+    "wizard": {
+      "title": "Fabriquer un profil",
+      "step1": "Étape 1 : Authentification",
+      "step1_desc": "Il nous faut un compte Microsoft pour vérifier ta licence.",
+      "step1_success": "C'est tout bon !",
+      "step1_error": "Connecte-toi via le menu de gauche d'abord.",
+      "step2": "Étape 2 : Les bases",
+      "name_label": "Comment on l'appelle ?",
+      "name_placeholder": "Ex: Survie Optifine",
+      "version_label": "Version du jeu",
+      "import_settings": "Importer les paramètres",
+      "import_settings_desc": "Récupère tes paramètres depuis tes autres jeux (Lunar, Officiel...).",
+      "which_profile": "Quel profil importer ?",
+      "auto": "Automatique (Le plus récent)",
+      "detected": "-- Profils détectés --",
+      "searching": "Recherche en cours...",
+      "keybinds": "Touches (Keybinds)",
+      "sensitivity": "Sensibilité & Souris",
+      "graphics": "Paramètres Graphiques (Render Distance, etc.)",
+      "step3": "Étape 3 : Spécialisation",
+      "step4": "Étape 4 : Puissance",
+      "step5": "Étape 5 : Récapitulatif",
+      "version": "Version",
+      "type": "Type",
+      "graphics_label": "Graphismes",
+      "back": "Retour",
+      "next": "Suivant",
+      "forge": "Forger le profil !",
+      "preparing": "Préparation...",
+      "install_fail": "Oups, l'installation a échoué."
+    }
+  }
+}

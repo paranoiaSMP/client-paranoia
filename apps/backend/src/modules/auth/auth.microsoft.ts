@@ -105,14 +105,19 @@ async function exchangeCodeForMicrosoftToken(args: {
   codeVerifier: string;
   redirectUri: string;
 }): Promise<MicrosoftTokenResponse> {
-  const body = new URLSearchParams({
+  const bodyParams: Record<string, string> = {
     client_id: env.MICROSOFT_CLIENT_ID,
-    client_secret: env.MICROSOFT_CLIENT_SECRET,
     code: args.code,
     grant_type: "authorization_code",
     redirect_uri: args.redirectUri,
     code_verifier: args.codeVerifier
-  });
+  };
+
+  if (env.MICROSOFT_CLIENT_SECRET) {
+    bodyParams.client_secret = env.MICROSOFT_CLIENT_SECRET;
+  }
+
+  const body = new URLSearchParams(bodyParams);
 
   const response = await fetch("https://login.live.com/oauth20_token.srf", {
     method: "POST",
