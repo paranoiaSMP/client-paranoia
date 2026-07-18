@@ -1,64 +1,70 @@
-# Mapping Cahier des Charges -> Implementation
+# Requirements Mapping -> Implementation
 
 ## First Setup
 
-- [x] Etape 1 Connexion (UI obligatoire avant suite)
-- [x] Etape 2 Choix version Minecraft
-- [x] Etape 3 Choix type de profil depuis config distante
-- [x] Etape 4 Choix mode graphique depuis config distante
-- [x] Etape 5 Installation: creation manifest + creation profil
-- [x] OAuth Microsoft reel (token exchange + account linking)
+- [x] Step 1 Login (UI mandatory before proceeding)
+- [x] Step 2 Select Minecraft version
+- [x] Step 3 Select profile type from remote config
+- [x] Step 4 Select graphics mode from remote config
+- [x] Step 5 Installation: manifest creation + profile creation
+- [x] Actual Microsoft OAuth (token exchange + account linking)
 
-## Gestion des profils
+## Profile Management
 
-- [x] Creer
-- [x] Supprimer
-- [x] Dupliquer
-- [x] Favori
-- [x] Import/Export API
-- [ ] Renommer dedie (actuellement via PATCH)
-- [ ] Import/Export fichier local dans UI launcher
+- [x] Create
+- [x] Delete
+- [x] Duplicate
+- [x] Favorite
+- [x] Import/Export via API
+- [ ] Rename dedicated endpoint (currently via PATCH)
+- [ ] Import/Export local file in launcher UI
+- [ ] RAM Configuration (min/max) and custom JVM arguments
+- [ ] Strict instance isolation (separate folders per profile)
 
 ## Launcher
 
 - [x] Tauri + React + TS base
-- [x] Theme premium sombre glassmorphism
-- [x] Verification SHA-256 (commande native Rust)
-- [x] Recuperation config distante
-- [x] Manifest dynamique sans hardcode mods
-- [ ] Auth Microsoft officielle complete
-- [ ] Multi-comptes launcher
-- [ ] Telechargements paralleles + resume complet
-- [ ] Installation auto Java/Fabric complete
-- [ ] Branches stable/beta dynamiques
+- [x] Dark user interface with translucency effects (UI/UX)
+- [x] SHA-256 Verification (native Rust command)
+- [x] Fetch remote config
+- [x] Dynamic manifest without hardcoded mods
+- [ ] Cross-platform Support (Windows, Linux, macOS)
+- [ ] Complete official Microsoft Auth
+- [ ] Multi-account launcher support
+- [ ] Offline Mode Support (Fallback)
+- [ ] Parallel downloads + full resume capability
+- [ ] Complete auto-installation of Java/Fabric
+- [ ] Dynamic stable/beta branches
+- [ ] Native Tauri Auto-Updater for the launcher
+- [ ] Internationalization (i18n - EN/FR)
 - [ ] Discord Rich Presence
 
 ## Backend
 
-- [x] API REST modulaire
-- [x] Endpoints catalog/profiles/news/server-status/cosmetics/updates/telemetry
-- [x] Validation Zod + erreurs JSON
-- [x] Prisma schema PostgreSQL initial
-- [ ] Persistance DB effective (remplacer store JSON)
-- [ ] Signature cryptographique des manifests
+- [x] Modular REST API
+- [x] Endpoints: catalog/profiles/news/server-status/cosmetics/updates/telemetry
+- [x] Zod validation + JSON errors
+- [x] Initial PostgreSQL Prisma schema
+- [ ] Effective DB persistence (replace JSON store)
+- [ ] Cryptographic signature for manifests
 
-## Client Fabric
+## Fabric Client
 
 - [x] Base Java 21 + Fabric
-- [x] HudManager modulaire et modules de base
-- [x] Point d entree menu Right Shift pre-cable
-- [ ] HUD editor drag-and-drop complet
-- [ ] Interface complete custom sans ecrans vanilla
-- [ ] Cosmetiques synchronises runtime
+- [x] Modular HudManager and core modules
+- [x] Right Shift menu entry point pre-wired
+- [ ] Complete drag-and-drop HUD editor
+- [ ] Custom complete interface without vanilla screens
+- [ ] Cosmetics synchronized at runtime
 
-## Securite
+## Security
 
-- [x] Baseline rules centralisees
-- [x] Integrite pre-lancement (SHA-256)
-- [x] Endpoint security telemetry avec consent
-- [ ] Monitoring runtime avance et anti-injection complet
-- [ ] Update auto des regles de detection
+- [x] Centralized baseline rules
+- [x] Pre-launch integrity check (SHA-256)
+- [x] Endpoint security telemetry with consent
+- [ ] Advanced runtime monitoring and complete anti-injection
+- [ ] Automatic detection rules update
 
-## Remarque cle
+## Key Note
 
-Toutes les combinaisons version/type/mode et la liste des artifacts sont pilotees par configuration distante et non par hardcode launcher. Changer un pack ne necessite pas de release launcher.
+All version/type/mode combinations and the artifacts list are driven by remote configuration, not hardcoded in the launcher. Changing a modpack does not require a launcher release.

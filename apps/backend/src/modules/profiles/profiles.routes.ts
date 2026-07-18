@@ -8,8 +8,8 @@ import {
   importProfile,
   listProfiles,
   setFavorite,
-  updateProfile
-} from "./profiles.store";
+  updateProfile,
+} from "./profiles.store.js";
 
 export const profilesRouter = Router();
 
@@ -19,7 +19,7 @@ const profileCreateSchema = z.object({
   profileTypeId: z.string().min(1),
   graphicsModeId: z.string().min(1),
   ramMb: z.number().int().min(1024).max(65536).default(4096),
-  resolution: z.string().min(3).max(32).default("1920x1080")
+  resolution: z.string().min(3).max(32).default("1920x1080"),
 });
 
 const profilePatchSchema = profileCreateSchema.partial();
@@ -35,7 +35,7 @@ profilesRouter.post("/", (req, res) => {
 });
 
 profilesRouter.patch("/:id", (req, res) => {
-  const patch = profilePatchSchema.parse(req.body);
+  const patch = profilePatchSchema.parse(req.body) as any;
   const profile = updateProfile(req.params.id, patch);
   if (!profile) {
     return res.status(404).json({ message: "profile not found" });

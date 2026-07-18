@@ -1,0 +1,83 @@
+{
+  "translation": {
+    "app": {
+      "loading": "Loading...",
+      "generation": "Generating world...",
+      "error_load": "Loading error. Check your connection."
+    },
+    "sidebar": {
+      "home": "Home",
+      "profiles": "Profiles",
+      "settings": "Settings"
+    },
+    "topbar": {
+      "devMode": "Dev Mode",
+      "connect": "Sign In",
+      "connecting": "Connecting...",
+      "auth_error": "Microsoft connection failed. Try again?",
+      "auth_launch_error": "Cannot launch connection."
+    },
+    "home": {
+      "welcome": "Welcome back,",
+      "guest": "Guest",
+      "jumpBackIn": "Jump back in",
+      "play": "PLAY",
+      "no_profiles": "No profiles configured.",
+      "create_profile": "Create Profile",
+      "discover": "Discover",
+      "news_badge": "Featured",
+      "launching": "Launching"
+    },
+    "profiles": {
+      "title": "Your Profiles",
+      "subtitle": "Manage your game configurations.",
+      "cancel": "Cancel",
+      "new": "New Profile",
+      "empty_title": "Oops, it's quite empty here!",
+      "empty_subtitle": "Start by creating a profile to play.",
+      "create_btn": "Create Profile",
+      "favorite": "Favorite"
+    },
+    "settings": {
+      "title": "Under the Hood",
+      "subtitle": "Be careful what you touch here.",
+      "import_title": "Import Profile",
+      "import_desc": "Paste the JSON code you received to steal someone else's config.",
+      "import_validate": "Confirm Import",
+      "import_error": "Invalid JSON: missing info for this profile!",
+      "import_format_error": "Import error, weird format.",
+      "language": "Language"
+    },
+    "wizard": {
+      "title": "Craft a Profile",
+      "step1": "Step 1: Authentication",
+      "step1_desc": "We need a Microsoft account to verify your license.",
+      "step1_success": "All good!",
+      "step1_error": "Sign in from the left menu first.",
+      "step2": "Step 2: Basics",
+      "name_label": "What do we call it?",
+      "name_placeholder": "Ex: Survival Optifine",
+      "version_label": "Game Version",
+      "import_settings": "Import Settings",
+      "import_settings_desc": "Retrieve settings from your other games (Lunar, Official...).",
+      "which_profile": "Which profile to import?",
+      "auto": "Automatic (Most recent)",
+      "detected": "-- Detected Profiles --",
+      "searching": "Searching...",
+      "keybinds": "Keybinds",
+      "sensitivity": "Sensitivity & Mouse",
+      "graphics": "Graphics Settings (Render Distance, etc.)",
+      "step3": "Step 3: Specialization",
+      "step4": "Step 4: Power",
+      "step5": "Step 5: Summary",
+      "version": "Version",
+      "type": "Type",
+      "graphics_label": "Graphics",
+      "back": "Back",
+      "next": "Next",
+      "forge": "Forge Profile!",
+      "preparing": "Preparing...",
+      "install_fail": "Oops, installation failed."
+    }
+  }
+}

@@ -1,216 +1,163 @@
-import { createHash, randomBytes } from "node:crypto";
-import { env } from "../../config/env";
+import crypto from "crypto";
 
-interface MicrosoftTokenResponse {
-  token_type: string;
-  scope: string;
-  expires_in: number;
-  access_token: string;
-  refresh_token: string;
+const MINECRAFT_CLIENT_ID = "00000000402b5328"; // Official Minecraft Client ID
+
+export function getMicrosoftAuthorizeUrl(redirectUri: string) {
+  const url = new URL("https://login.live.com/oauth20_authorize.srf");
+  url.searchParams.set("client_id", MINECRAFT_CLIENT_ID);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("scope", "XboxLive.signin offline_access openid profile email");
+  return { authorizeUrl: url.toString() };
 }
 
-interface XboxUserTokenResponse {
-  Token: string;
-  DisplayClaims: {
-    xui: Array<{ uhs: string }>;
-  };
-}
-
-interface XstsTokenResponse {
-  Token: string;
-  DisplayClaims: {
-    xui: Array<{ uhs: string }>;
-  };
-}
-
-interface MinecraftLoginResponse {
-  access_token: string;
-  expires_in: number;
-  token_type: string;
-}
-
-interface MinecraftProfileResponse {
-  id: string;
-  name: string;
-  skins?: Array<{ url: string }>;
-}
-
-export interface MicrosoftAuthResult {
-  minecraftUuid: string;
-  minecraftUsername: string;
-  skinUrl: string;
-  microsoftAccessToken: string;
-  microsoftRefreshToken: string;
-  minecraftAccessToken: string;
-  expiresAt: string;
-}
-
-export function generatePkceVerifier(): string {
-  return randomBytes(64).toString("base64url");
-}
-
-export function generatePkceChallenge(verifier: string): string {
-  return createHash("sha256").update(verifier).digest("base64url");
-}
-
-export function buildMicrosoftAuthorizeUrl(args: {
+export async function completeMicrosoftCallback(opts: {
+  code: string;
   state: string;
-  codeChallenge: string;
   redirectUri: string;
-}): string {
-  const params = new URLSearchParams({
-    client_id: env.MICROSOFT_CLIENT_ID,
-    response_type: "code",
-    redirect_uri: args.redirectUri,
-    scope: "XboxLive.signin offline_access",
-    state: args.state,
-    code_challenge: args.codeChallenge,
-    code_challenge_method: "S256"
-  });
+}) {
+  try {
+    // 1. Exchange code for token
+    const tokenParams = new URLSearchParams({
+      client_id: MINECRAFT_CLIENT_ID,
+      code: opts.code,
+      grant_type: "authorization_code",
+      redirect_uri: opts.redirectUri,
+    });
 
-  return `https://login.live.com/oauth20_authorize.srf?${params.toString()}`;
-}
+    const tokenRes = await fetch("https://login.live.com/oauth20_token.srf", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: tokenParams.toString(),
+    });
 
-export async function completeMicrosoftAuth(args: {
-  code: string;
-  codeVerifier: string;
-  redirectUri: string;
-}): Promise<MicrosoftAuthResult> {
-  const microsoftToken = await exchangeCodeForMicrosoftToken(args);
-  const xboxUser = await authenticateXboxUser(microsoftToken.access_token);
-  const xsts = await authorizeXsts(xboxUser.Token);
-  const uhs = xsts.DisplayClaims.xui[0]?.uhs;
-
-  if (!uhs) {
-    throw new Error("missing uhs in XSTS response");
-  }
-
-  const minecraft = await loginMinecraftWithXbox(uhs, xsts.Token);
-  const profile = await fetchMinecraftProfile(minecraft.access_token);
-  const skinUrl = profile.skins?.[0]?.url ?? "";
-
-  return {
-    minecraftUuid: profile.id,
-    minecraftUsername: profile.name,
-    skinUrl,
-    microsoftAccessToken: microsoftToken.access_token,
-    microsoftRefreshToken: microsoftToken.refresh_token,
-    minecraftAccessToken: minecraft.access_token,
-    expiresAt: new Date(Date.now() + microsoftToken.expires_in * 1000).toISOString()
-  };
-}
-
-async function exchangeCodeForMicrosoftToken(args: {
-  code: string;
-  codeVerifier: string;
-  redirectUri: string;
-}): Promise<MicrosoftTokenResponse> {
-  const body = new URLSearchParams({
-    client_id: env.MICROSOFT_CLIENT_ID,
-    client_secret: env.MICROSOFT_CLIENT_SECRET,
-    code: args.code,
-    grant_type: "authorization_code",
-    redirect_uri: args.redirectUri,
-    code_verifier: args.codeVerifier
-  });
-
-  const response = await fetch("https://login.live.com/oauth20_token.srf", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`microsoft token exchange failed: ${message}`);
-  }
-
-  return (await response.json()) as MicrosoftTokenResponse;
-}
-
-async function authenticateXboxUser(msaAccessToken: string): Promise<XboxUserTokenResponse> {
-  const response = await fetch("https://user.auth.xboxlive.com/user/authenticate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify({
-      Properties: {
-        AuthMethod: "RPS",
-        SiteName: "user.auth.xboxlive.com",
-        RpsTicket: `d=${msaAccessToken}`
-      },
-      RelyingParty: "http://auth.xboxlive.com",
-      TokenType: "JWT"
-    })
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`xbox user auth failed: ${message}`);
-  }
-
-  return (await response.json()) as XboxUserTokenResponse;
-}
-
-async function authorizeXsts(userToken: string): Promise<XstsTokenResponse> {
-  const response = await fetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify({
-      Properties: {
-        SandboxId: "RETAIL",
-        UserTokens: [userToken]
-      },
-      RelyingParty: "rp://api.minecraftservices.com/",
-      TokenType: "JWT"
-    })
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`xsts authorize failed: ${message}`);
-  }
-
-  return (await response.json()) as XstsTokenResponse;
-}
-
-async function loginMinecraftWithXbox(uhs: string, xstsToken: string): Promise<MinecraftLoginResponse> {
-  const response = await fetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify({
-      identityToken: `XBL3.0 x=${uhs};${xstsToken}`
-    })
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`minecraft login failed: ${message}`);
-  }
-
-  return (await response.json()) as MinecraftLoginResponse;
-}
-
-async function fetchMinecraftProfile(minecraftAccessToken: string): Promise<MinecraftProfileResponse> {
-  const response = await fetch("https://api.minecraftservices.com/minecraft/profile", {
-    headers: {
-      Authorization: `Bearer ${minecraftAccessToken}`,
-      Accept: "application/json"
+    if (!tokenRes.ok) {
+      const errorText = await tokenRes.text();
+      throw new Error(`Failed to exchange code for token: ${errorText}`);
     }
-  });
 
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`minecraft profile fetch failed: ${message}`);
+    const tokenData = await tokenRes.json();
+    const oauthToken = tokenData.access_token;
+    const refreshToken = tokenData.refresh_token;
+
+    // 2. Authenticate with Xbox Live
+    const xblRes = await fetch(
+      "https://user.auth.xboxlive.com/user/authenticate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          Properties: {
+            AuthMethod: "RPS",
+            SiteName: "user.auth.xboxlive.com",
+            RpsTicket: `d=${oauthToken}`,
+          },
+          RelyingParty: "http://auth.xboxlive.com",
+          TokenType: "JWT",
+        }),
+      }
+    );
+
+    if (!xblRes.ok) {
+      const errTxt = await xblRes.text();
+      console.error("[AUTH] XBL Error payload:", errTxt);
+      throw new Error(`XBL authentication failed: ${xblRes.status}`);
+    }
+    const xblData = await xblRes.json();
+    console.log("[AUTH] Got XBL token successfully");
+
+    // 3. Authenticate with XSTS
+    const xstsRes = await fetch(
+      "https://xsts.auth.xboxlive.com/xsts/authorize",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          Properties: {
+            SandboxId: "RETAIL",
+            UserTokens: [xblData.Token],
+          },
+          RelyingParty: "rp://api.minecraftservices.com/",
+          TokenType: "JWT",
+        }),
+      }
+    );
+
+    if (!xstsRes.ok) {
+      const errTxt = await xstsRes.text();
+      console.error("[AUTH] XSTS Error payload:", errTxt);
+      throw new Error(`XSTS authentication failed: ${xstsRes.status}`);
+    }
+    const xstsData = await xstsRes.json();
+    
+    // Le UserHash est dans DisplayClaims.xui[0].uhs
+    const userHash = xstsData?.DisplayClaims?.xui?.[0]?.uhs || xblData.DisplayClaims?.xui?.[0]?.uhs;
+    const xstsToken = xstsData.Token;
+    console.log("[AUTH] Got XSTS token, userHash:", userHash);
+
+    // 4. Authenticate with Minecraft
+    const mcRes = await fetch(
+      "https://api.minecraftservices.com/authentication/login_with_xbox",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Accept": "application/json",
+          "User-Agent": "MinecraftLauncher/2.2.10675",
+        },
+        body: JSON.stringify({
+          identityToken: `XBL3.0 x=${userHash};${xstsToken}`,
+          ensureLegacyEnabled: true,
+        }),
+      }
+    );
+
+    if (!mcRes.ok) {
+      const errTxt = await mcRes.text();
+      console.error("[AUTH] Minecraft login failed payload:", errTxt);
+      console.error("====== ERREUR D'AUTHENTIFICATION MICROSOFT ======");
+      throw new Error(`minecraft login failed: ${errTxt}`);
+    }
+    const mcData = await mcRes.json();
+    const mcAccessToken = mcData.access_token;
+    const mcExpiresIn = mcData.expires_in;
+
+    console.log("[AUTH] Got Minecraft access token");
+
+    // 5. Profil Minecraft (pour l'UUID et le pseudo)
+    const profileRes = await fetch(
+      "https://api.minecraftservices.com/minecraft/profile",
+      {
+        headers: {
+          "Authorization": `Bearer ${mcAccessToken}`,
+        },
+      }
+    );
+
+    if (!profileRes.ok) {
+      const errTxt = await profileRes.text();
+      console.error("[AUTH] Failed to fetch MC profile:", errTxt);
+      throw new Error("Failed to fetch Minecraft profile");
+    }
+    const profileData = await profileRes.json();
+    console.log(`[AUTH] Successfully logged in as ${profileData.name}`);
+
+    return {
+      minecraftUuid: profileData.id,
+      minecraftUsername: profileData.name,
+      skinUrl: profileData.skins?.[0]?.url,
+      minecraftAccessToken: mcAccessToken,
+      microsoftRefreshToken: refreshToken,
+      expiresAt: new Date(Date.now() + mcExpiresIn * 1000).toISOString(),
+    };
+  } catch (error) {
+    console.error("[AUTH] FATAL ERROR in completeMicrosoftCallback:", error);
+    throw error;
   }
-
-  return (await response.json()) as MinecraftProfileResponse;
 }

@@ -43,7 +43,12 @@ export function listProfiles(): StoredLauncherProfile[] {
   return readAll();
 }
 
-export function createProfile(input: Omit<StoredLauncherProfile, "id" | "favorite" | "createdAt" | "updatedAt">): StoredLauncherProfile {
+export function createProfile(
+  input: Omit<
+    StoredLauncherProfile,
+    "id" | "favorite" | "createdAt" | "updatedAt"
+  >,
+): StoredLauncherProfile {
   const profiles = readAll();
   const now = new Date().toISOString();
   const profile: StoredLauncherProfile = {
@@ -51,7 +56,7 @@ export function createProfile(input: Omit<StoredLauncherProfile, "id" | "favorit
     favorite: profiles.length === 0,
     createdAt: now,
     updatedAt: now,
-    ...input
+    ...input,
   };
 
   profiles.push(profile);
@@ -61,7 +66,17 @@ export function createProfile(input: Omit<StoredLauncherProfile, "id" | "favorit
 
 export function updateProfile(
   profileId: string,
-  patch: Partial<Pick<StoredLauncherProfile, "name" | "minecraftVersion" | "profileTypeId" | "graphicsModeId" | "ramMb" | "resolution">>
+  patch: Partial<
+    Pick<
+      StoredLauncherProfile,
+      | "name"
+      | "minecraftVersion"
+      | "profileTypeId"
+      | "graphicsModeId"
+      | "ramMb"
+      | "resolution"
+    >
+  >,
 ): StoredLauncherProfile | null {
   const profiles = readAll();
   const index = profiles.findIndex((p) => p.id === profileId);
@@ -69,11 +84,7 @@ export function updateProfile(
     return null;
   }
 
-  const updated: StoredLauncherProfile = {
-    ...profiles[index],
-    ...patch,
-    updatedAt: new Date().toISOString()
-  };
+  const updated = { ...profiles[index], ...patch, updatedAt: new Date().toISOString() } as StoredLauncherProfile;
 
   profiles[index] = updated;
   writeAll(profiles);
@@ -89,14 +100,20 @@ export function deleteProfile(profileId: string): boolean {
   }
 
   if (!next.some((p) => p.favorite) && next.length > 0) {
-    next[0] = { ...next[0], favorite: true, updatedAt: new Date().toISOString() };
+    next[0] = {
+      ...next[0],
+      favorite: true,
+      updatedAt: new Date().toISOString(),
+    } as StoredLauncherProfile;
   }
 
   writeAll(next);
   return true;
 }
 
-export function duplicateProfile(profileId: string): StoredLauncherProfile | null {
+export function duplicateProfile(
+  profileId: string,
+): StoredLauncherProfile | null {
   const profiles = readAll();
   const source = profiles.find((p) => p.id === profileId);
   if (!source) {
@@ -110,7 +127,7 @@ export function duplicateProfile(profileId: string): StoredLauncherProfile | nul
     name: `${source.name} (copy)`,
     favorite: false,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   };
 
   profiles.push(duplicate);
@@ -149,6 +166,11 @@ export function exportProfile(profileId: string): StoredLauncherProfile | null {
   return readAll().find((p) => p.id === profileId) ?? null;
 }
 
-export function importProfile(profile: Omit<StoredLauncherProfile, "id" | "favorite" | "createdAt" | "updatedAt">): StoredLauncherProfile {
+export function importProfile(
+  profile: Omit<
+    StoredLauncherProfile,
+    "id" | "favorite" | "createdAt" | "updatedAt"
+  >,
+): StoredLauncherProfile {
   return createProfile(profile);
 }

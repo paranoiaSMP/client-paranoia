@@ -1,14 +1,18 @@
 const API_BASE_URL =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_PARANOIA_API_BASE_URL) ||
+  (typeof import.meta !== "undefined" &&
+    import.meta.env?.VITE_PARANOIA_API_BASE_URL) ||
   "http://localhost:8080";
 
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
-      ...(init?.headers ?? {})
+      ...(init?.headers ?? {}),
     },
-    ...init
+    ...init,
   });
 
   if (!response.ok) {
