@@ -1,4 +1,8 @@
-import type { CreateManifestRequest, InstallationManifest, RemoteConfiguration } from "@paranoia/contracts";
+import type {
+  CreateManifestRequest,
+  InstallationManifest,
+  RemoteConfiguration,
+} from "@paranoia/contracts";
 import { apiRequest } from "./http";
 
 export async function fetchRemoteConfiguration(): Promise<RemoteConfiguration> {
@@ -6,10 +10,10 @@ export async function fetchRemoteConfiguration(): Promise<RemoteConfiguration> {
 }
 
 export async function createInstallationManifest(
-  input: CreateManifestRequest
+  input: CreateManifestRequest,
 ): Promise<InstallationManifest> {
   return apiRequest<InstallationManifest>("/v1/catalog/manifest", {
     method: "POST",
-    body: JSON.stringify(input)
+    body: JSON.stringify(input),
   });
 }

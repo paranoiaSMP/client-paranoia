@@ -37,6 +37,36 @@ async fn download_and_verify(url: String, destination: String, expected_sha256: 
     Ok(())
 }
 
+#[tauri::command]
+async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    use tauri::{Emitter, Manager};
+    let app_handle = app.clone();
+    
+    // We run it on the main thread
+    let _ = tauri::WebviewWindowBuilder::new(
+        &app,
+        "microsoft-login",
+        tauri::WebviewUrl::External(url.parse().map_err(|e| format!("Invalid URL: {}", e))?),
+    )
+    .title("Connexion Microsoft")
+    .inner_size(500.0, 600.0)
+    .on_navigation(move |nav_url| {
+        let url_str = nav_url.as_str();
+        if url_str.starts_with("https://login.live.com/oauth20_desktop.srf") {
+            let _ = app_handle.emit("microsoft-oauth-code", url_str);
+            if let Some(window) = app_handle.get_webview_window("microsoft-login") {
+                let _ = window.close();
+            }
+            return false;
+        }
+        true
+    })
+    .build()
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[derive(Serialize)]
 pub struct DetectedProfile {
     id: String,
@@ -186,7 +216,7 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles])
+        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

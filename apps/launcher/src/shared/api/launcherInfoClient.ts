@@ -2,7 +2,6 @@ import type { NewsItem, ServerStatus } from "@paranoia/contracts";
 import { apiRequest } from "./http";
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  // Si une URL externe est définie dans le fichier .env, on l'utilise
   const externalNewsUrl = import.meta.env?.VITE_NEWS_URL;
   if (externalNewsUrl) {
     try {
@@ -15,7 +14,6 @@ export async function fetchNews(): Promise<NewsItem[]> {
     }
   }
 
-  // Sinon on utilise l'API backend locale
   return apiRequest<NewsItem[]>("/v1/news");
 }
 

@@ -11,8 +11,8 @@ newsRouter.get("/", (_req, res) => {
       excerpt: "TEST",
       contentHtml: "<h1>Test</h1><p>Test</p>",
       publishedAt: new Date().toISOString(),
-      tags: ["news"]
-    }
+      tags: ["news"],
+    },
   ];
 
   res.json(payload);

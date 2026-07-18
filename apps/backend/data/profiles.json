@@ -1,10 +1,22 @@
 [
   {
-    "id": "c8c5db62-26da-4ab9-a866-b8d2219d7d5a",
+    "id": "42fed124-09c1-456b-aa89-42f135710f4e",
     "favorite": true,
-    "createdAt": "2026-07-16T20:58:22.489Z",
-    "updatedAt": "2026-07-16T20:58:22.489Z",
-    "name": "Mon profil",
+    "createdAt": "2026-07-17T08:34:08.925Z",
+    "updatedAt": "2026-07-17T08:34:08.925Z",
+    "name": "a",
+    "minecraftVersion": "1.21.11",
+    "profileTypeId": "pvp",
+    "graphicsModeId": "performance",
+    "ramMb": 4096,
+    "resolution": "1920x1080"
+  },
+  {
+    "id": "a911fb63-b11f-4857-899c-0f4345e0ff27",
+    "favorite": false,
+    "createdAt": "2026-07-17T08:59:40.906Z",
+    "updatedAt": "2026-07-17T08:59:40.906Z",
+    "name": "a",
     "minecraftVersion": "1.21.11",
     "profileTypeId": "pvp",
     "graphicsModeId": "performance",

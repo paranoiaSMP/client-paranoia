@@ -11,15 +11,13 @@ export interface MicrosoftAccount {
 }
 
 export interface MicrosoftAuthUrlResponse {
-  state: string;
-  redirectUri: string;
   authorizeUrl: string;
 }
 
-export interface MicrosoftCallbackRequest {
+export interface MicrosoftAuthCallbackRequest {
   code: string;
   state: string;
-  redirectUri?: string;
+  redirectUri: string;
 }
 
 export interface ProfileTypeDefinition {
@@ -48,7 +46,7 @@ export interface FileArtifact {
 export interface InstallationManifest {
   id: string;
   minecraftVersion: string;
-  fabricLoaderVersion: string;
+  fabricLoaderVersion?: string;
   requiredJavaMajor: number;
   profileTypeId: string;
   graphicsModeId: string;

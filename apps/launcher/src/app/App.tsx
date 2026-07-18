@@ -3,17 +3,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { Pickaxe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type {
-  LauncherProfile,
-  MicrosoftAccount,
-  NewsItem,
-  RemoteConfiguration
-} from "@paranoia/contracts";
+import type { RemoteConfiguration, NewsItem } from "@paranoia/contracts";
 
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
-import { createProfile, deleteProfile, favoriteProfile, importProfile, listProfiles } from "../shared/api/profilesClient";
-import { completeMicrosoftCallback, getMicrosoftAuthorizeUrl } from "../shared/api/authClient";
+import { createProfile, importProfile } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
+import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse } from "../shared/api/launcherClient";
 
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
@@ -21,6 +16,9 @@ import { AccueilTab } from "./components/tabs/AccueilTab";
 import { ProfilsTab } from "./components/tabs/ProfilsTab";
 import { ParametresTab } from "./components/tabs/ParametresTab";
 import { ProfileCreation } from "./components/ProfileCreation";
+
+import { useAuth } from "./hooks/useAuth";
+import { useProfiles } from "./hooks/useProfiles";
 
 type SetupStep = 1 | 2 | 3 | 4 | 5;
 
@@ -33,76 +31,103 @@ type DetectedProfile = {
 
 export function App() {
   const { t } = useTranslation();
-  const [step, setStep] = useState<SetupStep>(1);
-  const [connected, setConnected] = useState(false);
-  const [config, setConfig] = useState<RemoteConfiguration | null>(null);
+  
+  // App Global State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [minecraftVersion, setMinecraftVersion] = useState("1.21.11");
+  const [config, setConfig] = useState<RemoteConfiguration | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [activeTab, setActiveTab] = useState<"accueil" | "profils" | "parametres">("accueil");
+  const [setupComplete, setSetupComplete] = useState(false);
+
+  // Hooks
+  const { connected, account, accounts, connectingMicrosoft, handleMicrosoftConnect, handleLocalDevContinue, handleSwitchAccount, handleLogout } = useAuth(setError);
+  const { profiles, setProfiles, selectedProfileId, setSelectedProfileId, refreshProfiles, handleDeleteProfile, handleFavoriteProfile } = useProfiles(setError);
+
+  // Profile Creation State
+  const [step, setStep] = useState<SetupStep>(1);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [minecraftVersion, setMinecraftVersion] = useState("1.21.1");
   const [profileType, setProfileType] = useState<string>("pvp");
   const [graphicsMode, setGraphicsMode] = useState<string>("performance");
   const [profileName, setProfileName] = useState("Mon profil");
-  const [setupComplete, setSetupComplete] = useState(false);
-  const [profiles, setProfiles] = useState<LauncherProfile[]>([]);
-  const [installState, setInstallState] = useState<"idle" | "running" | "done">("idle");
-  const [account, setAccount] = useState<MicrosoftAccount | null>(null);
-  const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [importJson, setImportJson] = useState("");
-  const [activeTab, setActiveTab] = useState<"accueil" | "profils" | "parametres">("accueil");
-  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [importSettings, setImportSettings] = useState(false);
   const [keybindSource, setKeybindSource] = useState("auto");
   const [detectedProfiles, setDetectedProfiles] = useState<DetectedProfile[]>([]);
-  const [importOptions, setImportOptions] = useState({
-    keybinds: true,
-    sensitivity: true,
-    graphics: false
-  });
+  const [importOptions, setImportOptions] = useState({ keybinds: true, sensitivity: true, graphics: false });
 
+  // Import State
+  const [importJson, setImportJson] = useState("");
+
+  // Game Launcher State
+  const [installState, setInstallState] = useState<"idle" | "running" | "done">("idle");
+  const [launchStatus, setLaunchStatus] = useState<LaunchStatusResponse>({ state: "idle", progress: 0, text: "" });
+
+  // Poll launch status when installState is "running"
+  useEffect(() => {
+    let interval: any;
+    if (installState === "running" && selectedProfileId) {
+      interval = setInterval(async () => {
+        try {
+          const status = await getLaunchStatus(selectedProfileId);
+          setLaunchStatus(status);
+          if (status.state === "error") {
+            setError(status.text);
+            setInstallState("idle");
+            clearInterval(interval);
+          } else if (status.state === "running") {
+            setInstallState("done");
+            clearInterval(interval);
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [installState, selectedProfileId]);
+
+  /*
+   * DETECTION DES PROFILS EXTERNES
+   * Recherche les installations existantes de Minecraft sur la machine pour l'importation de parametres.
+   */
   useEffect(() => {
     if (importSettings && detectedProfiles.length === 0) {
       invoke<DetectedProfile[]>("get_detected_profiles")
-        .then((res) => {
-          setDetectedProfiles(res);
-        })
-        .catch((err) => console.error("Erreur de détection des profils :", err));
+        .then((res) => setDetectedProfiles(res))
+        .catch((err) => console.error("Erreur de detection des profils :", err));
     }
   }, [importSettings, detectedProfiles.length]);
 
-  useEffect(() => {
-    if (profiles.length > 0 && !selectedProfileId) {
-      const p = profiles[0];
-      if (p) setSelectedProfileId(p.id);
-    }
-  }, [profiles, selectedProfileId]);
-
+  /*
+   * INITIALISATION DE L'APPLICATION
+   * Charge la configuration distante, la liste des profils locaux et les dernieres actualites.
+   */
   useEffect(() => {
     async function bootstrap() {
       setLoading(true);
       setError(null);
       try {
-        const [remoteConfig, existingProfiles] = await Promise.all([
+        const [remoteConfig] = await Promise.all([
           fetchRemoteConfiguration(),
-          listProfiles()
+          refreshProfiles()
         ]);
 
         const latestNews = await fetchNews();
-
         setConfig(remoteConfig);
-        const firstVersion = remoteConfig.supportedMinecraftVersions[0];
-        if (firstVersion) setMinecraftVersion(firstVersion);
+        
+        if (remoteConfig.supportedMinecraftVersions.length > 0) {
+          setMinecraftVersion(remoteConfig.supportedMinecraftVersions[0]);
+        }
+        if (remoteConfig.profileTypes.length > 0) {
+          setProfileType(remoteConfig.profileTypes[0].id);
+        }
+        if (remoteConfig.graphicsModes.length > 0) {
+          setGraphicsMode(remoteConfig.graphicsModes[0].id);
+        }
 
-        const firstProfileType = remoteConfig.profileTypes[0];
-        if (firstProfileType) setProfileType(firstProfileType.id);
-
-        const firstGraphicsMode = remoteConfig.graphicsModes[0];
-        if (firstGraphicsMode) setGraphicsMode(firstGraphicsMode.id);
-
-        setProfiles(existingProfiles);
-        setSetupComplete(existingProfiles.length > 0);
         setNews(latestNews);
+        setSetupComplete(true); // Assuming refreshProfiles updates the local state
       } catch (e) {
         setError(e instanceof Error ? e.message : t("app.error_load"));
       } finally {
@@ -110,62 +135,16 @@ export function App() {
       }
     }
     bootstrap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    async function tryHandleAuthCallback() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const state = params.get("state");
-
-      if (!code || !state) return;
-
-      try {
-        setConnectingMicrosoft(true);
-        setError(null);
-        const redirectUri = `${window.location.origin}/auth/callback`;
-        const authAccount = await completeMicrosoftCallback({ code, state, redirectUri });
-        setAccount(authAccount);
-        setConnected(true);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("topbar.auth_error"));
-      } finally {
-        setConnectingMicrosoft(false);
-      }
-    }
-    tryHandleAuthCallback();
-  }, []);
-
-  async function handleMicrosoftConnect() {
-    try {
-      setConnectingMicrosoft(true);
-      setError(null);
-      const redirectUri = `${window.location.origin}/auth/callback`;
-      const { authorizeUrl } = await getMicrosoftAuthorizeUrl(redirectUri);
-      window.location.assign(authorizeUrl);
-    } catch (e) {
-      setConnectingMicrosoft(false);
-      setError(e instanceof Error ? e.message : t("topbar.auth_launch_error"));
-    }
-  }
-
-  function handleLocalDevContinue() {
-    setConnected(true);
-    setAccount({
-      id: "local-dev",
-      minecraftUuid: "00000000000000000000000000000000",
-      minecraftUsername: "DEV",
-      skinUrl: "",
-      accessToken: "local-dev-token",
-      refreshToken: "local-dev-refresh",
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    });
-  }
 
   const selectedType = useMemo(() => config?.profileTypes.find((x) => x.id === profileType), [config, profileType]);
   const selectedGraphics = useMemo(() => config?.graphicsModes.find((x) => x.id === graphicsMode), [config, graphicsMode]);
 
+  /*
+   * INSTALLATION D'UN NOUVEAU PROFIL
+   * Genere le manifeste d'installation et cree l'entree du profil dans la base locale.
+   */
   async function handleInstall() {
     try {
       setInstallState("running");
@@ -187,8 +166,7 @@ export function App() {
         resolution: "1920x1080"
       });
 
-      const refreshedProfiles = await listProfiles();
-      setProfiles(refreshedProfiles);
+      await refreshProfiles();
       setSetupComplete(true);
       setInstallState("done");
       setIsCreatingProfile(false);
@@ -199,17 +177,29 @@ export function App() {
     }
   }
 
-  async function handleDeleteProfile(profileId: string) {
-    await deleteProfile(profileId);
-    setProfiles(await listProfiles());
+  /*
+   * LANCEMENT DU JEU
+   * Interagit avec le backend local pour telecharger les ressources manquantes et lancer le processus Java.
+   */
+  async function handleLaunchGame(profileId: string) {
+    if (!account) return;
+    const profile = profiles.find(p => p.id === profileId);
+    if (!profile) return;
+    
+    try {
+      setInstallState("running");
+      setLaunchStatus({ state: "idle", progress: 0, text: "Initialisation..." });
+      await launchMinecraftGame(profileId, profile.minecraftVersion, profile.ramMb, account);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur au lancement du jeu");
+      setInstallState("idle");
+    }
   }
 
-  async function handleFavoriteProfile(profileId: string) {
-    await favoriteProfile(profileId);
-    setProfiles(await listProfiles());
-  }
-
-  async function handleImportProfile() {
+  /*
+   * IMPORTATION D'UN PROFIL JSON
+   */
+  async function handleImportProfileAction() {
     try {
       const parsed = JSON.parse(importJson) as Partial<LauncherProfile>;
       if (!parsed.name || !parsed.minecraftVersion || !parsed.profileTypeId || !parsed.graphicsModeId || !parsed.ramMb || !parsed.resolution) {
@@ -224,7 +214,7 @@ export function App() {
         resolution: parsed.resolution
       });
       setImportJson("");
-      setProfiles(await listProfiles());
+      await refreshProfiles();
       setActiveTab("profils");
     } catch (e) {
       setError(e instanceof Error ? e.message : t("settings.import_format_error"));
@@ -249,10 +239,13 @@ export function App() {
       <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-transparent">
         <TopBar 
           connected={connected} 
-          account={account} 
+          account={account}
+          accounts={accounts}
           connectingMicrosoft={connectingMicrosoft} 
           onConnectMicrosoft={handleMicrosoftConnect} 
-          onLocalDevContinue={handleLocalDevContinue} 
+          onLocalDevContinue={handleLocalDevContinue}
+          onSwitchAccount={handleSwitchAccount}
+          onLogout={handleLogout}
         />
 
         <div className="flex-1 overflow-y-auto p-8">
@@ -262,9 +255,11 @@ export function App() {
               profiles={profiles}
               connected={connected}
               installState={installState}
+              launchStatus={launchStatus}
               news={news}
               setSelectedProfileId={setSelectedProfileId}
               setActiveTab={setActiveTab}
+              onLaunchGame={handleLaunchGame}
             />
           )}
 
@@ -315,7 +310,7 @@ export function App() {
             <ParametresTab 
               importJson={importJson}
               setImportJson={setImportJson}
-              handleImportProfile={handleImportProfile}
+              handleImportProfile={handleImportProfileAction}
               error={error}
             />
           )}

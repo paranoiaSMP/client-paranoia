@@ -9,7 +9,7 @@ serverStatusRouter.get("/", (_req, res) => {
     motd: "Paranoia Network",
     pingMs: 28,
     playerCount: 124,
-    maxPlayers: 1200
+    maxPlayers: 1200,
   };
 
   res.json(status);

@@ -11,9 +11,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
-      "@paranoia/contracts": ["packages/contracts/src/index.ts"]
+      "@paranoia/contracts": ["./packages/contracts/src/index.ts"]
     }
   }
 }

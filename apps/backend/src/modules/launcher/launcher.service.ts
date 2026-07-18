@@ -1,7 +1,11 @@
 import { Client } from "minecraft-launcher-core";
 import path from "node:path";
 import os from "node:os";
-import { ensureJava21 } from "./javaDownloader";
+import { ensureJava21 } from "./javaDownloader.js";
+import { getManifest } from "../catalog/catalog.routes.js";
+import { exportProfile } from "../profiles/profiles.store.js";
+import { ensureFabric } from "./fabricDownloader.js";
+import { downloadArtifacts } from "./artifactDownloader.js";
 
 export type LaunchStatus = {
   state: "idle" | "downloading_java" | "downloading_assets" | "launching" | "running" | "error";
@@ -9,16 +13,7 @@ export type LaunchStatus = {
   text: string;
 };
 
-/*
- * SERVICE DE LANCEMENT MINECRAFT
- * Ce service orchestre le demarrage d'une instance Minecraft via 'minecraft-launcher-core'.
- *
- * Fonctionnalites :
- * - Telechargement et configuration de Java 21 via le module javaDownloader
- * - Preparation des arguments de lancement (RAM, Auth, Versions)
- * - Lancement du processus de jeu et ecoute des evenements (telechargement de ressources, execution)
- * - Suivi en temps reel de la progression pour l'interface utilisateur
- */
+// We store instances and status of launchers
 const activeLaunchers = new Map<string, Client>();
 const launchStatuses = new Map<string, LaunchStatus>();
 
@@ -39,6 +34,7 @@ export async function launchMinecraft(
   const launcher = new Client();
   const rootPath = path.join(os.homedir(), "AppData", "Roaming", ".paranoia-client");
 
+  // Keep track of it
   activeLaunchers.set(profileId, launcher);
   
   const updateStatus = (status: LaunchStatus) => {
@@ -46,21 +42,62 @@ export async function launchMinecraft(
   };
 
   try {
+    const profile = exportProfile(profileId);
+    if (!profile) {
+      throw new Error(`Profile ${profileId} not found`);
+    }
+
+    const manifest = getManifest(profile.minecraftVersion, profile.profileTypeId, profile.graphicsModeId);
+    if (!manifest) {
+      throw new Error(`Manifest not found for ${profile.minecraftVersion} / ${profile.profileTypeId} / ${profile.graphicsModeId}`);
+    }
+
+    // 1. Verifier et telecharger Java 21
     updateStatus({ state: "downloading_java", progress: 0, text: "Verification de Java 21..." });
-    const javaPath = await ensureJava21(rootPath, (text, percentage) => {
+    const javaPath = await ensureJava21(rootPath, (text: string, percentage: number) => {
       updateStatus({ state: "downloading_java", progress: percentage, text });
     });
 
+    // 2. Installer Fabric si nécessaire
+    let customVersionName: string | undefined;
+    if (manifest.fabricLoaderVersion) {
+      customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, manifest.fabricLoaderVersion, (text, percentage) => {
+        updateStatus({ state: "downloading_assets", progress: percentage, text });
+      });
+    }
+
+    // 3. Telecharger les artefacts du manifeste
+    if (manifest.artifacts.length > 0) {
+      await downloadArtifacts(rootPath, manifest.artifacts, (text, percentage) => {
+        updateStatus({ state: "downloading_assets", progress: percentage, text });
+      });
+    }
+
+    // 4. Copier options.txt depuis le .minecraft vanilla si manquant
+    const fs = await import("node:fs");
+    const vanillaOptionsPath = path.join(os.homedir(), "AppData", "Roaming", ".minecraft", "options.txt");
+    const targetOptionsPath = path.join(rootPath, "options.txt");
+    
+    if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
+      try {
+        fs.copyFileSync(vanillaOptionsPath, targetOptionsPath);
+        console.log("Copied options.txt from vanilla .minecraft");
+      } catch (e) {
+        console.warn("Could not copy options.txt", e);
+      }
+    }
+
+    // 4. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
 
-    const opts = {
-      clientPackage: null,
+    const opts: any = {
+      clientPackage: null as any,
       authorization: {
         access_token: account.accessToken,
         client_token: "paranoia-client",
         uuid: account.minecraftUuid,
         name: account.minecraftUsername,
-        user_properties: "{}",
+        user_properties: {} as Partial<any>,
         meta: {
           type: "msa"
         }
@@ -76,9 +113,13 @@ export async function launchMinecraft(
       },
       javaPath: javaPath,
       overrides: {
-        maxSockets: 6
+        maxSockets: 6 // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
       }
     };
+
+    if (customVersionName) {
+      opts.version.custom = customVersionName;
+    }
 
     launcher.on('debug', (e) => console.log(`[MC Launcher Debug] ${e}`));
     launcher.on('data', (e) => console.log(`[MC Launcher Data] ${e}`));
@@ -101,6 +142,7 @@ export async function launchMinecraft(
 
     console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${javaPath}`);
     
+    // Une fois lance, on passe a "launching" (jeu en cours de demarrage)
     const proc = await launcher.launch(opts);
     if (proc) {
       updateStatus({ state: "running", progress: 100, text: "Jeu en cours d'execution" });

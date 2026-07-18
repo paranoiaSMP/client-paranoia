@@ -7,6 +7,6 @@ export default defineConfig({
   envPrefix: ["VITE_", "PARANOIA_"],
   server: {
     port: 1420,
-    strictPort: true
-  }
+    strictPort: true,
+  },
 });

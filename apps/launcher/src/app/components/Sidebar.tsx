@@ -1,4 +1,4 @@
-import { Home, Sword, Wrench, Pickaxe } from "lucide-react";
+import { Home, Gamepad2, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type SidebarProps = {
@@ -6,40 +6,46 @@ type SidebarProps = {
   setActiveTab: (tab: "accueil" | "profils" | "parametres") => void;
 };
 
+const tabs = [
+  { id: "accueil" as const, icon: Home, labelKey: "sidebar.home" },
+  { id: "profils" as const, icon: Gamepad2, labelKey: "sidebar.profiles" },
+  { id: "parametres" as const, icon: Settings, labelKey: "sidebar.settings" },
+];
+
 export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const { t } = useTranslation();
 
   return (
-    <aside className="w-20 bg-[#050505] border-r border-[#1a1a1a] flex flex-col items-center z-20 shadow-[4px_0_24px_rgba(168,85,247,0.05)] py-6 shrink-0">
-      <div className="w-12 h-12 bg-accent-purple/20 rounded-xl border border-accent-purple/30 flex items-center justify-center mb-8 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-        <Pickaxe className="w-7 h-7 text-accent-purple" strokeWidth={2.5} />
+    <aside className="w-16 bg-[#0c0c0e] border-r border-[#1a1a1c] flex flex-col items-center py-4 shrink-0">
+      
+      {/* Logo */}
+      <div className="w-9 h-9 bg-accent-purple rounded-lg flex items-center justify-center mb-6 text-white font-black text-sm">
+        P
       </div>
 
-      <nav className="flex-1 w-full px-3 space-y-3">
-        <button 
-          onClick={() => setActiveTab("accueil")}
-          title={t("sidebar.home")}
-          className={`w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-200 ${activeTab === 'accueil' ? 'bg-[#111111] text-white ring-1 ring-[#2a2a2a] shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 'text-[#8888a0] hover:bg-[#0a0a0a] hover:text-white'}`}
-        >
-          <Home className="w-6 h-6" strokeWidth={2.5} />
-        </button>
-        
-        <button 
-          onClick={() => setActiveTab("profils")}
-          title={t("sidebar.profiles")}
-          className={`w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-200 ${activeTab === 'profils' ? 'bg-[#111111] text-white ring-1 ring-[#2a2a2a] shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 'text-[#8888a0] hover:bg-[#0a0a0a] hover:text-white'}`}
-        >
-          <Sword className="w-6 h-6" strokeWidth={2.5} />
-        </button>
-        
-        <button 
-          onClick={() => setActiveTab("parametres")}
-          title={t("sidebar.settings")}
-          className={`w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-200 ${activeTab === 'parametres' ? 'bg-[#111111] text-white ring-1 ring-[#2a2a2a] shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 'text-[#8888a0] hover:bg-[#0a0a0a] hover:text-white'}`}
-        >
-          <Wrench className="w-6 h-6" strokeWidth={2.5} />
-        </button>
+      {/* Nav */}
+      <nav className="flex-1 flex flex-col gap-1 w-full px-2">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              title={t(tab.labelKey)}
+              className={`w-full aspect-square rounded-lg flex items-center justify-center transition-colors ${
+                active 
+                  ? 'bg-[#18181b] text-white' 
+                  : 'text-[#52525b] hover:text-[#a1a1aa] hover:bg-[#18181b]/50'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          );
+        })}
       </nav>
+
+      {/* Paramètres en bas */}
     </aside>
   );
 }

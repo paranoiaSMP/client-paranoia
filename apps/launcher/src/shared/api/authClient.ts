@@ -1,7 +1,7 @@
 import {
   MicrosoftAuthUrlResponse,
   MicrosoftAuthCallbackRequest,
-  AuthAccount,
+  MicrosoftAccount,
 } from "@paranoia/contracts";
 
 const API_URL = "http://localhost:8080/v1"; // TODO: Use environment variable
@@ -21,7 +21,7 @@ export async function getMicrosoftAuthorizeUrl(
 
 export async function completeMicrosoftCallback(
   req: MicrosoftAuthCallbackRequest,
-): Promise<AuthAccount> {
+): Promise<MicrosoftAccount> {
   const response = await fetch(`${API_URL}/auth/microsoft/callback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

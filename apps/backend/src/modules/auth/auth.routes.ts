@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
-} from "./auth.microsoft";
+} from "./auth.microsoft.js";
 
 export const authRouter = Router();
 

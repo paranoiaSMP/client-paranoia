@@ -5,14 +5,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -23,14 +23,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -41,14 +41,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -59,14 +59,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -77,14 +77,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -95,14 +95,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -113,14 +113,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -131,14 +131,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -149,14 +149,14 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -164,17 +164,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -182,17 +182,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -200,17 +200,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -218,17 +218,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -236,17 +236,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -254,17 +254,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -272,17 +272,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -290,17 +290,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -308,17 +308,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.10",
+      "minecraftVersion": "1.20.1",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -326,17 +326,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -344,17 +344,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -362,17 +362,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -380,17 +380,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -398,17 +398,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -416,17 +416,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -434,17 +434,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -452,17 +452,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -470,17 +470,17 @@
       ]
     },
     {
-      "minecraftVersion": "1.21.8",
+      "minecraftVersion": "1.18.2",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -491,14 +491,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -509,14 +509,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -527,14 +527,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -545,14 +545,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -563,14 +563,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -581,14 +581,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -599,14 +599,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -617,14 +617,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
@@ -635,14 +635,14 @@
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      "fabricLoaderVersion": "0.16.10",
+      
       "requiredJavaMajor": 21,
       "artifacts": [
         {
           "id": "dummy-mod",
           "kind": "mod",
           "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://cdn.paranoia.gg/mods/dummy.jar",
+          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
           "sha256": "TODO_SHA256",
           "size": 1024,
           "targetPath": "mods/dummy.jar"
