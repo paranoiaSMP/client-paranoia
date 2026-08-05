@@ -8,7 +8,8 @@
     "sidebar": {
       "home": "Accueil",
       "profiles": "Profils",
-      "settings": "Réglages"
+      "settings": "Réglages",
+      "mods": "Mods"
     },
     "topbar": {
       "devMode": "Dev Mode",

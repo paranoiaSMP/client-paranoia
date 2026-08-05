@@ -16,6 +16,7 @@ import { TopBar } from "./components/TopBar";
 import { AccueilTab } from "./components/tabs/AccueilTab";
 import { ProfilsTab } from "./components/tabs/ProfilsTab";
 import { ParametresTab } from "./components/tabs/ParametresTab";
+import { ModsTab } from "./components/tabs/ModsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 
 import { useAuth } from "./hooks/useAuth";
@@ -38,7 +39,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [activeTab, setActiveTab] = useState<"accueil" | "profils" | "parametres">("accueil");
+  const [activeTab, setActiveTab] = useState<"accueil" | "profils" | "mods" | "parametres">("accueil");
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Hooks
@@ -312,6 +313,15 @@ export function App() {
                 />
               )}
             </>
+          )}
+
+          {activeTab === "mods" && (
+            <ModsTab
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              setSelectedProfileId={setSelectedProfileId}
+              setError={setError}
+            />
           )}
 
           {activeTab === "parametres" && (
