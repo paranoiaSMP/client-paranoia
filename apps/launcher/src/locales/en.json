@@ -3,7 +3,10 @@
     "app": {
       "loading": "Loading...",
       "generation": "Generating world...",
-      "error_load": "Loading error. Check your connection."
+      "error_load": "Loading error. Check your connection.",
+      "error_title": "The local service did not start",
+      "error_hint": "Close Paranoia Client completely and open it again. If it keeps failing, restart your PC: another program may be using the port.",
+      "retry": "Retry"
     },
     "sidebar": {
       "home": "Home",
