@@ -6,6 +6,9 @@ import type { MicrosoftAccount } from "@paranoia/contracts";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
+  listSavedAccounts,
+  refreshAccount,
+  forgetAccount,
 } from "../../shared/api/authClient";
 
 const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
@@ -16,6 +19,59 @@ export function useAuth(setError: (err: string | null) => void) {
   const [account, setAccount] = useState<MicrosoftAccount | null>(null);
   const [accounts, setAccounts] = useState<MicrosoftAccount[]>([]);
   const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
+  const [restoringSession, setRestoringSession] = useState(true);
+
+  /*
+   * RESTAURATION DE LA SESSION
+   * Recharge les comptes enregistres et renouvelle celui qui sera utilise.
+   * Sans cela, il fallait repasser par la fenetre Microsoft a chaque ouverture.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restore() {
+      try {
+        const saved = await listSavedAccounts();
+        if (cancelled || saved.length === 0) {
+          return;
+        }
+
+        setAccounts(saved);
+
+        const first = saved[0];
+        if (!first) {
+          return;
+        }
+
+        const usable = await refreshAccount(first.id);
+        if (cancelled) {
+          return;
+        }
+
+        if (usable) {
+          setAccount(usable);
+          setAccounts((prev) =>
+            prev.map((a) => (a.id === usable.id ? usable : a)),
+          );
+          setConnected(true);
+        } else {
+          // Refresh token perime: le backend a deja oublie le compte.
+          setAccounts((prev) => prev.filter((a) => a.id !== first.id));
+        }
+      } catch {
+        // Pas de session restauree: l'utilisateur se connectera normalement.
+      } finally {
+        if (!cancelled) {
+          setRestoringSession(false);
+        }
+      }
+    }
+
+    restore();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /*
    * GESTION DE L'AUTHENTIFICATION MICROSOFT
@@ -96,17 +152,38 @@ export function useAuth(setError: (err: string | null) => void) {
   /*
    * GESTION DES COMPTES ACTIFS
    */
-  function handleSwitchAccount(target: MicrosoftAccount) {
+  async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
+
+    // La session du compte choisi peut avoir expire pendant qu'un autre etait
+    // actif: on la renouvelle avant que le joueur ne lance le jeu.
+    const usable = await refreshAccount(target.id);
+    if (usable) {
+      setAccount(usable);
+      setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
+      return;
+    }
+
+    setAccounts((prev) => prev.filter((a) => a.id !== target.id));
+    setAccount(null);
+    setConnected(false);
+    setError(t("topbar.auth_error"));
   }
 
-  function handleLogout() {
-    const remaining = accounts.filter((a) => a.id !== account?.id);
+  async function handleLogout() {
+    const current = account;
+    const remaining = accounts.filter((a) => a.id !== current?.id);
     setAccounts(remaining);
 
     const next = remaining[0] ?? null;
     setAccount(next);
     setConnected(next !== null);
+
+    // Retire aussi les jetons du disque, sinon le compte reviendrait au
+    // prochain demarrage.
+    if (current && current.id !== "local-dev") {
+      await forgetAccount(current.id).catch(() => {});
+    }
   }
 
   return {
@@ -114,6 +191,11 @@ export function useAuth(setError: (err: string | null) => void) {
     account,
     accounts,
     connectingMicrosoft,
+    restoringSession,
+    // Le compte factice ne passe pas la verification de session de Mojang:
+    // l'exposer dans une version distribuee ne menait qu'a un lancement en
+    // echec pour le joueur.
+    devModeAvailable: import.meta.env.DEV,
     handleMicrosoftConnect,
     handleLocalDevContinue,
     handleSwitchAccount,

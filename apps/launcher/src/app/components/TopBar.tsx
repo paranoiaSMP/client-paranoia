@@ -8,6 +8,7 @@ type TopBarProps = {
   account: MicrosoftAccount | null;
   accounts: MicrosoftAccount[];
   connectingMicrosoft: boolean;
+  devModeAvailable?: boolean;
   onConnectMicrosoft: () => void;
   onLocalDevContinue: () => void;
   onSwitchAccount: (account: MicrosoftAccount) => void;
@@ -19,6 +20,7 @@ export function TopBar({
   account,
   accounts,
   connectingMicrosoft,
+  devModeAvailable = false,
   onConnectMicrosoft,
   onLocalDevContinue,
   onSwitchAccount,
@@ -146,12 +148,14 @@ export function TopBar({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <button
-              onClick={onLocalDevContinue}
-              className="px-3 py-1.5 text-xs text-[#52525b] hover:text-white transition-colors"
-            >
-              {t("topbar.devMode")}
-            </button>
+            {devModeAvailable && (
+              <button
+                onClick={onLocalDevContinue}
+                className="px-3 py-1.5 text-xs text-[#52525b] hover:text-white transition-colors"
+              >
+                {t("topbar.devMode")}
+              </button>
+            )}
             <button
               onClick={onConnectMicrosoft}
               disabled={connectingMicrosoft}

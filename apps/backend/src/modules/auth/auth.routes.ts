@@ -1,11 +1,19 @@
 import { Router } from "express";
-import crypto from "node:crypto";
 import { z } from "zod";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
+  refreshMicrosoftAccount,
 } from "./auth.microsoft.js";
 import { createAuthState, consumeAuthState, safeEquals } from "./auth.state.js";
+import {
+  deleteAccount,
+  getAccount,
+  isExpired,
+  listAccounts,
+  saveAccount,
+  type StoredAccount,
+} from "./accounts.store.js";
 
 export const authRouter = Router();
 
@@ -52,21 +60,60 @@ authRouter.post("/microsoft/callback", async (req, res, next) => {
         .json({ message: "invalid or expired authentication state" });
     }
 
-    const account = await completeMicrosoftCallback({
+    const tokens = await completeMicrosoftCallback({
       code: body.code,
       state: body.state,
       redirectUri: body.redirectUri,
     });
 
-    return res.json({
-      id: crypto.randomUUID(),
-      minecraftUuid: account.minecraftUuid,
-      minecraftUsername: account.minecraftUsername,
-      skinUrl: account.skinUrl,
-      accessToken: account.minecraftAccessToken,
-      refreshToken: account.microsoftRefreshToken,
-      expiresAt: account.expiresAt,
-    });
+    // Le compte est ecrit sur disque: sans ca il fallait repasser par la
+    // fenetre Microsoft a chaque demarrage du launcher.
+    return res.json(saveAccount(tokens));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Comptes deja connectes, restaures au demarrage du launcher. */
+authRouter.get("/accounts", (_req, res) => {
+  return res.json(listAccounts());
+});
+
+authRouter.delete("/accounts/:id", (req, res) => {
+  if (!deleteAccount(req.params.id)) {
+    return res.status(404).json({ message: "account not found" });
+  }
+  return res.status(204).send();
+});
+
+/**
+ * Return a usable session for this account, renewing it through the Microsoft
+ * refresh token when the Minecraft one has expired.
+ */
+authRouter.post("/accounts/:id/refresh", async (req, res, next) => {
+  try {
+    const account = getAccount(req.params.id);
+    if (!account) {
+      return res.status(404).json({ message: "account not found" });
+    }
+
+    if (!isExpired(account)) {
+      return res.json(account);
+    }
+
+    let refreshed: StoredAccount;
+    try {
+      refreshed = saveAccount(await refreshMicrosoftAccount(account.refreshToken));
+    } catch {
+      // Le refresh token de Microsoft a une duree de vie limitee: une fois
+      // perime, seule une reconnexion complete peut rendre la main.
+      deleteAccount(account.id);
+      return res
+        .status(401)
+        .json({ message: "session expired, sign in again" });
+    }
+
+    return res.json(refreshed);
   } catch (err) {
     return next(err);
   }

@@ -17,6 +17,18 @@ export type LaunchStatus = {
 const activeLaunchers = new Map<string, Client>();
 const launchStatuses = new Map<string, LaunchStatus>();
 
+/** "1920x1080" -> { width: 1920, height: 1080 }; null si la valeur est invalide. */
+function parseResolution(
+  resolution: string,
+): { width: number; height: number } | null {
+  const match = /^(\d{3,5})\s*[x×]\s*(\d{3,5})$/i.exec(resolution.trim());
+  if (!match) {
+    return null;
+  }
+
+  return { width: Number(match[1]), height: Number(match[2]) };
+}
+
 export function getLaunchStatus(profileId: string): LaunchStatus {
   return launchStatuses.get(profileId) || { state: "idle", progress: 0, text: "" };
 }
@@ -118,6 +130,13 @@ export async function launchMinecraft(
         maxSockets: 6 // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
       }
     };
+
+    // La resolution etait enregistree dans le profil mais n'arrivait jamais
+    // jusqu'au jeu: choisir 1280x720 n'avait donc aucun effet.
+    const resolution = parseResolution(profile.resolution);
+    if (resolution) {
+      opts.window = resolution;
+    }
 
     if (customVersionName) {
       opts.version.custom = customVersionName;
