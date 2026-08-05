@@ -25,6 +25,22 @@ export function paranoiaDataDir(): string {
   }
 }
 
+/**
+ * Per-profile game folder: mods, saves, config, resource packs, options.txt.
+ * Versions, libraries, assets and the Java runtime stay in the shared root —
+ * duplicating those per profile would cost gigabytes for nothing.
+ */
+export function instanceDir(profileId: string): string {
+  // profileId vient d'un randomUUID cote store, mais il transite par l'API:
+  // on refuse tout ce qui n'est pas un identifiant simple pour qu'il ne puisse
+  // pas servir a remonter hors du dossier des instances.
+  if (!/^[A-Za-z0-9._-]+$/.test(profileId)) {
+    throw new Error(`Identifiant de profil invalide: ${profileId}`);
+  }
+
+  return path.join(paranoiaDataDir(), "instances", profileId);
+}
+
 /** Where the official Minecraft launcher keeps its `.minecraft` folder. */
 export function vanillaMinecraftDir(): string {
   const home = os.homedir();

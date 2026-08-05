@@ -13,6 +13,7 @@ import { serverStatusRouter } from "./modules/server-status/server-status.routes
 import { telemetryRouter } from "./modules/telemetry/telemetry.routes.js";
 import { updatesRouter } from "./modules/updates/updates.routes.js";
 import { launcherRouter } from "./modules/launcher/launcher.routes.js";
+import { modsRouter } from "./modules/mods/modrinth.routes.js";
 
 const app = express();
 const logger = pino({ level: "info" });
@@ -46,6 +47,7 @@ app.use("/v1/server-status", serverStatusRouter);
 app.use("/v1/updates", updatesRouter);
 app.use("/v1/telemetry", telemetryRouter);
 app.use("/v1/launcher", launcherRouter);
+app.use("/v1/mods", modsRouter);
 
 app.use(
   (
