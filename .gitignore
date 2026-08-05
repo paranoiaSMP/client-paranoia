@@ -15,6 +15,10 @@ pnpm-debug.log*
 src-tauri/target/
 target/
 **/*.rs.bk
+# Backend compile en executable autonome (~120 Mo), reconstruit par
+# `pnpm --filter @paranoia/backend build:sidecar`
+apps/launcher/src-tauri/binaries/
+apps/backend/dist-sidecar/
 
 .gradle/
 build/
@@ -49,3 +53,8 @@ Thumbs.db
 !.vscode/extensions.json
 *.swp
 *.swo
+
+# Artefacts generes pendant une verification locale (schema Tauri Linux,
+# donnees d execution a la racine)
+/data/
+apps/launcher/src-tauri/gen/schemas/linux-schema.json

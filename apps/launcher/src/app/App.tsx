@@ -8,6 +8,7 @@ import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/c
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
 import { createProfile, importProfile } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
+import { waitForApi } from "../shared/api/http";
 import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse } from "../shared/api/launcherClient";
 
 import { Sidebar } from "./components/Sidebar";
@@ -108,6 +109,8 @@ export function App() {
       setLoading(true);
       setError(null);
       try {
+        await waitForApi();
+
         const [remoteConfig] = await Promise.all([
           fetchRemoteConfiguration(),
           refreshProfiles()

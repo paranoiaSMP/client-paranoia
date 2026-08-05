@@ -3,9 +3,21 @@
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::Write;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path::Path;
 use std::env;
+use std::sync::Mutex;
+use tauri::Manager;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+use tauri_plugin_shell::ShellExt;
+
+/// Port du backend embarque. Doit rester aligne avec PORT dans apps/backend et
+/// avec le connect-src de la CSP dans tauri.conf.json.
+const BACKEND_PORT: &str = "47820";
+
+/// Garde le processus du backend pour pouvoir le tuer a la fermeture: sans ca,
+/// il survivrait a la fenetre et bloquerait le port au prochain lancement.
+struct BackendProcess(Mutex<Option<CommandChild>>);
 
 #[tauri::command]
 async fn download_and_verify(url: String, destination: String, expected_sha256: String) -> Result<(), String> {
@@ -214,8 +226,65 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     Ok(profiles)
 }
 
+/// Demarre le backend embarque et relaie sa sortie dans les logs de l'app.
+fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, String> {
+    let (mut rx, child) = app
+        .shell()
+        .sidecar("paranoia-server")
+        .map_err(|e| format!("sidecar introuvable: {e}"))?
+        .env("PORT", BACKEND_PORT)
+        .spawn()
+        .map_err(|e| format!("demarrage du backend impossible: {e}"))?;
+
+    tauri::async_runtime::spawn(async move {
+        while let Some(event) = rx.recv().await {
+            match event {
+                CommandEvent::Stdout(line) | CommandEvent::Stderr(line) => {
+                    print!("[backend] {}", String::from_utf8_lossy(&line));
+                }
+                CommandEvent::Terminated(payload) => {
+                    eprintln!("[backend] arrete (code {:?})", payload.code);
+                }
+                _ => {}
+            }
+        }
+    });
+
+    Ok(child)
+}
+
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .manage(BackendProcess(Mutex::new(None)))
+        .setup(|app| {
+            let handle = app.handle();
+            match spawn_backend(handle) {
+                Ok(child) => {
+                    let state = app.state::<BackendProcess>();
+                    *state.0.lock().unwrap() = Some(child);
+                }
+                Err(err) => {
+                    // On laisse l'interface s'ouvrir: elle affichera l'erreur de
+                    // chargement, ce qui est plus parlant qu'une fenetre absente.
+                    eprintln!("[backend] {err}");
+                }
+            }
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                if window.label() != "main" {
+                    return;
+                }
+                // Le verrou est relache des la fin de cette instruction, avant
+                // le kill: le garder plus longtemps ne compile pas.
+                let child = window.state::<BackendProcess>().0.lock().unwrap().take();
+                if let Some(child) = child {
+                    let _ = child.kill();
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
