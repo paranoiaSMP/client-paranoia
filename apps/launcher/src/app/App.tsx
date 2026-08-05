@@ -42,7 +42,7 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Hooks
-  const { connected, account, accounts, connectingMicrosoft, handleMicrosoftConnect, handleLocalDevContinue, handleSwitchAccount, handleLogout } = useAuth(setError);
+  const { connected, account, accounts, connectingMicrosoft, devModeAvailable, handleMicrosoftConnect, handleLocalDevContinue, handleSwitchAccount, handleLogout } = useAuth(setError);
   const { profiles, setProfiles, selectedProfileId, setSelectedProfileId, refreshProfiles, handleDeleteProfile, handleFavoriteProfile } = useProfiles(setError);
 
   // Profile Creation State
@@ -248,8 +248,9 @@ export function App() {
           connected={connected} 
           account={account}
           accounts={accounts}
-          connectingMicrosoft={connectingMicrosoft} 
-          onConnectMicrosoft={handleMicrosoftConnect} 
+          connectingMicrosoft={connectingMicrosoft}
+          devModeAvailable={devModeAvailable}
+          onConnectMicrosoft={handleMicrosoftConnect}
           onLocalDevContinue={handleLocalDevContinue}
           onSwitchAccount={handleSwitchAccount}
           onLogout={handleLogout}
