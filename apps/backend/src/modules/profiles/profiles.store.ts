@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { paranoiaDataDir } from "../launcher/paths.js";
 
 export interface StoredLauncherProfile {
   id: string;
@@ -15,7 +16,10 @@ export interface StoredLauncherProfile {
   updatedAt: string;
 }
 
-const DB_PATH = join(process.cwd(), "data", "profiles.json");
+// Dossier de donnees de l'utilisateur, et non process.cwd(): une fois
+// l'application installee, le repertoire courant est celui du programme
+// (C:\Program Files\...), ou un compte standard n'a pas le droit d'ecrire.
+const DB_PATH = join(paranoiaDataDir(), "profiles.json");
 
 function ensureStore() {
   const dir = dirname(DB_PATH);

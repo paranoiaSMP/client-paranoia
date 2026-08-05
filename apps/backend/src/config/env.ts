@@ -15,7 +15,9 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 const envSchema = z.object({
-  PORT: z.string().default("8080"),
+  // Port dedie plutot que 8080, tres souvent deja pris par un autre service:
+  // l'API tourne desormais sur la machine du joueur, pas sur un serveur.
+  PORT: z.string().default("47820"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
