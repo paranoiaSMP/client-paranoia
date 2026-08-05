@@ -3,7 +3,10 @@
     "app": {
       "loading": "Chargement...",
       "generation": "Génération du monde...",
-      "error_load": "Erreur de chargement. Vérifie ta connexion."
+      "error_load": "Erreur de chargement. Vérifie ta connexion.",
+      "error_title": "Le service local n'a pas démarré",
+      "error_hint": "Ferme complètement Paranoia Client puis relance-le. Si le problème persiste, redémarre ton PC : un autre programme occupe peut-être le port.",
+      "retry": "Réessayer"
     },
     "sidebar": {
       "home": "Accueil",

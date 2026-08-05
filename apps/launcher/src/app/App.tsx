@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from '@tauri-apps/api/core';
-import { Pickaxe } from "lucide-react";
+import { Pickaxe, AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/contracts";
@@ -105,10 +105,14 @@ export function App() {
    * INITIALISATION DE L'APPLICATION
    * Charge la configuration distante, la liste des profils locaux et les dernieres actualites.
    */
+  const [bootstrapFailed, setBootstrapFailed] = useState(false);
+  const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
+
   useEffect(() => {
     async function bootstrap() {
       setLoading(true);
       setError(null);
+      setBootstrapFailed(false);
       try {
         await waitForApi();
 
@@ -138,13 +142,14 @@ export function App() {
         setSetupComplete(true); // Assuming refreshProfiles updates the local state
       } catch (e) {
         setError(e instanceof Error ? e.message : t("app.error_load"));
+        setBootstrapFailed(true);
       } finally {
         setLoading(false);
       }
     }
     bootstrap();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bootstrapAttempt]);
 
   const selectedType = useMemo(() => config?.profileTypes.find((x) => x.id === profileType), [config, profileType]);
   const selectedGraphics = useMemo(() => config?.graphicsModes.find((x) => x.id === graphicsMode), [config, graphicsMode]);
@@ -227,6 +232,36 @@ export function App() {
     } catch (e) {
       setError(e instanceof Error ? e.message : t("settings.import_format_error"));
     }
+  }
+
+  /*
+   * ECHEC DE DEMARRAGE
+   * Le service local n'a pas repondu. Sans cet ecran, `!config` gardait le
+   * spinner affiche indefiniment et l'erreur calculee n'etait jamais montree.
+   */
+  if (bootstrapFailed && !config) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0f] p-8">
+        <div className="max-w-md w-full text-center flex flex-col items-center gap-4">
+          <AlertTriangle className="w-12 h-12 text-accent-red" strokeWidth={2} />
+          <h1 className="text-white text-lg font-bold">
+            {t("app.error_title")}
+          </h1>
+          <p className="text-[#a1a1aa] text-sm">{t("app.error_hint")}</p>
+          {error && (
+            <p className="text-[#71717a] text-xs font-mono bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 w-full break-words">
+              {error}
+            </p>
+          )}
+          <button
+            onClick={() => setBootstrapAttempt((n) => n + 1)}
+            className="mt-2 bg-accent-purple hover:bg-accent-purple-dark text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+          >
+            {t("app.retry")}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (loading || !config) {
