@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Pickaxe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type { RemoteConfiguration, NewsItem } from "@paranoia/contracts";
+import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/contracts";
 
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
 import { createProfile, importProfile } from "../shared/api/profilesClient";

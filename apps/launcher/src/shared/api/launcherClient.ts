@@ -1,6 +1,5 @@
 import type { MicrosoftAccount } from "@paranoia/contracts";
-
-const API_URL = "http://localhost:8080/v1";
+import { apiRequest } from "./http";
 
 export type LaunchStatusResponse = {
   state:
@@ -20,29 +19,25 @@ export async function launchMinecraftGame(
   ramMb: number,
   account: MicrosoftAccount,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/launcher/play`, {
+  await apiRequest<{ status: string }>("/v1/launcher/play", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       profileId,
       minecraftVersion,
       ramMb,
-      account,
+      account: {
+        minecraftUuid: account.minecraftUuid,
+        minecraftUsername: account.minecraftUsername,
+        accessToken: account.accessToken,
+      },
     }),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to launch game");
-  }
 }
 
 export async function getLaunchStatus(
   profileId: string,
 ): Promise<LaunchStatusResponse> {
-  const response = await fetch(`${API_URL}/launcher/status/${profileId}`);
-  if (!response.ok) {
-    throw new Error("Failed to get launch status");
-  }
-  return response.json();
+  return apiRequest<LaunchStatusResponse>(
+    `/v1/launcher/status/${encodeURIComponent(profileId)}`,
+  );
 }

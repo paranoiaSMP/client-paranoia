@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://minotar.net; font-src 'self' data:; connect-src 'self' http://localhost:8080 http://127.0.0.1:8080; object-src 'none'; frame-src 'none'"
     }
   },
   "bundle": {

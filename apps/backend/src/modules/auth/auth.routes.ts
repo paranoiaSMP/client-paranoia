@@ -1,35 +1,61 @@
 import { Router } from "express";
 import crypto from "node:crypto";
+import { z } from "zod";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
 } from "./auth.microsoft.js";
+import { createAuthState, consumeAuthState, safeEquals } from "./auth.state.js";
 
 export const authRouter = Router();
 
-authRouter.get("/microsoft/url", async (req, res, next) => {
+const ALLOWED_REDIRECT_URIS = new Set([
+  "https://login.live.com/oauth20_desktop.srf",
+]);
+
+const callbackSchema = z.object({
+  code: z.string().min(1),
+  state: z.string().min(1),
+  redirectUri: z.string().url(),
+});
+
+authRouter.get("/microsoft/url", (req, res, next) => {
   try {
-    const redirectUri = req.query.redirectUri as string;
-    if (!redirectUri) {
-      return res.status(400).json({ error: "Missing redirectUri" });
+    const redirectUri = req.query.redirectUri;
+    if (typeof redirectUri !== "string" || redirectUri.length === 0) {
+      return res.status(400).json({ message: "Missing redirectUri" });
     }
-    const result = getMicrosoftAuthorizeUrl(redirectUri);
-    res.json(result);
+
+    // Sans liste blanche, n'importe qui pouvant joindre l'API pourrait faire
+    // emettre une URL de connexion renvoyant le code vers son propre domaine.
+    if (!ALLOWED_REDIRECT_URIS.has(redirectUri)) {
+      return res.status(400).json({ message: "redirectUri not allowed" });
+    }
+
+    const state = createAuthState(redirectUri);
+    return res.json(getMicrosoftAuthorizeUrl(redirectUri, state));
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
 authRouter.post("/microsoft/callback", async (req, res, next) => {
   try {
-    const { code, state, redirectUri } = req.body;
-    if (!code || !redirectUri) {
-      return res.status(400).json({ error: "Missing code or redirectUri" });
+    const body = callbackSchema.parse(req.body);
+
+    // Le state etait accepte sans jamais etre verifie: un code d'autorisation
+    // obtenu ailleurs pouvait donc etre rejoue sur cette route.
+    const issued = consumeAuthState(body.state);
+    if (!issued || !safeEquals(issued.redirectUri, body.redirectUri)) {
+      return res
+        .status(400)
+        .json({ message: "invalid or expired authentication state" });
     }
+
     const account = await completeMicrosoftCallback({
-      code,
-      state,
-      redirectUri,
+      code: body.code,
+      state: body.state,
+      redirectUri: body.redirectUri,
     });
 
     return res.json({
@@ -42,9 +68,6 @@ authRouter.post("/microsoft/callback", async (req, res, next) => {
       expiresAt: account.expiresAt,
     });
   } catch (err) {
-    console.error("\n\n====== ERREUR D'AUTHENTIFICATION MICROSOFT ======");
-    console.error(err);
-    console.error("==================================================\n\n");
-    next(err);
+    return next(err);
   }
 });
