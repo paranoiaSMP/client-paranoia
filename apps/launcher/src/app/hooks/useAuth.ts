@@ -8,6 +8,8 @@ import {
   completeMicrosoftCallback,
 } from "../../shared/api/authClient";
 
+const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
+
 export function useAuth(setError: (err: string | null) => void) {
   const { t } = useTranslation();
   const [connected, setConnected] = useState(false);
@@ -24,13 +26,20 @@ export function useAuth(setError: (err: string | null) => void) {
     const unlisten = listen<string>("microsoft-oauth-code", async (event) => {
       const url = new URL(event.payload);
       const code = url.searchParams.get("code");
+      // Microsoft renvoie le state emis par le backend; il doit repartir tel
+      // quel pour que la requete de callback soit reconnue comme la notre.
+      const state = url.searchParams.get("state");
 
       if (code) {
         try {
+          if (!state) {
+            throw new Error(t("topbar.auth_error"));
+          }
+
           const authAccount = await completeMicrosoftCallback({
             code,
-            state: "tauri",
-            redirectUri: "https://login.live.com/oauth20_desktop.srf",
+            state,
+            redirectUri: REDIRECT_URI,
           });
           setAccount(authAccount);
           setAccounts((prev) => {
@@ -59,9 +68,7 @@ export function useAuth(setError: (err: string | null) => void) {
     try {
       setConnectingMicrosoft(true);
       setError(null);
-      const { authorizeUrl } = await getMicrosoftAuthorizeUrl(
-        "https://login.live.com/oauth20_desktop.srf",
-      );
+      const { authorizeUrl } = await getMicrosoftAuthorizeUrl(REDIRECT_URI);
       await invoke("open_microsoft_login", { url: authorizeUrl });
     } catch (e) {
       setConnectingMicrosoft(false);
@@ -94,14 +101,12 @@ export function useAuth(setError: (err: string | null) => void) {
   }
 
   function handleLogout() {
-    setAccounts((prev) => prev.filter((a) => a.id !== account?.id));
     const remaining = accounts.filter((a) => a.id !== account?.id);
-    if (remaining.length > 0) {
-      setAccount(remaining[0]);
-    } else {
-      setAccount(null);
-      setConnected(false);
-    }
+    setAccounts(remaining);
+
+    const next = remaining[0] ?? null;
+    setAccount(next);
+    setConnected(next !== null);
   }
 
   return {

@@ -1,21 +1,54 @@
 name: build-windows
 
 on:
+  # La branche par defaut du depot est ci/windows-exe-build: en ne ciblant que
+  # main, ce workflow ne se declenchait jamais.
   push:
     branches:
       - main
+      - ci/windows-exe-build
     tags:
       - "v*"
   pull_request:
     branches:
       - main
+      - ci/windows-exe-build
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Le backend n'etait compile nulle part dans la CI: ses erreurs de type
+      # ne remontaient qu'au lancement en local.
+      - name: Typecheck workspace
+        run: pnpm -r typecheck
+
   build:
     runs-on: windows-latest
+    needs: checks
 
     steps:
       - name: Checkout

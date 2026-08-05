@@ -20,6 +20,14 @@ target/
 build/
 out/
 bin/
+# Distribution Gradle extraite localement: elle avait ete commitee par erreur
+# (295 fichiers, ~146 Mo). Le wrapper la retelecharge tout seul.
+gradle-temp/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Donnees d'execution du backend (profils locaux du joueur)
+apps/backend/data/
 
 .env
 .env.local

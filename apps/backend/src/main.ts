@@ -17,7 +17,19 @@ import { launcherRouter } from "./modules/launcher/launcher.routes.js";
 const app = express();
 const logger = pino({ level: "info" });
 
-app.use(cors());
+// L'API tourne sur la machine du joueur: avec un CORS ouvert, n'importe quel
+// site visite dans un navigateur pouvait appeler /v1/launcher/play ou lire les
+// profils. On n'autorise que les origines du launcher (voir env.allowedOrigins);
+// les requetes sans Origin (clients natifs, curl) restent acceptees.
+app.use(
+  cors({
+    origin(origin, callback) {
+      // false = pas d'en-tete CORS renvoye, donc le navigateur bloque la
+      // lecture (et le preflight des POST JSON echoue avant l'envoi).
+      callback(null, !origin || env.allowedOrigins.includes(origin));
+    },
+  }),
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(pinoHttp({ logger }));
 
@@ -49,11 +61,11 @@ app.use(
       });
     }
 
-    if (err instanceof Error) {
-      return res.status(500).json({ message: err.message });
-    }
-
-    return res.status(500).json({ message: "unknown server error" });
+    // Le detail part dans les logs serveur, pas dans la reponse: err.message
+    // pouvait contenir un chemin absolu, une URL interne ou un extrait de
+    // reponse d'un service tiers.
+    logger.error({ err }, "unhandled error");
+    return res.status(500).json({ message: "internal server error" });
   },
 );
 

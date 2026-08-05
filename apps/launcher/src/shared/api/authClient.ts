@@ -3,33 +3,22 @@ import {
   MicrosoftAuthCallbackRequest,
   MicrosoftAccount,
 } from "@paranoia/contracts";
-
-const API_URL = "http://localhost:8080/v1"; // TODO: Use environment variable
+import { apiRequest } from "./http";
 
 export async function getMicrosoftAuthorizeUrl(
   redirectUri: string,
 ): Promise<MicrosoftAuthUrlResponse> {
-  const url = new URL(`${API_URL}/auth/microsoft/url`);
-  url.searchParams.set("redirectUri", redirectUri);
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to get authorize url");
-  }
-  return response.json();
+  const query = new URLSearchParams({ redirectUri });
+  return apiRequest<MicrosoftAuthUrlResponse>(
+    `/v1/auth/microsoft/url?${query.toString()}`,
+  );
 }
 
 export async function completeMicrosoftCallback(
   req: MicrosoftAuthCallbackRequest,
 ): Promise<MicrosoftAccount> {
-  const response = await fetch(`${API_URL}/auth/microsoft/callback`, {
+  return apiRequest<MicrosoftAccount>("/v1/auth/microsoft/callback", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to complete authentication");
-  }
-  return response.json();
 }

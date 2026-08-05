@@ -69,7 +69,9 @@ export function getManifest(
   return {
     id: randomUUID(),
     minecraftVersion: minecraftVersion,
-    fabricLoaderVersion: match.fabricLoaderVersion,
+    ...(match.fabricLoaderVersion
+      ? { fabricLoaderVersion: match.fabricLoaderVersion }
+      : {}),
     requiredJavaMajor: match.requiredJavaMajor,
     profileTypeId: profileTypeId,
     graphicsModeId: graphicsModeId,

@@ -5,7 +5,7 @@ import type {
   MicrosoftAccount,
   NewsItem,
 } from "@paranoia/contracts";
-import type { LaunchStatusResponse } from "../../shared/api/launcherClient";
+import type { LaunchStatusResponse } from "../../../shared/api/launcherClient";
 
 type AccueilTabProps = {
   account: MicrosoftAccount | null;

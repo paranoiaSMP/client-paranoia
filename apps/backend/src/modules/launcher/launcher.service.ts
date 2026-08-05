@@ -1,11 +1,11 @@
 import { Client } from "minecraft-launcher-core";
 import path from "node:path";
-import os from "node:os";
 import { ensureJava21 } from "./javaDownloader.js";
 import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
+import { paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
   state: "idle" | "downloading_java" | "downloading_assets" | "launching" | "running" | "error";
@@ -32,7 +32,7 @@ export async function launchMinecraft(
   }
 ): Promise<void> {
   const launcher = new Client();
-  const rootPath = path.join(os.homedir(), "AppData", "Roaming", ".paranoia-client");
+  const rootPath = paranoiaDataDir();
 
   // Keep track of it
   activeLaunchers.set(profileId, launcher);
@@ -54,14 +54,16 @@ export async function launchMinecraft(
 
     // 1. Verifier et telecharger Java 21
     updateStatus({ state: "downloading_java", progress: 0, text: "Verification de Java 21..." });
-    const javaPath = await ensureJava21(rootPath, (text: string, percentage: number) => {
+    const java = await ensureJava21(rootPath, (text: string, percentage: number) => {
       updateStatus({ state: "downloading_java", progress: percentage, text });
     });
 
     // 2. Installer Fabric si nécessaire
     let customVersionName: string | undefined;
     if (manifest.fabricLoaderVersion) {
-      customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, manifest.fabricLoaderVersion, (text, percentage) => {
+      // On passe le Java qu'on vient d'installer: l'installateur s'appuyait sur
+      // un `java` present dans le PATH, ce qui echouait sur une machine sans JDK.
+      customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, manifest.fabricLoaderVersion, java.java, (text, percentage) => {
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
     }
@@ -75,7 +77,7 @@ export async function launchMinecraft(
 
     // 4. Copier options.txt depuis le .minecraft vanilla si manquant
     const fs = await import("node:fs");
-    const vanillaOptionsPath = path.join(os.homedir(), "AppData", "Roaming", ".minecraft", "options.txt");
+    const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
     const targetOptionsPath = path.join(rootPath, "options.txt");
     
     if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
@@ -111,7 +113,7 @@ export async function launchMinecraft(
         max: `${ramMb}M`,
         min: `${Math.floor(ramMb / 2)}M`
       },
-      javaPath: javaPath,
+      javaPath: java.javaw,
       overrides: {
         maxSockets: 6 // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
       }
@@ -140,7 +142,7 @@ export async function launchMinecraft(
       updateStatus({ state: "idle", progress: 0, text: "" });
     });
 
-    console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${javaPath}`);
+    console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${java.javaw}`);
     
     // Une fois lance, on passe a "launching" (jeu en cours de demarrage)
     const proc = await launcher.launch(opts);

@@ -5,649 +5,253 @@
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.21.11",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.20.1",
+      "minecraftVersion": "1.21.10",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
-      "minecraftVersion": "1.18.2",
+      "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     },
     {
       "minecraftVersion": "1.20.6",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      
       "requiredJavaMajor": 21,
-      "artifacts": [
-        {
-          "id": "dummy-mod",
-          "kind": "mod",
-          "fileName": "dummy-fabric-1.0.jar",
-          "downloadUrl": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar",
-          "sha256": "TODO_SHA256",
-          "size": 1024,
-          "targetPath": "mods/dummy.jar"
-        }
-      ]
+      "artifacts": []
     }
   ]
 }

@@ -2,12 +2,13 @@ import crypto from "crypto";
 
 const MINECRAFT_CLIENT_ID = "00000000402b5328"; // Official Minecraft Client ID
 
-export function getMicrosoftAuthorizeUrl(redirectUri: string) {
+export function getMicrosoftAuthorizeUrl(redirectUri: string, state: string) {
   const url = new URL("https://login.live.com/oauth20_authorize.srf");
   url.searchParams.set("client_id", MINECRAFT_CLIENT_ID);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("scope", "XboxLive.signin offline_access openid profile email");
+  url.searchParams.set("state", state);
   return { authorizeUrl: url.toString() };
 }
 
@@ -32,8 +33,7 @@ export async function completeMicrosoftCallback(opts: {
     });
 
     if (!tokenRes.ok) {
-      const errorText = await tokenRes.text();
-      throw new Error(`Failed to exchange code for token: ${errorText}`);
+      throw new Error(`Failed to exchange code for token: ${tokenRes.status}`);
     }
 
     const tokenData = await tokenRes.json();
@@ -62,12 +62,9 @@ export async function completeMicrosoftCallback(opts: {
     );
 
     if (!xblRes.ok) {
-      const errTxt = await xblRes.text();
-      console.error("[AUTH] XBL Error payload:", errTxt);
       throw new Error(`XBL authentication failed: ${xblRes.status}`);
     }
     const xblData = await xblRes.json();
-    console.log("[AUTH] Got XBL token successfully");
 
     // 3. Authenticate with XSTS
     const xstsRes = await fetch(
@@ -90,8 +87,6 @@ export async function completeMicrosoftCallback(opts: {
     );
 
     if (!xstsRes.ok) {
-      const errTxt = await xstsRes.text();
-      console.error("[AUTH] XSTS Error payload:", errTxt);
       throw new Error(`XSTS authentication failed: ${xstsRes.status}`);
     }
     const xstsData = await xstsRes.json();
@@ -99,7 +94,6 @@ export async function completeMicrosoftCallback(opts: {
     // Le UserHash est dans DisplayClaims.xui[0].uhs
     const userHash = xstsData?.DisplayClaims?.xui?.[0]?.uhs || xblData.DisplayClaims?.xui?.[0]?.uhs;
     const xstsToken = xstsData.Token;
-    console.log("[AUTH] Got XSTS token, userHash:", userHash);
 
     // 4. Authenticate with Minecraft
     const mcRes = await fetch(
@@ -119,16 +113,11 @@ export async function completeMicrosoftCallback(opts: {
     );
 
     if (!mcRes.ok) {
-      const errTxt = await mcRes.text();
-      console.error("[AUTH] Minecraft login failed payload:", errTxt);
-      console.error("====== ERREUR D'AUTHENTIFICATION MICROSOFT ======");
-      throw new Error(`minecraft login failed: ${errTxt}`);
+      throw new Error(`minecraft login failed: ${mcRes.status}`);
     }
     const mcData = await mcRes.json();
     const mcAccessToken = mcData.access_token;
     const mcExpiresIn = mcData.expires_in;
-
-    console.log("[AUTH] Got Minecraft access token");
 
     // 5. Profil Minecraft (pour l'UUID et le pseudo)
     const profileRes = await fetch(
@@ -141,9 +130,9 @@ export async function completeMicrosoftCallback(opts: {
     );
 
     if (!profileRes.ok) {
-      const errTxt = await profileRes.text();
-      console.error("[AUTH] Failed to fetch MC profile:", errTxt);
-      throw new Error("Failed to fetch Minecraft profile");
+      throw new Error(
+        `Failed to fetch Minecraft profile: ${profileRes.status}`,
+      );
     }
     const profileData = await profileRes.json();
     console.log(`[AUTH] Successfully logged in as ${profileData.name}`);
