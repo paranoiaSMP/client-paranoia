@@ -87,9 +87,65 @@ jobs:
       - name: Build backend sidecar
         run: pnpm --filter @paranoia/backend build:sidecar
 
+      # Verifie sur du vrai Windows que le binaire injecte demarre et sert
+      # l'API. Sans ce test, un sidecar casse (injection SEA ratee, dependance
+      # manquante) ne se voyait qu'apres installation chez un joueur.
+      - name: Smoke test sidecar
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "apps/launcher/src-tauri/binaries/paranoia-server-*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "sidecar introuvable dans binaries/" }
+          Write-Host "sidecar: $($exe.Name) ($([math]::Round($exe.Length / 1MB)) Mo)"
+
+          $env:PORT = "47820"
+          $proc = Start-Process -FilePath $exe.FullName -PassThru -NoNewWindow
+          try {
+            $ready = $false
+            foreach ($i in 1..30) {
+              Start-Sleep -Seconds 1
+              try {
+                $health = Invoke-RestMethod -Uri "http://127.0.0.1:47820/health" -TimeoutSec 2
+                if ($health.ok) { $ready = $true; break }
+              } catch { }
+            }
+            if (-not $ready) { throw "le sidecar n'a pas repondu sur /health en 30s" }
+            Write-Host "health: OK"
+
+            # Le catalogue est embarque dans le binaire: s'il repond, le bundle
+            # esbuild a bien ete injecte et pas seulement le runtime Node.
+            $config = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/remote-config" -TimeoutSec 5
+            if (-not $config.supportedMinecraftVersions) { throw "catalogue vide ou absent" }
+            Write-Host "catalogue: OK ($($config.supportedMinecraftVersions.Count) versions)"
+
+            $profiles = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/profiles" -TimeoutSec 5
+            Write-Host "profils: OK"
+          } finally {
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          }
+
       - name: Build Windows bundle
         working-directory: apps/launcher
         run: pnpm exec tauri build --bundles nsis
+
+      # Le sidecar doit se retrouver a cote de l'executable principal, sinon
+      # l'application s'installe correctement mais ne demarre aucun backend.
+      - name: Verify sidecar is bundled
+        shell: pwsh
+        run: |
+          $dir = "apps/launcher/src-tauri/target/release"
+          $sidecar = Get-ChildItem "$dir/paranoia-server*.exe" -ErrorAction SilentlyContinue
+          if (-not $sidecar) {
+            Get-ChildItem $dir -Filter *.exe | ForEach-Object { Write-Host " - $($_.Name)" }
+            throw "le sidecar n'a pas ete copie a cote de l'executable"
+          }
+          Write-Host "sidecar empaquete: $($sidecar.Name)"
+
+          $installer = Get-ChildItem "$dir/bundle/nsis/*.exe"
+          Write-Host "installeur: $($installer.Name) ($([math]::Round($installer.Length / 1MB)) Mo)"
+          # Un installeur trop leger signifie que le sidecar n'y est pas.
+          if ($installer.Length -lt 20MB) {
+            throw "installeur suspect ($([math]::Round($installer.Length / 1MB)) Mo): le backend n'y est probablement pas"
+          }
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
