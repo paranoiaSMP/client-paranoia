@@ -5,7 +5,7 @@ import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
-import { paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
+import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
   state: "idle" | "downloading_java" | "downloading_assets" | "launching" | "running" | "error";
@@ -44,7 +44,12 @@ export async function launchMinecraft(
   }
 ): Promise<void> {
   const launcher = new Client();
+  // rootPath: partage entre tous les profils (versions, librairies, assets,
+  // runtime Java). gameDir: propre au profil (mods, saves, config, options).
+  // Sans cette separation, changer de profil ne changeait que la version et la
+  // RAM: tous partageaient les memes mods et les memes mondes.
   const rootPath = paranoiaDataDir();
+  const gameDir = instanceDir(profileId);
 
   // Keep track of it
   activeLaunchers.set(profileId, launcher);
@@ -59,10 +64,9 @@ export async function launchMinecraft(
       throw new Error(`Profile ${profileId} not found`);
     }
 
+    // Toujours defini: une combinaison absente du catalogue donne un manifeste
+    // vide, donc un lancement en vanilla plutot qu'un echec.
     const manifest = getManifest(profile.minecraftVersion, profile.profileTypeId, profile.graphicsModeId);
-    if (!manifest) {
-      throw new Error(`Manifest not found for ${profile.minecraftVersion} / ${profile.profileTypeId} / ${profile.graphicsModeId}`);
-    }
 
     // 1. Verifier et telecharger Java 21
     updateStatus({ state: "downloading_java", progress: 0, text: "Verification de Java 21..." });
@@ -80,17 +84,19 @@ export async function launchMinecraft(
       });
     }
 
-    // 3. Telecharger les artefacts du manifeste
+    // 3. Telecharger les artefacts du manifeste dans le dossier du profil
+    const fs = await import("node:fs");
+    await fs.promises.mkdir(gameDir, { recursive: true });
+
     if (manifest.artifacts.length > 0) {
-      await downloadArtifacts(rootPath, manifest.artifacts, (text, percentage) => {
+      await downloadArtifacts(gameDir, manifest.artifacts, (text, percentage) => {
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
     }
 
     // 4. Copier options.txt depuis le .minecraft vanilla si manquant
-    const fs = await import("node:fs");
     const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
-    const targetOptionsPath = path.join(rootPath, "options.txt");
+    const targetOptionsPath = path.join(gameDir, "options.txt");
     
     if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
       try {
@@ -127,7 +133,10 @@ export async function launchMinecraft(
       },
       javaPath: java.javaw,
       overrides: {
-        maxSockets: 6 // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
+        maxSockets: 6, // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
+        // Le jeu ecrit ses mondes, mods, configs et captures ici; les
+        // telechargements lourds restent mutualises dans rootPath.
+        gameDirectory: gameDir
       }
     };
 

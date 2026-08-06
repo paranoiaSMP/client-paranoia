@@ -3,12 +3,16 @@
     "app": {
       "loading": "Chargement...",
       "generation": "Génération du monde...",
-      "error_load": "Erreur de chargement. Vérifie ta connexion."
+      "error_load": "Erreur de chargement. Vérifie ta connexion.",
+      "error_title": "Le service local n'a pas démarré",
+      "error_hint": "Ferme complètement Paranoia Client puis relance-le. Si le problème persiste, redémarre ton PC : un autre programme occupe peut-être le port.",
+      "retry": "Réessayer"
     },
     "sidebar": {
       "home": "Accueil",
       "profiles": "Profils",
-      "settings": "Réglages"
+      "settings": "Réglages",
+      "mods": "Mods"
     },
     "topbar": {
       "devMode": "Dev Mode",
@@ -78,6 +82,14 @@
       "forge": "Forger le profil !",
       "preparing": "Préparation...",
       "install_fail": "Oups, l'installation a échoué."
+    },
+    "update": {
+      "available": "Paranoia Client {{version}} est disponible.",
+      "downloading": "Téléchargement de la mise à jour...",
+      "ready": "Mise à jour installée, redémarrage...",
+      "failed": "Mise à jour impossible :",
+      "install": "Mettre à jour",
+      "later": "Plus tard"
     }
   }
 }

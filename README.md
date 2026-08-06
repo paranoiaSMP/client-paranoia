@@ -145,3 +145,53 @@ Points connus restant a traiter:
 - la signature des manifestes (`signature`) n est pas encore verifiee;
 - l historique git contient encore ~137 Mo de JARs Gradle supprimes du suivi:
   seul un reecriture d historique (git filter-repo / BFG) peut les enlever.
+
+## Mises a jour automatiques
+
+Le launcher interroge la derniere release au demarrage et propose la mise a
+jour dans une banniere. Le telechargement et l installation se font sans
+reinstaller a la main.
+
+Tauri n accepte qu une archive **signee**: un client refuse toute mise a jour
+dont la signature ne correspond pas a la cle publique compilee dans son
+binaire. Il faut donc creer une paire de cles une fois.
+
+### 1. Generer la paire de cles
+
+```bash
+pnpm --filter @paranoia/launcher exec tauri signer generate -w ~/.tauri/paranoia.key
+```
+
+La commande affiche la cle publique et ecrit la cle privee dans le fichier
+indique. **La cle privee ne doit jamais etre commitee.**
+
+### 2. Renseigner la cle publique
+
+Remplacer `REMPLACER_PAR_LA_CLE_PUBLIQUE` dans
+`apps/launcher/src-tauri/tauri.conf.json` par la cle publique affichee.
+
+### 3. Ajouter les secrets GitHub
+
+Dans Settings > Secrets and variables > Actions:
+
+- `TAURI_SIGNING_PRIVATE_KEY`: contenu du fichier de cle privee
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: mot de passe choisi (vide si aucun)
+
+### 4. Publier une version
+
+Merger ne suffit pas: une mise a jour est declenchee par une **release**.
+
+```bash
+# adapter la version dans apps/launcher/src-tauri/tauri.conf.json, puis:
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+La CI construit l installeur, le signe, genere `latest.json` et publie le tout.
+Les clients installes voient la mise a jour a leur prochain demarrage.
+
+La version du tag doit correspondre a celle de `tauri.conf.json`, sinon les
+clients comparent une version qui n existe pas.
+
+> Tant que la cle publique n est pas renseignee, la verification echoue en
+> silence: le launcher fonctionne normalement, sans proposer de mise a jour.

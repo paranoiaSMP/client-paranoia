@@ -79,6 +79,67 @@ async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), 
     Ok(())
 }
 
+/// Dossier de donnees du launcher, aligne sur apps/backend/src/modules/launcher/paths.ts.
+fn paranoia_data_dir() -> Option<std::path::PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        let appdata = env::var("APPDATA").ok()?;
+        Some(Path::new(&appdata).join(".paranoia-client"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = env::var("HOME").ok()?;
+        Some(
+            Path::new(&home)
+                .join("Library")
+                .join("Application Support")
+                .join("paranoia-client"),
+        )
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let base = env::var("XDG_DATA_HOME")
+            .ok()
+            .map(std::path::PathBuf::from)
+            .or_else(|| env::var("HOME").ok().map(|h| Path::new(&h).join(".local").join("share")))?;
+        Some(base.join("paranoia-client"))
+    }
+}
+
+/// Ouvre le dossier d'un profil dans l'explorateur de fichiers du systeme.
+#[tauri::command]
+fn open_instance_folder(profile_id: String) -> Result<(), String> {
+    // L'identifiant vient de l'interface: on refuse tout ce qui n'est pas un
+    // identifiant simple, pour qu'il ne puisse pas designer un autre dossier.
+    if profile_id.is_empty()
+        || !profile_id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
+    {
+        return Err("Identifiant de profil invalide".into());
+    }
+
+    let dir = paranoia_data_dir()
+        .ok_or("Dossier de donnees introuvable")?
+        .join("instances")
+        .join(&profile_id);
+
+    if !dir.is_dir() {
+        return Err(format!("Dossier introuvable: {}", dir.display()));
+    }
+
+    let opened = if cfg!(target_os = "windows") {
+        std::process::Command::new("explorer").arg(&dir).spawn()
+    } else if cfg!(target_os = "macos") {
+        std::process::Command::new("open").arg(&dir).spawn()
+    } else {
+        std::process::Command::new("xdg-open").arg(&dir).spawn()
+    };
+
+    opened.map_err(|e| format!("Ouverture impossible: {e}"))?;
+    Ok(())
+}
+
 #[derive(Serialize)]
 pub struct DetectedProfile {
     id: String,
@@ -256,6 +317,8 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(BackendProcess(Mutex::new(None)))
         .setup(|app| {
             let handle = app.handle();
@@ -285,7 +348,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login])
+        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login, open_instance_folder])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
