@@ -23,6 +23,9 @@ const installSchema = z.object({
   profileId: z.string().min(1),
   projectId: z.string().min(1),
   versionId: z.string().min(1),
+  // Servent a choisir la bonne version des dependances requises.
+  gameVersion: z.string().max(32).optional(),
+  loader: z.string().max(32).optional(),
 });
 
 modsRouter.get("/search", async (req, res, next) => {
