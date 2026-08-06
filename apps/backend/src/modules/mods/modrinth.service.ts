@@ -43,6 +43,18 @@ export interface InstalledMod {
   installedAt: string;
 }
 
+/**
+ * Marks a failure as coming from Modrinth rather than from our own code, so the
+ * route can answer 502 with a message the player can act on instead of the
+ * generic "internal server error".
+ */
+export class ModrinthUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ModrinthUnavailableError";
+  }
+}
+
 async function modrinthGet<T>(
   pathname: string,
   params: Record<string, string>,
@@ -52,13 +64,25 @@ async function modrinthGet<T>(
     url.searchParams.set(key, value);
   }
 
-  const response = await fetch(url.toString(), {
-    headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
-    signal: AbortSignal.timeout(15_000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new ModrinthUnavailableError(
+      `Modrinth est injoignable. Verifie ta connexion internet. (${reason})`,
+    );
+  }
 
   if (!response.ok) {
-    throw new Error(`Modrinth a repondu ${response.status}`);
+    throw new ModrinthUnavailableError(
+      response.status === 429
+        ? "Trop de requetes vers Modrinth, reessaie dans une minute."
+        : `Modrinth a repondu ${response.status}.`,
+    );
   }
 
   return (await response.json()) as T;
@@ -126,7 +150,14 @@ export async function listProjectVersions(
     params,
   );
 
+  // Modrinth ne garantit pas l'ordre: on trie du plus recent au plus ancien
+  // pour que la premiere entree soit bien la derniere version publiee.
   return (data ?? [])
+    .slice()
+    .sort(
+      (a, b) =>
+        Date.parse(b.date_published ?? 0) - Date.parse(a.date_published ?? 0),
+    )
     .map((version) => {
       // Le fichier principal porte primary: true; sinon on prend le premier.
       const files = version.files ?? [];

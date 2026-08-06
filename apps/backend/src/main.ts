@@ -14,6 +14,7 @@ import { telemetryRouter } from "./modules/telemetry/telemetry.routes.js";
 import { updatesRouter } from "./modules/updates/updates.routes.js";
 import { launcherRouter } from "./modules/launcher/launcher.routes.js";
 import { modsRouter } from "./modules/mods/modrinth.routes.js";
+import { ModrinthUnavailableError } from "./modules/mods/modrinth.service.js";
 
 const app = express();
 const logger = pino({ level: "info" });
@@ -61,6 +62,13 @@ app.use(
         message: "validation error",
         issues: err.issues,
       });
+    }
+
+    // Panne d'un service tiers: le message est destine au joueur et ne revele
+    // rien de la machine, contrairement a une erreur interne.
+    if (err instanceof ModrinthUnavailableError) {
+      logger.warn({ err }, "modrinth unavailable");
+      return res.status(502).json({ message: err.message });
     }
 
     // Le detail part dans les logs serveur, pas dans la reponse: err.message

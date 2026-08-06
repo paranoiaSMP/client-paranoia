@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { ensureInstanceLayout, instanceDir } from "../launcher/paths.js";
 import {
   createProfile,
   deleteProfile,
@@ -28,10 +29,26 @@ profilesRouter.get("/", (_req, res) => {
   res.json(listProfiles());
 });
 
-profilesRouter.post("/", (req, res) => {
-  const input = profileCreateSchema.parse(req.body);
-  const profile = createProfile(input);
-  res.status(201).json(profile);
+profilesRouter.post("/", async (req, res, next) => {
+  try {
+    const input = profileCreateSchema.parse(req.body);
+    const profile = createProfile(input);
+    await ensureInstanceLayout(profile.id);
+    return res.status(201).json(profile);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Chemin du dossier de l'instance, pour l'ouvrir depuis le launcher. */
+profilesRouter.get("/:id/folder", async (req, res) => {
+  const profile = exportProfile(req.params.id);
+  if (!profile) {
+    return res.status(404).json({ message: "profile not found" });
+  }
+
+  await ensureInstanceLayout(profile.id);
+  return res.json({ path: instanceDir(profile.id) });
 });
 
 profilesRouter.patch("/:id", (req, res) => {
@@ -53,13 +70,18 @@ profilesRouter.delete("/:id", (req, res) => {
   return res.status(204).send();
 });
 
-profilesRouter.post("/:id/duplicate", (req, res) => {
-  const duplicated = duplicateProfile(req.params.id);
-  if (!duplicated) {
-    return res.status(404).json({ message: "profile not found" });
-  }
+profilesRouter.post("/:id/duplicate", async (req, res, next) => {
+  try {
+    const duplicated = duplicateProfile(req.params.id);
+    if (!duplicated) {
+      return res.status(404).json({ message: "profile not found" });
+    }
 
-  return res.status(201).json(duplicated);
+    await ensureInstanceLayout(duplicated.id);
+    return res.status(201).json(duplicated);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 profilesRouter.post("/:id/favorite", (req, res) => {
@@ -80,8 +102,13 @@ profilesRouter.get("/:id/export", (req, res) => {
   return res.json(profile);
 });
 
-profilesRouter.post("/import", (req, res) => {
-  const input = profileCreateSchema.parse(req.body);
-  const profile = importProfile(input);
-  return res.status(201).json(profile);
+profilesRouter.post("/import", async (req, res, next) => {
+  try {
+    const input = profileCreateSchema.parse(req.body);
+    const profile = importProfile(input);
+    await ensureInstanceLayout(profile.id);
+    return res.status(201).json(profile);
+  } catch (err) {
+    return next(err);
+  }
 });

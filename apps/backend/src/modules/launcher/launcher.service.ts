@@ -64,10 +64,9 @@ export async function launchMinecraft(
       throw new Error(`Profile ${profileId} not found`);
     }
 
+    // Toujours defini: une combinaison absente du catalogue donne un manifeste
+    // vide, donc un lancement en vanilla plutot qu'un echec.
     const manifest = getManifest(profile.minecraftVersion, profile.profileTypeId, profile.graphicsModeId);
-    if (!manifest) {
-      throw new Error(`Manifest not found for ${profile.minecraftVersion} / ${profile.profileTypeId} / ${profile.graphicsModeId}`);
-    }
 
     // 1. Verifier et telecharger Java 21
     updateStatus({ state: "downloading_java", progress: 0, text: "Verification de Java 21..." });

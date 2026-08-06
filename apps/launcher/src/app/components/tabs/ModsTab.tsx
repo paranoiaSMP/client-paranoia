@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Search, Download, Trash2, Package, Loader2 } from "lucide-react";
+import { Search, Download, Trash2, Package, Loader2, AlertTriangle, X, FolderOpen } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import type { LauncherProfile } from "@paranoia/contracts";
 import {
   installMod,
@@ -17,6 +18,32 @@ type ModsTabProps = {
   setSelectedProfileId: (id: string) => void;
   setError: (err: string | null) => void;
 };
+
+/**
+ * Les erreurs remontees a l'application n'etaient affichees que sur l'ecran
+ * d'echec au demarrage: une recherche ou une installation qui echouait ne
+ * produisait donc aucun message. On les montre ici, dans l'onglet concerne.
+ */
+function ErrorNotice({
+  message,
+  onDismiss,
+}: {
+  message: string;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="bg-accent-red/10 border border-accent-red/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
+      <AlertTriangle className="w-4 h-4 text-accent-red shrink-0 mt-0.5" />
+      <p className="text-sm text-[#fca5a5] flex-1 break-words">{message}</p>
+      <button
+        onClick={onDismiss}
+        className="shrink-0 text-[#71717a] hover:text-white transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 function formatDownloads(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
@@ -38,15 +65,24 @@ export function ModsTab({
   const [installed, setInstalled] = useState<InstalledMod[]>([]);
   const [searching, setSearching] = useState(false);
   const [busyProject, setBusyProject] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const report = useCallback(
+    (message: string | null) => {
+      setLocalError(message);
+      setError(message);
+    },
+    [setError],
+  );
 
   const refreshInstalled = useCallback(async () => {
     if (!profile) return;
     try {
       setInstalled(await listInstalledMods(profile.id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Lecture des mods impossible");
+      report(e instanceof Error ? e.message : "Lecture des mods impossible");
     }
-  }, [profile, setError]);
+  }, [profile, report]);
 
   useEffect(() => {
     refreshInstalled();
@@ -55,7 +91,7 @@ export function ModsTab({
   async function runSearch() {
     if (!profile) return;
     setSearching(true);
-    setError(null);
+    report(null);
     try {
       const result = await searchMods({
         query,
@@ -65,7 +101,7 @@ export function ModsTab({
       });
       setHits(result.hits);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Recherche Modrinth impossible");
+      report(e instanceof Error ? e.message : "Recherche Modrinth impossible");
       setHits([]);
     } finally {
       setSearching(false);
@@ -75,7 +111,7 @@ export function ModsTab({
   async function handleInstall(hit: ModSearchHit) {
     if (!profile) return;
     setBusyProject(hit.projectId);
-    setError(null);
+    report(null);
     try {
       // On prend la version la plus recente compatible avec ce profil.
       const versions = await listProjectVersions(hit.projectId, {
@@ -97,9 +133,18 @@ export function ModsTab({
       });
       await refreshInstalled();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Installation impossible");
+      report(e instanceof Error ? e.message : "Installation impossible");
     } finally {
       setBusyProject(null);
+    }
+  }
+
+  async function openFolder() {
+    if (!profile) return;
+    try {
+      await invoke("open_instance_folder", { profileId: profile.id });
+    } catch (e) {
+      report(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -109,7 +154,7 @@ export function ModsTab({
       await removeMod(profile.id, fileName);
       await refreshInstalled();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Suppression impossible");
+      report(e instanceof Error ? e.message : "Suppression impossible");
     }
   }
 
@@ -149,6 +194,14 @@ export function ModsTab({
         </div>
 
         <button
+          onClick={openFolder}
+          title="Ouvrir le dossier du profil"
+          className="px-3 py-2.5 bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] text-[#a1a1aa] hover:text-white rounded-lg transition-colors shrink-0"
+        >
+          <FolderOpen className="w-4 h-4" />
+        </button>
+
+        <button
           onClick={runSearch}
           disabled={searching}
           className="px-4 py-2.5 bg-accent-purple hover:bg-accent-purple-dark disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -156,6 +209,10 @@ export function ModsTab({
           {searching ? "Recherche..." : "Rechercher"}
         </button>
       </div>
+
+      {localError && (
+        <ErrorNotice message={localError} onDismiss={() => report(null)} />
+      )}
 
       <p className="text-[#52525b] text-xs -mt-2">
         Les mods sont installés dans ce profil uniquement, filtrés pour Fabric et
