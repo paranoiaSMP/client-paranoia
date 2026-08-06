@@ -4,6 +4,7 @@ import { ensureJava21 } from "./javaDownloader.js";
 import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
+import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
@@ -74,14 +75,35 @@ export async function launchMinecraft(
       updateStatus({ state: "downloading_java", progress: percentage, text });
     });
 
-    // 2. Installer Fabric si nécessaire
+    // 2. Installer Fabric
+    // Le manifeste peut epingler un loader precis; sinon on prend le dernier
+    // stable publie pour cette version de Minecraft. Sans ca, aucune entree du
+    // catalogue n'en declarant, Fabric n'etait jamais installe et les mods
+    // deposes dans le dossier du profil etaient ignores par un jeu vanilla.
     let customVersionName: string | undefined;
-    if (manifest.fabricLoaderVersion) {
+    let loaderVersion = manifest.fabricLoaderVersion;
+
+    if (!loaderVersion) {
+      updateStatus({ state: "downloading_assets", progress: 0, text: "Recherche du loader Fabric..." });
+      try {
+        loaderVersion = (await latestStableLoader(manifest.minecraftVersion)) ?? undefined;
+      } catch (err) {
+        console.warn("[Launcher] loader Fabric introuvable:", err);
+      }
+    }
+
+    if (loaderVersion) {
       // On passe le Java qu'on vient d'installer: l'installateur s'appuyait sur
       // un `java` present dans le PATH, ce qui echouait sur une machine sans JDK.
-      customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, manifest.fabricLoaderVersion, java.java, (text, percentage) => {
+      customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, loaderVersion, java.java, (text, percentage) => {
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
+    } else {
+      // Fabric ne supporte pas encore cette version: on lance en vanilla plutot
+      // que d'echouer, mais les mods ne seront pas charges.
+      console.warn(
+        `[Launcher] aucun loader Fabric pour ${manifest.minecraftVersion}, lancement en vanilla`,
+      );
     }
 
     // 3. Telecharger les artefacts du manifeste dans le dossier du profil
