@@ -1,3 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
+import { paranoiaDataDir } from "../launcher/paths.js";
+
 const VERSION_MANIFEST_URL =
   process.env.MINECRAFT_VERSION_MANIFEST_URL ??
   "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
@@ -11,6 +15,41 @@ interface ManifestVersion {
 }
 
 let cache: { versions: string[]; fetchedAt: number } | null = null;
+
+/**
+ * Last list successfully fetched, kept on disk.
+ *
+ * Without it, a player who has been offline since install falls back to the
+ * versions frozen in the bundled config, which age with every Minecraft
+ * release. With it, the newest list ever seen survives restarts.
+ */
+const CACHE_FILE = () => path.join(paranoiaDataDir(), "minecraft-versions.json");
+
+function readDiskCache(): string[] | null {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(CACHE_FILE(), "utf-8"));
+    return Array.isArray(parsed?.versions) && parsed.versions.length > 0
+      ? (parsed.versions as string[])
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDiskCache(versions: string[]): void {
+  try {
+    const file = CACHE_FILE();
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ versions, updatedAt: new Date().toISOString() }),
+      "utf-8",
+    );
+  } catch (err) {
+    // Un cache non ecrit n'empeche rien: on repartira du reseau.
+    console.warn("[catalog] cache des versions non ecrit:", err);
+  }
+}
 
 /**
  * Live release list from Mojang, newest first.
@@ -47,6 +86,7 @@ export async function fetchMinecraftReleases(): Promise<string[]> {
   }
 
   cache = { versions, fetchedAt: Date.now() };
+  writeDiskCache(versions);
   return versions;
 }
 
@@ -61,9 +101,11 @@ export async function minecraftReleasesOrFallback(
     return await fetchMinecraftReleases();
   } catch (err) {
     console.warn(
-      "[catalog] liste des versions Mojang indisponible, repli sur la config embarquee:",
+      "[catalog] liste des versions Mojang indisponible:",
       err instanceof Error ? err.message : err,
     );
-    return fallback;
+
+    // La derniere liste connue vaut mieux que celle figee a la compilation.
+    return readDiskCache() ?? fallback;
   }
 }
