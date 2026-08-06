@@ -82,6 +82,14 @@
       "forge": "Forger le profil !",
       "preparing": "Préparation...",
       "install_fail": "Oups, l'installation a échoué."
+    },
+    "update": {
+      "available": "Paranoia Client {{version}} est disponible.",
+      "downloading": "Téléchargement de la mise à jour...",
+      "ready": "Mise à jour installée, redémarrage...",
+      "failed": "Mise à jour impossible :",
+      "install": "Mettre à jour",
+      "later": "Plus tard"
     }
   }
 }

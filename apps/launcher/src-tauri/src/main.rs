@@ -256,6 +256,8 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(BackendProcess(Mutex::new(None)))
         .setup(|app| {
             let handle = app.handle();
