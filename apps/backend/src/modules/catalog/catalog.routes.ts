@@ -7,6 +7,7 @@ import type {
 } from "@paranoia/contracts";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { minecraftReleasesOrFallback } from "./minecraftVersions.js";
 import stableConfig from "../../../../../examples/remote-config/stable-config.json" with { type: "json" };
 import installCatalog from "../../../../../examples/remote-config/install-catalog.json" with { type: "json" };
 
@@ -46,15 +47,27 @@ const installCatalogSchema = z.object({
 
 const validatedCatalog = installCatalogSchema.parse(installCatalog);
 
-catalogRouter.get("/remote-config", (_req, res) => {
-  res.json(stableConfig as RemoteConfiguration);
+const base = stableConfig as RemoteConfiguration;
+
+catalogRouter.get("/remote-config", async (_req, res, next) => {
+  try {
+    // La liste des versions vient de Mojang: figee dans ce fichier, elle
+    // obligeait a publier un nouveau launcher a chaque sortie de Minecraft.
+    const supportedMinecraftVersions = await minecraftReleasesOrFallback(
+      base.supportedMinecraftVersions,
+    );
+
+    return res.json({ ...base, supportedMinecraftVersions });
+  } catch (err) {
+    return next(err);
+  }
 });
 
 export function getManifest(
   minecraftVersion: string,
   profileTypeId: string,
   graphicsModeId: string,
-): InstallationManifest | null {
+): InstallationManifest {
   const match = validatedCatalog.entries.find(
     (entry) =>
       entry.minecraftVersion === minecraftVersion &&
@@ -62,20 +75,19 @@ export function getManifest(
       entry.graphicsModeId === graphicsModeId,
   );
 
-  if (!match) {
-    return null;
-  }
-
+  // Une combinaison absente du catalogue donne un manifeste vide, donc du
+  // Minecraft vanilla, au lieu d'une erreur. Le catalogue sert a proposer un
+  // pack pret a l'emploi, pas a autoriser une version.
   return {
     id: randomUUID(),
-    minecraftVersion: minecraftVersion,
-    ...(match.fabricLoaderVersion
+    minecraftVersion,
+    ...(match?.fabricLoaderVersion
       ? { fabricLoaderVersion: match.fabricLoaderVersion }
       : {}),
-    requiredJavaMajor: match.requiredJavaMajor,
-    profileTypeId: profileTypeId,
-    graphicsModeId: graphicsModeId,
-    artifacts: match.artifacts as FileArtifact[],
+    requiredJavaMajor: match?.requiredJavaMajor ?? 21,
+    profileTypeId,
+    graphicsModeId,
+    artifacts: (match?.artifacts ?? []) as FileArtifact[],
     generatedAt: new Date().toISOString(),
     signature: "TODO_SIGNED_MANIFEST",
   };
@@ -83,18 +95,7 @@ export function getManifest(
 
 catalogRouter.post("/manifest", (req, res) => {
   const body = createManifestSchema.parse(req.body) as CreateManifestRequest;
-  const manifest = getManifest(
-    body.minecraftVersion,
-    body.profileTypeId,
-    body.graphicsModeId
+  res.json(
+    getManifest(body.minecraftVersion, body.profileTypeId, body.graphicsModeId),
   );
-
-  if (!manifest) {
-    return res.status(404).json({
-      message:
-        "no installation template found for this version/type/graphics combination",
-    });
-  }
-
-  res.json(manifest);
 });
