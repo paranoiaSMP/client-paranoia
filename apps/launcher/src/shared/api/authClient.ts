@@ -22,3 +22,32 @@ export async function completeMicrosoftCallback(
     body: JSON.stringify(req),
   });
 }
+
+/** Comptes deja connectes lors des sessions precedentes. */
+export async function listSavedAccounts(): Promise<MicrosoftAccount[]> {
+  return apiRequest<MicrosoftAccount[]>("/v1/auth/accounts");
+}
+
+/**
+ * Renvoie une session utilisable, renouvelee si le jeton Minecraft a expire.
+ * Retourne null quand il faut repasser par la connexion Microsoft.
+ */
+export async function refreshAccount(
+  accountId: string,
+): Promise<MicrosoftAccount | null> {
+  try {
+    return await apiRequest<MicrosoftAccount>(
+      `/v1/auth/accounts/${encodeURIComponent(accountId)}/refresh`,
+      { method: "POST" },
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function forgetAccount(accountId: string): Promise<void> {
+  await apiRequest<void>(
+    `/v1/auth/accounts/${encodeURIComponent(accountId)}`,
+    { method: "DELETE" },
+  );
+}

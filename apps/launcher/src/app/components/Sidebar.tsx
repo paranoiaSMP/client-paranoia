@@ -1,14 +1,15 @@
-import { Home, Gamepad2, Settings } from "lucide-react";
+import { Home, Gamepad2, Package, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type SidebarProps = {
-  activeTab: "accueil" | "profils" | "parametres";
-  setActiveTab: (tab: "accueil" | "profils" | "parametres") => void;
+  activeTab: "accueil" | "profils" | "mods" | "parametres";
+  setActiveTab: (tab: "accueil" | "profils" | "mods" | "parametres") => void;
 };
 
 const tabs = [
   { id: "accueil" as const, icon: Home, labelKey: "sidebar.home" },
   { id: "profils" as const, icon: Gamepad2, labelKey: "sidebar.profiles" },
+  { id: "mods" as const, icon: Package, labelKey: "sidebar.mods" },
   { id: "parametres" as const, icon: Settings, labelKey: "sidebar.settings" },
 ];
 
