@@ -167,6 +167,14 @@ export function App() {
       setInstallState("running");
       setError(null);
 
+      let selectedOptionsTxtPath = undefined;
+      if (keybindSource !== "auto") {
+        const found = detectedProfiles.find(p => p.id === keybindSource);
+        if (found) {
+          selectedOptionsTxtPath = found.options_path;
+        }
+      }
+
       await createInstallationManifest({
         minecraftVersion,
         profileTypeId: profileType,
@@ -180,7 +188,8 @@ export function App() {
         profileTypeId: profileType,
         graphicsModeId: graphicsMode,
         ramMb: 4096,
-        resolution: "1920x1080"
+        resolution: "1920x1080",
+        optionsTxtPath: selectedOptionsTxtPath
       });
 
       await refreshProfiles();
@@ -310,6 +319,7 @@ export function App() {
               installState={installState}
               launchStatus={launchStatus}
               news={news}
+              selectedProfileId={selectedProfileId}
               setSelectedProfileId={setSelectedProfileId}
               setActiveTab={setActiveTab}
               onLaunchGame={handleLaunchGame}

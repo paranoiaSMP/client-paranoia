@@ -91,7 +91,7 @@ async function main() {
     // vaut la retirer proprement. signtool n'est pas toujours dans le PATH,
     // l'echec n'est donc pas bloquant.
     try {
-      run("signtool", ["remove", "/s", exePath], { stdio: "ignore" });
+      run("C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe", ["remove", "/s", exePath], { stdio: "ignore" });
       console.log("[sidecar] signature d'origine retiree");
     } catch {
       console.log("[sidecar] signtool indisponible, signature laissee en l'etat");
@@ -110,7 +110,8 @@ async function main() {
   if (process.platform === "darwin") {
     postjectArgs.push("--macho-segment-name", "NODE_SEA");
   }
-  run("npx", ["--yes", ...postjectArgs], { shell: isWindows });
+  const cp = await import("node:child_process");
+  cp.execSync(`npx --yes postject "${exePath}" NODE_SEA_BLOB "${blobPath}" --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2`, { stdio: "inherit" });
 
   if (!isWindows) {
     run("chmod", ["+x", exePath]);
