@@ -82,6 +82,14 @@
       "forge": "Forge Profile!",
       "preparing": "Preparing...",
       "install_fail": "Oops, installation failed."
+    },
+    "update": {
+      "available": "Paranoia Client {{version}} is available.",
+      "downloading": "Downloading update...",
+      "ready": "Update installed, restarting...",
+      "failed": "Update failed:",
+      "install": "Update now",
+      "later": "Later"
     }
   }
 }

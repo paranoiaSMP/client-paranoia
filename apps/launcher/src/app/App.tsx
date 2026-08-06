@@ -19,7 +19,10 @@ import { ParametresTab } from "./components/tabs/ParametresTab";
 import { ModsTab } from "./components/tabs/ModsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 
+import { UpdateBanner } from "./components/UpdateBanner";
+
 import { useAuth } from "./hooks/useAuth";
+import { useUpdater } from "./hooks/useUpdater";
 import { useProfiles } from "./hooks/useProfiles";
 
 type SetupStep = 1 | 2 | 3 | 4 | 5;
@@ -44,6 +47,7 @@ export function App() {
 
   // Hooks
   const { connected, account, accounts, connectingMicrosoft, devModeAvailable, handleMicrosoftConnect, handleLocalDevContinue, handleSwitchAccount, handleLogout } = useAuth(setError);
+  const { state: updateState, install: installUpdate, dismiss: dismissUpdate } = useUpdater();
   const { profiles, setProfiles, selectedProfileId, setSelectedProfileId, refreshProfiles, handleDeleteProfile, handleFavoriteProfile } = useProfiles(setError);
 
   // Profile Creation State
@@ -280,6 +284,11 @@ export function App() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-transparent">
+        <UpdateBanner
+          state={updateState}
+          onInstall={installUpdate}
+          onDismiss={dismissUpdate}
+        />
         <TopBar 
           connected={connected} 
           account={account}
