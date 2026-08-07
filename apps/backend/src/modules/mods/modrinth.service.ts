@@ -24,6 +24,12 @@ export interface ModSearchHit {
   categories: string[];
 }
 
+export interface ModDependency {
+  projectId: string | null;
+  versionId: string | null;
+  required: boolean;
+}
+
 export interface ModVersion {
   versionId: string;
   name: string;
@@ -35,12 +41,20 @@ export interface ModVersion {
   size: number;
   sha512: string;
   datePublished: string;
+  dependencies: ModDependency[];
 }
 
 export interface InstalledMod {
   fileName: string;
   size: number;
   installedAt: string;
+}
+
+export interface InstallResult {
+  /** Le mod demande. */
+  mod: InstalledMod;
+  /** Dependances requises posees au passage (Fabric API et consorts). */
+  dependencies: InstalledMod[];
 }
 
 /**
@@ -177,6 +191,11 @@ export async function listProjectVersions(
         size: file.size ?? 0,
         sha512: file.hashes.sha512,
         datePublished: version.date_published,
+        dependencies: (version.dependencies ?? []).map((dep: any) => ({
+          projectId: dep.project_id ?? null,
+          versionId: dep.version_id ?? null,
+          required: dep.dependency_type === "required",
+        })),
       } satisfies ModVersion;
     })
     .filter((v): v is ModVersion => v !== null);
@@ -186,22 +205,12 @@ function modsDir(profileId: string): string {
   return path.join(instanceDir(profileId), "mods");
 }
 
-/**
- * Install a specific version into the profile's own mods folder, verifying the
- * SHA-512 published by Modrinth before the file is put in place.
- */
-export async function installMod(opts: {
-  profileId: string;
-  projectId: string;
-  versionId: string;
-}): Promise<InstalledMod> {
-  const versions = await listProjectVersions(opts.projectId, {});
-  const version = versions.find((v) => v.versionId === opts.versionId);
-  if (!version) {
-    throw new Error("Version introuvable pour ce mod");
-  }
-
-  const dir = modsDir(opts.profileId);
+/** Download one version into the profile's mods folder, verifying its SHA-512. */
+async function downloadVersion(
+  profileId: string,
+  version: ModVersion,
+): Promise<InstalledMod> {
+  const dir = modsDir(profileId);
   await fs.promises.mkdir(dir, { recursive: true });
 
   // Le nom de fichier vient de Modrinth: on le confine au dossier mods.
@@ -218,6 +227,91 @@ export async function installMod(opts: {
     size: stats.size,
     installedAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Pick the version of a dependency that matches the profile, preferring the
+ * exact one Modrinth pinned when it gave us a `version_id`.
+ */
+async function resolveDependencyVersion(
+  dependency: ModDependency,
+  context: { gameVersion?: string | undefined; loader?: string | undefined },
+): Promise<ModVersion | null> {
+  if (!dependency.projectId) {
+    // Modrinth peut epingler une version sans donner le projet: sans projet on
+    // ne sait pas quoi interroger.
+    return null;
+  }
+
+  const versions = await listProjectVersions(dependency.projectId, context);
+  if (dependency.versionId) {
+    const pinned = versions.find((v) => v.versionId === dependency.versionId);
+    if (pinned) {
+      return pinned;
+    }
+  }
+
+  return versions[0] ?? null;
+}
+
+/**
+ * Install a version and everything it needs to load.
+ *
+ * Most Fabric mods declare a hard dependency on Fabric API; installing the jar
+ * alone left the game refusing to load it. Required dependencies are resolved
+ * recursively, filtered on the profile's loader and Minecraft version.
+ */
+export async function installMod(opts: {
+  profileId: string;
+  projectId: string;
+  versionId: string;
+  gameVersion?: string | undefined;
+  loader?: string | undefined;
+}): Promise<InstallResult> {
+  const versions = await listProjectVersions(opts.projectId, {});
+  const version = versions.find((v) => v.versionId === opts.versionId);
+  if (!version) {
+    throw new Error("Version introuvable pour ce mod");
+  }
+
+  const context = { gameVersion: opts.gameVersion, loader: opts.loader };
+  const mod = await downloadVersion(opts.profileId, version);
+
+  const installed: InstalledMod[] = [];
+  // Un mod peut dependre d'un mod qui depend lui-meme d'un autre; on suit le
+  // graphe en gardant trace des projets vus pour ne pas boucler.
+  const seen = new Set<string>([opts.projectId]);
+  const queue: ModDependency[] = version.dependencies.filter((d) => d.required);
+
+  while (queue.length > 0) {
+    const dependency = queue.shift()!;
+    if (!dependency.projectId || seen.has(dependency.projectId)) {
+      continue;
+    }
+    seen.add(dependency.projectId);
+
+    try {
+      const resolved = await resolveDependencyVersion(dependency, context);
+      if (!resolved) {
+        console.warn(
+          `[mods] dependance ${dependency.projectId} sans version compatible, ignoree`,
+        );
+        continue;
+      }
+
+      installed.push(await downloadVersion(opts.profileId, resolved));
+      queue.push(...resolved.dependencies.filter((d) => d.required));
+    } catch (err) {
+      // Une dependance qui echoue ne doit pas annuler l'installation du mod
+      // principal: le joueur verra le mod pose et pourra reessayer.
+      console.warn(
+        `[mods] dependance ${dependency.projectId} non installee:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+
+  return { mod, dependencies: installed };
 }
 
 export async function listInstalledMods(
