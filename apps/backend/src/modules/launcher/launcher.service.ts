@@ -1,6 +1,7 @@
 import { Client } from "minecraft-launcher-core";
 import path from "node:path";
 import { ensureJava21 } from "./javaDownloader.js";
+import { setIdlePresence, setPlayingPresence } from '../discord/discord.service.js';
 import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
@@ -204,6 +205,7 @@ export async function launchMinecraft(
       console.log(`[MC Launcher Close] Exited with code ${e}`);
       activeLaunchers.delete(profileId);
       updateStatus({ state: "idle", progress: 0, text: "" });
+      setIdlePresence();
     });
 
     console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${java.javaw}`);
@@ -212,6 +214,7 @@ export async function launchMinecraft(
     const proc = await launcher.launch(opts);
     if (proc) {
       updateStatus({ state: "running", progress: 100, text: "Jeu en cours d'execution" });
+      setPlayingPresence(minecraftVersion, account.minecraftUsername);
     }
     
   } catch (err) {

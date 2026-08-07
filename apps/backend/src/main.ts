@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import pino from "pino";
+import { initDiscordRPC } from './modules/discord/discord.service.js';
 import { pinoHttp } from "pino-http";
 import { ZodError } from "zod";
 import { env } from "./config/env.js";
@@ -78,6 +79,8 @@ app.use(
     return res.status(500).json({ message: "internal server error" });
   },
 );
+
+initDiscordRPC();
 
 app.listen(Number(env.PORT), () => {
   logger.info(`Paranoia API listening on :${env.PORT}`);
