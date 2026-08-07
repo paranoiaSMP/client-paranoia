@@ -60,3 +60,10 @@ Thumbs.db
 # donnees d execution a la racine)
 /data/
 apps/launcher/src-tauri/gen/schemas/linux-schema.json
+
+# Restes des essais de signature de mise a jour: pass.txt (mot de passe de la
+# cle privee), test.txt/test.txt.sig et run_log.txt avaient ete commites.
+# La cle a ete regeneree, mais ces fichiers ne doivent plus revenir.
+pass.txt
+*.sig
+run_log.txt

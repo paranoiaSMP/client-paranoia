@@ -51,8 +51,40 @@ jobs:
     needs: checks
 
     steps:
+      # Sur un tag, la signature est obligatoire: sans elle, la release est
+      # publiee mais aucun client installe ne peut se mettre a jour. Le secret
+      # etait verifie a la toute fin, apres ~15 min de compilation Rust; on
+      # echoue maintenant en quelques secondes.
+      - name: Check signing secret before building
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::le secret TAURI_SIGNING_PRIVATE_KEY est vide ou absent"
+            exit 1
+          fi
+          echo "cle de signature presente (${#TAURI_SIGNING_PRIVATE_KEY} caracteres)"
+
       - name: Checkout
         uses: actions/checkout@v4
+
+      # latest.json annonce la version tiree du tag, mais l'application
+      # installee annonce celle de tauri.conf.json. Si les deux different, le
+      # client propose une mise a jour vers une version qu'il vient d'installer,
+      # en boucle. On refuse le tag plutot que de publier ca.
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          app=$(node -p "require('./apps/launcher/src-tauri/tauri.conf.json').version")
+          if [ "$tag" != "$app" ]; then
+            echo "::error::tag $GITHUB_REF_NAME mais tauri.conf.json declare $app"
+            exit 1
+          fi
+          echo "version coherente: $app"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -137,11 +169,16 @@ jobs:
       # La cle privee signe l'archive de mise a jour. Sans elle le build reste
       # valide mais ne produit pas de .sig, donc aucune mise a jour publiable:
       # les clients deja installes refusent toute archive non signee.
+      #
+      # Le mot de passe est volontairement fixe a la chaine vide au lieu d'un
+      # secret: la cle du depot n'en a pas, et un secret desynchronise faisait
+      # echouer chaque release sur "incorrect updater private key password"
+      # apres que l'installeur ait deja ete produit (v0.2.0 a v0.2.7).
       - name: Build Windows bundle
         working-directory: apps/launcher
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: pnpm exec tauri build --bundles nsis
 
       # Le sidecar doit se retrouver a cote de l'executable principal, sinon
