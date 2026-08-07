@@ -343,6 +343,7 @@ export function App() {
                   setIsCreatingProfile={setIsCreatingProfile}
                   onFavorite={handleFavoriteProfile}
                   onDelete={handleDeleteProfile}
+                  onPlay={handleLaunchGame}
                 />
               ) : (
                 <ProfileCreation 

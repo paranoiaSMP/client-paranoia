@@ -187,8 +187,24 @@ export async function launchMinecraft(
       opts.version.custom = customVersionName;
     }
 
-    launcher.on('debug', (e) => console.log(`[MC Launcher Debug] ${e}`));
-    launcher.on('data', (e) => console.log(`[MC Launcher Data] ${e}`));
+    // Filtre les logs de debug pour cacher l'énorme commande Java illisible
+    launcher.on('debug', (e) => {
+      const msg = String(e);
+      if (msg.includes("-cp") && msg.includes("mx4096M")) {
+        console.log(`[🎮 Minecraft] Lancement du jeu en cours (arguments masqués pour la lisibilité)...`);
+        return;
+      }
+      if (msg.includes("Arguments:")) return; // Cache la liste brute
+      
+      console.log(`[🔍 Debug] ${msg}`);
+    });
+
+    // Formate joliment les retours de la console du jeu
+    launcher.on('data', (e) => {
+      const msg = String(e).trim();
+      if (!msg) return;
+      console.log(`[📝 Log Jeu] ${msg}`);
+    });
     
     launcher.on('progress', (e) => {
       console.log(`[MC Launcher Progress] ${e.type} - ${e.task} : ${e.total}`);
