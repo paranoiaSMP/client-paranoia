@@ -9,7 +9,6 @@ import { pipeline } from "node:stream/promises";
 
 const execFileAsync = promisify(execFile);
 
-const JAVA_MAJOR = 21;
 
 type JavaTarget = {
   /** Adoptium `os` path segment. */
@@ -51,9 +50,9 @@ function detectTarget(): JavaTarget {
   }
 }
 
-function adoptiumUrl(target: JavaTarget): string {
+function adoptiumUrl(major: number, target: JavaTarget): string {
   return (
-    `https://api.adoptium.net/v3/binary/latest/${JAVA_MAJOR}/ga/` +
+    `https://api.adoptium.net/v3/binary/latest/${major}/ga/` +
     `${target.os}/${target.arch}/jre/hotspot/normal/eclipse`
   );
 }
@@ -97,6 +96,7 @@ async function extractArchive(
  */
 async function findExtractedRuntime(
   targetDir: string,
+  major: number,
   before: Set<string>,
 ): Promise<string> {
   const entries = await fs.readdir(targetDir, { withFileTypes: true });
@@ -104,7 +104,9 @@ async function findExtractedRuntime(
     (entry) =>
       entry.isDirectory() &&
       !before.has(entry.name) &&
-      entry.name.startsWith(`jdk-${JAVA_MAJOR}`),
+      // Java 8 s'extrait dans jdk8u..., les suivants dans jdk-17, jdk-21...
+      (entry.name.startsWith(`jdk-${major}`) ||
+        entry.name.startsWith(`jdk${major}u`)),
   );
 
   if (!candidate) {
@@ -115,14 +117,19 @@ async function findExtractedRuntime(
 }
 
 /**
- * Download and install a Java 21 JRE under `targetDir`, reusing it when the
- * runtime is already present.
+ * Download and install the requested Java major under `targetDir`, reusing it
+ * when already present.
+ *
+ * Runtimes live side by side (`jre-8`, `jre-17`, `jre-21`, ...): Minecraft
+ * needs a different one depending on the version, and installing only Java 21
+ * made every pre-1.20.5 profile fail to launch.
  */
-export async function ensureJava21(
+export async function ensureJava(
+  major: number,
   targetDir: string,
   onProgress: (status: string, percentage: number) => void,
 ): Promise<JavaInstall> {
-  const javaHome = path.join(targetDir, `jre-${JAVA_MAJOR}`);
+  const javaHome = path.join(targetDir, `jre-${major}`);
   const existing = installLayout(javaHome);
 
   if (existsSync(existing.java)) {
@@ -130,21 +137,28 @@ export async function ensureJava21(
   }
 
   const target = detectTarget();
-  onProgress(`Telechargement de Java ${JAVA_MAJOR}...`, 0);
+  onProgress(`Telechargement de Java ${major}...`, 0);
 
   await fs.mkdir(targetDir, { recursive: true });
-  const archivePath = path.join(
-    targetDir,
-    `jre-${JAVA_MAJOR}.${target.archive}`,
-  );
+  const archivePath = path.join(targetDir, `jre-${major}.${target.archive}`);
 
-  const response = await axios({
-    url: adoptiumUrl(target),
+  let response;
+  try {
+    response = await axios({
+    url: adoptiumUrl(major, target),
     method: "GET",
     responseType: "stream",
     maxRedirects: 5,
     timeout: 120_000,
-  });
+    });
+  } catch (err) {
+    // Adoptium ne publie pas toutes les majeures: un message clair vaut mieux
+    // qu'une erreur reseau brute.
+    throw new Error(
+      `Java ${major} indisponible au telechargement (${target.os}/${target.arch}). ` +
+        `Detail: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 
   const totalLength = Number.parseInt(
     (response.headers["content-length"] as string) || "0",
@@ -156,7 +170,7 @@ export async function ensureJava21(
     downloadedLength += chunk.length;
     if (totalLength > 0) {
       onProgress(
-        `Telechargement de Java ${JAVA_MAJOR}...`,
+        `Telechargement de Java ${major}...`,
         Math.round((downloadedLength / totalLength) * 100),
       );
     }
@@ -164,7 +178,7 @@ export async function ensureJava21(
 
   await pipeline(response.data, createWriteStream(archivePath));
 
-  onProgress(`Extraction de Java ${JAVA_MAJOR}...`, 100);
+  onProgress(`Extraction de Java ${major}...`, 100);
 
   const before = new Set(
     (await fs.readdir(targetDir, { withFileTypes: true }))
@@ -174,14 +188,14 @@ export async function ensureJava21(
 
   await extractArchive(archivePath, target, targetDir);
 
-  const extracted = await findExtractedRuntime(targetDir, before);
+  const extracted = await findExtractedRuntime(targetDir, major, before);
   await fs.rename(extracted, javaHome);
   await fs.unlink(archivePath);
 
   const install = installLayout(javaHome);
   if (!existsSync(install.java)) {
     throw new Error(
-      `L'executable Java est introuvable apres l'installation (${install.java})`,
+      `L'executable Java ${major} est introuvable apres l'installation (${install.java})`,
     );
   }
 
