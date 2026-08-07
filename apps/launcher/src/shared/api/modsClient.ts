@@ -57,11 +57,18 @@ export async function listProjectVersions(
   );
 }
 
+export type InstallResult = {
+  mod: InstalledMod;
+  dependencies: InstalledMod[];
+};
+
 export async function installMod(input: {
   profileId: string;
   projectId: string;
   versionId: string;
-}): Promise<InstalledMod> {
+  gameVersion?: string;
+  loader?: string;
+}): Promise<InstallResult> {
   return apiRequest("/v1/mods/install", {
     method: "POST",
     body: JSON.stringify(input),
