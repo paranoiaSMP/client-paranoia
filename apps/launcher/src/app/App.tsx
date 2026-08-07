@@ -29,7 +29,7 @@ type SetupStep = 1 | 2 | 3 | 4 | 5;
 
 type DetectedProfile = {
   id: string;
-  label: string;
+  name: string;
   options_path: string;
   launcher: string;
 };
@@ -168,12 +168,18 @@ export function App() {
       setError(null);
 
       let selectedOptionsTxtPath = undefined;
-      if (keybindSource !== "auto") {
+      if (keybindSource === "auto" && detectedProfiles.length > 0) {
+        selectedOptionsTxtPath = detectedProfiles[0]?.options_path;
+      } else if (keybindSource !== "auto") {
         const found = detectedProfiles.find(p => p.id === keybindSource);
         if (found) {
           selectedOptionsTxtPath = found.options_path;
         }
       }
+
+      console.log("[DEBUG] detectedProfiles:", detectedProfiles);
+      console.log("[DEBUG] keybindSource:", keybindSource);
+      console.log("[DEBUG] selectedOptionsTxtPath:", selectedOptionsTxtPath);
 
       await createInstallationManifest({
         minecraftVersion,
