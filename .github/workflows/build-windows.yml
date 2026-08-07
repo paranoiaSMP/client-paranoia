@@ -71,6 +71,17 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
+      - name: Ensure Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure MSVC for node-gyp
+        shell: pwsh
+        run: |
+          npm config set msvs_version 2022
+          setx GYP_MSVS_VERSION 2022
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
