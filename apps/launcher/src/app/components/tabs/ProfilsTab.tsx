@@ -10,6 +10,7 @@ type ProfilsTabProps = {
   setIsCreatingProfile: (creating: boolean) => void;
   onFavorite: (id: string) => void;
   onDelete: (id: string) => void;
+  onPlay: (id: string) => void;
 };
 
 export function ProfilsTab({
@@ -19,7 +20,8 @@ export function ProfilsTab({
   isCreatingProfile,
   setIsCreatingProfile,
   onFavorite,
-  onDelete
+  onDelete,
+  onPlay
 }: ProfilsTabProps) {
   const { t } = useTranslation();
   
@@ -153,7 +155,7 @@ export function ProfilsTab({
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button 
-                  onClick={() => alert(`Lancement de ${selectedProfile.name}`)}
+                  onClick={() => onPlay(selectedProfile.id)}
                   className="flex-1 h-10 bg-accent-purple hover:bg-accent-purple-dark text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Play className="w-4 h-4 fill-current" />

@@ -116,18 +116,32 @@ export async function launchMinecraft(
       });
     }
 
-    // 4. Copier options.txt depuis le .minecraft vanilla si manquant
-    const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
     const targetOptionsPath = path.join(gameDir, "options.txt");
-    
-    if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
+    // LEOO955  
+
+
+    // SYSTEM POUR COPIER LE OPTION.TXT D'UN PROFILE SELECTIONé
+    const customOptionsPath = (profile as any).optionsTxtPath; 
+
+    if (customOptionsPath && fs.existsSync(customOptionsPath)) {
       try {
-        fs.copyFileSync(vanillaOptionsPath, targetOptionsPath);
-        console.log("Copied options.txt from vanilla .minecraft");
+        fs.copyFileSync(customOptionsPath, targetOptionsPath);
+        console.log(`Copied custom options.txt from ${customOptionsPath}`);
       } catch (e) {
-        console.warn("Could not copy options.txt", e);
+        console.warn("Could not copy custom options.txt", e);
+      }
+    } else {
+      const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
+      if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
+        try {
+          fs.copyFileSync(vanillaOptionsPath, targetOptionsPath);
+          console.log("Copied options.txt from vanilla .minecraft");
+        } catch (e) {
+          console.warn("Could not copy vanilla options.txt", e);
+        }
       }
     }
+
 
     // 4. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
@@ -173,8 +187,24 @@ export async function launchMinecraft(
       opts.version.custom = customVersionName;
     }
 
-    launcher.on('debug', (e) => console.log(`[MC Launcher Debug] ${e}`));
-    launcher.on('data', (e) => console.log(`[MC Launcher Data] ${e}`));
+    // Filtre les logs de debug pour cacher l'énorme commande Java illisible
+    launcher.on('debug', (e) => {
+      const msg = String(e);
+      if (msg.includes("-cp") && msg.includes("mx4096M")) {
+        console.log(`[🎮 Minecraft] Lancement du jeu en cours (arguments masqués pour la lisibilité)...`);
+        return;
+      }
+      if (msg.includes("Arguments:")) return; // Cache la liste brute
+      
+      console.log(`[🔍 Debug] ${msg}`);
+    });
+
+    // Formate joliment les retours de la console du jeu
+    launcher.on('data', (e) => {
+      const msg = String(e).trim();
+      if (!msg) return;
+      console.log(`[📝 Log Jeu] ${msg}`);
+    });
     
     launcher.on('progress', (e) => {
       console.log(`[MC Launcher Progress] ${e.type} - ${e.task} : ${e.total}`);

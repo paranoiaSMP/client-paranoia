@@ -29,7 +29,7 @@ type SetupStep = 1 | 2 | 3 | 4 | 5;
 
 type DetectedProfile = {
   id: string;
-  label: string;
+  name: string;
   options_path: string;
   launcher: string;
 };
@@ -167,6 +167,20 @@ export function App() {
       setInstallState("running");
       setError(null);
 
+      let selectedOptionsTxtPath = undefined;
+      if (keybindSource === "auto" && detectedProfiles.length > 0) {
+        selectedOptionsTxtPath = detectedProfiles[0]?.options_path;
+      } else if (keybindSource !== "auto") {
+        const found = detectedProfiles.find(p => p.id === keybindSource);
+        if (found) {
+          selectedOptionsTxtPath = found.options_path;
+        }
+      }
+
+      console.log("[DEBUG] detectedProfiles:", detectedProfiles);
+      console.log("[DEBUG] keybindSource:", keybindSource);
+      console.log("[DEBUG] selectedOptionsTxtPath:", selectedOptionsTxtPath);
+
       await createInstallationManifest({
         minecraftVersion,
         profileTypeId: profileType,
@@ -180,7 +194,8 @@ export function App() {
         profileTypeId: profileType,
         graphicsModeId: graphicsMode,
         ramMb: 4096,
-        resolution: "1920x1080"
+        resolution: "1920x1080",
+        optionsTxtPath: selectedOptionsTxtPath
       });
 
       await refreshProfiles();
@@ -310,6 +325,7 @@ export function App() {
               installState={installState}
               launchStatus={launchStatus}
               news={news}
+              selectedProfileId={selectedProfileId}
               setSelectedProfileId={setSelectedProfileId}
               setActiveTab={setActiveTab}
               onLaunchGame={handleLaunchGame}
@@ -327,6 +343,7 @@ export function App() {
                   setIsCreatingProfile={setIsCreatingProfile}
                   onFavorite={handleFavoriteProfile}
                   onDelete={handleDeleteProfile}
+                  onPlay={handleLaunchGame}
                 />
               ) : (
                 <ProfileCreation 

@@ -13,6 +13,7 @@ type AccueilTabProps = {
   connected: boolean;
   installState: string;
   launchStatus?: LaunchStatusResponse;
+  selectedProfileId: string | null;
   news: NewsItem[];
   setSelectedProfileId: (id: string) => void;
   setActiveTab: (tab: "accueil" | "profils" | "parametres") => void;
@@ -25,13 +26,14 @@ export function AccueilTab({
   connected,
   installState,
   launchStatus,
+  selectedProfileId,
   news,
   setSelectedProfileId,
   setActiveTab,
   onLaunchGame,
 }: AccueilTabProps) {
   const { t } = useTranslation();
-  const mainProfile = profiles.length > 0 ? profiles[0] : null;
+  const mainProfile = profiles.find((p) => p.id === selectedProfileId) || (profiles.length > 0 ? profiles[0] : null);
 
   /*
    * VUE D'ACCUEIL DU LAUNCHER

@@ -40,7 +40,9 @@ apps/backend/data/
 .env.production
 *.pem
 *.key
+*.key.pub
 *.cert
+.tauri/
 !.env.example
 
 .DS_Store

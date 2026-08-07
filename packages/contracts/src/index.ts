@@ -75,6 +75,7 @@ export interface CreateLauncherProfileRequest {
   graphicsModeId: string;
   ramMb: number;
   resolution: string;
+  optionsTxtPath?: string | undefined;
 }
 
 export interface CreateManifestRequest {
