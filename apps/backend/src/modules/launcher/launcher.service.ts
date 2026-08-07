@@ -1,6 +1,8 @@
 import { Client } from "minecraft-launcher-core";
 import path from "node:path";
-import { ensureJava21 } from "./javaDownloader.js";
+import { ensureJava } from "./javaDownloader.js";
+import { requiredJavaMajor } from "./javaRequirement.js";
+import { readSettings } from "../settings/settings.store.js";
 import { setIdlePresence, setPlayingPresence } from '../discord/discord.service.js';
 import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
@@ -70,11 +72,21 @@ export async function launchMinecraft(
     // vide, donc un lancement en vanilla plutot qu'un echec.
     const manifest = getManifest(profile.minecraftVersion, profile.profileTypeId, profile.graphicsModeId);
 
-    // 1. Verifier et telecharger Java 21
-    updateStatus({ state: "downloading_java", progress: 0, text: "Verification de Java 21..." });
-    const java = await ensureJava21(rootPath, (text: string, percentage: number) => {
+    const settings = readSettings();
+
+    // 1. Verifier et telecharger le Java attendu par cette version de Minecraft.
+    // Le manifeste peut l'imposer; sinon Mojang le declare dans ses metadonnees.
+    const javaMajor =
+      manifest.requiredJavaMajor ||
+      (await requiredJavaMajor(profile.minecraftVersion));
+
+    updateStatus({ state: "downloading_java", progress: 0, text: `Verification de Java ${javaMajor}...` });
+    const java = await ensureJava(javaMajor, rootPath, (text: string, percentage: number) => {
       updateStatus({ state: "downloading_java", progress: percentage, text });
     });
+
+    // Un chemin Java saisi dans les parametres prime sur le runtime telecharge.
+    const javaExecutable = settings.javaPath.trim() || java.javaw;
 
     // 2. Installer Fabric
     // Le manifeste peut epingler un loader precis; sinon on prend le dernier
@@ -165,10 +177,12 @@ export async function launchMinecraft(
         type: "release"
       },
       memory: {
-        max: `${ramMb}M`,
-        min: `${Math.floor(ramMb / 2)}M`
+        // La RAM du profil reste prioritaire; les parametres fournissent le
+        // minimum et servent de valeur par defaut.
+        max: `${ramMb || settings.ramMaxMb}M`,
+        min: `${Math.min(settings.ramMinMb, ramMb || settings.ramMaxMb)}M`
       },
-      javaPath: java.javaw,
+      javaPath: javaExecutable,
       overrides: {
         maxSockets: 6, // 6 est un bon compromis pour eviter les timeouts et les crashs EMFILE
         // Le jeu ecrit ses mondes, mods, configs et captures ici; les
@@ -179,17 +193,45 @@ export async function launchMinecraft(
 
     // La resolution etait enregistree dans le profil mais n'arrivait jamais
     // jusqu'au jeu: choisir 1280x720 n'avait donc aucun effet.
-    const resolution = parseResolution(profile.resolution);
-    if (resolution) {
-      opts.window = resolution;
+    const resolution = parseResolution(profile.resolution) ?? {
+      width: settings.width,
+      height: settings.height,
+    };
+    opts.window = settings.fullscreen
+      ? { ...resolution, fullscreen: true }
+      : resolution;
+
+    // Arguments JVM saisis dans les parametres, ajoutes a ceux du launcher.
+    const extraJvmArgs = settings.jvmArgs
+      .split(/\s+/)
+      .map((arg) => arg.trim())
+      .filter((arg) => arg.length > 0);
+    if (extraJvmArgs.length > 0) {
+      opts.customArgs = extraJvmArgs;
     }
 
     if (customVersionName) {
       opts.version.custom = customVersionName;
     }
 
-    launcher.on('debug', (e) => console.log(`[MC Launcher Debug] ${e}`));
-    launcher.on('data', (e) => console.log(`[MC Launcher Data] ${e}`));
+    // Filtre les logs de debug pour cacher l'énorme commande Java illisible
+    launcher.on('debug', (e) => {
+      const msg = String(e);
+      if (msg.includes("-cp") && msg.includes("mx4096M")) {
+        console.log(`[🎮 Minecraft] Lancement du jeu en cours (arguments masqués pour la lisibilité)...`);
+        return;
+      }
+      if (msg.includes("Arguments:")) return; // Cache la liste brute
+      
+      console.log(`[🔍 Debug] ${msg}`);
+    });
+
+    // Formate joliment les retours de la console du jeu
+    launcher.on('data', (e) => {
+      const msg = String(e).trim();
+      if (!msg) return;
+      console.log(`[📝 Log Jeu] ${msg}`);
+    });
     
     launcher.on('progress', (e) => {
       console.log(`[MC Launcher Progress] ${e.type} - ${e.task} : ${e.total}`);
@@ -208,7 +250,7 @@ export async function launchMinecraft(
       setIdlePresence();
     });
 
-    console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${java.javaw}`);
+    console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${javaMajor} (${javaExecutable})`);
     
     // Une fois lance, on passe a "launching" (jeu en cours de demarrage)
     const proc = await launcher.launch(opts);
