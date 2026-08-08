@@ -12,7 +12,7 @@ export interface StoredLauncherProfile {
   favorite: boolean;
   ramMb: number;
   resolution: string;
-  optionsTxtPath?: string;
+  optionsTxtPath?: string | undefined;
   createdAt: string;
   updatedAt: string;
 }

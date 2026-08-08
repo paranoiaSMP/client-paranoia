@@ -21,6 +21,7 @@ const profileCreateSchema = z.object({
   graphicsModeId: z.string().min(1),
   ramMb: z.number().int().min(1024).max(65536).default(4096),
   resolution: z.string().min(3).max(32).default("1920x1080"),
+  optionsTxtPath: z.string().optional(),
 });
 
 const profilePatchSchema = profileCreateSchema.partial();
@@ -31,10 +32,14 @@ profilesRouter.get("/", (_req, res) => {
 
 profilesRouter.post("/", async (req, res, next) => {
   try {
+
+    console.log("CE QUE LE FRONTEND A ENVOYE :", req.body);
     const input = profileCreateSchema.parse(req.body);
+    console.log("CE QUE ZOD A GARDE :", input);
     const profile = createProfile(input);
     await ensureInstanceLayout(profile.id);
     return res.status(201).json(profile);
+    
   } catch (err) {
     return next(err);
   }
