@@ -294,6 +294,7 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, String> {
         .sidecar("paranoia-server")
         .map_err(|e| format!("sidecar introuvable: {e}"))?
         .env("PORT", BACKEND_PORT)
+        .env("TAURI_SIDECAR", "true")
         .spawn()
         .map_err(|e| format!("demarrage du backend impossible: {e}"))?;
 
