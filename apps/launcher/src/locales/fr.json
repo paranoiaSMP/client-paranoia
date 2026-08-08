@@ -90,6 +90,28 @@
       "failed": "Mise à jour impossible :",
       "install": "Mettre à jour",
       "later": "Plus tard"
+    },
+    "mods": {
+      "selectProfile": "Sélectionner le profil",
+      "openFolder": "Ouvrir le dossier",
+      "searchPlaceholder": "Chercher un mod sur Modrinth...",
+      "sortByRelevance": "Trier : Pertinence",
+      "view": "Afficher :",
+      "installing": "Installation...",
+      "installedButton": "Installé",
+      "installButton": "Ajouter",
+      "addToInstance": "Ajouter à l'instance",
+      "addedToInstance": "Ajouté à l'instance",
+      "by": "par",
+      "downloads": "téléchargements",
+      "modsOfProfile": "Mods de ce profil",
+      "filteredText": "Installés dans ce profil uniquement, filtrés pour Fabric",
+      "noMods": "Aucun mod installé sur ce profil.",
+      "remove": "Retirer",
+      "noProfileHint": "Crée un profil pour installer des mods.",
+      "previousPage": "Précédent",
+      "nextPage": "Suivant",
+      "page": "Page"
     }
   }
 }

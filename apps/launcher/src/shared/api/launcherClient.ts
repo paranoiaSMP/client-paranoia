@@ -41,3 +41,9 @@ export async function getLaunchStatus(
     `/v1/launcher/status/${encodeURIComponent(profileId)}`,
   );
 }
+export async function stopMinecraftGame(profileId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(
+    `/v1/launcher/stop/${encodeURIComponent(profileId)}`,{
+      method: "POST",
+    });
+    }

@@ -27,7 +27,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
       <section className="bg-[#18181b] border border-[#27272a] rounded-xl p-5">
         <h3 className="text-white font-bold mb-4">Mémoire (RAM)</h3>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-[#a1a1aa] text-xs block mb-2">RAM minimum</label>
             <div className="flex items-center gap-3">

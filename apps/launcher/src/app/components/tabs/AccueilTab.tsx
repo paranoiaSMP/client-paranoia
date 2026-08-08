@@ -1,5 +1,6 @@
-import { Play, Settings } from "lucide-react";
+import { Play, Settings, Square } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
 import type {
   LauncherProfile,
   MicrosoftAccount,
@@ -18,6 +19,7 @@ type AccueilTabProps = {
   setSelectedProfileId: (id: string) => void;
   setActiveTab: (tab: "accueil" | "profils" | "parametres") => void;
   onLaunchGame: (id: string) => void;
+  onStopGame: (id: string) => void;
 };
 
 export function AccueilTab({
@@ -31,6 +33,7 @@ export function AccueilTab({
   setSelectedProfileId,
   setActiveTab,
   onLaunchGame,
+  onStopGame,
 }: AccueilTabProps) {
   const { t } = useTranslation();
   const mainProfile = profiles.find((p) => p.id === selectedProfileId) || (profiles.length > 0 ? profiles[0] : null);
@@ -49,7 +52,7 @@ export function AccueilTab({
         </span>
       </p>
 
-      <div className="relative w-full h-[280px] rounded-xl overflow-hidden border border-[#27272a] bg-[#09090b]">
+      <div className="relative w-full h-[200px] md:h-[280px] rounded-xl overflow-hidden border border-[#27272a] bg-[#09090b]">
         <img
           src="/hero-bg.png"
           alt=""
@@ -60,27 +63,37 @@ export function AccueilTab({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
           {mainProfile ? (
             <>
-              <button
-                onClick={() => {
-                  setSelectedProfileId(mainProfile.id);
-                  onLaunchGame(mainProfile.id);
-                }}
-                disabled={!connected || installState === "running"}
-                className="bg-accent-purple hover:bg-accent-purple-dark disabled:opacity-50 disabled:cursor-not-allowed text-white px-10 py-3.5 rounded-lg text-lg font-bold flex items-center gap-2 transition-colors relative overflow-hidden"
-              >
-                {installState === "running" && launchStatus && (
-                  <div
-                    className="absolute inset-0 bg-white/20 transition-all duration-300"
-                    style={{ width: `${launchStatus.progress}%` }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  <Play className="w-5 h-5 fill-current" />
-                  {installState === "running"
-                    ? t("home.launching")
-                    : t("home.play")}
-                </span>
-              </button>
+              {launchStatus?.state === "running" ? (
+                <button
+                  onClick={() => onStopGame(mainProfile.id)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 md:px-10 py-3 md:py-3.5 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 transition-colors relative"
+                >
+                  <Square className="w-5 h-5 fill-current" />
+                  Arrêter
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSelectedProfileId(mainProfile.id);
+                    onLaunchGame(mainProfile.id);
+                  }}
+                  disabled={!connected || installState === "running"}
+                  className="bg-accent-purple hover:bg-accent-purple-dark disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 md:px-10 py-3 md:py-3.5 rounded-lg text-base md:text-lg font-bold flex items-center gap-2 transition-colors relative overflow-hidden"
+                >
+                  {installState === "running" && launchStatus && (
+                    <div
+                      className="absolute inset-0 bg-white/20 transition-all duration-300"
+                      style={{ width: `${launchStatus.progress}%` }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Play className="w-5 h-5 fill-current" />
+                    {installState === "running"
+                      ? t("home.launching")
+                      : t("home.play")}
+                  </span>
+                </button>
+              )}
 
               <div className="flex flex-col items-center gap-1">
                 <p className="text-[#a1a1aa] text-xs">
@@ -149,7 +162,7 @@ export function AccueilTab({
             {news.map((item, idx) => (
               <div
                 key={idx}
-                className="min-w-[300px] h-[160px] bg-[#18181b] border border-[#27272a] rounded-xl overflow-hidden relative cursor-pointer hover:border-[#3f3f46] transition-colors group"
+                className="min-w-[260px] md:min-w-[300px] h-[160px] bg-[#18181b] border border-[#27272a] rounded-xl overflow-hidden relative cursor-pointer hover:border-[#3f3f46] transition-colors group"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] to-transparent"></div>
                 <div className="absolute bottom-0 left-0 right-0 p-4">

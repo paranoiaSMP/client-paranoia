@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Search, Download, Trash2, Package, Loader2, AlertTriangle, X, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Search, Download, Trash2, Package, Loader2, AlertTriangle, X, FolderOpen, Heart, Plus, Check, ChevronDown, ChevronRight } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LauncherProfile } from "@paranoia/contracts";
 import {
@@ -47,7 +48,7 @@ function ErrorNotice({
 
 function formatDownloads(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
-  if (count >= 1_000) return `${Math.round(count / 1_000)}k`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`;
   return String(count);
 }
 
@@ -57,6 +58,9 @@ export function ModsTab({
   setSelectedProfileId,
   setError,
 }: ModsTabProps) {
+  const { t } = useTranslation();
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
   const profile =
     profiles.find((p) => p.id === selectedProfileId) ?? profiles[0] ?? null;
 
@@ -89,7 +93,9 @@ export function ModsTab({
     refreshInstalled();
   }, [refreshInstalled]);
 
-  async function runSearch() {
+  async function runSearch(targetPage = 1) {
+    setPage(targetPage);
+    // setSearching(true); (handled below)
     if (!profile) return;
     setSearching(true);
     report(null);
@@ -99,8 +105,10 @@ export function ModsTab({
         gameVersion: profile.minecraftVersion,
         loader: "fabric",
         limit: 20,
+        offset: (targetPage - 1) * 20,
       });
       setHits(result.hits);
+      setTotalHits(result.total);
     } catch (e) {
       report(e instanceof Error ? e.message : "Recherche Modrinth impossible");
       setHits([]);
@@ -183,54 +191,75 @@ export function ModsTab({
   }
 
   return (
-    <div className="w-full animate-in fade-in duration-400 flex flex-col gap-5 text-white pt-2">
-      <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={profile.id}
-          onChange={(e) => setSelectedProfileId(e.target.value)}
-          className="bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2.5 text-sm outline-none"
-        >
-          {profiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} — {p.minecraftVersion}
-            </option>
-          ))}
-        </select>
+    <div className="w-full animate-in fade-in duration-400 flex flex-col pt-2 max-w-[1000px] mx-auto">
+      
 
-        <div className="flex items-center bg-[#18181b] rounded-lg px-3 py-2.5 flex-1 min-w-[200px] border border-[#27272a]">
-          <Search className="w-4 h-4 text-[#52525b] mr-2 shrink-0" />
+
+      {/* Search Bar */}
+      <div className="flex items-center gap-3 w-full mb-3">
+        <div className="flex items-center bg-[#18181b] rounded-xl px-4 py-3 flex-1 border border-[#27272a]">
+          <Search className="w-5 h-5 text-[#52525b] mr-3 shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && runSearch()}
-            placeholder="Chercher un mod sur Modrinth..."
-            className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-[#52525b]"
+            onKeyDown={(e) => e.key === "Enter" && runSearch(1)}
+            placeholder={t("mods.searchPlaceholder")}
+            className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-white placeholder:text-[#52525b]"
           />
         </div>
+      </div>
 
+      {/* Controls */}
+      <div className="flex items-center justify-end gap-2 mb-4">
+        <select
+          value={profile.id}
+          onChange={(e) => setSelectedProfileId(e.target.value)}
+          title={t("mods.selectProfile")}
+          className="bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] text-[#a1a1aa] rounded-lg px-3 py-2 text-xs md:text-sm font-semibold outline-none transition-colors shrink-0"
+        >
+          {profiles.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} ({p.minecraftVersion})
+            </option>
+          ))}
+        </select>
         <button
           onClick={openFolder}
-          title="Ouvrir le dossier du profil"
-          className="px-3 py-2.5 bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] text-[#a1a1aa] hover:text-white rounded-lg transition-colors shrink-0"
+          title={t("mods.openFolder")}
+          className="bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] text-[#a1a1aa] hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
-
-        <button
-          onClick={runSearch}
-          disabled={searching}
-          className="px-4 py-2.5 bg-accent-purple hover:bg-accent-purple-dark disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          {searching ? "Recherche..." : "Rechercher"}
-        </button>
+      
+        {totalHits > 0 && (
+          <div className="flex items-center gap-2 text-[#a1a1aa] text-sm font-bold shrink-0">
+            <button 
+              onClick={() => runSearch(Math.max(1, page - 1))}
+              disabled={page === 1 || searching}
+              className="w-8 h-8 flex items-center justify-center bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] hover:text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              &lt;
+            </button>
+            <span className="px-2">{t("mods.page")} {page} / {Math.ceil(totalHits / 20)}</span>
+            <button 
+              onClick={() => runSearch(Math.min(Math.ceil(totalHits / 20), page + 1))}
+              disabled={page >= Math.ceil(totalHits / 20) || searching}
+              className="w-8 h-8 flex items-center justify-center bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] hover:text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              &gt;
+            </button>
+          </div>
+        )}
       </div>
 
       {localError && (
-        <ErrorNotice message={localError} onDismiss={() => report(null)} />
+        <div className="mb-4">
+          <ErrorNotice message={localError} onDismiss={() => report(null)} />
+        </div>
       )}
 
       {notice && (
-        <div className="bg-accent-purple/10 border border-accent-purple/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
+        <div className="mb-4 bg-accent-purple/10 border border-accent-purple/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
           <Package className="w-4 h-4 text-accent-purple shrink-0 mt-0.5" />
           <p className="text-sm text-[#d8b4fe] flex-1 break-words">{notice}</p>
           <button
@@ -242,73 +271,89 @@ export function ModsTab({
         </div>
       )}
 
-      <p className="text-[#52525b] text-xs -mt-2">
-        Les mods sont installés dans ce profil uniquement, filtrés pour Fabric et
-        Minecraft {profile.minecraftVersion}.
-      </p>
-
       {hits.length > 0 && (
-        <div className="grid gap-2">
+        <div className="grid gap-3 mb-6">
           {hits.map((hit) => {
             const isInstalling = busyProject === hit.projectId;
+            const isInstalled = installed.some(m => m.fileName.toLowerCase().includes(hit.slug.toLowerCase()) || m.fileName.toLowerCase().includes(hit.title.toLowerCase().replace(/ /g, '-')));
             return (
               <div
                 key={hit.projectId}
-                className="bg-[#18181b] border border-[#27272a] rounded-xl p-3 flex items-center gap-3 hover:border-[#3f3f46] transition-colors"
+                className="bg-[#121214] border border-[#27272a] rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-[#3f3f46] transition-colors group"
               >
-                {hit.iconUrl ? (
-                  <img
-                    src={hit.iconUrl}
-                    alt=""
-                    className="w-10 h-10 rounded-lg shrink-0 bg-[#27272a]"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-[#27272a] shrink-0 flex items-center justify-center">
-                    <Package className="w-5 h-5 text-[#52525b]" />
-                  </div>
-                )}
+                <div className="flex flex-1 gap-4 md:gap-5 min-w-0">
+                  {hit.iconUrl ? (
+                    <img
+                      src={hit.iconUrl}
+                      alt=""
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-[#27272a]"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-[#27272a] shrink-0 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-[#52525b]" />
+                    </div>
+                  )}
 
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm truncate">{hit.title}</p>
-                  <p className="text-[#71717a] text-xs truncate">
-                    {hit.description}
-                  </p>
-                  <p className="text-[#52525b] text-[11px] mt-0.5">
-                    {hit.author} · {formatDownloads(hit.downloads)}{" "}
-                    téléchargements
-                  </p>
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <h3 className="font-bold text-lg md:text-xl text-white truncate">{hit.title}</h3>
+                      <span className="text-[#71717a] text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
+                    </div>
+                    <p className="text-[#a1a1aa] text-xs md:text-sm line-clamp-2 leading-relaxed">
+                      {hit.description}
+                    </p>
+                    
+
+                  </div>
                 </div>
 
-                <button
-                  onClick={() => handleInstall(hit)}
-                  disabled={isInstalling}
-                  className="shrink-0 px-3 py-2 bg-[#27272a] hover:bg-accent-purple-dark disabled:opacity-50 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  {isInstalling ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                  Installer
-                </button>
+                <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-[#27272a] pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
+                  <button
+                    onClick={() => handleInstall(hit)}
+                    disabled={isInstalling || isInstalled}
+                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent-purple/10 border border-accent-purple text-accent-purple disabled:opacity-50 disabled:border-[#3f3f46] disabled:text-[#71717a] disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
+                  >
+                    {isInstalling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isInstalled ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    {isInstalled ? "Installé" : "Add to instance"}
+                  </button>
+
+                  <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-[#a1a1aa] text-xs md:text-sm font-semibold w-full md:w-auto">
+                    <span className="flex items-center gap-1.5" title="Downloads">
+                      <Download className="w-4 h-4" />
+                      {formatDownloads(hit.downloads)}
+                    </span>
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
       )}
 
-      <div>
-        <h2 className="text-sm font-bold mb-2">
-          Mods de ce profil{" "}
-          <span className="text-[#71717a] font-normal">
-            ({installed.length})
-          </span>
-        </h2>
+      {/* Installed Mods list at the bottom */}
+      <div className="mt-4 border-t border-[#27272a] pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-white">
+            Mods de ce profil{" "}
+            <span className="text-[#71717a] font-normal">
+              ({installed.length})
+            </span>
+          </h2>
+          <p className="text-[#52525b] text-xs hidden sm:block">
+            InstallÃ©s dans ce profil uniquement, filtrÃ©s pour Fabric {profile.minecraftVersion}.
+          </p>
+        </div>
 
         {installed.length === 0 ? (
           <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-6 text-center">
             <p className="text-[#52525b] text-sm">
-              Aucun mod installé sur ce profil.
+              Aucun mod installÃ© sur ce profil.
             </p>
           </div>
         ) : (
@@ -316,17 +361,17 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2.5 flex items-center gap-3"
+                className="bg-[#18181b] border border-[#27272a] rounded-lg px-4 py-3 flex items-center gap-4 hover:border-[#3f3f46] transition-colors"
               >
-                <Package className="w-4 h-4 text-[#52525b] shrink-0" />
-                <span className="text-sm truncate flex-1">{mod.fileName}</span>
-                <span className="text-[#52525b] text-xs shrink-0">
+                <Package className="w-5 h-5 text-[#52525b] shrink-0" />
+                <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
+                <span className="text-[#52525b] text-xs shrink-0 font-mono">
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>
                 <button
                   onClick={() => handleRemove(mod.fileName)}
-                  className="shrink-0 p-1.5 text-[#71717a] hover:text-accent-red transition-colors"
-                  title="Retirer"
+                  className="shrink-0 p-2 bg-[#27272a] hover:bg-accent-red/20 text-[#71717a] hover:text-accent-red rounded-lg transition-colors"
+                  title={t("mods.remove")}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

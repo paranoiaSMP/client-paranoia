@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { launchMinecraft, getLaunchStatus } from "./launcher.service.js";
+import { launchMinecraft, getLaunchStatus, stopMinecraft } from "./launcher.service.js";
 
 export const launcherRouter = Router();
 
@@ -40,3 +40,11 @@ launcherRouter.get("/status/:profileId", (req, res) => {
   const status = getLaunchStatus(req.params.profileId);
   res.json(status);
 });
+
+launcherRouter.post("/stop/:profileId", (req, res) =>
+   {
+    const sucess = stopMinecraft(req.params.profileId);
+    res.json({ success: sucess });
+  
+
+  });

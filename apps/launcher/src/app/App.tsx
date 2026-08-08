@@ -9,7 +9,7 @@ import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/
 import { createProfile, importProfile } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
 import { waitForApi } from "../shared/api/http";
-import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse } from "../shared/api/launcherClient";
+import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse, stopMinecraftGame } from "../shared/api/launcherClient";
 
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
@@ -70,29 +70,31 @@ export function App() {
   const [launchStatus, setLaunchStatus] = useState<LaunchStatusResponse>({ state: "idle", progress: 0, text: "" });
 
   // Poll launch status when installState is "running"
+  // Poll launch status when installState is "running" or "done" (so we know when it stops)
   useEffect(() => {
     let interval: any;
-    if (installState === "running" && selectedProfileId) {
+    if ((installState === "running" || installState === "done") && selectedProfileId) {
       interval = setInterval(async () => {
         try {
           const status = await getLaunchStatus(selectedProfileId);
           setLaunchStatus(status);
+          
           if (status.state === "error") {
             setError(status.text);
             setInstallState("idle");
             clearInterval(interval);
-          } else if (status.state === "running") {
-            setInstallState("done");
+          } else if (status.state === "idle") {
+            setInstallState("idle");
             clearInterval(interval);
+          } else if (status.state === "running" && installState !== "done") {
+            setInstallState("done");
           }
         } catch (e) {
-          // ignore
         }
       }, 500);
     }
     return () => clearInterval(interval);
   }, [installState, selectedProfileId]);
-
   /*
    * DETECTION DES PROFILS EXTERNES
    * Recherche les installations existantes de Minecraft sur la machine pour l'importation de parametres.
@@ -223,6 +225,23 @@ export function App() {
   }
 
   /*
+  *  ARRET DU JEU 
+  *
+  */
+  
+    async function handleStopGame(profileId: string) {
+    try {
+      await stopMinecraftGame(profileId);
+      setInstallState("idle");
+      setLaunchStatus({ state: "idle", progress: 0, text: "" });
+    } catch (e) {
+      console.error("Erreur lors de l'arrêt", e);
+    }
+  }
+  
+  
+
+  /*
    * IMPORTATION D'UN PROFIL JSON
    */
   async function handleImportProfileAction() {
@@ -310,7 +329,7 @@ export function App() {
           onLogout={handleLogout}
         />
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           {activeTab === "accueil" && (
             <AccueilTab 
               account={account}
@@ -322,6 +341,7 @@ export function App() {
               selectedProfileId={selectedProfileId}
               setSelectedProfileId={setSelectedProfileId}
               setActiveTab={setActiveTab}
+              onStopGame={handleStopGame}
               onLaunchGame={handleLaunchGame}
             />
           )}

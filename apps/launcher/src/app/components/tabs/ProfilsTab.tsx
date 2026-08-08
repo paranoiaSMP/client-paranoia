@@ -63,7 +63,7 @@ export function ProfilsTab({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pb-6">
             {profiles.map((profile) => {
               const isSelected = selectedProfileId === profile.id;
               return (

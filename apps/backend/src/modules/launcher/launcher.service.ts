@@ -18,6 +18,7 @@ export type LaunchStatus = {
 // We store instances and status of launchers
 const activeLaunchers = new Map<string, Client>();
 const launchStatuses = new Map<string, LaunchStatus>();
+const activeProcesses = new Map<string, import("node:child_process").ChildProcess>();
 
 /** "1920x1080" -> { width: 1920, height: 1080 }; null si la valeur est invalide. */
 function parseResolution(
@@ -33,6 +34,20 @@ function parseResolution(
 
 export function getLaunchStatus(profileId: string): LaunchStatus {
   return launchStatuses.get(profileId) || { state: "idle", progress: 0, text: "" };
+}
+
+export function stopMinecraft(profileId: string):
+boolean {
+  const proc = activeProcesses.get(profileId);
+  if (proc) {
+    proc.kill();
+    activeProcesses.delete(profileId);
+    activeLaunchers.delete(profileId);
+    launchStatuses.set(profileId, { state: "idle", progress: 0, text: ""});
+    return true;
+  
+  }
+  return false;
 }
 
 export async function launchMinecraft(
@@ -204,6 +219,7 @@ export async function launchMinecraft(
     launcher.on('close', (e) => {
       console.log(`[MC Launcher Close] Exited with code ${e}`);
       activeLaunchers.delete(profileId);
+      activeProcesses.delete(profileId);
       updateStatus({ state: "idle", progress: 0, text: "" });
       setIdlePresence();
     });
@@ -213,6 +229,7 @@ export async function launchMinecraft(
     // Une fois lance, on passe a "launching" (jeu en cours de demarrage)
     const proc = await launcher.launch(opts);
     if (proc) {
+      activeProcesses.set(profileId, proc);
       updateStatus({ state: "running", progress: 100, text: "Jeu en cours d'execution" });
       setPlayingPresence(minecraftVersion, account.minecraftUsername);
     }
