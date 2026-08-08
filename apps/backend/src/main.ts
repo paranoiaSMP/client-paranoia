@@ -87,3 +87,11 @@ initDiscordRPC();
 app.listen(Number(env.PORT), () => {
   logger.info(`Paranoia API listening on :${env.PORT}`);
 });
+
+// Lorsqu'on ferme le launcher ou que le processus parent crashe, Tauri ferme les pipes (stdin).
+// Le sidecar détecte la fin de stdin et s'éteint proprement au lieu de rester zombie.
+process.stdin.resume();
+process.stdin.on('end', () => {
+  logger.info('Stdin closed by parent, shutting down backend...');
+  process.exit(0);
+});
