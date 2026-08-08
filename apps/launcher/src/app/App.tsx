@@ -218,6 +218,8 @@ export function App() {
     const profile = profiles.find(p => p.id === profileId);
     if (!profile) return;
     
+    setActiveTab("accueil");
+
     try {
       setInstallState("running");
       setLaunchStatus({ state: "idle", progress: 0, text: "Initialisation..." });

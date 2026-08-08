@@ -9,18 +9,28 @@ const cache = new Map<string, number>();
  * required historically; only used offline or if the metadata is missing.
  */
 function guessFromVersion(minecraftVersion: string): number {
-  const match = /^1\.(\d+)(?:\.(\d+))?/.exec(minecraftVersion);
-  if (!match) {
-    return 21;
+  // Gère les anciennes versions (1.x.y) et les nouvelles (ex: 26.1 depuis le Game drop de 2026)
+  const oldMatch = /^1\.(\d+)(?:\.(\d+))?/.exec(minecraftVersion);
+  const newMatch = /^(\d+)(?:\.(\d+))?/.exec(minecraftVersion);
+  
+  let featureVersion = 0;
+  let patchVersion = 0;
+
+  if (oldMatch) {
+    featureVersion = Number(oldMatch[1]);
+    patchVersion = Number(oldMatch[2] ?? 0);
+  } else if (newMatch) {
+    featureVersion = Number(newMatch[1]);
+    patchVersion = Number(newMatch[2] ?? 0);
+  } else {
+    return 25; // Par défaut pour les versions très récentes ou inconnues
   }
 
-  const minor = Number(match[1]);
-  const patch = Number(match[2] ?? 0);
-
-  if (minor <= 16) return 8;
-  if (minor <= 19) return 17;
-  if (minor === 20 && patch < 5) return 17;
-  return 21;
+  if (featureVersion <= 16) return 8;
+  if (featureVersion <= 19) return 17;
+  if (featureVersion === 20 && patchVersion < 5) return 17;
+  if (featureVersion === 20 || featureVersion === 21) return 21;
+  return 25; // Pour 1.22+ ou 26+ (Game drops), Java 25 (class version 69.0)
 }
 
 /**
