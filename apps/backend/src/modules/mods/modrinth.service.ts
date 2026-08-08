@@ -111,7 +111,7 @@ export async function searchMods(opts: {
   gameVersion?: string | undefined;
   loader?: string | undefined;
   limit: number;
-  offset: number;
+  offset?: number;
 }): Promise<{ hits: ModSearchHit[]; total: number }> {
   const facets: string[][] = [["project_type:mod"]];
   if (opts.loader) {
@@ -128,7 +128,7 @@ export async function searchMods(opts: {
     query: opts.query,
     facets: JSON.stringify(facets),
     limit: String(opts.limit),
-    offset: String(opts.offset),
+    offset: String(opts.offset ?? 0),
     index: "relevance",
   });
 

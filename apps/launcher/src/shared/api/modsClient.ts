@@ -35,11 +35,13 @@ export async function searchMods(opts: {
   gameVersion?: string;
   loader?: string;
   limit?: number;
+  offset?: number;
 }): Promise<{ hits: ModSearchHit[]; total: number }> {
   const params = new URLSearchParams({ query: opts.query });
   if (opts.gameVersion) params.set("gameVersion", opts.gameVersion);
   if (opts.loader) params.set("loader", opts.loader);
   if (opts.limit) params.set("limit", String(opts.limit));
+  if (opts.offset) params.set("offset", String(opts.offset));
 
   return apiRequest(`/v1/mods/search?${params.toString()}`);
 }
