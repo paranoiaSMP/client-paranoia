@@ -47,7 +47,7 @@ export interface InstallationManifest {
   id: string;
   minecraftVersion: string;
   fabricLoaderVersion?: string;
-  requiredJavaMajor: number;
+  requiredJavaMajor?: number;
   profileTypeId: string;
   graphicsModeId: string;
   artifacts: FileArtifact[];

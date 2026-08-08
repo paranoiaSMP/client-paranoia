@@ -84,7 +84,9 @@ export function getManifest(
     ...(match?.fabricLoaderVersion
       ? { fabricLoaderVersion: match.fabricLoaderVersion }
       : {}),
-    requiredJavaMajor: match?.requiredJavaMajor ?? 21,
+    ...(match?.requiredJavaMajor
+      ? { requiredJavaMajor: match.requiredJavaMajor }
+      : {}),
     profileTypeId,
     graphicsModeId,
     artifacts: (match?.artifacts ?? []) as FileArtifact[],
