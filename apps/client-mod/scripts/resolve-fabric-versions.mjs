@@ -37,20 +37,32 @@ async function resolveLoom() {
     await get("https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml")
   ).text();
 
-  // <release> designe la derniere version stable; certains depots ne l'ont pas,
-  // d'ou le repli sur la derniere <version> non-SNAPSHOT.
-  const release = /<release>([^<]+)<\/release>/.exec(metadata);
-  if (release) {
-    return release[1].trim();
+  // <release> n'est pas fiable ici: il a pointe sur 1.18.0-alpha.14, une
+  // preversion qui exige une JVM 25. On ne garde que les versions purement
+  // numeriques, ce qui ecarte alpha, beta, rc et SNAPSHOT d'un coup.
+  const stable = [...metadata.matchAll(/<version>([^<]+)<\/version>/g)]
+    .map((match) => match[1].trim())
+    .filter((version) => /^\d+(\.\d+)*$/.test(version));
+
+  if (stable.length === 0) {
+    throw new Error("aucune version stable de fabric-loom trouvee");
   }
 
-  const versions = [...metadata.matchAll(/<version>([^<]+)<\/version>/g)]
-    .map((match) => match[1].trim())
-    .filter((version) => !version.endsWith("-SNAPSHOT"));
-  if (versions.length === 0) {
-    throw new Error("aucune version de fabric-loom trouvee");
+  // L'ordre du fichier n'est pas garanti: on compare les numeros nous-memes,
+  // sinon "1.9.0" passerait apres "1.11.9" en tri lexicographique.
+  return stable.sort(compareVersions)[stable.length - 1];
+}
+
+function compareVersions(a, b) {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) {
+      return diff;
+    }
   }
-  return versions[versions.length - 1];
+  return 0;
 }
 
 /** Derniere version de yarn publiee pour cette version de Minecraft. */

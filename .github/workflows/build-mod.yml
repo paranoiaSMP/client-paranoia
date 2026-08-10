@@ -30,11 +30,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK 21
+      # Deux JDK, deux roles distincts: Gradle et loom tournent sur le 25 (les
+      # versions recentes de loom l'exigent), tandis que le mod est compile en
+      # bytecode 21 via la toolchain, que Gradle retrouve parmi les JDK
+      # installes. Compiler en 21 depuis une JVM 25 est le fonctionnement normal
+      # des toolchains, pas un contournement.
+      - name: Setup JDKs
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: |
+            21
+            25
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
