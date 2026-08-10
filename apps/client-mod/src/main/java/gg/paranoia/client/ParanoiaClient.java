@@ -36,7 +36,7 @@ public final class ParanoiaClient {
         // fichier garde ses defauts, un module absent du code est ignore.
         REGISTRY.load();
 
-        platform.registerHudRenderer((context, tickDelta) -> REGISTRY.renderInGame(context));
+        platform.registerHudRenderer(REGISTRY::renderInGame);
         platform.registerMenuKey(ParanoiaClient::toggleMenu);
 
         LOGGER.info(

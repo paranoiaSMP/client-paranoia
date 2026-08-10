@@ -20,8 +20,9 @@ public final class PlatformImpl implements ClientPlatform {
 
     @Override
     public void registerHudRenderer(HudRenderer renderer) {
-        HudRenderCallback.EVENT.register(
-            (context, tickCounter) -> renderer.render(context, tickCounter.getTickDelta(true)));
+        // Le second parametre est le compteur d'images: inutilise, et son nom de
+        // methode differe selon la version, donc on ne le touche pas.
+        HudRenderCallback.EVENT.register((context, tickCounter) -> renderer.render(context));
     }
 
     @Override
@@ -50,13 +51,15 @@ public final class PlatformImpl implements ClientPlatform {
 
     @Override
     public void pushScale(DrawContext context, float scale, int pivotX, int pivotY) {
-        context.getMatrices().push();
-        context.getMatrices().translate(pivotX, pivotY, 0.0f);
-        context.getMatrices().scale(scale, scale, 1.0f);
+        // getMatrices() renvoie un Matrix3x2fStack (JOML, 2D): pushMatrix/popMatrix
+        // et des translate/scale a deux composantes, pas le MatrixStack 3D d'avant.
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(pivotX, pivotY);
+        context.getMatrices().scale(scale, scale);
     }
 
     @Override
     public void popScale(DrawContext context) {
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 }
