@@ -68,6 +68,25 @@ jobs:
         working-directory: apps/client-mod
         run: gradle build
 
+      # Quand une classe de Minecraft change de paquet entre deux versions,
+      # javac dit seulement "cannot find symbol". Plutot que de deviner le
+      # nouveau chemin et de relancer la CI a chaque essai, on va le lire dans
+      # les jars remappes par loom.
+      - name: Locate moved Minecraft classes
+        if: failure()
+        run: |
+          names="Click KeyInput RenderTickCounter"
+          echo "Recherche de: $names"
+          find ~/.gradle/caches -name '*.jar' -path '*loom*' 2>/dev/null | while read -r jar; do
+            for name in $names; do
+              hits=$(unzip -l "$jar" 2>/dev/null \
+                | grep -oE "net/minecraft/[a-z0-9/]*${name}\.class" | sort -u || true)
+              if [ -n "$hits" ]; then
+                echo "$hits" | sed "s|^|  $(basename "$jar"): |"
+              fi
+            done
+          done | sort -u
+
       - name: List produced jars
         working-directory: apps/client-mod
         run: |
