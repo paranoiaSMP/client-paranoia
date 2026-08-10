@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "paranoia_client",
+  "version": "${version}",
+  "name": "Paranoia Client",
+  "description": "Client premium Paranoia: menu de mods, HUD deplacables et cosmetiques",
+  "authors": ["Paranoia Team"],
+  "contact": {
+    "homepage": "https://paranoia.gg"
+  },
+  "license": "Proprietary",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "gg.paranoia.client.platform.impl.VersionEntrypoint"
+    ]
+  },
+  "mixins": [
+    "paranoia_client.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "fabric-api": "*",
+    "minecraft": "1.21.10",
+    "java": ">=21"
+  }
+}
