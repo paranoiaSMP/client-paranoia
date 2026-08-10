@@ -29,6 +29,17 @@ const installCatalogSchema = z.object({
       graphicsModeId: z.string(),
       fabricLoaderVersion: z.string().optional(),
       requiredJavaMajor: z.number().int().positive(),
+      // Sans cette declaration, zod retire la cle a la lecture: les cles
+      // inconnues sont supprimees par defaut. Le mod client etait donc efface
+      // du catalogue avant meme d'arriver a getManifest.
+      clientMod: z
+        .object({
+          fileName: z.string(),
+          downloadUrl: z.string().url(),
+          sha256: z.string(),
+          size: z.number().int().nonnegative(),
+        })
+        .optional(),
       artifacts: z.array(
         z.object({
           id: z.string(),
@@ -89,6 +100,10 @@ export function getManifest(
       : {}),
     profileTypeId,
     graphicsModeId,
+    // Oubli qui rendait le mod client indetectable: le manifeste est reconstruit
+    // champ par champ, et celui-ci n'y figurait pas. manifest.clientMod valait
+    // donc toujours undefined, quelle que soit la version.
+    ...(match?.clientMod ? { clientMod: match.clientMod } : {}),
     artifacts: (match?.artifacts ?? []) as FileArtifact[],
     generatedAt: new Date().toISOString(),
     signature: "TODO_SIGNED_MANIFEST",

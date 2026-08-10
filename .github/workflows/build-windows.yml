@@ -175,6 +175,21 @@ jobs:
 
             $profiles = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/profiles" -TimeoutSec 5
             Write-Host "profils: OK"
+
+            # Le mod client a deja ete publie deux fois sans jamais se charger:
+            # une fois faute de Fabric API, une fois parce que le manifeste
+            # perdait le champ clientMod entre le catalogue et le launcher.
+            # On verifie donc ce que le launcher recevra reellement, pas ce
+            # qu'on croit avoir ecrit dans le catalogue.
+            if ("${{ github.ref }}".StartsWith("refs/tags/v")) {
+              $body = '{"minecraftVersion":"1.21.8","profileTypeId":"pvp","graphicsModeId":"balanced"}'
+              $manifest = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/manifest" `
+                -Method Post -ContentType "application/json" -Body $body -TimeoutSec 5
+              if (-not $manifest.clientMod) {
+                throw "le manifeste ne porte pas clientMod: le mod ne serait installe chez personne"
+              }
+              Write-Host "mod client: OK ($($manifest.clientMod.fileName))"
+            }
           } finally {
             Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
           }
