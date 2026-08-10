@@ -87,6 +87,31 @@ jobs:
             done
           done | sort -u
 
+      # TEMPORAIRE -- a retirer une fois les mixins ecrits.
+      #
+      # Brightness (fullbright), crosshair personnalise et color hit ont besoin
+      # de cibler des methodes de Minecraft par leur nom mappe, qui differe
+      # selon la version. Les deviner coute un aller-retour de CI par essai;
+      # javap les donne d'un coup, pour les deux versions.
+      - name: Dump mixin target signatures
+        if: always()
+        run: |
+          dump() { # jar, classe, motif de filtre
+            echo "--- $2"
+            javap -classpath "$1" "$2" 2>/dev/null | grep -E "$3" || echo "    (rien ne correspond)"
+          }
+
+          find ~/.gradle/caches -name 'minecraft-merged-*-v2.jar' | sort -u | while read -r jar; do
+            echo "=============================================================="
+            echo "$(basename "$jar")"
+            echo "=============================================================="
+            dump "$jar" net.minecraft.client.render.LightmapTextureManager '.'
+            dump "$jar" net.minecraft.client.option.GameOptions '[Gg]amma'
+            dump "$jar" net.minecraft.client.gui.hud.InGameHud '[Cc]rosshair'
+            dump "$jar" net.minecraft.client.network.ClientPlayNetworkHandler '[Tt]ime'
+            dump "$jar" net.minecraft.client.render.entity.LivingEntityRenderer '[Oo]verlay|[Cc]olor|getRenderLayer'
+          done
+
       - name: List produced jars
         working-directory: apps/client-mod
         run: |

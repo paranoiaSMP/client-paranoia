@@ -30,6 +30,8 @@ public final class MenuController {
     private static final int PANEL_WIDTH = 168;
     private static final int ROW_HEIGHT = 18;
     private static final int SETTINGS_WIDTH = 190;
+    private static final int BUTTON_WIDTH = 150;
+    private static final int BUTTON_HEIGHT = 28;
 
     /** Distance en pixels sous laquelle un bord s'aimante. */
     private static final int SNAP_DISTANCE = 5;
@@ -43,11 +45,21 @@ public final class MenuController {
     private static final int COLOR_TEXT_DIM = 0xFF9090A0;
     private static final int COLOR_GUIDE = 0xFFB07CFF;
     private static final int COLOR_SELECTION = 0xFFB07CFF;
+    private static final int COLOR_BUTTON = 0xD0141419;
+    private static final int COLOR_BUTTON_HOVER = 0xF0241E33;
 
     private final HudRegistry registry;
 
     private ModuleCategory activeCategory = ModuleCategory.HUD;
     private Module selectedModule;
+
+    /**
+     * Maj droite ouvre le mode edition: fond floute, HUD deplacables, et un
+     * bouton au centre. La liste des modules n'apparait qu'apres un clic
+     * dessus, pour ne pas recouvrir la moitie de l'ecran qu'on est en train de
+     * regler.
+     */
+    private boolean listOpen;
 
     private HudElement dragged;
     private int dragGrabX;
@@ -104,10 +116,45 @@ public final class MenuController {
 
         renderHudElements(context);
         renderGuides(context);
-        renderPanel(context, mouseX, mouseY);
+        renderCenterButton(context, mouseX, mouseY);
 
-        if (selectedModule != null) {
-            renderSettingsPanel(context, mouseX, mouseY);
+        if (listOpen) {
+            renderPanel(context, mouseX, mouseY);
+
+            if (selectedModule != null) {
+                renderSettingsPanel(context, mouseX, mouseY);
+            }
+        }
+    }
+
+    // --------------------------------------------------------- bouton central
+
+    private int buttonX() {
+        return (width - BUTTON_WIDTH) / 2;
+    }
+
+    private int buttonY() {
+        return (height - BUTTON_HEIGHT) / 2;
+    }
+
+    private void renderCenterButton(DrawContext context, int mouseX, int mouseY) {
+        int x = buttonX();
+        int y = buttonY();
+        boolean hovered = inside(mouseX, mouseY, x, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+
+        context.fill(x, y, x + BUTTON_WIDTH, y + BUTTON_HEIGHT,
+            hovered ? COLOR_BUTTON_HOVER : COLOR_BUTTON);
+        drawOutline(context, x, y, BUTTON_WIDTH, BUTTON_HEIGHT, COLOR_ACCENT);
+
+        String label = listOpen ? "FERMER LA LISTE" : "MODULES";
+        int labelX = x + (BUTTON_WIDTH - textRenderer.getWidth(label)) / 2;
+        int labelY = y + (BUTTON_HEIGHT - textRenderer.fontHeight) / 2;
+        context.drawText(textRenderer, label, labelX, labelY, COLOR_ACCENT, false);
+
+        if (!listOpen) {
+            String hint = "Glissez les HUD pour les deplacer";
+            int hintX = x + (BUTTON_WIDTH - textRenderer.getWidth(hint)) / 2;
+            context.drawText(textRenderer, hint, hintX, y + BUTTON_HEIGHT + 6, COLOR_TEXT_DIM, false);
         }
     }
 
@@ -303,10 +350,20 @@ public final class MenuController {
         double mouseX = this.mouseX;
         double mouseY = this.mouseY;
 
-        if (handlePanelClick(mouseX, mouseY, button)) {
+        if (inside(mouseX, mouseY, buttonX(), buttonY(), BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            listOpen = !listOpen;
+            if (!listOpen) {
+                selectedModule = null;
+            }
             return true;
         }
-        if (selectedModule != null && handleSettingsClick(mouseX, mouseY, button)) {
+
+        // Les panneaux n'existent que liste ouverte: sinon un clic a leur
+        // emplacement doit pouvoir attraper un HUD pose au meme endroit.
+        if (listOpen && handlePanelClick(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (listOpen && selectedModule != null && handleSettingsClick(mouseX, mouseY, button)) {
             return true;
         }
         return handleHudClick(mouseX, mouseY, button);
@@ -449,6 +506,9 @@ public final class MenuController {
             }
 
             if (button == 1) {
+                // Clic droit sur un HUD: on ouvre la liste sur ses reglages,
+                // sinon le panneau resterait invisible et le clic sans effet.
+                listOpen = true;
                 selectedModule = element;
                 activeCategory = element.category();
                 return true;
