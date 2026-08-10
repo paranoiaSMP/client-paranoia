@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { ensureInstanceLayout, instanceDir } from "../launcher/paths.js";
+import { ensureFabricApi } from "../launcher/fabricApi.js";
 import {
   createProfile,
   deleteProfile,
@@ -30,6 +31,31 @@ profilesRouter.get("/", (_req, res) => {
   res.json(listProfiles());
 });
 
+/**
+ * Prepare une instance neuve: arborescence, puis Fabric API.
+ *
+ * <p>Fabric API part en tache de fond: la creation d'un profil doit rester
+ * instantanee, et elle ne doit pas echouer parce que Modrinth est lent ou
+ * injoignable. Le lancement le refait de toute facon, cette fois en bloquant,
+ * avec la barre de progression et un message clair en cas d'echec.
+ */
+async function prepareInstance(profile: { id: string; minecraftVersion: string }): Promise<void> {
+  await ensureInstanceLayout(profile.id);
+
+  void ensureFabricApi(instanceDir(profile.id), profile.minecraftVersion, () => {})
+    .then((installed) => {
+      console.log(
+        installed
+          ? `[Profils] Fabric API pret pour ${profile.id}`
+          : `[Profils] pas de Fabric API pour Minecraft ${profile.minecraftVersion}`,
+      );
+    })
+    .catch((err) => {
+      // Jamais fatal ici: seul le lancement a besoin d'une garantie.
+      console.warn(`[Profils] Fabric API non installe pour ${profile.id}:`, err);
+    });
+}
+
 profilesRouter.post("/", async (req, res, next) => {
   try {
 
@@ -37,7 +63,7 @@ profilesRouter.post("/", async (req, res, next) => {
     const input = profileCreateSchema.parse(req.body);
     console.log("CE QUE ZOD A GARDE :", input);
     const profile = createProfile(input);
-    await ensureInstanceLayout(profile.id);
+    await prepareInstance(profile);
     return res.status(201).json(profile);
     
   } catch (err) {
@@ -82,7 +108,7 @@ profilesRouter.post("/:id/duplicate", async (req, res, next) => {
       return res.status(404).json({ message: "profile not found" });
     }
 
-    await ensureInstanceLayout(duplicated.id);
+    await prepareInstance(duplicated);
     return res.status(201).json(duplicated);
   } catch (err) {
     return next(err);
@@ -111,7 +137,7 @@ profilesRouter.post("/import", async (req, res, next) => {
   try {
     const input = profileCreateSchema.parse(req.body);
     const profile = importProfile(input);
-    await ensureInstanceLayout(profile.id);
+    await prepareInstance(profile);
     return res.status(201).json(profile);
   } catch (err) {
     return next(err);

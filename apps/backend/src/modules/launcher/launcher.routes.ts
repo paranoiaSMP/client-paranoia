@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { launchMinecraft, getLaunchStatus } from "./launcher.service.js";
+import { launchMinecraft, getLaunchStatus, cancelLaunch } from "./launcher.service.js";
 
 export const launcherRouter = Router();
 
@@ -39,4 +39,9 @@ launcherRouter.post("/play", async (req, res, next) => {
 launcherRouter.get("/status/:profileId", (req, res) => {
   const status = getLaunchStatus(req.params.profileId);
   res.json(status);
+});
+
+launcherRouter.post("/cancel/:profileId", (req, res) => {
+  cancelLaunch(req.params.profileId);
+  res.json({ status: "canceled" });
 });

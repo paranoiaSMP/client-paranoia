@@ -56,13 +56,6 @@ export function ProfileCreation({
   installState,
 }: ProfileCreationProps) {
   const { t } = useTranslation();
-
-  /*
-   * ASSISTANT DE CREATION DE PROFIL (WIZARD)
-   * Guide l'utilisateur a travers 5 etapes pour configurer un nouveau profil Minecraft.
-   * Les etapes incluent la verification du compte, le choix de version/nom, le preset global,
-   * le preset graphique et enfin un recapitulatif avant l'installation.
-   */
   return (
     <div className="bg-[#1c1c1e] border-2 border-[#2a2a2c] rounded-xl p-8 max-w-2xl mx-auto shadow-2xl">
       <h3 className="text-2xl font-black text-white mb-6">
@@ -343,7 +336,7 @@ export function ProfileCreation({
       <div className="flex justify-between mt-8 pt-6 border-t border-[#2a2a2c]">
         <button
           onClick={() => setStep(step - 1)}
-          disabled={step === 1}
+          disabled={step === 1 || (step === 2 && connected)}
           className="px-6 py-2 rounded text-[#8888a0] font-bold hover:text-white hover:bg-[#2a2a2c] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {t("wizard.back")}

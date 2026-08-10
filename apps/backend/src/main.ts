@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import pino from "pino";
+import { initDiscordRPC } from './modules/discord/discord.service.js';
 import { pinoHttp } from "pino-http";
 import { ZodError } from "zod";
 import { env } from "./config/env.js";
@@ -81,6 +82,19 @@ app.use(
   },
 );
 
+initDiscordRPC();
+
 app.listen(Number(env.PORT), () => {
   logger.info(`Paranoia API listening on :${env.PORT}`);
 });
+
+// Lorsqu'on ferme le launcher ou que le processus parent crashe, Tauri ferme les pipes (stdin).
+// Le sidecar détecte la fin de stdin et s'éteint proprement au lieu de rester zombie.
+// N'est activé que si lancé via Tauri (et non pas en standalone pour les tests CI).
+if (process.env.TAURI_SIDECAR === "true") {
+  process.stdin.resume();
+  process.stdin.on('end', () => {
+    logger.info('Stdin closed by parent, shutting down backend...');
+    process.exit(0);
+  });
+}

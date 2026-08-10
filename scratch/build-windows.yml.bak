@@ -1,0 +1,226 @@
+name: build-windows
+
+on:
+  # La branche par defaut du depot est ci/windows-exe-build: en ne ciblant que
+  # main, ce workflow ne se declenchait jamais.
+  push:
+    branches:
+      - main
+      - ci/windows-exe-build
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+      - ci/windows-exe-build
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Le backend n'etait compile nulle part dans la CI: ses erreurs de type
+      # ne remontaient qu'au lancement en local.
+      - name: Typecheck workspace
+        run: pnpm -r typecheck
+
+  build:
+    runs-on: windows-latest
+    needs: checks
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/launcher/src-tauri
+
+      - name: Ensure Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure MSVC for node-gyp
+        shell: pwsh
+        run: |
+          npm config set msvs_version 2022
+          setx GYP_MSVS_VERSION 2022
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate placeholder icons
+        working-directory: apps/launcher
+        run: pnpm exec tauri icon src-tauri/app-icon.svg
+
+      - name: Typecheck and build launcher
+        working-directory: apps/launcher
+        run: pnpm build
+
+      # Doit precede le bundle: tauri.conf.json declare le backend en
+      # externalBin et echoue si le binaire n'existe pas encore.
+      - name: Build backend sidecar
+        run: pnpm --filter @paranoia/backend build:sidecar
+
+      # Verifie sur du vrai Windows que le binaire injecte demarre et sert
+      # l'API. Sans ce test, un sidecar casse (injection SEA ratee, dependance
+      # manquante) ne se voyait qu'apres installation chez un joueur.
+      - name: Smoke test sidecar
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "apps/launcher/src-tauri/binaries/paranoia-server-*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "sidecar introuvable dans binaries/" }
+          Write-Host "sidecar: $($exe.Name) ($([math]::Round($exe.Length / 1MB)) Mo)"
+
+          $env:PORT = "47820"
+          $proc = Start-Process -FilePath $exe.FullName -PassThru -NoNewWindow
+          try {
+            $ready = $false
+            foreach ($i in 1..30) {
+              Start-Sleep -Seconds 1
+              try {
+                $health = Invoke-RestMethod -Uri "http://127.0.0.1:47820/health" -TimeoutSec 2
+                if ($health.ok) { $ready = $true; break }
+              } catch { }
+            }
+            if (-not $ready) { throw "le sidecar n'a pas repondu sur /health en 30s" }
+            Write-Host "health: OK"
+
+            # Le catalogue est embarque dans le binaire: s'il repond, le bundle
+            # esbuild a bien ete injecte et pas seulement le runtime Node.
+            $config = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/remote-config" -TimeoutSec 5
+            if (-not $config.supportedMinecraftVersions) { throw "catalogue vide ou absent" }
+            Write-Host "catalogue: OK ($($config.supportedMinecraftVersions.Count) versions)"
+
+            $profiles = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/profiles" -TimeoutSec 5
+            Write-Host "profils: OK"
+          } finally {
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          }
+
+      # La cle privee signe l'archive de mise a jour. Sans elle le build reste
+      # valide mais ne produit pas de .sig, donc aucune mise a jour publiable:
+      # les clients deja installes refusent toute archive non signee.
+      - name: Build Windows bundle
+        working-directory: apps/launcher
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm exec tauri build --bundles nsis
+
+      # Le sidecar doit se retrouver a cote de l'executable principal, sinon
+      # l'application s'installe correctement mais ne demarre aucun backend.
+      - name: Verify sidecar is bundled
+        shell: pwsh
+        run: |
+          $dir = "apps/launcher/src-tauri/target/release"
+          $sidecar = Get-ChildItem "$dir/paranoia-server*.exe" -ErrorAction SilentlyContinue
+          if (-not $sidecar) {
+            Get-ChildItem $dir -Filter *.exe | ForEach-Object { Write-Host " - $($_.Name)" }
+            throw "le sidecar n'a pas ete copie a cote de l'executable"
+          }
+          Write-Host "sidecar empaquete: $($sidecar.Name)"
+
+          $installer = Get-ChildItem "$dir/bundle/nsis/*.exe"
+          Write-Host "installeur: $($installer.Name) ($([math]::Round($installer.Length / 1MB)) Mo)"
+          # Un installeur trop leger signifie que le sidecar n'y est pas.
+          if ($installer.Length -lt 20MB) {
+            throw "installeur suspect ($([math]::Round($installer.Length / 1MB)) Mo): le backend n'y est probablement pas"
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: paranoia-client-windows
+          if-no-files-found: error
+          path: |
+            apps/launcher/src-tauri/target/release/bundle/nsis/*.exe
+            apps/launcher/src-tauri/target/release/paranoia-launcher.exe
+
+      # Manifeste lu par les clients deja installes pour detecter une nouvelle
+      # version. Il porte la signature produite juste avant: un client refuse
+      # toute archive dont la signature ne correspond pas a sa cle publique.
+      - name: Generate update manifest
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $nsis = "apps/launcher/src-tauri/target/release/bundle/nsis"
+          $installer = Get-ChildItem "$nsis/*-setup.exe" | Select-Object -First 1
+          if (-not $installer) { throw "installeur NSIS introuvable" }
+
+          $sigFile = "$($installer.FullName).sig"
+          if (-not (Test-Path $sigFile)) {
+            throw "signature absente: le secret TAURI_SIGNING_PRIVATE_KEY est-il configure ?"
+          }
+
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $manifest = @{
+            version = $version
+            notes = "Voir les notes de version sur GitHub."
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = (Get-Content $sigFile -Raw).Trim()
+                url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$($installer.Name.Replace(' ', '.'))"
+              }
+            }
+          }
+
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content "$nsis/latest.json" -Encoding utf8
+          Write-Host "latest.json genere pour la version $version"
+
+      # Pousser un tag `v0.1.0` publie l'installeur en release GitHub, seule
+      # forme telechargeable sans compte connecte.
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Paranoia Client ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
+            apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
+            apps/launcher/src-tauri/target/release/bundle/nsis/latest.json

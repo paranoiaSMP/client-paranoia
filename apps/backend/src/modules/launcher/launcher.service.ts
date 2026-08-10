@@ -3,11 +3,14 @@ import path from "node:path";
 import { ensureJava } from "./javaDownloader.js";
 import { requiredJavaMajor } from "./javaRequirement.js";
 import { readSettings } from "../settings/settings.store.js";
+import { setIdlePresence, setPlayingPresence } from '../discord/discord.service.js';
 import { getManifest } from "../catalog/catalog.routes.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
 import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
+import { ensureClientMod } from "./clientMod.js";
+import { ensureFabricApi } from "./fabricApi.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
@@ -18,6 +21,8 @@ export type LaunchStatus = {
 
 // We store instances and status of launchers
 const activeLaunchers = new Map<string, Client>();
+const activeProcesses = new Map<string, any>(); // Store the ChildProcess
+const cancelFlags = new Map<string, boolean>();
 const launchStatuses = new Map<string, LaunchStatus>();
 
 /** "1920x1080" -> { width: 1920, height: 1080 }; null si la valeur est invalide. */
@@ -34,6 +39,18 @@ function parseResolution(
 
 export function getLaunchStatus(profileId: string): LaunchStatus {
   return launchStatuses.get(profileId) || { state: "idle", progress: 0, text: "" };
+}
+
+export function cancelLaunch(profileId: string) {
+  cancelFlags.set(profileId, true);
+  const proc = activeProcesses.get(profileId);
+  if (proc) {
+    try {
+      proc.kill();
+    } catch (e) {
+      console.warn("Could not kill process", e);
+    }
+  }
 }
 
 export async function launchMinecraft(
@@ -56,10 +73,14 @@ export async function launchMinecraft(
 
   // Keep track of it
   activeLaunchers.set(profileId, launcher);
+  cancelFlags.set(profileId, false);
+  activeProcesses.delete(profileId);
   
   const updateStatus = (status: LaunchStatus) => {
     launchStatuses.set(profileId, status);
   };
+  
+  updateStatus({ state: "downloading_assets", progress: 0, text: "Initialisation du lancement..." });
 
   try {
     const profile = exportProfile(profileId);
@@ -83,6 +104,8 @@ export async function launchMinecraft(
     const java = await ensureJava(javaMajor, rootPath, (text: string, percentage: number) => {
       updateStatus({ state: "downloading_java", progress: percentage, text });
     });
+    
+    if (cancelFlags.get(profileId)) throw new Error("Lancement annulé");
 
     // Un chemin Java saisi dans les parametres prime sur le runtime telecharge.
     const javaExecutable = settings.javaPath.trim() || java.javaw;
@@ -110,6 +133,7 @@ export async function launchMinecraft(
       customVersionName = await ensureFabric(rootPath, manifest.minecraftVersion, loaderVersion, java.java, (text, percentage) => {
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
+      if (cancelFlags.get(profileId)) throw new Error("Lancement annulé");
     } else {
       // Fabric ne supporte pas encore cette version: on lance en vanilla plutot
       // que d'echouer, mais les mods ne seront pas charges.
@@ -127,7 +151,43 @@ export async function launchMinecraft(
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
     }
+    
+    if (cancelFlags.get(profileId)) throw new Error("Lancement annulé");
 
+    // 4. Installer Fabric API, dont le client Paranoia depend, comme la
+    // quasi-totalite des mods Fabric. Le launcher n'installait que le loader:
+    // sans Fabric API, le loader refuse de charger le mod et le joueur voit un
+    // jeu qui demarre sans que rien ne reponde.
+    let fabricApiPath: string | null = null;
+    if (loaderVersion) {
+      try {
+        fabricApiPath = await ensureFabricApi(gameDir, manifest.minecraftVersion, (text, percentage) => {
+          updateStatus({ state: "downloading_assets", progress: percentage, text });
+        });
+      } catch (err) {
+        console.warn("[Launcher] Fabric API non installe:", err);
+      }
+    }
+
+    // 5. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
+    // charge par un argument JVM, donc le joueur ne peut ni le supprimer par
+    // accident ni le confondre avec les mods qu'il installe lui-meme.
+    const clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
+      updateStatus({ state: "downloading_assets", progress: percentage, text });
+    });
+
+    if (clientModPath && !fabricApiPath) {
+      throw new Error(
+        "Fabric API n'a pas pu etre installe: le client Paranoia en depend et ne se chargerait pas. " +
+        "Verifiez votre connexion, ou choisissez une version de Minecraft supportee.",
+      );
+    }
+
+    console.log(
+      `[Launcher] client Paranoia: ${clientModPath ?? "absent du catalogue pour cette version"}`,
+    );
+
+    // 6. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");
     // LEOO955  
 
@@ -155,7 +215,7 @@ export async function launchMinecraft(
     }
 
 
-    // 4. Lancer Minecraft
+    // 7. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
 
     const opts: any = {
@@ -205,6 +265,14 @@ export async function launchMinecraft(
       .split(/\s+/)
       .map((arg) => arg.trim())
       .filter((arg) => arg.length > 0);
+
+    if (clientModPath) {
+      // Ajoute comme element distinct du tableau, surtout pas via le decoupage
+      // sur les espaces ci-dessus: un chemin Windows du type
+      // C:\Users\Prenom Nom\AppData\... serait coupe en deux arguments.
+      extraJvmArgs.push(`-Dfabric.addMods=${clientModPath}`);
+    }
+
     if (extraJvmArgs.length > 0) {
       opts.customArgs = extraJvmArgs;
     }
@@ -245,20 +313,31 @@ export async function launchMinecraft(
     launcher.on('close', (e) => {
       console.log(`[MC Launcher Close] Exited with code ${e}`);
       activeLaunchers.delete(profileId);
+      activeProcesses.delete(profileId);
       updateStatus({ state: "idle", progress: 0, text: "" });
+      setIdlePresence();
     });
 
     console.log(`Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${javaMajor} (${javaExecutable})`);
     
     // Une fois lance, on passe a "launching" (jeu en cours de demarrage)
     const proc = await launcher.launch(opts);
+    
+    if (cancelFlags.get(profileId)) {
+      if (proc) proc.kill();
+      throw new Error("Lancement annulé");
+    }
+    
     if (proc) {
+      activeProcesses.set(profileId, proc);
       updateStatus({ state: "running", progress: 100, text: "Jeu en cours d'execution" });
+      setPlayingPresence(minecraftVersion, account.minecraftUsername);
     }
     
   } catch (err) {
     console.error(`[MC Launcher Error]`, err);
     activeLaunchers.delete(profileId);
+    activeProcesses.delete(profileId);
     updateStatus({ state: "error", progress: 0, text: err instanceof Error ? err.message : "Erreur fatale" });
     throw err;
   }

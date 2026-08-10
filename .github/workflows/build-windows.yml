@@ -46,13 +46,38 @@ jobs:
       - name: Typecheck workspace
         run: pnpm -r typecheck
 
+  # Les jars du mod sont construits sur ubuntu (facture 1x) et transmis au job
+  # windows par un artefact, plutot que d'installer Gradle et un JDK sur un
+  # runner facture le double.
+  mod:
+    uses: ./.github/workflows/build-mod.yml
+
   build:
     runs-on: windows-latest
-    needs: checks
+    needs: [checks, mod]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # latest.json annonce la version tiree du tag, mais l'application
+      # installee annonce celle de tauri.conf.json. Quand les deux different, le
+      # launcher propose en boucle une mise a jour vers la version qu'il vient
+      # d'installer -- c'est arrive avec v0.3.6, qui a publie un installeur
+      # nomme 0.3.4. On refuse le tag plutot que de publier ca.
+      #
+      # `node scripts/bump-version.mjs <x.y.z>` met les cinq fichiers d'accord.
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          app=$(node -p "require('./apps/launcher/src-tauri/tauri.conf.json').version")
+          if [ "$tag" != "$app" ]; then
+            echo "::error::tag $GITHUB_REF_NAME mais tauri.conf.json declare $app -- lancer scripts/bump-version.mjs $tag"
+            exit 1
+          fi
+          echo "version coherente: $app"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -71,6 +96,23 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/launcher/src-tauri
+
+      - name: Ensure Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure MSVC for node-gyp
+        shell: pwsh
+        run: |
+          npm config set msvs_version 2022
+          setx GYP_MSVS_VERSION 2022
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -81,6 +123,20 @@ jobs:
       - name: Typecheck and build launcher
         working-directory: apps/launcher
         run: pnpm build
+
+      - name: Download mod jars
+        uses: actions/download-artifact@v4
+        with:
+          name: paranoia-client-mod
+          path: mod-jars
+
+      # Le catalogue est embarque dans le sidecar: l'empreinte du jar doit y
+      # etre ecrite avant, sinon le launcher refuserait un telechargement dont
+      # le sha256 ne correspond pas. Uniquement sur un tag, l'URL de
+      # telechargement etant celle de la release en cours.
+      - name: Inject client mod into catalog
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: node apps/backend/scripts/inject-client-mod.mjs mod-jars ${{ github.ref_name }} ${{ github.repository }}
 
       # Doit precede le bundle: tauri.conf.json declare le backend en
       # externalBin et echoue si le binaire n'existe pas encore.
@@ -186,7 +242,7 @@ jobs:
             platforms = @{
               "windows-x86_64" = @{
                 signature = (Get-Content $sigFile -Raw).Trim()
-                url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$($installer.Name)"
+                url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$($installer.Name.Replace(' ', '.'))"
               }
             }
           }
@@ -207,3 +263,4 @@ jobs:
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
             apps/launcher/src-tauri/target/release/bundle/nsis/latest.json
+            mod-jars/**/*.jar

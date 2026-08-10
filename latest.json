@@ -1,0 +1,11 @@
+{
+  "notes": "Voir les notes de version sur GitHub.",
+  "version": "0.3.0",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTelpacWYrTUFEczRRcjRkbFdhdFlHT1ZwTlA3eFE1MVZCRllXUzZsWWlsZDQvTzZaMGRiNW1pbXFocm5acGk4Wi9XY04reVFQVUlzV2FEWGpuK2xIcWRzOU93WVIydVE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2MTk0Mjk5CWZpbGU6UGFyYW5vaWEgQ2xpZW50XzAuMy4wX3g2NC1zZXR1cC5leGUKZ0hSRXBNTklnWTZ5WXNYNmR4Q2w5WnZUVmxMOHJFSllKL1ZZQVExNGFDMGd6dld1MlVDejJlblJRaElEM0JMbkRRaTl0UFN1S09tRmd5aUtmbnJzQ0E9PQo=",
+      "url": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.3.0/Paranoia.Client_0.3.0_x64-setup.exe"
+    }
+  },
+  "pub_date": "2026-08-08T13:05:07Z"
+}

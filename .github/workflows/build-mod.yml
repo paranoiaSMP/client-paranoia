@@ -1,0 +1,110 @@
+name: build-mod
+
+# Le mod Fabric n'etait construit nulle part: il n'existait que sous forme de
+# sources jamais compilees. Ce workflow est le seul compilateur du projet pour
+# cette partie, et il tourne sur ubuntu (facture 1x, contre 2x pour windows).
+on:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    tags:
+      - "v*"
+    paths:
+      - "apps/client-mod/**"
+      - ".github/workflows/build-mod.yml"
+  pull_request:
+    paths:
+      - "apps/client-mod/**"
+      - ".github/workflows/build-mod.yml"
+  workflow_dispatch:
+  # Appele par build-windows au moment d'une release, pour que les jars du mod
+  # soient produits une seule fois et injectes dans le catalogue.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Java 21, et pas plus recent: Gradle 8.14 ne sait pas lire les classes
+      # Java 25 et echoue des l'analyse des scripts de build sur
+      # "Unsupported class file major version 69". Le JDK 25 n'avait ete tente
+      # que pour une preversion de loom, desormais ecartee par le resolveur.
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # yarn, le loader et Fabric API bougent a chaque publication amont. On les
+      # resout au moment du build plutot que de figer dans le depot des numeros
+      # qui casseront tout seuls.
+      - name: Resolve Fabric versions
+        working-directory: apps/client-mod
+        run: node scripts/resolve-fabric-versions.mjs
+
+      # Doit rester en phase avec loom_version dans apps/client-mod/gradle.properties:
+      # fabric-loom 1.17.19 declare exiger l'API Gradle 9.5.0.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      # Un jar par version de Minecraft ciblee.
+      #
+      # Sans --stacktrace volontairement: Gradle affiche alors un bloc
+      # "What went wrong" de quelques lignes, la ou la trace complete noyait le
+      # message d'erreur sous deux cents lignes de pile interne.
+      - name: Build every Minecraft target
+        working-directory: apps/client-mod
+        run: gradle build
+
+      # Quand une classe de Minecraft change de paquet entre deux versions,
+      # javac dit seulement "cannot find symbol". Plutot que de deviner le
+      # nouveau chemin et de relancer la CI a chaque essai, on va le lire dans
+      # les jars remappes par loom.
+      - name: Locate moved Minecraft classes
+        if: failure()
+        run: |
+          names="Click KeyInput RenderTickCounter"
+          echo "Recherche de: $names"
+          find ~/.gradle/caches -name '*.jar' -path '*loom*' 2>/dev/null | while read -r jar; do
+            for name in $names; do
+              hits=$(unzip -l "$jar" 2>/dev/null \
+                | grep -oE "net/minecraft/[a-z0-9/]*${name}\.class" | sort -u || true)
+              if [ -n "$hits" ]; then
+                echo "$hits" | sed "s|^|  $(basename "$jar"): |"
+              fi
+            done
+          done | sort -u
+
+      - name: List produced jars
+        working-directory: apps/client-mod
+        run: |
+          found=$(find versions -path '*/build/libs/*.jar' ! -name '*-sources.jar' | sort)
+          if [ -z "$found" ]; then
+            echo "::error::aucun jar produit"
+            exit 1
+          fi
+          echo "$found" | while read -r jar; do
+            printf '%s (%s Ko)\n' "$jar" "$(( $(stat -c%s "$jar") / 1024 ))"
+          done
+
+      - name: Upload mod jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: paranoia-client-mod
+          if-no-files-found: error
+          path: apps/client-mod/versions/*/build/libs/*.jar
