@@ -18,6 +18,9 @@ on:
       - "apps/client-mod/**"
       - ".github/workflows/build-mod.yml"
   workflow_dispatch:
+  # Appele par build-windows au moment d'une release, pour que les jars du mod
+  # soient produits une seule fois et injectes dans le catalogue.
+  workflow_call:
 
 permissions:
   contents: read

@@ -43,6 +43,21 @@ export interface FileArtifact {
   optional?: boolean;
 }
 
+/**
+ * Le mod Paranoia lui-meme.
+ *
+ * <p>Il ne passe pas par `artifacts`: ceux-ci sont installes dans le dossier de
+ * l'instance, alors que le mod client vit hors du dossier `mods` et est charge
+ * par un argument JVM. Un joueur ne peut donc ni le supprimer par accident, ni
+ * en garder une vieille copie, ni le confondre avec les mods qu'il installe.
+ */
+export interface ClientModArtifact {
+  fileName: string;
+  downloadUrl: string;
+  sha256: string;
+  size: number;
+}
+
 export interface InstallationManifest {
   id: string;
   minecraftVersion: string;
@@ -51,6 +66,7 @@ export interface InstallationManifest {
   profileTypeId: string;
   graphicsModeId: string;
   artifacts: FileArtifact[];
+  clientMod?: ClientModArtifact;
   generatedAt: string;
   signature: string;
 }

@@ -46,9 +46,15 @@ jobs:
       - name: Typecheck workspace
         run: pnpm -r typecheck
 
+  # Les jars du mod sont construits sur ubuntu (facture 1x) et transmis au job
+  # windows par un artefact, plutot que d'installer Gradle et un JDK sur un
+  # runner facture le double.
+  mod:
+    uses: ./.github/workflows/build-mod.yml
+
   build:
     runs-on: windows-latest
-    needs: checks
+    needs: [checks, mod]
 
     steps:
       - name: Checkout
@@ -98,6 +104,20 @@ jobs:
       - name: Typecheck and build launcher
         working-directory: apps/launcher
         run: pnpm build
+
+      - name: Download mod jars
+        uses: actions/download-artifact@v4
+        with:
+          name: paranoia-client-mod
+          path: mod-jars
+
+      # Le catalogue est embarque dans le sidecar: l'empreinte du jar doit y
+      # etre ecrite avant, sinon le launcher refuserait un telechargement dont
+      # le sha256 ne correspond pas. Uniquement sur un tag, l'URL de
+      # telechargement etant celle de la release en cours.
+      - name: Inject client mod into catalog
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: node apps/backend/scripts/inject-client-mod.mjs mod-jars ${{ github.ref_name }} ${{ github.repository }}
 
       # Doit precede le bundle: tauri.conf.json declare le backend en
       # externalBin et echoue si le binaire n'existe pas encore.
@@ -224,3 +244,4 @@ jobs:
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
             apps/launcher/src-tauri/target/release/bundle/nsis/latest.json
+            mod-jars/**/*.jar
