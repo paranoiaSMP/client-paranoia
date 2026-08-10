@@ -10,7 +10,11 @@ subprojects {
 
     group = 'gg.paranoia'
     version = "${mod_version}+${project.name}"
-    archivesBaseName = 'paranoia-client'
+
+    // `archivesBaseName` est deprecie depuis Gradle 8 et retire en 9.
+    base {
+        archivesName = 'paranoia-client'
+    }
 
     repositories {
         mavenCentral()
@@ -35,6 +39,9 @@ subprojects {
     sourceSets {
         main {
             java.srcDirs += rootProject.file('src/main/java')
+            // Traductions et assets communs. fabric.mod.json reste propre a
+            // chaque version: il declare la version de Minecraft acceptee.
+            resources.srcDirs += rootProject.file('src/main/resources')
         }
     }
 
