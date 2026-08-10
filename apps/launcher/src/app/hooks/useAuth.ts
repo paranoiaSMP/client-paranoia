@@ -21,11 +21,7 @@ export function useAuth(setError: (err: string | null) => void) {
   const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
   const [restoringSession, setRestoringSession] = useState(true);
 
-  /*
-   * RESTAURATION DE LA SESSION
-   * Recharge les comptes enregistres et renouvelle celui qui sera utilise.
-   * Sans cela, il fallait repasser par la fenetre Microsoft a chaque ouverture.
-   */
+
   useEffect(() => {
     let cancelled = false;
 
@@ -73,11 +69,7 @@ export function useAuth(setError: (err: string | null) => void) {
     };
   }, []);
 
-  /*
-   * GESTION DE L'AUTHENTIFICATION MICROSOFT
-   * Écoute l'événement Tauri déclenché lors de la redirection OAuth réussie.
-   * Procède à l'échange du code contre le Token récupère le profil Minecraft.
-   */
+
   useEffect(() => {
     const unlisten = listen<string>("microsoft-oauth-code", async (event) => {
       const url = new URL(event.payload);
@@ -116,10 +108,7 @@ export function useAuth(setError: (err: string | null) => void) {
     };
   }, [setError, t]);
 
-  /*
-   * LANCEMENT DE LA CONNEXION MICROSOFT
-   * Ouvre la fenêtre WebView Tauri pour la page de connexion Microsoft.
-   */
+
   async function handleMicrosoftConnect() {
     try {
       setConnectingMicrosoft(true);
@@ -132,10 +121,7 @@ export function useAuth(setError: (err: string | null) => void) {
     }
   }
 
-  /*
-   * COMPTE DE DEVELOPPEMENT LOCAL
-   * Permet de contourner l'authentification Microsoft en environnement de développement.
-   */
+
   function handleLocalDevContinue() {
     setConnected(true);
     setAccount({
@@ -149,9 +135,7 @@ export function useAuth(setError: (err: string | null) => void) {
     });
   }
 
-  /*
-   * GESTION DES COMPTES ACTIFS
-   */
+
   async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
 

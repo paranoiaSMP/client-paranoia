@@ -41,3 +41,12 @@ export async function getLaunchStatus(
     `/v1/launcher/status/${encodeURIComponent(profileId)}`,
   );
 }
+
+export async function cancelLaunch(
+  profileId: string,
+): Promise<void> {
+  await apiRequest<{ status: string }>(
+    `/v1/launcher/cancel/${encodeURIComponent(profileId)}`,
+    { method: "POST" }
+  );
+}
