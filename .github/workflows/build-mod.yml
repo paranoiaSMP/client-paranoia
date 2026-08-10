@@ -30,18 +30,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Deux JDK, deux roles distincts: Gradle et loom tournent sur le 25 (les
-      # versions recentes de loom l'exigent), tandis que le mod est compile en
-      # bytecode 21 via la toolchain, que Gradle retrouve parmi les JDK
-      # installes. Compiler en 21 depuis une JVM 25 est le fonctionnement normal
-      # des toolchains, pas un contournement.
-      - name: Setup JDKs
+      # Java 21, et pas plus recent: Gradle 8.14 ne sait pas lire les classes
+      # Java 25 et echoue des l'analyse des scripts de build sur
+      # "Unsupported class file major version 69". Le JDK 25 n'avait ete tente
+      # que pour une preversion de loom, desormais ecartee par le resolveur.
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: |
-            21
-            25
+          java-version: 21
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
