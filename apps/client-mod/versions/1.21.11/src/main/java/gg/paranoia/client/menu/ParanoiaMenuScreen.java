@@ -2,7 +2,7 @@ package gg.paranoia.client.menu;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.Click;
+import net.minecraft.client.gui.Click;
 import net.minecraft.text.Text;
 
 /**
