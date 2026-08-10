@@ -6,6 +6,8 @@ import gg.paranoia.client.hud.elements.CoordinatesHud;
 import gg.paranoia.client.hud.elements.DirectionHud;
 import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.modules.BrightnessModule;
+import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.Platforms;
@@ -42,6 +44,8 @@ public final class ParanoiaClient {
         REGISTRY.register(new DirectionHud());
         REGISTRY.register(new ArmorHud());
         REGISTRY.register(new InfoHud());
+        REGISTRY.register(new BrightnessModule());
+        REGISTRY.register(new ColorHitModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.

@@ -96,20 +96,26 @@ jobs:
       - name: Dump mixin target signatures
         if: always()
         run: |
+          # -p est indispensable: les methodes de rendu de Minecraft sont
+          # privees, et sans lui le premier passage n'avait rien trouve pour le
+          # crosshair alors que la methode existe.
           dump() { # jar, classe, motif de filtre
             echo "--- $2"
-            javap -classpath "$1" "$2" 2>/dev/null | grep -E "$3" || echo "    (rien ne correspond)"
+            javap -p -classpath "$1" "$2" 2>/dev/null | grep -E "$3" || echo "    (rien ne correspond)"
           }
 
-          find ~/.gradle/caches -name 'minecraft-merged-*-v2.jar' | sort -u | while read -r jar; do
+          find ~/.gradle/caches -name 'minecraft-merged-1*-v2.jar' | sort -u | while read -r jar; do
             echo "=============================================================="
             echo "$(basename "$jar")"
             echo "=============================================================="
-            dump "$jar" net.minecraft.client.render.LightmapTextureManager '.'
-            dump "$jar" net.minecraft.client.option.GameOptions '[Gg]amma'
             dump "$jar" net.minecraft.client.gui.hud.InGameHud '[Cc]rosshair'
-            dump "$jar" net.minecraft.client.network.ClientPlayNetworkHandler '[Tt]ime'
-            dump "$jar" net.minecraft.client.render.entity.LivingEntityRenderer '[Oo]verlay|[Cc]olor|getRenderLayer'
+            dump "$jar" net.minecraft.entity.player.PlayerEntity 'AttackCooldownProgress|InteractionRange'
+
+            # En 1.21.11 le crosshair a quitte InGameHud: on cherche la classe
+            # qui le dessine desormais, ou qu'elle soit.
+            echo "--- classes contenant \"Crosshair\""
+            unzip -l "$jar" 2>/dev/null | grep -oE 'net/minecraft/[a-zA-Z0-9/]*[Cc]rosshair[a-zA-Z0-9]*\.class' \
+              | sort -u | sed 's|^|    |' || echo "    (aucune)"
           done
 
       - name: List produced jars

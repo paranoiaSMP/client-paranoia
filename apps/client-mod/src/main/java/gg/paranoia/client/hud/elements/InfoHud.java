@@ -3,6 +3,7 @@ package gg.paranoia.client.hud.elements;
 import gg.paranoia.client.hud.HudElement;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.ColorSetting;
+import gg.paranoia.client.net.ServerTpsTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
@@ -16,15 +17,14 @@ import java.util.List;
 /**
  * Panneau d'informations: serveur, latence, armure, position, inventaire.
  *
- * <p>Chaque ligne s'active separement. Le TPS est volontairement absent pour
- * l'instant: un client vanilla n'y a pas acces, il ne peut que l'estimer a
- * partir de l'intervalle entre deux paquets de temps du serveur, ce qui demande
- * un mixin. Il arrivera avec les autres modules qui en dependent, plutot que
- * sous forme d'un chiffre invente.
+ * <p>Chaque ligne s'active separement. Le TPS est une estimation, pas une
+ * mesure: voir {@link ServerTpsTracker}. Tant qu'aucune valeur fiable n'est
+ * disponible la ligne affiche "--" plutot qu'un chiffre invente.
  */
 public final class InfoHud extends HudElement {
     private final BooleanSetting showIp = add(new BooleanSetting("ip", "Adresse du serveur", true));
     private final BooleanSetting showPing = add(new BooleanSetting("ping", "Latence", true));
+    private final BooleanSetting showTps = add(new BooleanSetting("tps", "TPS (estime)", true));
     private final BooleanSetting showArmor = add(new BooleanSetting("armor", "Armure totale", true));
     private final BooleanSetting showCoords =
         add(new BooleanSetting("coords", "Coordonnees", false));
@@ -63,6 +63,10 @@ public final class InfoHud extends HudElement {
         if (showPing.get()) {
             int ping = ping(client);
             lines.add(new Line("Ping", ping < 0 ? "--" : ping + " ms"));
+        }
+        if (showTps.get()) {
+            double tps = ServerTpsTracker.tps();
+            lines.add(new Line("TPS", tps < 0 ? "--" : String.format("%.1f", tps)));
         }
         if (showArmor.get()) {
             lines.add(new Line("Armure", player == null ? "0" : String.valueOf(player.getArmor())));

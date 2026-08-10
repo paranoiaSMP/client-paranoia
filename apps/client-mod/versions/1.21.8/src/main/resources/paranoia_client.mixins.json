@@ -7,6 +7,9 @@
     "defaultRequire": 1
   },
   "client": [
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "LightmapTextureManagerMixin",
+    "LivingEntityRendererMixin",
+    "ClientPlayNetworkHandlerMixin"
   ]
 }
