@@ -54,9 +54,13 @@ jobs:
           gradle-version: "8.14.3"
 
       # Un jar par version de Minecraft ciblee.
+      #
+      # Sans --stacktrace volontairement: Gradle affiche alors un bloc
+      # "What went wrong" de quelques lignes, la ou la trace complete noyait le
+      # message d'erreur sous deux cents lignes de pile interne.
       - name: Build every Minecraft target
         working-directory: apps/client-mod
-        run: gradle build --stacktrace
+        run: gradle build
 
       - name: List produced jars
         working-directory: apps/client-mod

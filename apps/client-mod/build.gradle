@@ -10,7 +10,11 @@ subprojects {
 
     group = 'gg.paranoia'
     version = "${mod_version}+${project.name}"
-    archivesBaseName = 'paranoia-client'
+
+    // `archivesBaseName` est deprecie depuis Gradle 8 et retire en 9.
+    base {
+        archivesName = 'paranoia-client'
+    }
 
     repositories {
         mavenCentral()
