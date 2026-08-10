@@ -48,7 +48,8 @@
       "windows": {
         "installMode": "passive"
       },
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk3NkQxMDAzQzJEMzIxREUKUldUZUlkUENBeEJ0bDd0VytBRk9pbndDRWZMcFFMei9wd0hUOEtIT04ySDdSYk9WU2Z5dnlieHUK"
+
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUzMThDRkNFN0U1QzUwQUEKUldTcVVGeCt6czhZNDZ0WHg5Z050aU1vUVZzbllQbEZJZkthRWZpODd3TXJwN2VIL2sxSTdVYTQK"
     }
   }
 }
