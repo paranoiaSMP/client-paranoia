@@ -132,63 +132,117 @@
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.21.8",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
       "requiredJavaMajor": 21,
-      "artifacts": []
+      "artifacts": [],
+      "clientMod": {
+        "fileName": "paranoia-client-0.3.0+1.21.8.jar",
+        "downloadUrl": "https://github.com/paranoiaSMP/client-paranoia/releases/download/v0.4.1/paranoia-client-0.3.0+1.21.8.jar",
+        "sha256": "fb8ce05502991565de98e3e21d9ab98151c1cd1715b14a3f7c349cba300cb2b9",
+        "size": 4
+      }
     },
     {
       "minecraftVersion": "1.20.6",
