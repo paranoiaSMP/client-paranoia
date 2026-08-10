@@ -39,6 +39,9 @@ subprojects {
     sourceSets {
         main {
             java.srcDirs += rootProject.file('src/main/java')
+            // Traductions et assets communs. fabric.mod.json reste propre a
+            // chaque version: il declare la version de Minecraft acceptee.
+            resources.srcDirs += rootProject.file('src/main/resources')
         }
     }
 

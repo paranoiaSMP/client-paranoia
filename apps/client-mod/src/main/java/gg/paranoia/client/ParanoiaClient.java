@@ -1,9 +1,12 @@
 package gg.paranoia.client;
 
-import gg.paranoia.client.hud.HudManager;
-import gg.paranoia.client.menu.ClientMenuController;
+import gg.paranoia.client.hud.HudRegistry;
+import gg.paranoia.client.hud.elements.CoordinatesHud;
+import gg.paranoia.client.hud.elements.DirectionHud;
+import gg.paranoia.client.menu.ParanoiaMenuScreen;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.Platforms;
+import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +21,7 @@ public final class ParanoiaClient {
     public static final String MOD_ID = "paranoia_client";
 
     private static final Logger LOGGER = LoggerFactory.getLogger("ParanoiaClient");
-
-    private static final HudManager HUD_MANAGER = new HudManager();
-    private static final ClientMenuController MENU_CONTROLLER = new ClientMenuController(HUD_MANAGER);
+    private static final HudRegistry REGISTRY = new HudRegistry();
 
     private ParanoiaClient() {
     }
@@ -28,13 +29,40 @@ public final class ParanoiaClient {
     public static void start(ClientPlatform platform) {
         Platforms.install(platform);
 
-        HUD_MANAGER.bootstrapDefaultModules();
-        MENU_CONTROLLER.registerHotkeys();
+        REGISTRY.register(new CoordinatesHud());
+        REGISTRY.register(new DirectionHud());
 
-        LOGGER.info("Paranoia Client demarre pour Minecraft {}", platform.minecraftVersion());
+        // Les reglages sont lus apres l'enregistrement: un module absent du
+        // fichier garde ses defauts, un module absent du code est ignore.
+        REGISTRY.load();
+
+        platform.registerHudRenderer((context, tickDelta) -> REGISTRY.renderInGame(context));
+        platform.registerMenuKey(ParanoiaClient::toggleMenu);
+
+        LOGGER.info(
+            "Paranoia Client demarre pour Minecraft {} ({} modules)",
+            platform.minecraftVersion(), REGISTRY.all().size());
     }
 
-    public static HudManager hudManager() {
-        return HUD_MANAGER;
+    private static void toggleMenu() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null) {
+            return;
+        }
+
+        if (client.currentScreen instanceof ParanoiaMenuScreen menu) {
+            menu.close();
+            return;
+        }
+
+        // On n'ouvre pas par-dessus un autre ecran: la touche serait capturee
+        // pendant une saisie de texte ou dans un inventaire.
+        if (client.currentScreen == null) {
+            client.setScreen(new ParanoiaMenuScreen(REGISTRY));
+        }
+    }
+
+    public static HudRegistry registry() {
+        return REGISTRY;
     }
 }
