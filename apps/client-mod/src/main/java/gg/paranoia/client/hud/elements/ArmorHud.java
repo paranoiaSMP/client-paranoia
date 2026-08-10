@@ -6,6 +6,7 @@ import gg.paranoia.client.module.EnumSetting;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 
 import java.util.ArrayList;
@@ -50,11 +51,18 @@ public final class ArmorHud extends HudElement {
         return client() != null && client().player != null && !slots().isEmpty();
     }
 
+    /** Du casque aux bottes, puis la main. */
+    private static final EquipmentSlot[] ARMOR_SLOTS = {
+        EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
+    };
+
     /**
-     * Pieces a afficher, des bottes au casque puis la main.
+     * Pieces a afficher.
      *
-     * <p>On passe par l'iterable d'equipement d'armure plutot que par des index
-     * d'inventaire en dur: leur ordre a deja change entre versions de Minecraft.
+     * <p>On demande chaque piece par son emplacement d'equipement plutot que de
+     * parcourir une liste de l'inventaire: le champ `armor` de PlayerInventory
+     * n'existe plus, alors que getEquippedStack(EquipmentSlot) dit ce qu'on veut
+     * et ne depend pas de l'ordre interne des emplacements.
      */
     private List<ItemStack> slots() {
         List<ItemStack> stacks = new ArrayList<>();
@@ -63,7 +71,8 @@ public final class ArmorHud extends HudElement {
             return stacks;
         }
 
-        for (ItemStack stack : player.getInventory().armor) {
+        for (EquipmentSlot slot : ARMOR_SLOTS) {
+            ItemStack stack = player.getEquippedStack(slot);
             if (!stack.isEmpty() || !hideEmpty.get()) {
                 stacks.add(stack);
             }
