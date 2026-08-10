@@ -10,6 +10,7 @@
     "MinecraftClientMixin",
     "LightmapTextureManagerMixin",
     "LivingEntityRendererMixin",
-    "ClientPlayNetworkHandlerMixin"
+    "ClientPlayNetworkHandlerMixin",
+    "InGameHudMixin"
   ]
 }
