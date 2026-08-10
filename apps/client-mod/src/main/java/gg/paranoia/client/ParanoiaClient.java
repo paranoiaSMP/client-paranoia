@@ -11,9 +11,14 @@ import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
+import gg.paranoia.client.net.ModulePolicy;
+import gg.paranoia.client.net.PolicyPayload;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.Platforms;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -57,6 +62,7 @@ public final class ParanoiaClient {
 
         platform.registerHudRenderer(REGISTRY::renderInGame);
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
+        registerPolicyChannel();
 
         LOGGER.info(
             "Paranoia Client demarre pour Minecraft {} ({} modules)",
@@ -99,6 +105,25 @@ public final class ParanoiaClient {
         if (client.currentScreen == null) {
             client.setScreen(Platforms.get().createMenuScreen(CONTROLLER));
         }
+    }
+
+    /**
+     * Ecoute la politique des serveurs Paranoia.
+     *
+     * <p>Aucun paquet ne veut dire aucune restriction: un serveur tiers n'a
+     * rien a dire sur les modules, et le mod doit y rester utilisable.
+     */
+    private static void registerPolicyChannel() {
+        PayloadTypeRegistry.playS2C().register(PolicyPayload.ID, PolicyPayload.CODEC);
+
+        ClientPlayNetworking.registerGlobalReceiver(
+            PolicyPayload.ID,
+            (payload, context) -> context.client().execute(
+                () -> ModulePolicy.apply(REGISTRY, payload.json())));
+
+        // Sans ca, la politique d'un serveur resterait appliquee sur le suivant.
+        ClientPlayConnectionEvents.DISCONNECT.register(
+            (handler, client) -> ModulePolicy.clear(REGISTRY));
     }
 
     public static HudRegistry registry() {

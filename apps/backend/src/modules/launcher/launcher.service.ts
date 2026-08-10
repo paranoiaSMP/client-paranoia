@@ -9,6 +9,7 @@ import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
 import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
+import { ensureClientMod } from "./clientMod.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
@@ -129,6 +130,14 @@ export async function launchMinecraft(
       });
     }
 
+    // 4. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
+    // charge par un argument JVM, donc le joueur ne peut ni le supprimer par
+    // accident ni le confondre avec les mods qu'il installe lui-meme.
+    const clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
+      updateStatus({ state: "downloading_assets", progress: percentage, text });
+    });
+
+    // 5. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");
     // LEOO955  
 
@@ -156,7 +165,7 @@ export async function launchMinecraft(
     }
 
 
-    // 4. Lancer Minecraft
+    // 6. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
 
     const opts: any = {
@@ -206,6 +215,14 @@ export async function launchMinecraft(
       .split(/\s+/)
       .map((arg) => arg.trim())
       .filter((arg) => arg.length > 0);
+
+    if (clientModPath) {
+      // Ajoute comme element distinct du tableau, surtout pas via le decoupage
+      // sur les espaces ci-dessus: un chemin Windows du type
+      // C:\Users\Prenom Nom\AppData\... serait coupe en deux arguments.
+      extraJvmArgs.push(`-Dfabric.addMods=${clientModPath}`);
+    }
+
     if (extraJvmArgs.length > 0) {
       opts.customArgs = extraJvmArgs;
     }
