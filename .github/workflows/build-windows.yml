@@ -60,6 +60,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # latest.json annonce la version tiree du tag, mais l'application
+      # installee annonce celle de tauri.conf.json. Quand les deux different, le
+      # launcher propose en boucle une mise a jour vers la version qu'il vient
+      # d'installer -- c'est arrive avec v0.3.6, qui a publie un installeur
+      # nomme 0.3.4. On refuse le tag plutot que de publier ca.
+      #
+      # `node scripts/bump-version.mjs <x.y.z>` met les cinq fichiers d'accord.
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          app=$(node -p "require('./apps/launcher/src-tauri/tauri.conf.json').version")
+          if [ "$tag" != "$app" ]; then
+            echo "::error::tag $GITHUB_REF_NAME mais tauri.conf.json declare $app -- lancer scripts/bump-version.mjs $tag"
+            exit 1
+          fi
+          echo "version coherente: $app"
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
