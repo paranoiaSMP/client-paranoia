@@ -10,6 +10,7 @@ import { ensureFabric } from "./fabricDownloader.js";
 import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
+import { ensureFabricApi } from "./fabricApi.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
@@ -130,14 +131,40 @@ export async function launchMinecraft(
       });
     }
 
-    // 4. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
+    // 4. Installer Fabric API, dont le client Paranoia depend, comme la
+    // quasi-totalite des mods Fabric. Le launcher n'installait que le loader:
+    // sans Fabric API, le loader refuse de charger le mod et le joueur voit un
+    // jeu qui demarre sans que rien ne reponde.
+    let fabricApiPath: string | null = null;
+    if (loaderVersion) {
+      try {
+        fabricApiPath = await ensureFabricApi(gameDir, manifest.minecraftVersion, (text, percentage) => {
+          updateStatus({ state: "downloading_assets", progress: percentage, text });
+        });
+      } catch (err) {
+        console.warn("[Launcher] Fabric API non installe:", err);
+      }
+    }
+
+    // 5. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
     // charge par un argument JVM, donc le joueur ne peut ni le supprimer par
     // accident ni le confondre avec les mods qu'il installe lui-meme.
     const clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
       updateStatus({ state: "downloading_assets", progress: percentage, text });
     });
 
-    // 5. options.txt
+    if (clientModPath && !fabricApiPath) {
+      throw new Error(
+        "Fabric API n'a pas pu etre installe: le client Paranoia en depend et ne se chargerait pas. " +
+        "Verifiez votre connexion, ou choisissez une version de Minecraft supportee.",
+      );
+    }
+
+    console.log(
+      `[Launcher] client Paranoia: ${clientModPath ?? "absent du catalogue pour cette version"}`,
+    );
+
+    // 6. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");
     // LEOO955  
 
@@ -165,7 +192,7 @@ export async function launchMinecraft(
     }
 
 
-    // 6. Lancer Minecraft
+    // 7. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
 
     const opts: any = {
