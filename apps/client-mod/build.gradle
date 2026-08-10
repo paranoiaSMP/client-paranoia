@@ -1,30 +1,47 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
-    id 'maven-publish'
+    id 'fabric-loom' version "${loom_version}" apply false
 }
 
-group = 'gg.paranoia'
-version = '0.1.0'
+// Le projet racine ne produit rien: il ne fait que porter la configuration
+// commune. Chaque sous-projet versions/<mc> construit un jar.
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'fabric-loom'
 
-repositories {
-    mavenCentral()
-    maven { url = 'https://maven.fabricmc.net/' }
-}
+    group = 'gg.paranoia'
+    version = "${mod_version}+${project.name}"
+    archivesBaseName = 'paranoia-client'
 
-dependencies {
-    minecraft 'com.mojang:minecraft:1.21.1'
-    mappings 'net.fabricmc:yarn:1.21.1+build.3:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.16.10'
-    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.102.0+1.21.1'
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.fabricmc.net/' }
     }
-    withSourcesJar()
-}
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 21
+        it.options.encoding = 'UTF-8'
+    }
+
+    // Les sources partagees sont ajoutees a chaque sous-projet plutot que
+    // compilees une fois: un `common` compile une seule fois ne pourrait pas
+    // toucher aux classes de rendu, qui changent d'une version a l'autre.
+    sourceSets {
+        main {
+            java.srcDirs += rootProject.file('src/main/java')
+        }
+    }
+
+    processResources {
+        inputs.property 'version', project.version
+        filesMatching('fabric.mod.json') {
+            expand 'version': project.version
+        }
+    }
 }

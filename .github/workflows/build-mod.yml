@@ -1,0 +1,78 @@
+name: build-mod
+
+# Le mod Fabric n'etait construit nulle part: il n'existait que sous forme de
+# sources jamais compilees. Ce workflow est le seul compilateur du projet pour
+# cette partie, et il tourne sur ubuntu (facture 1x, contre 2x pour windows).
+on:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    tags:
+      - "v*"
+    paths:
+      - "apps/client-mod/**"
+      - ".github/workflows/build-mod.yml"
+  pull_request:
+    paths:
+      - "apps/client-mod/**"
+      - ".github/workflows/build-mod.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # yarn, le loader et Fabric API bougent a chaque publication amont. On les
+      # resout au moment du build plutot que de figer dans le depot des numeros
+      # qui casseront tout seuls.
+      - name: Resolve Fabric versions
+        working-directory: apps/client-mod
+        run: node scripts/resolve-fabric-versions.mjs
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10"
+
+      # Un jar par version de Minecraft ciblee.
+      - name: Build every Minecraft target
+        working-directory: apps/client-mod
+        run: gradle build --stacktrace
+
+      - name: List produced jars
+        working-directory: apps/client-mod
+        run: |
+          found=$(find versions -path '*/build/libs/*.jar' ! -name '*-sources.jar' | sort)
+          if [ -z "$found" ]; then
+            echo "::error::aucun jar produit"
+            exit 1
+          fi
+          echo "$found" | while read -r jar; do
+            printf '%s (%s Ko)\n' "$jar" "$(( $(stat -c%s "$jar") / 1024 ))"
+          done
+
+      - name: Upload mod jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: paranoia-client-mod
+          if-no-files-found: error
+          path: apps/client-mod/versions/*/build/libs/*.jar
