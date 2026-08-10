@@ -52,10 +52,12 @@ jobs:
         working-directory: apps/client-mod
         run: node scripts/resolve-fabric-versions.mjs
 
+      # Doit rester en phase avec loom_version dans apps/client-mod/gradle.properties:
+      # fabric-loom 1.17.19 declare exiger l'API Gradle 9.5.0.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.14.3"
+          gradle-version: "9.5.0"
 
       # Un jar par version de Minecraft ciblee.
       #

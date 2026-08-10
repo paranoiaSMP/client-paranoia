@@ -25,46 +25,6 @@ async function getJson(url) {
   return (await get(url)).json();
 }
 
-/**
- * Derniere version publiee de fabric-loom.
- *
- * <p>Contrairement aux autres, ce numero est lu par Gradle avant l'execution du
- * moindre script: il doit donc etre ecrit dans gradle.properties avant le build,
- * et pas seulement dans un fichier lu par un build.gradle.
- */
-async function resolveLoom() {
-  const metadata = await (
-    await get("https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml")
-  ).text();
-
-  // <release> n'est pas fiable ici: il a pointe sur 1.18.0-alpha.14, une
-  // preversion qui exige une JVM 25. On ne garde que les versions purement
-  // numeriques, ce qui ecarte alpha, beta, rc et SNAPSHOT d'un coup.
-  const stable = [...metadata.matchAll(/<version>([^<]+)<\/version>/g)]
-    .map((match) => match[1].trim())
-    .filter((version) => /^\d+(\.\d+)*$/.test(version));
-
-  if (stable.length === 0) {
-    throw new Error("aucune version stable de fabric-loom trouvee");
-  }
-
-  // L'ordre du fichier n'est pas garanti: on compare les numeros nous-memes,
-  // sinon "1.9.0" passerait apres "1.11.9" en tri lexicographique.
-  return stable.sort(compareVersions)[stable.length - 1];
-}
-
-function compareVersions(a, b) {
-  const left = a.split(".").map(Number);
-  const right = b.split(".").map(Number);
-  for (let i = 0; i < Math.max(left.length, right.length); i++) {
-    const diff = (left[i] ?? 0) - (right[i] ?? 0);
-    if (diff !== 0) {
-      return diff;
-    }
-  }
-  return 0;
-}
-
 /** Derniere version de yarn publiee pour cette version de Minecraft. */
 async function resolveYarn(minecraftVersion) {
   const builds = await getJson(
@@ -117,26 +77,11 @@ async function targets() {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 }
 
-/** Remplace la ligne loom_version de gradle.properties par la version resolue. */
-async function writeLoomVersion(loomVersion) {
-  const propertiesPath = path.join(modRoot, "gradle.properties");
-  const current = await fs.readFile(propertiesPath, "utf8");
-  const updated = current.replace(/^loom_version=.*$/m, `loom_version=${loomVersion}`);
-  if (updated === current) {
-    throw new Error("ligne loom_version introuvable dans gradle.properties");
-  }
-  await fs.writeFile(propertiesPath, updated, "utf8");
-}
-
 async function main() {
   const minecraftVersions = await targets();
   if (minecraftVersions.length === 0) {
     throw new Error("aucun dossier dans versions/");
   }
-
-  const loomVersion = await resolveLoom();
-  await writeLoomVersion(loomVersion);
-  console.log(`fabric-loom: ${loomVersion}`);
 
   for (const minecraftVersion of minecraftVersions) {
     const [yarn, loader, fabricApi] = await Promise.all([
