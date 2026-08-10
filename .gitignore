@@ -67,3 +67,7 @@ apps/launcher/src-tauri/gen/schemas/linux-schema.json
 pass.txt
 *.sig
 run_log.txt
+
+# Numeros de yarn/loader/Fabric API resolus au moment du build par
+# apps/client-mod/scripts/resolve-fabric-versions.mjs
+apps/client-mod/versions/*/versions.properties
