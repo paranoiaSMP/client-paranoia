@@ -1,15 +1,12 @@
 package gg.paranoia.client.platform.impl;
 
+import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.menu.ParanoiaMenuScreen;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.HudRenderer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import org.lwjgl.glfw.GLFW;
 
 /** Branchements propres a Minecraft 1.21.11. */
 public final class PlatformImpl implements ClientPlatform {
@@ -20,29 +17,14 @@ public final class PlatformImpl implements ClientPlatform {
 
     @Override
     public void registerHudRenderer(HudRenderer renderer) {
-        // Le second parametre est le compteur d'images: inutilise, et son nom de
-        // methode differe selon la version, donc on ne le touche pas.
+        // Le second parametre est le compteur d'images: inutilise, et ses
+        // methodes different selon la version, donc on ne le touche pas.
         HudRenderCallback.EVENT.register((context, tickCounter) -> renderer.render(context));
     }
 
     @Override
-    public void registerMenuKey(Runnable onPressed) {
-        KeyBinding key = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.paranoia.menu",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_RIGHT_SHIFT,
-            "key.categories.paranoia"));
-
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (key.wasPressed()) {
-                onPressed.run();
-            }
-        });
-    }
-
-    @Override
-    public void renderMenuBackdrop(Screen screen, DrawContext context, int mouseX, int mouseY, float delta) {
-        screen.renderBackground(context, mouseX, mouseY, delta);
+    public Screen createMenuScreen(MenuController controller) {
+        return new ParanoiaMenuScreen(controller);
     }
 
     @Override

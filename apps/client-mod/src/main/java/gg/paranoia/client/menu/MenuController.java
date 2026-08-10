@@ -10,11 +10,8 @@ import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.module.Setting;
 import gg.paranoia.client.module.SliderSetting;
-import gg.paranoia.client.platform.Platforms;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +24,7 @@ import java.util.List;
  * sont les deux primitives dont la signature n'a pas bouge entre les versions
  * ciblees. Le flou et la mise a l'echelle, eux, passent par la plateforme.
  */
-public final class ParanoiaMenuScreen extends Screen {
+public final class MenuController {
     private static final int PANEL_X = 12;
     private static final int PANEL_Y = 12;
     private static final int PANEL_WIDTH = 168;
@@ -60,33 +57,50 @@ public final class ParanoiaMenuScreen extends Screen {
     private final List<Integer> guidesX = new ArrayList<>();
     private final List<Integer> guidesY = new ArrayList<>();
 
-    public ParanoiaMenuScreen(HudRegistry registry) {
-        super(Text.literal("Paranoia Client"));
+    // Dimensions et police de l'ecran hote, rafraichies a chaque image.
+    private int width;
+    private int height;
+    private TextRenderer textRenderer;
+
+    // Derniere position connue du curseur, relevee au rendu.
+    //
+    // On ne lit pas la position portee par l'evenement souris: en 1.21.11 un
+    // clic arrive dans un objet Click qui porte le point d'appui, pas le point
+    // courant, ce qui ferait sauter tout deplacement. Le rendu, lui, recoit la
+    // position courante avec la meme signature sur les deux versions.
+    private int mouseX;
+    private int mouseY;
+
+    public MenuController(HudRegistry registry) {
         this.registry = registry;
     }
 
-    /**
-     * Le menu ne met pas le jeu en pause: on regle ses HUD en regardant le jeu
-     * tourner, et une pause deconnecterait de toute facon en multijoueur.
-     */
-    @Override
-    public boolean shouldPause() {
-        return false;
+    /** Appele par l'ecran de la version avant tout rendu ou toute entree. */
+    public void setViewport(int width, int height, TextRenderer textRenderer) {
+        this.width = width;
+        this.height = height;
+        this.textRenderer = textRenderer;
     }
 
-    @Override
-    public void close() {
-        // Fermer le menu vaut validation: le joueur ne devrait pas avoir a
-        // penser a enregistrer ce qu'il vient de deplacer.
+    /**
+     * Fermer le menu vaut validation: le joueur ne devrait pas avoir a penser a
+     * enregistrer ce qu'il vient de deplacer.
+     */
+    public void onClosed() {
         registry.save();
-        super.close();
     }
 
     // ------------------------------------------------------------------ rendu
 
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        Platforms.get().renderMenuBackdrop(this, context, mouseX, mouseY, delta);
+    public void render(DrawContext context, int mouseX, int mouseY) {
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
+
+        // Le deplacement suit le curseur image par image plutot que les
+        // evenements de glissement, dont la forme differe selon la version.
+        if (dragged != null) {
+            updateDrag();
+        }
 
         renderHudElements(context);
         renderGuides(context);
@@ -95,8 +109,6 @@ public final class ParanoiaMenuScreen extends Screen {
         if (selectedModule != null) {
             renderSettingsPanel(context, mouseX, mouseY);
         }
-
-        super.render(context, mouseX, mouseY, delta);
     }
 
     /** Les HUD tels qu'ils apparaitront en jeu, plus un cadre en mode edition. */
@@ -287,18 +299,17 @@ public final class ParanoiaMenuScreen extends Screen {
 
     // ------------------------------------------------------------------ souris
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(int button) {
+        double mouseX = this.mouseX;
+        double mouseY = this.mouseY;
+
         if (handlePanelClick(mouseX, mouseY, button)) {
             return true;
         }
         if (selectedModule != null && handleSettingsClick(mouseX, mouseY, button)) {
             return true;
         }
-        if (handleHudClick(mouseX, mouseY, button)) {
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handleHudClick(mouseX, mouseY, button);
     }
 
     private boolean handlePanelClick(double mouseX, double mouseY, int button) {
@@ -453,12 +464,7 @@ public final class ParanoiaMenuScreen extends Screen {
         return false;
     }
 
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (dragged == null) {
-            return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
-        }
-
+    private void updateDrag() {
         int[] box = HudRegistry.bounds(dragged, textRenderer, width, height);
         int elementWidth = box[2];
         int elementHeight = box[3];
@@ -477,7 +483,6 @@ public final class ParanoiaMenuScreen extends Screen {
             Math.round(x / scale), Math.round(y / scale),
             (int) (width / scale), (int) (height / scale),
             Math.round(elementWidth / scale), Math.round(elementHeight / scale));
-        return true;
     }
 
     /** Aimante le bord gauche, le centre ou le bord droit de l'element. */
@@ -537,8 +542,7 @@ public final class ParanoiaMenuScreen extends Screen {
         return y;
     }
 
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased() {
         if (dragged != null) {
             dragged = null;
             guidesX.clear();
@@ -546,19 +550,6 @@ public final class ParanoiaMenuScreen extends Screen {
             registry.save();
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    // ------------------------------------------------------------------ clavier
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Maj droite ferme aussi bien qu'elle ouvre: c'est ce que fait la touche
-        // dans les clients auxquels les joueurs sont habitues.
-        if (keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT || keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return false;
     }
 }
