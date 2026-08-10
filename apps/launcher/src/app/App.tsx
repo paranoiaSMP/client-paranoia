@@ -107,7 +107,7 @@ export function App() {
 
   // Polling for launch status of the currently selected profile
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: ReturnType<typeof setInterval>;
     
     if (mainProfile) {
       const checkStatus = async () => {
