@@ -61,7 +61,10 @@ async function bumpCargoLock(version) {
     return null;
   }
 
-  const pattern = /(name = "paranoia-launcher"\nversion = ")([^"]+)(")/;
+  // \r? est indispensable: sur Windows le fichier est en CRLF, et un motif
+  // avec un simple \n ne trouvait rien -- Cargo.lock restait a l'ancienne
+  // version sans que personne ne s'en apercoive.
+  const pattern = /(name = "paranoia-launcher"\r?\nversion = ")([^"]+)(")/;
   const found = pattern.exec(raw);
   if (!found) {
     return null;
@@ -87,11 +90,18 @@ async function main() {
   const lockBefore = await bumpCargoLock(version);
   if (lockBefore) {
     console.log(`  apps/launcher/src-tauri/Cargo.lock: ${lockBefore} -> ${version}`);
+  } else {
+    // Silencieux, ce cas etait passe inapercu une fois: Cargo.lock declarait
+    // encore 0.3.0 alors que tout le reste etait a 0.4.0.
+    console.warn("  apps/launcher/src-tauri/Cargo.lock: NON MIS A JOUR (paquet introuvable)");
   }
 
-  console.log(`\nVersion ${version}. Ensuite:`);
+  // Une commande par ligne, sans `&&`: PowerShell 5.1, celui livre avec
+  // Windows, le refuse et rejette le bloc entier avant de rien executer.
+  console.log(`\nVersion ${version}. Ensuite, une ligne a la fois:`);
   console.log(`  git commit -am "chore: release v${version}"`);
-  console.log(`  git tag v${version} && git push origin main v${version}`);
+  console.log(`  git tag v${version}`);
+  console.log(`  git push origin main v${version}`);
 }
 
 main().catch((err) => {
