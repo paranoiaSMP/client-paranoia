@@ -18,6 +18,29 @@ import { downloadVerified, hashFile, safeUnlink } from "./verifiedDownload.js";
 
 const FABRIC_API_PROJECT = "fabric-api";
 
+/**
+ * Fabric API deja pose dans l'instance par un lancement precedent.
+ *
+ * <p>C'est le disque qui dit si Fabric API est la, pas Modrinth. La difference
+ * compte: une recherche qui echoue faisait conclure a une absence, et le mod
+ * Paranoia etait alors volontairement laisse de cote alors que Fabric API se
+ * trouvait dans `mods` depuis la veille -- le jeu demarrait sans le mod, sans
+ * message et sans erreur.
+ */
+export function findInstalledFabricApi(gameDir: string): string | null {
+  const modsDir = path.join(gameDir, "mods");
+
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(modsDir);
+  } catch {
+    return null;
+  }
+
+  const found = entries.find((name) => /^fabric-api-.*\.jar$/i.test(name));
+  return found ? path.join(modsDir, found) : null;
+}
+
 export async function ensureFabricApi(
   gameDir: string,
   minecraftVersion: string,
@@ -28,15 +51,26 @@ export async function ensureFabricApi(
 
   onProgress("Recherche de Fabric API...", 0);
 
-  const versions = await listProjectVersions(FABRIC_API_PROJECT, {
-    gameVersion: minecraftVersion,
-    loader: "fabric",
-  });
+  let versions;
+  try {
+    versions = await listProjectVersions(FABRIC_API_PROJECT, {
+      gameVersion: minecraftVersion,
+      loader: "fabric",
+    });
+  } catch (err) {
+    // Modrinth injoignable: si Fabric API est deja installe, il fera l'affaire.
+    const installed = findInstalledFabricApi(gameDir);
+    if (installed) {
+      onProgress("Fabric API deja installe", 100);
+      return installed;
+    }
+    throw err;
+  }
 
   const latest = versions[0];
   if (!latest) {
     // Version de Minecraft trop recente pour Fabric API, ou Modrinth muet.
-    return null;
+    return findInstalledFabricApi(gameDir);
   }
 
   const target = path.join(modsDir, path.basename(latest.fileName));
@@ -50,12 +84,22 @@ export async function ensureFabricApi(
     await safeUnlink(target);
   }
 
-  await downloadVerified(
-    latest.downloadUrl,
-    target,
-    { algorithm: "sha512", value: expected },
-    (percentage) => onProgress("Telechargement de Fabric API...", percentage),
-  );
+  try {
+    await downloadVerified(
+      latest.downloadUrl,
+      target,
+      { algorithm: "sha512", value: expected },
+      (percentage) => onProgress("Telechargement de Fabric API...", percentage),
+    );
+  } catch (err) {
+    // Meme raisonnement qu'au-dessus: une version deja posee vaut mieux que
+    // rien, et surtout mieux que renoncer a charger le mod Paranoia.
+    const installed = findInstalledFabricApi(gameDir);
+    if (installed) {
+      return installed;
+    }
+    throw err;
+  }
 
   await removeOtherVersions(modsDir, path.basename(target));
   return target;
