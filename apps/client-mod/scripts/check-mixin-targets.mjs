@@ -234,6 +234,14 @@ function main() {
     const result = checkVersion(version, classpath);
     problems.push(...result.problems);
     console.log(`${version}: ${result.checked} cible(s) verifiee(s), ${result.problems.length} probleme(s)`);
+
+    // Une verification qui ne verifie rien passerait sans bruit et laisserait
+    // repartir en release le bug meme qu'elle est censee attraper. Les sources
+    // partagees portent des injections: n'en trouver aucune veut dire que
+    // l'analyse est cassee, pas que tout va bien.
+    if (result.checked === 0) {
+      problems.push(`${version}: aucune cible d'injection trouvee dans les sources -- l'analyse des mixins est cassee`);
+    }
   }
 
   if (problems.length > 0) {
