@@ -149,20 +149,38 @@ export async function launchMinecraft(
     // 5. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
     // charge par un argument JVM, donc le joueur ne peut ni le supprimer par
     // accident ni le confondre avec les mods qu'il installe lui-meme.
-    const clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
-      updateStatus({ state: "downloading_assets", progress: percentage, text });
-    });
+    //
+    // Rien de ce qui suit ne doit empecher le jeu de demarrer. Le mod est un
+    // plus; Minecraft est ce que le joueur est venu lancer. Une panne de
+    // Modrinth ou de GitHub ne doit pas se traduire par "impossible de jouer".
+    let clientModPath: string | null = null;
 
-    if (clientModPath && !fabricApiPath) {
-      throw new Error(
-        "Fabric API n'a pas pu etre installe: le client Paranoia en depend et ne se chargerait pas. " +
-        "Verifiez votre connexion, ou choisissez une version de Minecraft supportee.",
-      );
+    try {
+      clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
+        updateStatus({ state: "downloading_assets", progress: percentage, text });
+      });
+    } catch (err) {
+      console.warn("[Launcher] client Paranoia non installe:", err);
     }
 
-    console.log(
-      `[Launcher] client Paranoia: ${clientModPath ?? "absent du catalogue pour cette version"}`,
-    );
+    // Sans Fabric API le loader refuserait de charger le mod et afficherait un
+    // ecran d'erreur a la place du jeu: on prefere lancer sans le mod.
+    if (clientModPath && !fabricApiPath) {
+      console.warn(
+        "[Launcher] Fabric API absent: le client Paranoia ne sera pas charge",
+      );
+      clientModPath = null;
+    }
+
+    if (clientModPath) {
+      console.log(`[Launcher] client Paranoia: ${clientModPath}`);
+    } else {
+      console.warn(
+        "[Launcher] client Paranoia non charge " +
+        `(Minecraft ${manifest.minecraftVersion}, Fabric API ${fabricApiPath ? "present" : "absent"}, ` +
+        `catalogue ${manifest.clientMod ? "fournit un jar" : "sans jar pour cette version"})`,
+      );
+    }
 
     // 6. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");
