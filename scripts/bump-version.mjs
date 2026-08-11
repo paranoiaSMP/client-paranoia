@@ -37,13 +37,18 @@ async function bumpJson(relative, version) {
 async function bumpCargoToml(version) {
   const file = path.join(root, "apps/launcher/src-tauri/Cargo.toml");
   const raw = await fs.readFile(file, "utf8");
-  const before = /^version = "([^"]+)"/m.exec(raw)?.[1];
-  const updated = raw.replace(/^version = "[^"]+"/m, `version = "${version}"`);
-  if (updated === raw) {
+  // On teste la presence de la ligne, pas le fait que le texte ait change:
+  // relancer le script sur la version deja en place produisait un fichier
+  // identique, donc l'erreur "ligne version introuvable" -- alarmante et
+  // fausse. Pire, elle interrompait le script avant Cargo.lock.
+  const pattern = /^version = "([^"]+)"/m;
+  const found = pattern.exec(raw);
+  if (!found) {
     throw new Error("ligne version introuvable dans Cargo.toml");
   }
-  await fs.writeFile(file, updated);
-  return before;
+
+  await fs.writeFile(file, raw.replace(pattern, `version = "${version}"`));
+  return found[1];
 }
 
 /**
