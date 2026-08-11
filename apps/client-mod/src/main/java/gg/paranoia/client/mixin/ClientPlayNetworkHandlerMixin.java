@@ -13,17 +13,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *
  * <p>La signature est identique sur les deux versions ciblees, ce mixin vit
  * donc dans les sources partagees.
+ *
+ * <p>La remise a zero entre deux serveurs ne se fait pas ici: {@code
+ * onDisconnected} est heritee de {@code ClientCommonNetworkHandler} et n'existe
+ * pas sur cette classe, une injection dessus fait planter le jeu au demarrage.
+ * Elle passe par {@code ClientPlayConnectionEvents.DISCONNECT}, qui couvre
+ * exactement le meme moment sans mixin.
  */
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class ClientPlayNetworkHandlerMixin {
     @Inject(method = "onWorldTimeUpdate", at = @At("TAIL"))
     private void paranoia$trackServerTps(WorldTimeUpdateS2CPacket packet, CallbackInfo info) {
         ServerTpsTracker.onWorldTime(packet.time());
-    }
-
-    @Inject(method = "onDisconnected", at = @At("HEAD"))
-    private void paranoia$resetServerTps(CallbackInfo info) {
-        // Sans ca, le TPS du serveur precedent resterait affiche sur le suivant.
-        ServerTpsTracker.reset();
     }
 }

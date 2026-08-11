@@ -13,6 +13,7 @@ import gg.paranoia.client.modules.HitIndicatorModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
 import gg.paranoia.client.net.PolicyPayload;
+import gg.paranoia.client.net.ServerTpsTracker;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.Platforms;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -121,9 +122,14 @@ public final class ParanoiaClient {
             (payload, context) -> context.client().execute(
                 () -> ModulePolicy.apply(REGISTRY, payload.json())));
 
-        // Sans ca, la politique d'un serveur resterait appliquee sur le suivant.
-        ClientPlayConnectionEvents.DISCONNECT.register(
-            (handler, client) -> ModulePolicy.clear(REGISTRY));
+        // Sans ca, la politique et le TPS d'un serveur resteraient sur le
+        // suivant. Le TPS est remis a zero ici plutot que par un mixin sur
+        // onDisconnected: cette methode est heritee, on ne peut pas s'y injecter
+        // depuis ClientPlayNetworkHandler.
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ModulePolicy.clear(REGISTRY);
+            ServerTpsTracker.reset();
+        });
     }
 
     public static HudRegistry registry() {

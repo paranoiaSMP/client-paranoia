@@ -62,6 +62,17 @@ jobs:
         with:
           gradle-version: "9.5.0"
 
+      # Avant de compiler: une cible d'injection inexistante ne se voit ni a la
+      # compilation ni au remappage, seulement au demarrage du jeu -- et la elle
+      # est fatale. Le mod a ete publie deux fois avec une injection sur
+      # `onDisconnected`, methode heritee donc absente de la classe ciblee, et
+      # plantait chez tous les joueurs pendant que la CI restait verte.
+      - name: Verify mixin targets exist
+        working-directory: apps/client-mod
+        run: |
+          gradle writeCompileClasspath
+          node scripts/check-mixin-targets.mjs
+
       # Un jar par version de Minecraft ciblee.
       #
       # Sans --stacktrace volontairement: Gradle affiche alors un bloc
