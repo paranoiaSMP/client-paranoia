@@ -45,6 +45,18 @@ subprojects {
         }
     }
 
+    // Le chemin du jar Minecraft remappe n'est connu que de loom, et il change a
+    // chaque version. On l'expose pour scripts/check-mixin-targets.mjs, qui va y
+    // lire les classes reelles avec javap.
+    tasks.register('writeCompileClasspath') {
+        def destination = layout.buildDirectory.file('compile-classpath.txt')
+        def classpath = provider { sourceSets.main.compileClasspath.asPath }
+        outputs.file(destination)
+        doLast {
+            destination.get().asFile.text = classpath.get()
+        }
+    }
+
     processResources {
         inputs.property 'version', project.version
         filesMatching('fabric.mod.json') {
