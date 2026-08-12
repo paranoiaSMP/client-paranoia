@@ -85,7 +85,7 @@ jobs:
             echo "=============== $version"
             for entry in \
               "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
-              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration" \
+              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
               "net.minecraft.entity.effect.StatusEffect:getName" \
               "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
               "net.minecraft.entity.LivingEntity:getStatusEffects"
