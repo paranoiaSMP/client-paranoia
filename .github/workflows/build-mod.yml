@@ -73,6 +73,31 @@ jobs:
           gradle writeCompileClasspath
           node scripts/check-mixin-targets.mjs
 
+      # Sonde temporaire: le mod menu a besoin d'API dont la signature bouge
+      # entre 1.21.8 et 1.21.11 (entrees clavier, molette, effets de potion).
+      # Les lire dans les jars remappes coute une execution; les deviner coute
+      # un aller-retour de CI par erreur.
+      - name: Probe Minecraft API signatures
+        working-directory: apps/client-mod
+        run: |
+          for version in 1.21.8 1.21.11; do
+            cp=$(cat "versions/$version/build/compile-classpath.txt")
+            echo "=============== $version"
+            for entry in \
+              "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
+              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration" \
+              "net.minecraft.entity.effect.StatusEffect:getName" \
+              "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
+              "net.minecraft.entity.LivingEntity:getStatusEffects"
+            do
+              class="${entry%%:*}"
+              members="${entry#*:}"
+              echo "--- $class"
+              javap -p -cp "$cp" "$class" 2>/dev/null \
+                | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+            done
+          done
+
       # Un jar par version de Minecraft ciblee.
       #
       # Sans --stacktrace volontairement: Gradle affiche alors un bloc
