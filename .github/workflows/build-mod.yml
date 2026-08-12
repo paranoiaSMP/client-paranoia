@@ -73,10 +73,13 @@ jobs:
           gradle writeCompileClasspath
           node scripts/check-mixin-targets.mjs
 
-      # Sonde temporaire: le mod menu a besoin d'API dont la signature bouge
-      # entre 1.21.8 et 1.21.11 (entrees clavier, molette, effets de potion).
-      # Les lire dans les jars remappes coute une execution; les deviner coute
-      # un aller-retour de CI par erreur.
+      # Affiche la signature reelle des API sensibles, sur chaque version.
+      #
+      # Gardee en permanence, et pas seulement le temps d'un correctif: c'est
+      # l'etape qui a evite le plus d'allers-retours de ce depot. Rien ici ne
+      # peut faire echouer le build -- c'est une lecture, pas une verification.
+      # Quand une version de Minecraft sortira, ces quelques lignes diront
+      # immediatement ce qui a bouge.
       - name: Probe Minecraft API signatures
         working-directory: apps/client-mod
         run: |
