@@ -1,4 +1,5 @@
 import { Client } from "minecraft-launcher-core";
+import fs from "node:fs";
 import path from "node:path";
 import { ensureJava } from "./javaDownloader.js";
 import { requiredJavaMajor } from "./javaRequirement.js";
@@ -10,7 +11,7 @@ import { ensureFabric } from "./fabricDownloader.js";
 import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
-import { ensureFabricApi } from "./fabricApi.js";
+import { ensureFabricApi, findInstalledFabricApi } from "./fabricApi.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 
 export type LaunchStatus = {
@@ -24,6 +25,29 @@ const activeLaunchers = new Map<string, Client>();
 const activeProcesses = new Map<string, any>(); // Store the ChildProcess
 const cancelFlags = new Map<string, boolean>();
 const launchStatuses = new Map<string, LaunchStatus>();
+
+/**
+ * Journal du launcher, ecrit a cote des donnees du jeu.
+ *
+ * <p>La console du sidecar n'est visible nulle part chez le joueur. Quand le mod
+ * Paranoia n'etait pas charge, le jeu demarrait normalement, le mod manquait a
+ * l'appel et rien n'expliquait pourquoi -- il a fallu quatre allers-retours de
+ * journaux de jeu pour le comprendre. La reponse doit etre quelque part.
+ */
+function logToFile(rootPath: string, message: string): void {
+  const file = path.join(rootPath, "launcher.log");
+
+  try {
+    // Borne volontairement basse: c'est un journal de diagnostic, pas un
+    // historique. Au-dela, on repart d'un fichier vide.
+    if ((fs.statSync(file, { throwIfNoEntry: false })?.size ?? 0) > 512 * 1024) {
+      fs.rmSync(file, { force: true });
+    }
+    fs.appendFileSync(file, `[${new Date().toISOString()}] ${message}\n`);
+  } catch {
+    // Un journal qui echoue ne doit jamais empecher un lancement.
+  }
+}
 
 /** "1920x1080" -> { width: 1920, height: 1080 }; null si la valeur est invalide. */
 function parseResolution(
@@ -167,6 +191,15 @@ export async function launchMinecraft(
       } catch (err) {
         console.warn("[Launcher] Fabric API non installe:", err);
       }
+
+      // Une panne de Modrinth ne doit pas faire passer pour absent un Fabric API
+      // deja pose dans l'instance: c'est le disque qui fait foi. Sans ce
+      // rattrapage, une recherche ratee suffisait a ce que le mod Paranoia ne
+      // soit pas charge -- jeu qui demarre normalement, mod absent de la liste,
+      // aucune erreur nulle part.
+      if (!fabricApiPath) {
+        fabricApiPath = findInstalledFabricApi(gameDir);
+      }
     }
 
     // 5. Installer le mod Paranoia, hors du dossier mods de l'instance: il est
@@ -177,12 +210,14 @@ export async function launchMinecraft(
     // plus; Minecraft est ce que le joueur est venu lancer. Une panne de
     // Modrinth ou de GitHub ne doit pas se traduire par "impossible de jouer".
     let clientModPath: string | null = null;
+    let clientModError: string | null = null;
 
     try {
       clientModPath = await ensureClientMod(rootPath, manifest.clientMod, (text, percentage) => {
         updateStatus({ state: "downloading_assets", progress: percentage, text });
       });
     } catch (err) {
+      clientModError = err instanceof Error ? err.message : String(err);
       console.warn("[Launcher] client Paranoia non installe:", err);
     }
 
@@ -195,15 +230,17 @@ export async function launchMinecraft(
       clientModPath = null;
     }
 
-    if (clientModPath) {
-      console.log(`[Launcher] client Paranoia: ${clientModPath}`);
-    } else {
-      console.warn(
-        "[Launcher] client Paranoia non charge " +
-        `(Minecraft ${manifest.minecraftVersion}, Fabric API ${fabricApiPath ? "present" : "absent"}, ` +
-        `catalogue ${manifest.clientMod ? "fournit un jar" : "sans jar pour cette version"})`,
-      );
-    }
+    const modState = clientModPath
+      ? `charge (${path.basename(clientModPath)})`
+      : "non charge ("
+        + `Fabric API ${fabricApiPath ? "present" : "absent"}, `
+        + `catalogue ${manifest.clientMod
+          ? `fournit ${manifest.clientMod.fileName}`
+          : "sans jar pour cette version"}`
+        + `${clientModError ? `, echec: ${clientModError}` : ""})`;
+
+    console.log(`[Launcher] client Paranoia ${modState}`);
+    logToFile(rootPath, `Minecraft ${manifest.minecraftVersion}: client Paranoia ${modState}`);
 
     // 6. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");

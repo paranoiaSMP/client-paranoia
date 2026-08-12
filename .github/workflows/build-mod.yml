@@ -73,6 +73,34 @@ jobs:
           gradle writeCompileClasspath
           node scripts/check-mixin-targets.mjs
 
+      # Affiche la signature reelle des API sensibles, sur chaque version.
+      #
+      # Gardee en permanence, et pas seulement le temps d'un correctif: c'est
+      # l'etape qui a evite le plus d'allers-retours de ce depot. Rien ici ne
+      # peut faire echouer le build -- c'est une lecture, pas une verification.
+      # Quand une version de Minecraft sortira, ces quelques lignes diront
+      # immediatement ce qui a bouge.
+      - name: Probe Minecraft API signatures
+        working-directory: apps/client-mod
+        run: |
+          for version in 1.21.8 1.21.11; do
+            cp=$(cat "versions/$version/build/compile-classpath.txt")
+            echo "=============== $version"
+            for entry in \
+              "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
+              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
+              "net.minecraft.entity.effect.StatusEffect:getName" \
+              "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
+              "net.minecraft.entity.LivingEntity:getStatusEffects"
+            do
+              class="${entry%%:*}"
+              members="${entry#*:}"
+              echo "--- $class"
+              javap -p -cp "$cp" "$class" 2>/dev/null \
+                | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+            done
+          done
+
       # Un jar par version de Minecraft ciblee.
       #
       # Sans --stacktrace volontairement: Gradle affiche alors un bloc
