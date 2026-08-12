@@ -86,6 +86,17 @@ export function getManifest(
       entry.graphicsModeId === graphicsModeId,
   );
 
+  // Le mod client ne depend que de la version de Minecraft: un jar est compile
+  // par version, pas par type de profil ni par mode graphique. Le chercher dans
+  // l'entree exacte le faisait donc disparaitre des qu'un profil portait une
+  // combinaison absente du catalogue -- le launcher recevait un manifeste sans
+  // mod, et le jeu demarrait sans lui, sans la moindre erreur.
+  const clientMod =
+    match?.clientMod
+    ?? validatedCatalog.entries.find(
+      (entry) => entry.minecraftVersion === minecraftVersion && entry.clientMod,
+    )?.clientMod;
+
   // Une combinaison absente du catalogue donne un manifeste vide, donc du
   // Minecraft vanilla, au lieu d'une erreur. Le catalogue sert a proposer un
   // pack pret a l'emploi, pas a autoriser une version.
@@ -103,7 +114,7 @@ export function getManifest(
     // Oubli qui rendait le mod client indetectable: le manifeste est reconstruit
     // champ par champ, et celui-ci n'y figurait pas. manifest.clientMod valait
     // donc toujours undefined, quelle que soit la version.
-    ...(match?.clientMod ? { clientMod: match.clientMod } : {}),
+    ...(clientMod ? { clientMod } : {}),
     artifacts: (match?.artifacts ?? []) as FileArtifact[],
     generatedAt: new Date().toISOString(),
     signature: "TODO_SIGNED_MANIFEST",
