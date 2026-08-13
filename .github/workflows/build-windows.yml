@@ -218,13 +218,37 @@ jobs:
             # On verifie donc ce que le launcher recevra reellement, pas ce
             # qu'on croit avoir ecrit dans le catalogue.
             if ("${{ steps.release.outputs.tag }}" -ne "") {
-              $body = '{"minecraftVersion":"1.21.8","profileTypeId":"pvp","graphicsModeId":"balanced"}'
-              $manifest = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/manifest" `
-                -Method Post -ContentType "application/json" -Body $body -TimeoutSec 5
-              if (-not $manifest.clientMod) {
-                throw "le manifeste ne porte pas clientMod: le mod ne serait installe chez personne"
+              # Le troisieme cas est volontairement absent du catalogue: un
+              # profil portant une combinaison inconnue ne trouvait aucune
+              # entree, donc aucun mod client, alors que le jar ne depend que de
+              # la version de Minecraft. Le jeu demarrait sans le mod et sans
+              # erreur -- c'est ce qu'a vecu le premier joueur a l'essayer.
+              $cases = @(
+                @{ version = "1.21.8";  type = "pvp";     mode = "balanced" },
+                @{ version = "1.21.11"; type = "pvp";     mode = "balanced" },
+                @{ version = "1.21.11"; type = "inconnu"; mode = "inconnu"  }
+              )
+
+              foreach ($case in $cases) {
+                $label = "$($case.version) $($case.type)/$($case.mode)"
+                $body = @{
+                  minecraftVersion = $case.version
+                  profileTypeId = $case.type
+                  graphicsModeId = $case.mode
+                } | ConvertTo-Json -Compress
+
+                $manifest = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/manifest" `
+                  -Method Post -ContentType "application/json" -Body $body -TimeoutSec 5
+
+                if (-not $manifest.clientMod) {
+                  throw "manifeste sans clientMod pour $label : le mod ne serait pas installe"
+                }
+                # Le jar doit etre celui de la version demandee, pas d'une autre.
+                if ($manifest.clientMod.fileName -notlike "*+$($case.version).jar") {
+                  throw "mauvais jar pour $label : $($manifest.clientMod.fileName)"
+                }
+                Write-Host "mod client $label : OK ($($manifest.clientMod.fileName))"
               }
-              Write-Host "mod client: OK ($($manifest.clientMod.fileName))"
             }
           } finally {
             Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue

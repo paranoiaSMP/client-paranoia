@@ -1,6 +1,7 @@
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { invoke } from '@tauri-apps/api/core';
-import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle } from "lucide-react";
+import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingBag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -11,6 +12,7 @@ import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/c
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
 import { createProfile, importProfile } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
+import { listInstalledMods } from "../shared/api/modsClient";
 import { waitForApi } from "../shared/api/http";
 import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse, cancelLaunch } from "../shared/api/launcherClient";
 
@@ -21,10 +23,33 @@ import { ModsTab } from "./components/tabs/ModsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { HomeActionBar } from "./components/HomeActionBar";
+import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
+import { InstanceMenu } from "./components/InstanceMenu";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
 import { useProfiles } from "./hooks/useProfiles";
+
+// Boutique Paranoia. Ouverte dans le navigateur du systeme, pas dans le
+// launcher: un paiement se fait la ou le joueur a ses moyens enregistres.
+const SHOP_URL = "https://paranoiastudio.fr/shop";
+
+/**
+ * Fond de l'application.
+ *
+ * <p>Deux lueurs violettes tres diluees posees sur un degrade sombre: l'une en
+ * haut a gauche derriere la barre d'actions, l'autre en bas a droite derriere
+ * le personnage. Les valeurs restent basses volontairement -- le fond ne doit
+ * pas concurrencer les vignettes, qui portent deja leur propre degrade.
+ */
+const BACKGROUND: CSSProperties = {
+  backgroundImage: [
+    "radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.16) 0%, rgba(147, 9, 239, 0) 55%)",
+    "radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.22) 0%, rgba(97, 6, 158, 0) 60%)",
+    "linear-gradient(160deg, #1a1621 0%, #141416 45%, #0e0e10 100%)",
+  ].join(", "),
+};
 
 const DESIGN_WIDTH = 860;
 const DESIGN_HEIGHT = 520;
@@ -49,17 +74,56 @@ type DetectedProfile = {
   launcher: string;
 };
 
-function InstanceCard({ label, isSelected, onClick }: { label: string, isSelected: boolean, onClick: () => void }) {
+/**
+ * Vignette d'instance.
+ *
+ * <p>Le degrade et la lueur ne sont pas decoratifs seulement: une vignette
+ * pleine d'un aplat uni ne se distinguait de sa voisine que par la couleur de
+ * sa bordure, difficile a voir de loin. La version selectionnee est violette et
+ * eclairee, les autres restent sombres.
+ */
+function InstanceCard({
+  label,
+  version,
+  detail,
+  isSelected,
+  onClick,
+}: {
+  label: string;
+  version?: string;
+  detail?: string;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
   return (
     <article
       onClick={onClick}
-      className={`relative flex h-[180px] w-[184px] shrink-0 cursor-pointer items-end overflow-hidden rounded-[18px] border-2 transition-colors ${
-        isSelected ? "border-[#9309ef] bg-[#2a133f]" : "border-[#333] bg-[#212121] hover:border-[#555]"
-      } p-4`}
+      className={`group relative flex h-[180px] w-[184px] shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[18px] border-2 p-4 transition-colors ${
+        isSelected
+          ? "border-[#9309ef] bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
+          : "border-[#333] bg-gradient-to-br from-[#26262b] via-[#1d1d21] to-[#161619] hover:border-[#555]"
+      }`}
     >
-      <p className="whitespace-nowrap text-sm font-medium leading-normal text-white truncate w-full">
-        {label}
-      </p>
+      {/* Lueur d'angle, derriere le contenu. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
+          isSelected
+            ? "bg-[#9309ef]/40"
+            : "bg-white/5 group-hover:bg-white/10"
+        }`}
+      />
+
+      <div className="relative z-10 min-w-0">
+        <p className="truncate text-sm font-medium leading-normal text-white">
+          {label}
+        </p>
+        {(version || detail) && (
+          <p className="mt-0.5 truncate text-[11px] text-[#a1a1aa]">
+            {[version, detail].filter(Boolean).join(" · ")}
+          </p>
+        )}
+      </div>
     </article>
   );
 }
@@ -72,10 +136,12 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [modCount, setModCount] = useState<number | null>(null);
+  const [shopError, setShopError] = useState<string | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -144,6 +210,29 @@ export function App() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [mainProfile]);
+
+  // Nombre de mods du profil courant, relu a la fermeture du gestionnaire pour
+  // que le compteur suive une installation ou une suppression.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!mainProfile) {
+      setModCount(null);
+      return;
+    }
+
+    listInstalledMods(mainProfile.id)
+      .then((mods) => {
+        if (!cancelled) setModCount(mods.length);
+      })
+      .catch(() => {
+        if (!cancelled) setModCount(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mainProfile?.id, activeModal]);
 
   useEffect(() => {
     if (importSettings && detectedProfiles.length === 0) {
@@ -281,7 +370,7 @@ export function App() {
   // IF DISCONNECTED -> KEEP TOPBAR LAYOUT FOR LOGIN
   if (!connected) {
     return (
-      <div className="h-screen w-full flex flex-col overflow-hidden bg-[#0b0b0b]">
+      <div className="h-screen w-full flex flex-col overflow-hidden" style={BACKGROUND}>
         <TopBar 
           connected={connected} 
           account={account}
@@ -304,7 +393,11 @@ export function App() {
   }
 
   // GAME UI LAYOUT
-  const displayProfiles = [0, 1, 2].map((index) => profiles[index] || null);
+  // Toutes les instances, et non les trois premieres: la piste en montre
+  // trois a la fois et la molette fait defiler les suivantes. Avec l'ancien
+  // decoupage, une quatrieme instance restait invisible depuis l'accueil.
+  const displayProfiles: (LauncherProfile | null)[] =
+    profiles.length > 0 ? profiles : [null];
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-[#0b0b0b] relative">
@@ -314,11 +407,49 @@ export function App() {
         <div className="w-full h-full relative">
           <section
             aria-label="Interface principale du jeu"
-            className="absolute inset-0 w-full h-full overflow-hidden bg-[#141414] p-8 lg:p-12 flex flex-col"
+            className="absolute inset-0 w-full h-full overflow-hidden p-8 lg:p-12 flex flex-col"
+            style={BACKGROUND}
           >
             {/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
             <div className="flex flex-col gap-5">
-              <div className="h-[99px] w-full lg:w-[75%] overflow-hidden rounded-[20px] bg-[#262626] shrink-0" />
+              <HomeActionBar
+                modCount={modCount}
+                instanceCount={profiles.length}
+                onAction={async (action) => {
+                  if (action === "instances") {
+                    setActiveModal("profils");
+                    return;
+                  }
+                  if (action === "dossier") {
+                    // Le dossier n'existe qu'apres un premier lancement: on le
+                    // dit plutot que de laisser le bouton sans effet.
+                    if (!mainProfile) return;
+                    try {
+                      await invoke("open_instance_folder", { profileId: mainProfile.id });
+                    } catch (e) {
+                      setError(
+                        typeof e === "string"
+                          ? e
+                          : "Dossier introuvable. Lance l'instance une fois.",
+                      );
+                    }
+                    return;
+                  }
+                  if (action === "boutique") {
+                    // La modale ne s'ouvre qu'en cas d'echec: elle sert alors a
+                    // afficher l'adresse pour qu'elle reste copiable.
+                    try {
+                      setShopError(null);
+                      await invoke("open_external_url", { url: SHOP_URL });
+                    } catch (e) {
+                      setShopError(typeof e === "string" ? e : "Ouverture impossible");
+                      setActiveModal("boutique");
+                    }
+                    return;
+                  }
+                  setActiveModal(action);
+                }}
+              />
               <img
                 alt=""
                 aria-hidden="true"
@@ -371,6 +502,10 @@ export function App() {
                     </div>
 
                     <div className="flex flex-col items-center mt-auto gap-4">
+                      {/* Logo Paranoia, juste au-dessus de la sortie. */}
+                      <div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#9309ef] to-[#61069e] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#9309ef]/20">
+                        P
+                      </div>
                       <div className="w-6 h-[1px] bg-[#333]" />
                       <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-red-500/20 transition-colors group relative" title="Déconnexion">
                         <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
@@ -382,18 +517,32 @@ export function App() {
 
             {/* PROFILES & PLAY BUTTON */}
             <div className="mt-auto flex flex-col items-start gap-8 pb-4 relative z-10 w-full lg:w-[55%] xl:w-[50%] lg:pr-8">
-              <div className="flex flex-row items-center gap-8 flex-wrap">
+              <div
+                onWheel={(event) => {
+                  // Meme conversion que la barre du haut: une molette de souris
+                  // ne produit que du deplacement vertical.
+                  if (event.deltaY !== 0) {
+                    event.currentTarget.scrollLeft += event.deltaY;
+                  }
+                }}
+                className="no-scrollbar flex max-w-full lg:max-w-[616px] flex-row flex-nowrap items-center gap-8 overflow-x-auto scroll-smooth py-1"
+              >
                 {displayProfiles.map((profile, index) => {
                   const isSelected = profile ? profile.id === mainProfile?.id : false;
                   const label = profile ? profile.name : t("home.new_instance", "Nouvelle instance");
                   return (
                     <InstanceCard
-                      key={index}
+                      key={profile ? profile.id : "vide"}
                       label={label}
+                      {...(profile ? { version: profile.minecraftVersion, detail: profile.profileTypeId } : {})}
                       isSelected={isSelected}
                       onClick={() => {
                         if (profile) {
+                          // Selection d'abord: le menu qui s'ouvre, le bouton
+                          // Jouer et le compteur de mods parlent tous de
+                          // l'instance courante.
                           setSelectedProfileId(profile.id);
+                          setActiveModal("instance");
                         } else {
                           setStep(connected ? 2 : 1);
                           setIsCreatingProfile(true);
@@ -423,7 +572,7 @@ export function App() {
                 </button>
               </div>
 
-              <div className="flex h-[74px] w-[280px] shrink-0 items-center">
+              <div className="flex h-[74px] w-[280px] shrink-0 items-center gap-3">
                 <button
                   aria-label={installState === "running" ? "Arrêter" : "Lancer"}
                   disabled={!mainProfile}
@@ -455,6 +604,23 @@ export function App() {
                     )}
                   </span>
                 </button>
+
+                {/* Gestionnaire de mods Modrinth. Il n'etait plus atteignable
+                    que par le menu replie en haut a droite, ou personne ne le
+                    trouvait. */}
+                <button
+                  aria-label="Gerer les mods"
+                  title="Installer des mods depuis Modrinth"
+                  disabled={!mainProfile}
+                  onClick={() => setActiveModal("mods")}
+                  className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#333] bg-gradient-to-b from-[#242429] to-[#1a1a1e] px-4 text-white transition-colors hover:border-[#9309ef] disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                >
+                  <Pickaxe className="h-5 w-5" />
+                  <span className="text-[10px] leading-none text-[#a1a1aa]">
+                    {modCount === null ? "Mods" : `${modCount} mod${modCount > 1 ? "s" : ""}`}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -484,6 +650,50 @@ export function App() {
           setGraphicsMode={setGraphicsMode} selectedType={selectedType} selectedGraphics={selectedGraphics}
           handleInstall={handleInstall} installState={installState}
         />
+      </Modal>
+
+      <Modal
+        isOpen={activeModal === "instance" && !!mainProfile}
+        onClose={() => setActiveModal("none")}
+        title={mainProfile ? mainProfile.name : "Instance"}
+      >
+        {mainProfile && (
+          <InstanceMenu
+            profile={mainProfile}
+            modCount={modCount}
+            running={installState === "running"}
+            onPlay={() => {
+              setActiveModal("none");
+              handleLaunchGame(mainProfile.id);
+            }}
+            onOpenMods={() => setActiveModal("mods")}
+            onFavorite={() => handleFavoriteProfile(mainProfile.id)}
+            onDelete={async () => {
+              await handleDeleteProfile(mainProfile.id);
+              setActiveModal("none");
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal isOpen={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} title="Cosmétiques">
+        <CosmetiquesTab />
+      </Modal>
+
+      <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <ShoppingBag className="h-10 w-10 text-[#3f3f46]" />
+          <p className="text-sm font-semibold text-white">
+            Impossible d'ouvrir la boutique
+          </p>
+          <p className="max-w-sm text-xs text-[#71717a]">
+            Ouvre cette adresse dans ton navigateur :
+          </p>
+          <p className="rounded-lg border border-[#27272a] bg-[#131316] px-3 py-2 font-mono text-xs text-accent-purple">
+            {SHOP_URL}
+          </p>
+          {shopError && <p className="text-xs text-red-400">{shopError}</p>}
+        </div>
       </Modal>
 
       <Modal isOpen={activeModal === "profils"} onClose={() => setActiveModal("none")} title="Gérer les profils">

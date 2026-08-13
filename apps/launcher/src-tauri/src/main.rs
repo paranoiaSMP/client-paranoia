@@ -106,6 +106,24 @@ fn paranoia_data_dir() -> Option<std::path::PathBuf> {
     }
 }
 
+/// Ouvre une adresse web dans le navigateur du systeme.
+///
+/// La boutique vit sur le site, pas dans le launcher: un navigateur complet
+/// apporte le gestionnaire de mots de passe et les moyens de paiement
+/// enregistres, qu'une fenetre integree n'aurait pas.
+#[tauri::command]
+fn open_external_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    // Seul le web, et seulement en https. Sans ce filtre, l'interface pourrait
+    // faire ouvrir un fichier ou un programme local par cette commande.
+    if !url.starts_with("https://") {
+        return Err("Adresse refusee: seules les adresses https sont ouvertes".into());
+    }
+
+    app.shell()
+        .open(url, None)
+        .map_err(|e| format!("Ouverture impossible: {e}"))
+}
+
 /// Ouvre le dossier d'un profil dans l'explorateur de fichiers du systeme.
 #[tauri::command]
 fn open_instance_folder(profile_id: String) -> Result<(), String> {
@@ -349,7 +367,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login, open_instance_folder])
+        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login, open_instance_folder, open_external_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

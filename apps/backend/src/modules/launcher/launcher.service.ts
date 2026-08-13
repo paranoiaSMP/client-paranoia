@@ -239,8 +239,14 @@ export async function launchMinecraft(
           : "sans jar pour cette version"}`
         + `${clientModError ? `, echec: ${clientModError}` : ""})`;
 
+    // Le type de profil et le mode graphique figurent dans la ligne: c'est le
+    // couple qui sert a retrouver l'entree du catalogue, et son absence du
+    // journal a coute un aller-retour de diagnostic complet.
     console.log(`[Launcher] client Paranoia ${modState}`);
-    logToFile(rootPath, `Minecraft ${manifest.minecraftVersion}: client Paranoia ${modState}`);
+    logToFile(
+      rootPath,
+      `Minecraft ${manifest.minecraftVersion} (${profile.profileTypeId}/${profile.graphicsModeId}): `
+      + `client Paranoia ${modState}`);
 
     // 6. options.txt
     const targetOptionsPath = path.join(gameDir, "options.txt");

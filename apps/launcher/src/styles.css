@@ -46,3 +46,18 @@ h1, h2, h3, h4, h5, h6 {
 .animate-shine {
   animation: shine 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/*
+ * Piste defilante sans barre de defilement visible.
+ *
+ * Le contenu reste atteignable a la molette, aux fleches et au clavier: on
+ * masque l'indicateur, pas le defilement.
+ */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
