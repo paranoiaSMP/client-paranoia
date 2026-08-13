@@ -30,6 +30,10 @@ import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
 import { useProfiles } from "./hooks/useProfiles";
 
+// Boutique Paranoia. Ouverte dans le navigateur du systeme, pas dans le
+// launcher: un paiement se fait la ou le joueur a ses moyens enregistres.
+const SHOP_URL = "https://paranoiastudio.fr/shop";
+
 const DESIGN_WIDTH = 860;
 const DESIGN_HEIGHT = 520;
 
@@ -116,6 +120,7 @@ export function App() {
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [modCount, setModCount] = useState<number | null>(null);
+  const [shopError, setShopError] = useState<string | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
@@ -388,9 +393,24 @@ export function App() {
               <HomeActionBar
                 modCount={modCount}
                 instanceCount={profiles.length}
-                onAction={(action) => {
-                  if (action === "instances") setActiveModal("profils");
-                  else setActiveModal(action);
+                onAction={async (action) => {
+                  if (action === "instances") {
+                    setActiveModal("profils");
+                    return;
+                  }
+                  if (action === "boutique") {
+                    // La modale ne s'ouvre qu'en cas d'echec: elle sert alors a
+                    // afficher l'adresse pour qu'elle reste copiable.
+                    try {
+                      setShopError(null);
+                      await invoke("open_external_url", { url: SHOP_URL });
+                    } catch (e) {
+                      setShopError(typeof e === "string" ? e : "Ouverture impossible");
+                      setActiveModal("boutique");
+                    }
+                    return;
+                  }
+                  setActiveModal(action);
                 }}
               />
               <img
@@ -615,14 +635,18 @@ export function App() {
       </Modal>
 
       <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
           <ShoppingBag className="h-10 w-10 text-[#3f3f46]" />
-          <p className="text-sm font-semibold text-white">Boutique pas encore reliée</p>
-          <p className="max-w-sm text-xs text-[#71717a]">
-            Le bouton est en place, mais aucune boutique n'existe côté serveur :
-            ni adresse, ni catalogue. Donne-moi l'adresse de la boutique et je
-            l'ouvre depuis ce bouton.
+          <p className="text-sm font-semibold text-white">
+            Impossible d'ouvrir la boutique
           </p>
+          <p className="max-w-sm text-xs text-[#71717a]">
+            Ouvre cette adresse dans ton navigateur :
+          </p>
+          <p className="rounded-lg border border-[#27272a] bg-[#131316] px-3 py-2 font-mono text-xs text-accent-purple">
+            {SHOP_URL}
+          </p>
+          {shopError && <p className="text-xs text-red-400">{shopError}</p>}
         </div>
       </Modal>
 
