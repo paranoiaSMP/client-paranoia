@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { invoke } from '@tauri-apps/api/core';
-import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle } from "lucide-react";
+import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingBag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "motion/react";
 
 import { SkinViewer3D } from "../components/SkinViewer3D";
 
-import type { RemoteConfiguration, NewsItem, LauncherProfile, ServerStatus } from "@paranoia/contracts";
+import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/contracts";
 
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
 import { createProfile, importProfile } from "../shared/api/profilesClient";
-import { fetchNews, fetchServerStatus } from "../shared/api/launcherInfoClient";
+import { fetchNews } from "../shared/api/launcherInfoClient";
 import { listInstalledMods } from "../shared/api/modsClient";
 import { waitForApi } from "../shared/api/http";
 import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse, cancelLaunch } from "../shared/api/launcherClient";
@@ -22,7 +22,8 @@ import { ModsTab } from "./components/tabs/ModsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
-import { HomeInfoBar } from "./components/HomeInfoBar";
+import { HomeActionBar } from "./components/HomeActionBar";
+import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
 import { InstanceMenu } from "./components/InstanceMenu";
 
 import { useAuth } from "./hooks/useAuth";
@@ -114,12 +115,11 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
   const [modCount, setModCount] = useState<number | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -188,28 +188,6 @@ export function App() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [mainProfile]);
-
-  // Etat du serveur: une information d'accueil, jamais bloquante. Un echec
-  // laisse le bandeau afficher "indisponible" plutot qu'une erreur de page.
-  useEffect(() => {
-    let cancelled = false;
-
-    async function refreshStatus() {
-      try {
-        const status = await fetchServerStatus();
-        if (!cancelled) setServerStatus(status);
-      } catch {
-        if (!cancelled) setServerStatus(null);
-      }
-    }
-
-    refreshStatus();
-    const intervalId = setInterval(refreshStatus, 60_000);
-    return () => {
-      cancelled = true;
-      clearInterval(intervalId);
-    };
-  }, []);
 
   // Nombre de mods du profil courant, relu a la fermeture du gestionnaire pour
   // que le compteur suive une installation ou une suppression.
@@ -407,7 +385,14 @@ export function App() {
           >
             {/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
             <div className="flex flex-col gap-5">
-              <HomeInfoBar status={serverStatus} news={news} />
+              <HomeActionBar
+                modCount={modCount}
+                instanceCount={profiles.length}
+                onAction={(action) => {
+                  if (action === "instances") setActiveModal("profils");
+                  else setActiveModal(action);
+                }}
+              />
               <img
                 alt=""
                 aria-hidden="true"
@@ -623,6 +608,22 @@ export function App() {
             }}
           />
         )}
+      </Modal>
+
+      <Modal isOpen={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} title="Cosmétiques">
+        <CosmetiquesTab />
+      </Modal>
+
+      <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
+        <div className="flex flex-col items-center gap-3 py-10 text-center">
+          <ShoppingBag className="h-10 w-10 text-[#3f3f46]" />
+          <p className="text-sm font-semibold text-white">Boutique pas encore reliée</p>
+          <p className="max-w-sm text-xs text-[#71717a]">
+            Le bouton est en place, mais aucune boutique n'existe côté serveur :
+            ni adresse, ni catalogue. Donne-moi l'adresse de la boutique et je
+            l'ouvre depuis ce bouton.
+          </p>
+        </div>
       </Modal>
 
       <Modal isOpen={activeModal === "profils"} onClose={() => setActiveModal("none")} title="Gérer les profils">
