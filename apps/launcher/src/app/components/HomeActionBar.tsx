@@ -40,7 +40,7 @@ const STEP = 128;
 /**
  * Barre d'actions de l'accueil.
  *
- * <p>La boutique est ancree a gauche, hors de la piste: c'est le seul bouton
+ * <p>La boutique est ancree a droite, hors de la piste: c'est le seul bouton
  * qui doit rester atteignable sans rien faire defiler. Les autres tiennent sur
  * une piste large de trois, que la molette fait defiler -- les fleches sont la
  * pour que ce defilement se voie, une piste sans indice ne s'essaie pas.
@@ -61,23 +61,6 @@ export function HomeActionBar({
 
   return (
     <div className="sticky top-0 z-30 flex h-[64px] w-full lg:w-[75%] shrink-0 items-center gap-2 rounded-[20px] border border-[#2e2e33] bg-[#1b1b20]/95 px-3 backdrop-blur">
-      {/* Boutique: ancree a gauche, toujours visible. */}
-      <button
-        onClick={() => onAction("boutique")}
-        title="Boutique Paranoia"
-        type="button"
-        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-[#9309ef]/60 bg-gradient-to-br from-[#9309ef]/25 to-[#61069e]/15 px-3 text-white transition-colors hover:from-[#9309ef]/40 hover:to-[#61069e]/25"
-      >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-[#9309ef] to-[#61069e] shadow-lg shadow-[#9309ef]/20">
-          <ShoppingBag className="h-4 w-4" />
-        </span>
-        <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">
-          Boutique
-        </span>
-      </button>
-
-      <div className="h-8 w-px shrink-0 bg-[#2e2e33]" />
-
       <button
         onClick={() => scrollBy(-1)}
         aria-label="Raccourcis precedents"
@@ -136,6 +119,24 @@ export function HomeActionBar({
       >
         <ChevronRight className="h-4 w-4" />
       </button>
+
+      <div className="h-8 w-px shrink-0 bg-[#2e2e33]" />
+
+      {/* Boutique: ancree a droite, hors de la piste, toujours visible. */}
+      <button
+        onClick={() => onAction("boutique")}
+        title="Boutique Paranoia"
+        type="button"
+        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-[#9309ef]/60 bg-gradient-to-br from-[#9309ef]/25 to-[#61069e]/15 px-3 text-white transition-colors hover:from-[#9309ef]/40 hover:to-[#61069e]/25"
+      >
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-[#9309ef] to-[#61069e] shadow-lg shadow-[#9309ef]/20">
+          <ShoppingBag className="h-4 w-4" />
+        </span>
+        <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">
+          Boutique
+        </span>
+      </button>
+
     </div>
   );
 }
