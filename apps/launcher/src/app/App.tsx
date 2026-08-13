@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { invoke } from '@tauri-apps/api/core';
 import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingBag } from "lucide-react";
@@ -33,6 +34,22 @@ import { useProfiles } from "./hooks/useProfiles";
 // Boutique Paranoia. Ouverte dans le navigateur du systeme, pas dans le
 // launcher: un paiement se fait la ou le joueur a ses moyens enregistres.
 const SHOP_URL = "https://paranoiastudio.fr/shop";
+
+/**
+ * Fond de l'application.
+ *
+ * <p>Deux lueurs violettes tres diluees posees sur un degrade sombre: l'une en
+ * haut a gauche derriere la barre d'actions, l'autre en bas a droite derriere
+ * le personnage. Les valeurs restent basses volontairement -- le fond ne doit
+ * pas concurrencer les vignettes, qui portent deja leur propre degrade.
+ */
+const BACKGROUND: CSSProperties = {
+  backgroundImage: [
+    "radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.16) 0%, rgba(147, 9, 239, 0) 55%)",
+    "radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.22) 0%, rgba(97, 6, 158, 0) 60%)",
+    "linear-gradient(160deg, #1a1621 0%, #141416 45%, #0e0e10 100%)",
+  ].join(", "),
+};
 
 const DESIGN_WIDTH = 860;
 const DESIGN_HEIGHT = 520;
@@ -353,7 +370,7 @@ export function App() {
   // IF DISCONNECTED -> KEEP TOPBAR LAYOUT FOR LOGIN
   if (!connected) {
     return (
-      <div className="h-screen w-full flex flex-col overflow-hidden bg-[#0b0b0b]">
+      <div className="h-screen w-full flex flex-col overflow-hidden" style={BACKGROUND}>
         <TopBar 
           connected={connected} 
           account={account}
@@ -386,7 +403,8 @@ export function App() {
         <div className="w-full h-full relative">
           <section
             aria-label="Interface principale du jeu"
-            className="absolute inset-0 w-full h-full overflow-hidden bg-[#141414] p-8 lg:p-12 flex flex-col"
+            className="absolute inset-0 w-full h-full overflow-hidden p-8 lg:p-12 flex flex-col"
+            style={BACKGROUND}
           >
             {/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
             <div className="flex flex-col gap-5">
