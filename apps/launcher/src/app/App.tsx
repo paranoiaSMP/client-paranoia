@@ -23,6 +23,7 @@ import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { HomeInfoBar } from "./components/HomeInfoBar";
+import { InstanceMenu } from "./components/InstanceMenu";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
@@ -118,7 +119,7 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -486,7 +487,11 @@ export function App() {
                       isSelected={isSelected}
                       onClick={() => {
                         if (profile) {
+                          // Selection d'abord: le menu qui s'ouvre, le bouton
+                          // Jouer et le compteur de mods parlent tous de
+                          // l'instance courante.
                           setSelectedProfileId(profile.id);
+                          setActiveModal("instance");
                         } else {
                           setStep(connected ? 2 : 1);
                           setIsCreatingProfile(true);
@@ -594,6 +599,30 @@ export function App() {
           setGraphicsMode={setGraphicsMode} selectedType={selectedType} selectedGraphics={selectedGraphics}
           handleInstall={handleInstall} installState={installState}
         />
+      </Modal>
+
+      <Modal
+        isOpen={activeModal === "instance" && !!mainProfile}
+        onClose={() => setActiveModal("none")}
+        title={mainProfile ? mainProfile.name : "Instance"}
+      >
+        {mainProfile && (
+          <InstanceMenu
+            profile={mainProfile}
+            modCount={modCount}
+            running={installState === "running"}
+            onPlay={() => {
+              setActiveModal("none");
+              handleLaunchGame(mainProfile.id);
+            }}
+            onOpenMods={() => setActiveModal("mods")}
+            onFavorite={() => handleFavoriteProfile(mainProfile.id)}
+            onDelete={async () => {
+              await handleDeleteProfile(mainProfile.id);
+              setActiveModal("none");
+            }}
+          />
+        )}
       </Modal>
 
       <Modal isOpen={activeModal === "profils"} onClose={() => setActiveModal("none")} title="Gérer les profils">
