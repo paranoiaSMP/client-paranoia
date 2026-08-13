@@ -393,7 +393,11 @@ export function App() {
   }
 
   // GAME UI LAYOUT
-  const displayProfiles = [0, 1, 2].map((index) => profiles[index] || null);
+  // Toutes les instances, et non les trois premieres: la piste en montre
+  // trois a la fois et la molette fait defiler les suivantes. Avec l'ancien
+  // decoupage, une quatrieme instance restait invisible depuis l'accueil.
+  const displayProfiles: (LauncherProfile | null)[] =
+    profiles.length > 0 ? profiles : [null];
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-[#0b0b0b] relative">
@@ -414,6 +418,21 @@ export function App() {
                 onAction={async (action) => {
                   if (action === "instances") {
                     setActiveModal("profils");
+                    return;
+                  }
+                  if (action === "dossier") {
+                    // Le dossier n'existe qu'apres un premier lancement: on le
+                    // dit plutot que de laisser le bouton sans effet.
+                    if (!mainProfile) return;
+                    try {
+                      await invoke("open_instance_folder", { profileId: mainProfile.id });
+                    } catch (e) {
+                      setError(
+                        typeof e === "string"
+                          ? e
+                          : "Dossier introuvable. Lance l'instance une fois.",
+                      );
+                    }
                     return;
                   }
                   if (action === "boutique") {
@@ -498,13 +517,22 @@ export function App() {
 
             {/* PROFILES & PLAY BUTTON */}
             <div className="mt-auto flex flex-col items-start gap-8 pb-4 relative z-10 w-full lg:w-[55%] xl:w-[50%] lg:pr-8">
-              <div className="flex flex-row items-center gap-8 flex-wrap">
+              <div
+                onWheel={(event) => {
+                  // Meme conversion que la barre du haut: une molette de souris
+                  // ne produit que du deplacement vertical.
+                  if (event.deltaY !== 0) {
+                    event.currentTarget.scrollLeft += event.deltaY;
+                  }
+                }}
+                className="no-scrollbar flex max-w-full lg:max-w-[616px] flex-row flex-nowrap items-center gap-8 overflow-x-auto scroll-smooth py-1"
+              >
                 {displayProfiles.map((profile, index) => {
                   const isSelected = profile ? profile.id === mainProfile?.id : false;
                   const label = profile ? profile.name : t("home.new_instance", "Nouvelle instance");
                   return (
                     <InstanceCard
-                      key={index}
+                      key={profile ? profile.id : "vide"}
                       label={label}
                       {...(profile ? { version: profile.minecraftVersion, detail: profile.profileTypeId } : {})}
                       isSelected={isSelected}
