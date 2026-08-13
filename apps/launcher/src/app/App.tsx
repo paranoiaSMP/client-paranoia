@@ -6,11 +6,12 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { SkinViewer3D } from "../components/SkinViewer3D";
 
-import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/contracts";
+import type { RemoteConfiguration, NewsItem, LauncherProfile, ServerStatus } from "@paranoia/contracts";
 
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
 import { createProfile, importProfile } from "../shared/api/profilesClient";
-import { fetchNews } from "../shared/api/launcherInfoClient";
+import { fetchNews, fetchServerStatus } from "../shared/api/launcherInfoClient";
+import { listInstalledMods } from "../shared/api/modsClient";
 import { waitForApi } from "../shared/api/http";
 import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse, cancelLaunch } from "../shared/api/launcherClient";
 
@@ -21,6 +22,7 @@ import { ModsTab } from "./components/tabs/ModsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { HomeInfoBar } from "./components/HomeInfoBar";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
@@ -49,17 +51,56 @@ type DetectedProfile = {
   launcher: string;
 };
 
-function InstanceCard({ label, isSelected, onClick }: { label: string, isSelected: boolean, onClick: () => void }) {
+/**
+ * Vignette d'instance.
+ *
+ * <p>Le degrade et la lueur ne sont pas decoratifs seulement: une vignette
+ * pleine d'un aplat uni ne se distinguait de sa voisine que par la couleur de
+ * sa bordure, difficile a voir de loin. La version selectionnee est violette et
+ * eclairee, les autres restent sombres.
+ */
+function InstanceCard({
+  label,
+  version,
+  detail,
+  isSelected,
+  onClick,
+}: {
+  label: string;
+  version?: string;
+  detail?: string;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
   return (
     <article
       onClick={onClick}
-      className={`relative flex h-[180px] w-[184px] shrink-0 cursor-pointer items-end overflow-hidden rounded-[18px] border-2 transition-colors ${
-        isSelected ? "border-[#9309ef] bg-[#2a133f]" : "border-[#333] bg-[#212121] hover:border-[#555]"
-      } p-4`}
+      className={`group relative flex h-[180px] w-[184px] shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[18px] border-2 p-4 transition-colors ${
+        isSelected
+          ? "border-[#9309ef] bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
+          : "border-[#333] bg-gradient-to-br from-[#26262b] via-[#1d1d21] to-[#161619] hover:border-[#555]"
+      }`}
     >
-      <p className="whitespace-nowrap text-sm font-medium leading-normal text-white truncate w-full">
-        {label}
-      </p>
+      {/* Lueur d'angle, derriere le contenu. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
+          isSelected
+            ? "bg-[#9309ef]/40"
+            : "bg-white/5 group-hover:bg-white/10"
+        }`}
+      />
+
+      <div className="relative z-10 min-w-0">
+        <p className="truncate text-sm font-medium leading-normal text-white">
+          {label}
+        </p>
+        {(version || detail) && (
+          <p className="mt-0.5 truncate text-[11px] text-[#a1a1aa]">
+            {[version, detail].filter(Boolean).join(" · ")}
+          </p>
+        )}
+      </div>
     </article>
   );
 }
@@ -72,6 +113,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<RemoteConfiguration | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
+  const [modCount, setModCount] = useState<number | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
@@ -144,6 +187,51 @@ export function App() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [mainProfile]);
+
+  // Etat du serveur: une information d'accueil, jamais bloquante. Un echec
+  // laisse le bandeau afficher "indisponible" plutot qu'une erreur de page.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshStatus() {
+      try {
+        const status = await fetchServerStatus();
+        if (!cancelled) setServerStatus(status);
+      } catch {
+        if (!cancelled) setServerStatus(null);
+      }
+    }
+
+    refreshStatus();
+    const intervalId = setInterval(refreshStatus, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  // Nombre de mods du profil courant, relu a la fermeture du gestionnaire pour
+  // que le compteur suive une installation ou une suppression.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!mainProfile) {
+      setModCount(null);
+      return;
+    }
+
+    listInstalledMods(mainProfile.id)
+      .then((mods) => {
+        if (!cancelled) setModCount(mods.length);
+      })
+      .catch(() => {
+        if (!cancelled) setModCount(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mainProfile?.id, activeModal]);
 
   useEffect(() => {
     if (importSettings && detectedProfiles.length === 0) {
@@ -318,7 +406,7 @@ export function App() {
           >
             {/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
             <div className="flex flex-col gap-5">
-              <div className="h-[99px] w-full lg:w-[75%] overflow-hidden rounded-[20px] bg-[#262626] shrink-0" />
+              <HomeInfoBar status={serverStatus} news={news} />
               <img
                 alt=""
                 aria-hidden="true"
@@ -371,6 +459,10 @@ export function App() {
                     </div>
 
                     <div className="flex flex-col items-center mt-auto gap-4">
+                      {/* Logo Paranoia, juste au-dessus de la sortie. */}
+                      <div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#9309ef] to-[#61069e] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#9309ef]/20">
+                        P
+                      </div>
                       <div className="w-6 h-[1px] bg-[#333]" />
                       <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-red-500/20 transition-colors group relative" title="Déconnexion">
                         <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
@@ -390,6 +482,7 @@ export function App() {
                     <InstanceCard
                       key={index}
                       label={label}
+                      {...(profile ? { version: profile.minecraftVersion, detail: profile.profileTypeId } : {})}
                       isSelected={isSelected}
                       onClick={() => {
                         if (profile) {
@@ -423,7 +516,7 @@ export function App() {
                 </button>
               </div>
 
-              <div className="flex h-[74px] w-[280px] shrink-0 items-center">
+              <div className="flex h-[74px] w-[280px] shrink-0 items-center gap-3">
                 <button
                   aria-label={installState === "running" ? "Arrêter" : "Lancer"}
                   disabled={!mainProfile}
@@ -453,6 +546,23 @@ export function App() {
                         {t("home.play", "Jouer")}
                       </>
                     )}
+                  </span>
+                </button>
+
+                {/* Gestionnaire de mods Modrinth. Il n'etait plus atteignable
+                    que par le menu replie en haut a droite, ou personne ne le
+                    trouvait. */}
+                <button
+                  aria-label="Gerer les mods"
+                  title="Installer des mods depuis Modrinth"
+                  disabled={!mainProfile}
+                  onClick={() => setActiveModal("mods")}
+                  className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#333] bg-gradient-to-b from-[#242429] to-[#1a1a1e] px-4 text-white transition-colors hover:border-[#9309ef] disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                >
+                  <Pickaxe className="h-5 w-5" />
+                  <span className="text-[10px] leading-none text-[#a1a1aa]">
+                    {modCount === null ? "Mods" : `${modCount} mod${modCount > 1 ? "s" : ""}`}
                   </span>
                 </button>
               </div>
