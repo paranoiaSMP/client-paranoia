@@ -7,6 +7,9 @@ import gg.paranoia.client.platform.HudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.PlayerListEntry;
+
+import java.util.UUID;
 
 /** Branchements propres a Minecraft 1.21.8. */
 public final class PlatformImpl implements ClientPlatform {
@@ -39,5 +42,11 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public void popScale(DrawContext context) {
         context.getMatrices().popMatrix();
+    }
+
+    @Override
+    public UUID profileId(PlayerListEntry entry) {
+        // GameProfile est une classe dans cette version.
+        return entry.getProfile().getId();
     }
 }

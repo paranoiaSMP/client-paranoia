@@ -1,6 +1,7 @@
 package gg.paranoia.client.mixin;
 
 import gg.paranoia.client.modules.BadgeModule;
+import gg.paranoia.client.platform.Platforms;
 import net.minecraft.client.gui.hud.PlayerListHud;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
@@ -26,7 +27,10 @@ public abstract class PlayerListHudMixin {
             return;
         }
 
-        Text decorated = BadgeModule.decorate(info.getReturnValue(), entry.getProfile().getId(), true);
+        // L'identifiant passe par la plateforme: GameProfile est une classe en
+        // 1.21.8 et un record ensuite, getId() d'un cote, id() de l'autre.
+        Text decorated =
+            BadgeModule.decorate(info.getReturnValue(), Platforms.get().profileId(entry), true);
         if (decorated != info.getReturnValue()) {
             info.setReturnValue(decorated);
         }
