@@ -92,7 +92,10 @@ jobs:
               "net.minecraft.entity.effect.StatusEffect:getName" \
               "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
               "net.minecraft.entity.LivingEntity:getStatusEffects" \
-              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update"
+              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update" \
+              "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
+              "net.minecraft.client.network.PlayerListEntry:getProfile" \
+              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel"
             do
               class="${entry%%:*}"
               members="${entry#*:}"

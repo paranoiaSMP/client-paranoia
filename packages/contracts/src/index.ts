@@ -90,7 +90,15 @@ export interface CreateLauncherProfileRequest {
   profileTypeId: string;
   graphicsModeId: string;
   ramMb: number;
-  resolution: string;
+  /**
+   * Taille de fenetre propre au profil.
+   *
+   * <p>Optionnelle: la taille appliquee au lancement vient des parametres, seul
+   * endroit ou le joueur peut la changer. Le champ etait rempli a "1920x1080"
+   * pour tout le monde, ecrasait ce reglage, et donnait une fenetre de la taille
+   * exacte de l'ecran -- indistinguable d'un plein ecran.
+   */
+  resolution?: string;
   optionsTxtPath?: string | undefined;
 }
 
