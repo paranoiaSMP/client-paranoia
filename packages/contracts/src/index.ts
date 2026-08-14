@@ -133,4 +133,14 @@ export interface RemoteConfiguration {
   profileTypes: ProfileTypeDefinition[];
   graphicsModes: GraphicsModeDefinition[];
   supportedMinecraftVersions: string[];
+  /**
+   * Versions de Minecraft pour lesquelles le client Paranoia est compile.
+   *
+   * <p>Sous-ensemble tres reduit de `supportedMinecraftVersions`, qui suit le
+   * manifeste de Mojang et propose donc toutes les versions publiees. Sans
+   * cette distinction, rien n'indique au joueur que le mod n'existe pas pour
+   * la version qu'il choisit: son instance se lance, sans le client, et sans
+   * la moindre explication.
+   */
+  clientModVersions?: string[];
 }

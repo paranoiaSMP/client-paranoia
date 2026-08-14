@@ -121,9 +121,23 @@ export function ProfileCreation({
               {config?.supportedMinecraftVersions.map((v) => (
                 <option key={v} value={v}>
                   {v}
+                  {config.clientModVersions?.includes(v) ? "  — Client Paranoia" : ""}
                 </option>
               ))}
             </select>
+
+            {/* Le launcher propose toutes les versions publiees par Mojang,
+                mais le mod n'est compile que pour quelques-unes. Sans cet
+                avertissement, l'instance se lance sans le client et rien ne
+                dit pourquoi. */}
+            {config?.clientModVersions && config.clientModVersions.length > 0
+              && !config.clientModVersions.includes(minecraftVersion) && (
+              <p className="mt-2 text-xs text-amber-400/90">
+                Le client Paranoia n'existe pas pour cette version. L'instance
+                se lancera en Minecraft normal. Versions couvertes :{" "}
+                {config.clientModVersions.join(", ")}.
+              </p>
+            )}
           </div>
 
           <div className="pt-2">

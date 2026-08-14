@@ -26,6 +26,7 @@ import { UpdateBanner } from "./components/UpdateBanner";
 import { HomeActionBar } from "./components/HomeActionBar";
 import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
 import { InstanceMenu } from "./components/InstanceMenu";
+import { NewsCard } from "./components/NewsCard";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
@@ -458,6 +459,9 @@ export function App() {
               />
             </div>
 
+            {/* ACTUALITÉS */}
+            <NewsCard news={news} />
+
 
             {/* SLIDING MENU */}
             <motion.div
@@ -517,16 +521,22 @@ export function App() {
 
             {/* PROFILES & PLAY BUTTON */}
             <div className="mt-auto flex flex-col items-start gap-8 pb-4 relative z-10 w-full lg:w-[55%] xl:w-[50%] lg:pr-8">
-              <div
-                onWheel={(event) => {
-                  // Meme conversion que la barre du haut: une molette de souris
-                  // ne produit que du deplacement vertical.
-                  if (event.deltaY !== 0) {
-                    event.currentTarget.scrollLeft += event.deltaY;
-                  }
-                }}
-                className="no-scrollbar flex max-w-full lg:max-w-[616px] flex-row flex-nowrap items-center gap-8 overflow-x-auto scroll-smooth py-1"
-              >
+              <div className="flex max-w-full flex-row items-center gap-6">
+                {/* Piste des instances: trois vignettes visibles, molette pour
+                    atteindre les suivantes. Le bouton d'ajout reste en dehors:
+                    place a l'interieur, il sortait du champ des la troisieme
+                    instance et donnait l'impression qu'on ne pouvait pas en
+                    creer davantage. */}
+                <div
+                  onWheel={(event) => {
+                    // Meme conversion que la barre du haut: une molette de
+                    // souris ne produit que du deplacement vertical.
+                    if (event.deltaY !== 0) {
+                      event.currentTarget.scrollLeft += event.deltaY;
+                    }
+                  }}
+                  className="no-scrollbar flex max-w-full lg:max-w-[616px] flex-row flex-nowrap items-center gap-8 overflow-x-auto scroll-smooth py-1"
+                >
                 {displayProfiles.map((profile, index) => {
                   const isSelected = profile ? profile.id === mainProfile?.id : false;
                   const label = profile ? profile.name : t("home.new_instance", "Nouvelle instance");
@@ -553,9 +563,12 @@ export function App() {
                   );
                 })}
 
+                </div>
+
                 <button
                   aria-label="Ajouter une instance"
-                  className="grid size-20 shrink-0 place-items-center rounded-2xl bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9309ef]"
+                  title="Nouvelle instance"
+                  className="grid size-20 shrink-0 place-items-center rounded-2xl border border-[#333] bg-[#1e1e1e] hover:border-[#9309ef] hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9309ef]"
                   onClick={() => {
                     setStep(connected ? 2 : 1);
                     setIsCreatingProfile(true);
