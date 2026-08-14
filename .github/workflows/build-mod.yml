@@ -91,7 +91,8 @@ jobs:
               "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
               "net.minecraft.entity.effect.StatusEffect:getName" \
               "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
-              "net.minecraft.entity.LivingEntity:getStatusEffects"
+              "net.minecraft.entity.LivingEntity:getStatusEffects" \
+              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
