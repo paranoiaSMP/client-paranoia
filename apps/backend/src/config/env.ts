@@ -34,15 +34,22 @@ const envSchema = z.object({
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_REDIRECT_URI: z.string().url().optional(),
 
+  // Base URL for the Paranoia Studio website API
+  SITE_API_URL: z.string().url().default("https://paranoiastudio.fr/api"),
+
   // URL of the remote API to check for bans before launching.
-  // Example: https://paranoiastudio.fr/api/bans/check
-  BAN_API_URL: z.string().url().default("https://paranoiastudio.fr/api/bans/check"),
+  BAN_API_URL: z.string().url().optional(),
+
+  // URL of the remote API to fetch news for the launcher home screen.
+  NEWS_API_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.parse(process.env);
 
 export const env = {
   ...parsed,
+  BAN_API_URL: parsed.BAN_API_URL || `${parsed.SITE_API_URL}/bans/check`,
+  NEWS_API_URL: parsed.NEWS_API_URL || `${parsed.SITE_API_URL}/news`,
   allowedOrigins: [
     ...DEFAULT_ALLOWED_ORIGINS,
     ...parsed.CORS_ALLOWED_ORIGINS.split(",")

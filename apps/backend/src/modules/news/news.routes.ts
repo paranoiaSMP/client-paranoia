@@ -1,19 +1,20 @@
 import { Router } from "express";
-import type { NewsItem } from "@paranoia/contracts";
+import { env } from "../../config/env.js";
 
 export const newsRouter = Router();
 
-newsRouter.get("/", (_req, res) => {
-  const payload: NewsItem[] = [
-    {
-      id: "news-saison-3",
-      title: "Test",
-      excerpt: "TEST",
-      contentHtml: "<h1>Test</h1><p>Test</p>",
-      publishedAt: new Date().toISOString(),
-      tags: ["news"],
-    },
-  ];
-
-  res.json(payload);
+newsRouter.get("/", async (_req, res) => {
+  try {
+    const response = await fetch(env.NEWS_API_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news: ${response.status}`);
+    }
+    
+    const payload = await response.json();
+    res.json(payload);
+  } catch (error) {
+    console.warn("Could not fetch news from remote API, returning empty list.", error);
+    // On renvoie un tableau vide pour ne pas faire planter le launcher si le site est down
+    res.json([]);
+  }
 });
