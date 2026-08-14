@@ -1,0 +1,6 @@
+name: ParanoiaServer
+version: '1.0.0'
+main: gg.paranoia.server.ParanoiaPlugin
+api-version: '1.21'
+description: Moitie serveur du client Paranoia (badge et politique des modules).
+author: Paranoia
