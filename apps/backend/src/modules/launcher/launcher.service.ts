@@ -80,18 +80,6 @@ function logToFile(rootPath: string, message: string): void {
   }
 }
 
-/** "1920x1080" -> { width: 1920, height: 1080 }; null si la valeur est invalide. */
-function parseResolution(
-  resolution: string,
-): { width: number; height: number } | null {
-  const match = /^(\d{3,5})\s*[x×]\s*(\d{3,5})$/i.exec(resolution.trim());
-  if (!match) {
-    return null;
-  }
-
-  return { width: Number(match[1]), height: Number(match[2]) };
-}
-
 export function getLaunchStatus(profileId: string): LaunchStatus {
   return launchStatuses.get(profileId) || { state: "idle", progress: 0, text: "" };
 }
@@ -348,7 +336,13 @@ export async function launchMinecraft(
 
     // La resolution etait enregistree dans le profil mais n'arrivait jamais
     // jusqu'au jeu: choisir 1280x720 n'avait donc aucun effet.
-    const resolution = parseResolution(profile.resolution) ?? {
+    // La taille des parametres prime sur celle du profil.
+    //
+    // Le champ du profil n'a jamais eu de controle dans l'interface: il valait
+    // "1920x1080" pour tout le monde, ecrasait le reglage visible, et donnait
+    // une fenetre de la taille exacte de l'ecran -- qu'on prend pour du plein
+    // ecran, et ou F11 bascule entre deux etats identiques a l'oeil.
+    const resolution = {
       width: settings.width,
       height: settings.height,
     };

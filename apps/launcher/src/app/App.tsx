@@ -289,7 +289,7 @@ export function App() {
         if (found) selectedOptionsTxtPath = found.options_path;
       }
       await createInstallationManifest({ minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, locale: "fr-FR" });
-      await createProfile({ name: profileName, minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, ramMb: 4096, resolution: "1920x1080", optionsTxtPath: selectedOptionsTxtPath });
+      await createProfile({ name: profileName, minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, ramMb: 4096, optionsTxtPath: selectedOptionsTxtPath });
       await refreshProfiles();
       setSetupComplete(true);
       setInstallState("done");
