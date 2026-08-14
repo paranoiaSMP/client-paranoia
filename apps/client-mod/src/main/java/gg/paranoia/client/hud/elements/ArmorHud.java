@@ -29,6 +29,22 @@ public final class ArmorHud extends HudElement {
         }
     }
 
+    /** Ce qu'on lit sous chaque piece. */
+    public enum Durability {
+        POINTS("Points restants"),
+        POURCENTAGE("Pourcentage");
+
+        private final String label;
+
+        Durability(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+    }
+
     private static final int ICON = 16;
     private static final int SPACING = 4;
 
@@ -38,6 +54,14 @@ public final class ArmorHud extends HudElement {
         add(new BooleanSetting("hand", "Inclure la main", true));
     private final BooleanSetting showDurability =
         add(new BooleanSetting("durability", "Durabilite restante", true));
+    /**
+     * Points restants par defaut.
+     *
+     * <p>C'est le chiffre qu'on regarde en combat: un pourcentage ne dit pas
+     * combien de coups il reste, alors que le nombre brut, si.
+     */
+    private final EnumSetting<Durability> durabilityFormat = add(new EnumSetting<>(
+        "durabilityFormat", "Affichage", Durability.POINTS, Durability.values(), Durability::label));
     private final BooleanSetting hideEmpty =
         add(new BooleanSetting("hideEmpty", "Masquer les emplacements vides", true));
 
@@ -88,6 +112,23 @@ public final class ArmorHud extends HudElement {
         return stacks;
     }
 
+    /** Largeur du plus long texte de durabilite affiche. */
+    private int durabilityWidth(TextRenderer textRenderer) {
+        int widest = 0;
+        for (ItemStack stack : slots()) {
+            if (stack.isEmpty() || !stack.isDamageable()) {
+                continue;
+            }
+            int remaining = stack.getMaxDamage() - stack.getDamage();
+            int percent = stack.getMaxDamage() > 0 ? remaining * 100 / stack.getMaxDamage() : 100;
+            String text = durabilityFormat.get() == Durability.POINTS
+                ? String.valueOf(remaining)
+                : percent + "%";
+            widest = Math.max(widest, textRenderer.getWidth(text));
+        }
+        return widest;
+    }
+
     private int cellHeight(TextRenderer textRenderer) {
         return showDurability.get() ? ICON + textRenderer.fontHeight + 1 : ICON;
     }
@@ -98,7 +139,7 @@ public final class ArmorHud extends HudElement {
         if (orientation.get() == Orientation.HORIZONTAL) {
             return count * ICON + (count - 1) * SPACING + PADDING * 2;
         }
-        return ICON + PADDING * 2 + (showDurability.get() ? 22 : 0);
+        return ICON + PADDING * 2 + (showDurability.get() ? 6 + durabilityWidth(textRenderer) : 0);
     }
 
     @Override
@@ -134,7 +175,9 @@ public final class ArmorHud extends HudElement {
 
             int remaining = stack.getMaxDamage() - stack.getDamage();
             int percent = stack.getMaxDamage() > 0 ? remaining * 100 / stack.getMaxDamage() : 100;
-            String text = percent + "%";
+            String text = durabilityFormat.get() == Durability.POINTS
+                ? String.valueOf(remaining)
+                : percent + "%";
 
             if (orientation.get() == Orientation.HORIZONTAL) {
                 int textX = slotX + (ICON - textRenderer.getWidth(text)) / 2;

@@ -27,6 +27,37 @@ const cancelFlags = new Map<string, boolean>();
 const launchStatuses = new Map<string, LaunchStatus>();
 
 /**
+ * Impose le mode fenetre ou plein ecran dans options.txt.
+ *
+ * <p>C'est ce fichier qui decide, pas la ligne de commande: l'argument
+ * `--fullscreen` ne sait que forcer le plein ecran, jamais l'inverse. Un
+ * options.txt recupere du launcher officiel -- ou laisse par un appui sur F11
+ * en jeu -- portant `fullscreen:true` rendait donc le mode fenetre
+ * inatteignable, quel que soit le reglage du launcher.
+ */
+function applyWindowMode(optionsPath: string, fullscreen: boolean): void {
+  try {
+    const line = `fullscreen:${fullscreen}`;
+    let content = "";
+
+    if (fs.existsSync(optionsPath)) {
+      content = fs.readFileSync(optionsPath, "utf8");
+    }
+
+    // \r? indispensable: un options.txt venu de Windows est en CRLF.
+    const pattern = /^fullscreen:.*$/m;
+    content = pattern.test(content)
+      ? content.replace(pattern, line)
+      : (content.length > 0 && !content.endsWith("\n") ? content + "\n" : content) + line + "\n";
+
+    fs.writeFileSync(optionsPath, content);
+  } catch (err) {
+    // Un options.txt illisible ne doit pas empecher de jouer.
+    console.warn("[Launcher] mode d'affichage non applique:", err);
+  }
+}
+
+/**
  * Journal du launcher, ecrit a cote des donnees du jeu.
  *
  * <p>La console du sidecar n'est visible nulle part chez le joueur. Quand le mod
@@ -276,6 +307,10 @@ export async function launchMinecraft(
     }
 
 
+    // Le mode d'affichage est ecrit apres la copie: sinon la valeur du fichier
+    // source ecraserait le choix du joueur.
+    applyWindowMode(targetOptionsPath, settings.fullscreen);
+
     // 7. Lancer Minecraft
     updateStatus({ state: "downloading_assets", progress: 0, text: "Preparation du lancement..." });
 
@@ -317,9 +352,11 @@ export async function launchMinecraft(
       width: settings.width,
       height: settings.height,
     };
+    // En fenetre, la taille vient du profil; en plein ecran elle est ignoree
+    // par le jeu, mais reste utile au retour en fenetre.
     opts.window = settings.fullscreen
       ? { ...resolution, fullscreen: true }
-      : resolution;
+      : { ...resolution, fullscreen: false };
 
     // Arguments JVM saisis dans les parametres, ajoutes a ceux du launcher.
     const extraJvmArgs = settings.jvmArgs
