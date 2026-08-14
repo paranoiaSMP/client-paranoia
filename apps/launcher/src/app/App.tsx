@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { invoke } from '@tauri-apps/api/core';
-import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingBag } from "lucide-react";
+import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingBag, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -20,9 +20,10 @@ import { TopBar } from "./components/TopBar";
 import { ProfilsTab } from "./components/tabs/ProfilsTab";
 import { ParametresTab } from "./components/tabs/ParametresTab";
 import { ModsTab } from "./components/tabs/ModsTab";
+import { ComptesTab } from "./components/tabs/ComptesTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
-import { UpdateBanner } from "./components/UpdateBanner";
+import { UpdateModal } from "./components/UpdateModal";
 import { HomeActionBar } from "./components/HomeActionBar";
 import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
 import { InstanceMenu } from "./components/InstanceMenu";
@@ -142,7 +143,7 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique" | "comptes">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -402,7 +403,7 @@ export function App() {
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-[#0b0b0b] relative">
-      <UpdateBanner state={updateState} onInstall={installUpdate} onDismiss={dismissUpdate} />
+      <UpdateModal state={updateState} onInstall={installUpdate} onDismiss={dismissUpdate} />
       
       <main className="flex-1 flex items-center justify-center min-h-[520px]">
         <div className="w-full h-full relative">
@@ -494,6 +495,9 @@ export function App() {
                     className="flex flex-col items-center flex-1 w-full mt-4 pb-4"
                   >
                     <div className="flex flex-col items-center gap-4">
+                      <button onClick={() => { setActiveModal("comptes"); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative" title="Comptes">
+                        <User className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                      </button>
                       <button onClick={() => { setActiveModal("profils"); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative" title="Gérer les profils">
                         <Box className="w-5 h-5 text-gray-400 group-hover:text-white" />
                       </button>
@@ -719,6 +723,13 @@ export function App() {
 
       <Modal isOpen={activeModal === "mods"} onClose={() => setActiveModal("none")} title="Mods">
         <ModsTab profiles={profiles} selectedProfileId={selectedProfileId} setSelectedProfileId={setSelectedProfileId} setError={setError} />
+      </Modal>
+
+      <Modal isOpen={activeModal === "comptes"} onClose={() => setActiveModal("none")} title="Comptes">
+        <ComptesTab 
+          account={account} accounts={accounts} connectingMicrosoft={connectingMicrosoft}
+          onConnectMicrosoft={handleMicrosoftConnect} onSwitchAccount={handleSwitchAccount}
+        />
       </Modal>
 
       <Modal isOpen={activeModal === "parametres"} onClose={() => setActiveModal("none")} title="Paramètres">

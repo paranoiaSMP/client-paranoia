@@ -33,6 +33,10 @@ const envSchema = z.object({
   MICROSOFT_CLIENT_ID: z.string().min(1).optional(),
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_REDIRECT_URI: z.string().url().optional(),
+
+  // URL of the remote API to check for bans before launching.
+  // Example: https://paranoiastudio.fr/api/bans/check
+  BAN_API_URL: z.string().url().default("https://paranoiastudio.fr/api/bans/check"),
 });
 
 const parsed = envSchema.parse(process.env);

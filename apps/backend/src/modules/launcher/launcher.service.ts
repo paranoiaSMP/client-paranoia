@@ -13,6 +13,7 @@ import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
 import { ensureFabricApi, findInstalledFabricApi } from "./fabricApi.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
+import { env } from "../../config/env.js";
 
 export type LaunchStatus = {
   state: "idle" | "downloading_java" | "downloading_assets" | "launching" | "running" | "error";
@@ -110,6 +111,28 @@ export async function launchMinecraft(
     const profile = exportProfile(profileId);
     if (!profile) {
       throw new Error(`Profile ${profileId} not found`);
+    }
+
+    if (env.BAN_API_URL) {
+      updateStatus({ state: "downloading_assets", progress: 0, text: "Vérification de l'état du compte..." });
+      try {
+        // Le site doit renvoyer du JSON. S'il renvoie { banned: true, reason: "..." } on bloque.
+        const banUrl = new URL(env.BAN_API_URL);
+        banUrl.searchParams.set("uuid", account.minecraftUuid);
+        
+        const banRes = await fetch(banUrl.toString());
+        if (banRes.ok) {
+          const banData = await banRes.json().catch(() => ({}));
+          if (banData.banned) {
+            throw new Error(`Vous êtes banni. Raison: ${banData.reason || "Non spécifiée"}`);
+          }
+        }
+      } catch (err: any) {
+        if (err.message && err.message.startsWith("Vous êtes banni")) {
+          throw err; // On relance l'erreur de ban pour bloquer le lancement
+        }
+        console.warn("[Launcher] Impossible de joindre l'API de ban, on autorise le lancement par précaution:", err);
+      }
     }
 
     // Toujours defini: une combinaison absente du catalogue donne un manifeste
@@ -256,21 +279,23 @@ export async function launchMinecraft(
     // SYSTEM POUR COPIER LE OPTION.TXT D'UN PROFILE SELECTIONé
     const customOptionsPath = (profile as any).optionsTxtPath; 
 
-    if (customOptionsPath && fs.existsSync(customOptionsPath)) {
-      try {
-        fs.copyFileSync(customOptionsPath, targetOptionsPath);
-        console.log(`Copied custom options.txt from ${customOptionsPath}`);
-      } catch (e) {
-        console.warn("Could not copy custom options.txt", e);
-      }
-    } else {
-      const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
-      if (fs.existsSync(vanillaOptionsPath) && !fs.existsSync(targetOptionsPath)) {
+    if (!fs.existsSync(targetOptionsPath)) {
+      if (customOptionsPath && fs.existsSync(customOptionsPath)) {
         try {
-          fs.copyFileSync(vanillaOptionsPath, targetOptionsPath);
-          console.log("Copied options.txt from vanilla .minecraft");
+          fs.copyFileSync(customOptionsPath, targetOptionsPath);
+          console.log(`Copied custom options.txt from ${customOptionsPath}`);
         } catch (e) {
-          console.warn("Could not copy vanilla options.txt", e);
+          console.warn("Could not copy custom options.txt", e);
+        }
+      } else {
+        const vanillaOptionsPath = path.join(vanillaMinecraftDir(), "options.txt");
+        if (fs.existsSync(vanillaOptionsPath)) {
+          try {
+            fs.copyFileSync(vanillaOptionsPath, targetOptionsPath);
+            console.log("Copied options.txt from vanilla .minecraft");
+          } catch (e) {
+            console.warn("Could not copy vanilla options.txt", e);
+          }
         }
       }
     }
