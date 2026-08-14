@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+group = 'gg.paranoia'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    // compileOnly: l'API est fournie par le serveur, l'embarquer dans le jar
+    // provoquerait des conflits de classes au chargement.
+    compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = 'UTF-8'
+}
