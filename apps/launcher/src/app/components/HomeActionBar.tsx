@@ -34,8 +34,21 @@ const ACTIONS: { id: HomeAction; label: string; icon: LucideIcon }[] = [
   { id: "dossier", label: "Dossier", icon: FolderOpen },
 ];
 
-/** Largeur d'un bouton plus l'espace qui le suit: un cran de defilement. */
-const STEP = 128;
+/** Largeur d'un bouton, et espace qui le suit. */
+const BUTTON = 120;
+const GAP = 8;
+
+/** Un cran de defilement: un bouton. */
+const STEP = BUTTON + GAP;
+
+/**
+ * Largeur de la piste, calee sur exactement trois boutons.
+ *
+ * <p>Elle etait en {@code flex-1}: sur une fenetre large, les cinq raccourcis
+ * tenaient sans deborder, donc rien ne defilait et on en voyait cinq. Une
+ * largeur fixe est ce qui garantit qu'il y en ait trois, et seulement trois.
+ */
+const TRACK_WIDTH = BUTTON * 3 + GAP * 2;
 
 /**
  * Barre d'actions de l'accueil.
@@ -80,7 +93,8 @@ export function HomeActionBar({
             event.currentTarget.scrollLeft += event.deltaY;
           }
         }}
-        className="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto scroll-smooth"
+        style={{ width: TRACK_WIDTH }}
+        className="no-scrollbar flex shrink-0 items-center gap-2 overflow-x-auto scroll-smooth"
       >
         {ACTIONS.map((action) => {
           const Icon = action.icon;
@@ -120,7 +134,7 @@ export function HomeActionBar({
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      <div className="h-8 w-px shrink-0 bg-[#2e2e33]" />
+      <div className="ml-auto h-8 w-px shrink-0 bg-[#2e2e33]" />
 
       {/* Boutique: ancree a droite, hors de la piste, toujours visible. */}
       <button

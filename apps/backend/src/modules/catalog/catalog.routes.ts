@@ -68,7 +68,17 @@ catalogRouter.get("/remote-config", async (_req, res, next) => {
       base.supportedMinecraftVersions,
     );
 
-    return res.json({ ...base, supportedMinecraftVersions });
+    // Versions reellement couvertes par le mod, tirees du catalogue: elles
+    // changent a chaque release, il ne faut pas les ecrire a la main.
+    const clientModVersions = [
+      ...new Set(
+        validatedCatalog.entries
+          .filter((entry) => entry.clientMod)
+          .map((entry) => entry.minecraftVersion),
+      ),
+    ];
+
+    return res.json({ ...base, supportedMinecraftVersions, clientModVersions });
   } catch (err) {
     return next(err);
   }
