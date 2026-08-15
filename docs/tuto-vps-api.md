@@ -78,6 +78,23 @@ cp .env.example .env
 cp data/cosmetics.example.json data/cosmetics.json
 ```
 
+### Si pnpm répond « No projects matched the filters »
+
+Ça veut dire que ton clone ne contient pas `apps/api` : tu es sur une branche
+où le service n'existe pas encore. `git clone` prend la branche par défaut, et
+tant que le travail n'y est pas fusionné, il faut aller le chercher.
+
+Inutile de recloner — bascule le dossier existant :
+
+```
+cd /opt/paranoia-api
+git fetch origin claude/client-repository-improvements-613zup
+git checkout claude/client-repository-improvements-613zup
+ls apps/          # doit maintenant lister: api  backend  client-mod  launcher
+```
+
+Puis reprends à partir du `pnpm install` ci-dessus.
+
 Teste tout de suite, avant d'aller plus loin :
 
 ```
