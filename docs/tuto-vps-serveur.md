@@ -1,15 +1,27 @@
-# Ce qu'il faut faire sur le VPS
+# Plugin serveur : interdire des modules sur ton SMP
 
-Le client Paranoia est terminé côté joueur. Deux de ses fonctions ne peuvent
-pas marcher sans une moitié serveur, et c'est ce que ce tutoriel installe.
+> **Le badge n'a plus besoin de ce plugin.** Il passe désormais par l'API
+> Paranoia, que tu héberges une fois pour toutes — voir
+> [`tuto-vps-api.md`](tuto-vps-api.md). C'est ce qui le fait marcher sur
+> n'importe quel serveur, y compris ceux qui n'installeront jamais rien de
+> nous. **Si tu cherches à faire marcher les badges, c'est là qu'il faut
+> aller, pas ici.**
 
-| Fonction | Pourquoi le serveur est indispensable |
+Ce plugin garde une seule utilité, mais elle est réelle : **interdire des
+modules sur ton propre serveur**. Un service central ne peut pas le faire à ta
+place — la question « le fullbright est-il autorisé ? » n'a de réponse que par
+serveur, et seul le serveur peut la donner.
+
+| Fonction | Où ça se règle |
 |---|---|
-| **Badge des utilisateurs** | Le protocole Minecraft ne transporte rien sur le logiciel du joueur d'en face. Aucun client ne peut deviner qui utilise Paranoia. Seul le serveur, qui parle à tout le monde, peut le redistribuer. |
-| **Modules interdits** | Un client ne s'auto-restreint que si on le lui demande. Le serveur envoie la liste, le menu affiche `VERROUILLÉ`. |
+| **Badge des utilisateurs** | L'API Paranoia — `tuto-vps-api.md` |
+| **Modules interdits** | Ce plugin, sur ton serveur |
 
-Tout le reste — menu, HUD, boutique, mises à jour — fonctionne déjà sans rien
-sur le VPS.
+Le plugin émet aussi la liste des utilisateurs sur `paranoia:users`. C'est
+redondant avec l'API, et conservé simplement parce que ça continue de marcher
+si l'API est injoignable : le client fait l'union des deux sources.
+
+Tout le reste — menu, HUD, boutique, mises à jour — ne demande rien au VPS.
 
 ---
 
