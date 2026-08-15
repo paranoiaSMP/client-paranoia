@@ -62,4 +62,17 @@ public interface ClientPlatform {
      * divergence quand meme.
      */
     UUID profileId(PlayerListEntry entry);
+
+    /**
+     * Le compte avec lequel le jeu tourne.
+     *
+     * <p>{@code Session} a change de paquet entre les versions ciblees --
+     * {@code net.minecraft.client.util} puis {@code net.minecraft.client.session}
+     * -- et le code partage ne peut donc pas la nommer. Chaque version la lit
+     * chez elle et rend un {@link SessionInfo}, qui n'appartient qu'a nous.
+     *
+     * <p>Le jeton d'acces qu'elle contient sert uniquement au handshake avec
+     * Mojang. Il ne doit jamais etre journalise, ni transmis a l'API Paranoia.
+     */
+    SessionInfo session();
 }

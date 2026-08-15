@@ -18,6 +18,7 @@ import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
 import gg.paranoia.client.net.ParanoiaUsers;
 import gg.paranoia.client.net.PolicyPayload;
+import gg.paranoia.client.net.PresenceService;
 import gg.paranoia.client.net.UsersPayload;
 import gg.paranoia.client.net.ServerTpsTracker;
 import gg.paranoia.client.platform.ClientPlatform;
@@ -44,6 +45,7 @@ public final class ParanoiaClient {
     private static final Logger LOGGER = LoggerFactory.getLogger("ParanoiaClient");
     private static final HudRegistry REGISTRY = new HudRegistry();
     private static final MenuController CONTROLLER = new MenuController(REGISTRY);
+    private static final PresenceService PRESENCE = new PresenceService();
 
     /** Etat precedent de Maj droite, pour n'agir que sur le front d'appui. */
     private static boolean menuKeyDown;
@@ -74,6 +76,11 @@ public final class ParanoiaClient {
         platform.registerHudRenderer(REGISTRY::renderInGame);
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
         registerPolicyChannel();
+
+        // Source principale des badges et des cosmetiques. Elle ne demande
+        // rien au serveur Minecraft, ce qui est tout l'interet: le badge
+        // fonctionne aussi sur les serveurs qui ignorent notre existence.
+        PRESENCE.start();
 
         LOGGER.info(
             "Paranoia Client demarre pour Minecraft {} ({} modules)",
