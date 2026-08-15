@@ -8,9 +8,13 @@ Wants=network-online.target
 Type=simple
 User=paranoia
 Group=paranoia
-WorkingDirectory=/opt/paranoia-api
-EnvironmentFile=/opt/paranoia-api/.env
-ExecStart=/usr/bin/node dist/apps/api/src/main.js
+# Le service tourne depuis le clone, et non depuis une copie des fichiers
+# construits: pnpm remplit node_modules de liens symboliques vers la racine du
+# depot, et deplacer le dossier ailleurs les casse tous -- le service echoue
+# alors sur un "Cannot find module 'express'" que rien n'explique.
+WorkingDirectory=/opt/paranoia-api/apps/api
+EnvironmentFile=/opt/paranoia-api/apps/api/.env
+ExecStart=/usr/bin/node dist/main.js
 
 # Un service public redemarre tout seul. Sans cela, la moindre exception non
 # rattrapee eteint les badges de tout le monde jusqu'a intervention manuelle.

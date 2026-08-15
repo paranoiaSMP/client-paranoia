@@ -1,10 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
+  // rootDir sur src, et non sur la racine du depot comme apps/backend: ce
+  // service ne partage aucun type avec le launcher, et un rootDir large
+  // produisait un dist/apps/api/src/main.js dont la profondeur ne sert a rien
+  // -- sinon a rendre la commande de demarrage penible a ecrire sans faute.
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "rootDir": "../..",
+    "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src", "../../packages/contracts/src"]
+  "include": ["src"]
 }

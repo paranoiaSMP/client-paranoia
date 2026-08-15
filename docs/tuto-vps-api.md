@@ -58,29 +58,30 @@ node -v      # doit afficher v22.x
 
 ## 3. Récupérer et compiler
 
+Le service tourne **depuis le clone**, sans copier les fichiers ailleurs. Ce
+n'est pas de la paresse : `pnpm` remplit `node_modules` de liens symboliques
+vers la racine du dépôt, et déplacer le dossier les casse tous. Le service
+échoue alors sur un `Cannot find module 'express'` que rien n'explique.
+
 ```
 sudo mkdir -p /opt/paranoia-api
 sudo chown "$USER" /opt/paranoia-api
 
-git clone https://github.com/paranoiaSMP/client-paranoia.git /tmp/paranoia-src
-cd /tmp/paranoia-src
+git clone https://github.com/paranoiaSMP/client-paranoia.git /opt/paranoia-api
+cd /opt/paranoia-api
 
 pnpm install --filter @paranoia/api...
 pnpm --filter @paranoia/api build
 
-# On ne deploie que ce qui tourne: le dist, les dependances, et rien du
-# reste du depot.
-cp -r apps/api/dist apps/api/package.json node_modules /opt/paranoia-api/
-mkdir -p /opt/paranoia-api/data
-cp apps/api/.env.example /opt/paranoia-api/.env
-cp apps/api/data/cosmetics.example.json /opt/paranoia-api/data/cosmetics.json
+cd apps/api
+cp .env.example .env
+cp data/cosmetics.example.json data/cosmetics.json
 ```
 
 Teste tout de suite, avant d'aller plus loin :
 
 ```
-cd /opt/paranoia-api
-node dist/apps/api/src/main.js
+node dist/main.js
 ```
 
 Tu dois voir `API Paranoia demarree`. Dans un autre terminal :
@@ -95,16 +96,25 @@ curl http://127.0.0.1:8080/health
 
 ## 4. En faire un service
 
+Le service tourne sous un compte dédié qui n'a **que le droit de lire** les
+fichiers — il n'en possède aucun. C'est volontaire : le service n'écrit nulle
+part (tout son état est en mémoire), et lui donner la propriété du clone
+n'apporterait rien qu'un risque.
+
 ```
 sudo useradd --system --no-create-home --shell /usr/sbin/nologin paranoia
-sudo chown -R paranoia:paranoia /opt/paranoia-api
 
-sudo cp /tmp/paranoia-src/apps/api/deploy/paranoia-api.service \
+sudo cp /opt/paranoia-api/apps/api/deploy/paranoia-api.service \
         /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now paranoia-api
 sudo systemctl status paranoia-api
 ```
+
+> Ne fais pas `chown -R paranoia` sur le clone. `pnpm` relie ses paquets au
+> magasin de ton compte par des liens physiques : changer le propriétaire du
+> clone change aussi celui du magasin, et les installations suivantes en
+> pâtissent. Les droits de lecture par défaut suffisent.
 
 `active (running)` en vert : c'est bon. Le service redémarre tout seul en cas
 de plantage, et au redémarrage du VPS.
@@ -130,7 +140,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
   | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 sudo apt update && sudo apt install -y caddy
 
-sudo cp /tmp/paranoia-src/apps/api/deploy/Caddyfile /etc/caddy/Caddyfile
+sudo cp /opt/paranoia-api/apps/api/deploy/Caddyfile /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
@@ -177,7 +187,7 @@ Si rien n'apparaît, dans cet ordre :
 
 ## 7. Donner des cosmétiques
 
-Édite `/opt/paranoia-api/data/cosmetics.json`. Le service **relit le fichier
+Édite `/opt/paranoia-api/apps/api/data/cosmetics.json`. Le service **relit le fichier
 tout seul** à chaque enregistrement, aucun redémarrage :
 
 ```json
@@ -212,14 +222,15 @@ résoudre.
 ## 8. Mettre à jour
 
 ```
-cd /tmp/paranoia-src && git pull
+cd /opt/paranoia-api
+git pull
 pnpm install --filter @paranoia/api...
 pnpm --filter @paranoia/api build
-sudo systemctl stop paranoia-api
-sudo cp -r apps/api/dist /opt/paranoia-api/
-sudo chown -R paranoia:paranoia /opt/paranoia-api
-sudo systemctl start paranoia-api
+sudo systemctl restart paranoia-api
 ```
+
+Ton `.env` et ton `cosmetics.json` ne sont pas suivis par git : `git pull` ne
+les écrase pas.
 
 Les jetons des joueurs sont en mémoire : ils sont perdus au redémarrage, les
 mods refont le handshake dans la seconde. Personne ne voit rien.
