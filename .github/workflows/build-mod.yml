@@ -96,9 +96,10 @@ jobs:
               "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
               "net.minecraft.client.network.PlayerListEntry:getProfile" \
               "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel" \
+              "net.minecraft.client.session.Session:*" \
               "net.minecraft.client.util.Session:*" \
+              "net.minecraft.entity.player.SkinTextures:*" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
-              "net.minecraft.client.network.PlayerListEntry:getSkinTextures|getCapeTexture" \
               "net.minecraft.client.MinecraftClient:getSession|getGameProfile"
             do
               class="${entry%%:*}"
