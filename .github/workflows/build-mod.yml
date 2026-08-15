@@ -126,6 +126,11 @@ jobs:
       # les deux cents lignes de Gradle repoussaient la sonde hors de portee
       # d'une lecture de la fin du journal. En queue, elle se lit d'un coup.
       - name: Probe Minecraft API signatures
+        # Surtout quand le build echoue: c'est precisement le moment ou l'on a
+        # besoin de savoir a quoi ressemble reellement l'API. Sans ce garde-fou,
+        # deplacer la sonde apres le build l'aurait rendue muette dans le seul
+        # cas qui compte.
+        if: always()
         working-directory: apps/client-mod
         run: |
           for version in 1.21.8 1.21.11; do
