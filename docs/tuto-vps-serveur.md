@@ -13,7 +13,66 @@ sur le VPS.
 
 ---
 
-## 1. Ce que le VPS doit avoir
+## 1. Se connecter au VPS en SSH
+
+Il te faut trois choses, toutes dans le panneau de ton hébergeur (OVH,
+Contabo, Hetzner, Oracle…) :
+
+- **l'adresse IP** du VPS, par exemple `51.75.12.34` ;
+- **le nom d'utilisateur** — souvent `root`, parfois `ubuntu` ou `debian` ;
+- **le mot de passe**, ou la clé SSH si tu en as fourni une à la création.
+
+Sous Windows 10 et 11, `ssh` est déjà installé. Ouvre **PowerShell** (touche
+Windows, tape `powershell`) et lance :
+
+```
+ssh root@51.75.12.34
+```
+
+À la toute première connexion, il affiche une empreinte et demande
+`Are you sure you want to continue connecting?` — réponds `yes`. C'est
+normal, et ça n'arrive qu'une fois par serveur.
+
+Puis il demande le mot de passe. **Rien ne s'affiche pendant que tu le
+tapes** — pas d'étoiles, pas de points, le curseur ne bouge pas. Tape à
+l'aveugle et appuie sur Entrée.
+
+Tu es dessus quand l'invite change en quelque chose comme
+`root@vps-1234:~#`. Tout ce que tu tapes ensuite s'exécute sur le VPS, plus
+sur ton PC. `exit` pour revenir chez toi.
+
+### Ne plus retaper le mot de passe
+
+Une fois, sur ton PC :
+
+```
+ssh-keygen -t ed25519
+```
+
+Entrée à toutes les questions. Puis, en remplaçant l'adresse :
+
+```
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@51.75.12.34 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+Il demande le mot de passe une dernière fois. Ensuite `ssh root@51.75.12.34`
+entre directement — et `scp`, à l'étape 4, aussi.
+
+### Si ça ne passe pas
+
+| Message | Cause |
+|---|---|
+| `Connection timed out` | Mauvaise IP, VPS éteint, ou pare-feu qui bloque le port 22. |
+| `Permission denied` | Mauvais mot de passe, ou mauvais utilisateur — essaie `ubuntu@` ou `debian@` au lieu de `root@`. |
+| `Connection refused` | Le VPS répond mais aucun serveur SSH n'écoute. Démarre-le depuis la console web de l'hébergeur : `systemctl start ssh`. |
+
+Ton hébergeur fournit aussi une **console web** (souvent appelée VNC ou KVM)
+qui marche même quand SSH est cassé. C'est le filet de sécurité si tu te
+verrouilles dehors.
+
+---
+
+## 2. Ce que le VPS doit avoir
 
 - **Java 21**. Minecraft 1.21.x ne démarre pas en dessous.
   ```
@@ -31,7 +90,7 @@ n'écrit aucune base de données.
 
 ---
 
-## 2. Compiler le plugin
+## 3. Compiler le plugin
 
 Le code est dans ce dépôt, sous `examples/server-plugin/`. Trois fichiers :
 la classe du plugin, `plugin.yml`, `config.yml`.
@@ -84,7 +143,7 @@ jar cf paranoia-server-plugin-1.0.0.jar -C out .
 ```
 
 Le jar produit est identique à celui de Gradle. `javac` et `jar` viennent
-avec le JDK 21 installé à l'étape 1 — rien de plus à installer.
+avec le JDK 21 installé à l'étape 2 — rien de plus à installer.
 
 Les deux `.yml` sont indispensables et doivent être **à la racine du jar**,
 pas dans un sous-dossier : sans `plugin.yml` le serveur ne voit pas le
@@ -93,11 +152,24 @@ aucun fichier de config n'apparaît dans `plugins/`.
 
 ---
 
-## 3. Installer
+## 4. Installer
+
+Si tu as compilé **sur le VPS**, le jar y est déjà : copie-le simplement au
+bon endroit.
 
 ```
-scp build/libs/paranoia-server-plugin-1.0.0.jar user@vps:/chemin/du/serveur/plugins/
+cp build/libs/paranoia-server-plugin-1.0.0.jar /chemin/du/serveur/plugins/
 ```
+
+Si tu as compilé **sur ton PC**, envoie-le avec `scp`, depuis PowerShell, en
+remplaçant l'adresse par la tienne :
+
+```
+scp build/libs/paranoia-server-plugin-1.0.0.jar root@51.75.12.34:/chemin/du/serveur/plugins/
+```
+
+`scp` utilise la même connexion que `ssh` : si l'étape 1 marche, celle-ci
+marche aussi.
 
 Puis, sur le VPS :
 
@@ -115,7 +187,7 @@ Dans la console, tu dois voir :
 
 ---
 
-## 4. Régler les modules interdits
+## 5. Régler les modules interdits
 
 Le fichier apparaît au premier démarrage, dans
 `plugins/ParanoiaServer/config.yml` :
@@ -136,7 +208,7 @@ Après modification, redémarre le serveur.
 
 ---
 
-## 5. Vérifier que ça marche
+## 6. Vérifier que ça marche
 
 Connecte-toi avec le launcher Paranoia, puis :
 
@@ -157,7 +229,7 @@ Si rien n'apparaît, dans cet ordre :
 
 ---
 
-## 6. Ce que ça ne fait pas
+## 7. Ce que ça ne fait pas
 
 À lire avant de compter dessus.
 
@@ -175,7 +247,7 @@ d'identité.**
 
 ---
 
-## 7. Détail technique, si tu modifies le plugin
+## 8. Détail technique, si tu modifies le plugin
 
 La charge utile n'est pas du JSON brut. Le client la lit avec
 `PacketCodecs.STRING`, qui attend **une longueur en VarInt suivie de l'UTF-8**.
