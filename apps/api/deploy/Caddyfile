@@ -1,0 +1,30 @@
+# Reverse proxy pour l'API Paranoia.
+#
+# Caddy plutot que nginx: il obtient et renouvelle le certificat Let's Encrypt
+# tout seul, sans certbot, sans tache cron, sans fichier de conf a rallonge.
+# Trois lignes suffisent et le HTTPS est correct des le premier demarrage.
+#
+# Prealable: api.paranoiastudio.fr doit deja pointer vers l'IP du VPS
+# (enregistrement A), sinon Caddy ne peut pas prouver a Let's Encrypt qu'il
+# controle le domaine et le certificat echoue.
+
+api.paranoiastudio.fr {
+	reverse_proxy 127.0.0.1:8080
+
+	# Le mod ne lit pas ces en-tetes, mais un navigateur qui atteindrait
+	# l'API par accident ne doit pas pouvoir l'encadrer ni deviner le type.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	log {
+		# Les chemins ne contiennent aucun identifiant de joueur -- tout passe
+		# en corps de requete POST, que Caddy ne journalise pas. Reduire le
+		# format ici evite quand meme de conserver les adresses IP plus
+		# longtemps que necessaire.
+		format console
+	}
+}

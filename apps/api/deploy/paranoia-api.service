@@ -1,0 +1,37 @@
+[Unit]
+Description=API Paranoia (presence, badges, cosmetiques)
+Documentation=https://github.com/paranoiaSMP/client-paranoia
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=paranoia
+Group=paranoia
+WorkingDirectory=/opt/paranoia-api
+EnvironmentFile=/opt/paranoia-api/.env
+ExecStart=/usr/bin/node dist/apps/api/src/main.js
+
+# Un service public redemarre tout seul. Sans cela, la moindre exception non
+# rattrapee eteint les badges de tout le monde jusqu'a intervention manuelle.
+Restart=always
+RestartSec=5
+
+# Le service n'a besoin d'ecrire nulle part: tout son etat est en memoire, et
+# le fichier des cosmetiques est seulement lu. On lui retire donc l'ecriture
+# sur l'ensemble du disque -- une faille dans une dependance ne donne alors
+# pas la main sur le VPS.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+[Install]
+WantedBy=multi-user.target

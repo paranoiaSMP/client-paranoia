@@ -71,3 +71,7 @@ run_log.txt
 # Numeros de yarn/loader/Fabric API resolus au moment du build par
 # apps/client-mod/scripts/resolve-fabric-versions.mjs
 apps/client-mod/versions/*/versions.properties
+
+# Cosmetiques reels du service heberge: contient les UUID des joueurs qui
+# possedent quoi. Le modele est dans apps/api/data/cosmetics.example.json.
+apps/api/data/cosmetics.json
