@@ -57,6 +57,10 @@ public final class PresenceService {
     private volatile SessionInfo session;
     private volatile boolean inGame;
 
+    /** Compteur d'echantillonnage, lu et ecrit par le seul fil du jeu. */
+    private int ticks;
+
+    /** Etat du fil reseau, jamais touche par le fil du jeu. */
     private String token;
     private int interval = 30;
     private int consecutiveFailures;
@@ -80,8 +84,6 @@ public final class PresenceService {
         ClientTickEvents.END_CLIENT_TICK.register(this::sample);
         worker.schedule(this::cycle, INITIAL_DELAY_SECONDS, TimeUnit.SECONDS);
     }
-
-    private int ticks;
 
     /**
      * Recopie, sur le fil du jeu, ce dont le fil reseau aura besoin.
@@ -219,7 +221,7 @@ public final class PresenceService {
     private int backoff(Exception err) {
         consecutiveFailures++;
 
-        if (err instanceof ParanoiaApi.ApiException api && api.requiresReauthentication()) {
+        if (err instanceof ParanoiaApi.ApiException failure && failure.requiresReauthentication()) {
             token = null;
         }
 
