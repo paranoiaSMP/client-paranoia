@@ -10,15 +10,15 @@
       "id": "cape_fondateur",
       "type": "cape",
       "name": "Cape Fondateur",
-      "previewUrl": "https://paranoiastudio.fr/cosmetics/cape_fondateur.png",
-      "textureUrl": "https://paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "textureUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
       "rarity": "legendary"
     },
     {
       "id": "ailes_spectre",
       "type": "wings",
       "name": "Ailes du Spectre",
-      "previewUrl": "https://paranoiastudio.fr/cosmetics/ailes_spectre.png",
+      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/ailes_spectre.png",
       "rarity": "epic"
     }
   ],

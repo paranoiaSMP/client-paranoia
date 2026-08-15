@@ -197,7 +197,7 @@ tout seul** à chaque enregistrement, aucun redémarrage :
       "id": "cape_fondateur",
       "type": "cape",
       "name": "Cape Fondateur",
-      "previewUrl": "https://paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
       "rarity": "legendary"
     }
   ],
