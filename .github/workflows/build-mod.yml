@@ -95,13 +95,23 @@ jobs:
               "net.minecraft.client.render.LightmapTextureManager:getBrightness|update" \
               "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
               "net.minecraft.client.network.PlayerListEntry:getProfile" \
-              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel"
+              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel" \
+              "net.minecraft.client.util.Session:*" \
+              "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
+              "net.minecraft.client.network.PlayerListEntry:getSkinTextures|getCapeTexture" \
+              "net.minecraft.client.MinecraftClient:getSession|getGameProfile"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
               echo "--- $class"
-              javap -p -cp "$cp" "$class" 2>/dev/null \
-                | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+              # "*" demande la classe entiere: pour Session on ne connait pas
+              # encore le nom des accesseurs, c'est justement ce qu'on cherche.
+              if [ "$members" = "*" ]; then
+                javap -p -cp "$cp" "$class" 2>/dev/null || echo "    (classe introuvable)"
+              else
+                javap -p -cp "$cp" "$class" 2>/dev/null \
+                  | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+              fi
             done
           done
 
