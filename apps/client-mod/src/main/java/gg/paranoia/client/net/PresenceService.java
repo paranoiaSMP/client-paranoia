@@ -2,7 +2,6 @@ package gg.paranoia.client.net;
 
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.platform.Platforms;
-import gg.paranoia.client.platform.SessionInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -96,8 +95,15 @@ public final class PresenceService {
             return;
         }
 
-        if (session == null && client.getSession() != null) {
-            session = Platforms.get().session();
+        if (session == null) {
+            // `var` volontairement: le type de la session a change de paquet
+            // entre les versions ciblees, et l'inference nous evite de le
+            // nommer. Ses accesseurs, eux, sont identiques partout.
+            var current = client.getSession();
+            if (current != null) {
+                session = new SessionInfo(
+                    current.getUsername(), current.getUuidOrNull(), current.getAccessToken());
+            }
         }
 
         // `world` plutot que `getNetworkHandler`: on ne veut compter comme
