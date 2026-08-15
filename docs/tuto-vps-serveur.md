@@ -46,11 +46,50 @@ gradle build
 
 Le jar sort dans `build/libs/paranoia-server-plugin-1.0.0.jar`.
 
-Si `gradle` n'est pas installé sur le VPS :
+Si `gradle` n'est pas installé :
 
 ```
 sudo apt install gradle
 ```
+
+### Si Gradle refuse le fichier
+
+Une erreur du genre :
+
+```
+Could not find method java() for arguments [...] on root project
+```
+
+ne vient pas du VPS mais de la **version de Gradle**. Celui d'`apt` est
+souvent bien plus ancien que ce que le fichier suppose. Vérifie avec
+`gradle -v`.
+
+Le `build.gradle` du dépôt a été réécrit pour tolérer les vieilles versions,
+donc commence par tirer la dernière version du dépôt. Si ça coince encore,
+n'installe pas Gradle à la main pour autant : **le plugin n'a pas besoin de
+Gradle du tout.** Il fait un seul fichier `.java` et sa seule dépendance est
+déjà sur le VPS — c'est le jar de ton serveur.
+
+Depuis `examples/server-plugin/`, en remplaçant le chemin par celui de ton
+serveur Paper :
+
+```
+SERVER_JAR=/chemin/du/serveur/paper.jar
+
+mkdir -p out
+javac -cp "$SERVER_JAR" -d out \
+  src/main/java/gg/paranoia/server/ParanoiaPlugin.java
+cp src/main/resources/plugin.yml src/main/resources/config.yml out/
+jar cf paranoia-server-plugin-1.0.0.jar -C out .
+```
+
+Le jar produit est identique à celui de Gradle. `javac` et `jar` viennent
+avec le JDK 21 installé à l'étape 1 — rien de plus à installer.
+
+Les deux `.yml` sont indispensables et doivent être **à la racine du jar**,
+pas dans un sous-dossier : sans `plugin.yml` le serveur ne voit pas le
+plugin, et sans `config.yml` la liste des modules interdits reste vide et
+aucun fichier de config n'apparaît dans `plugins/`.
 
 ---
 
