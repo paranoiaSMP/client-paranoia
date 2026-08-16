@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
-import { launchMinecraft, getLaunchStatus, cancelLaunch } from "./launcher.service.js";
+import { launchMinecraft, getLaunchStatus, cancelLaunch, setLaunchStatus } from "./launcher.service.js";
+import { env } from "../config/env.js";
 
 export const launcherRouter = Router();
 
@@ -19,6 +20,23 @@ launcherRouter.post("/play", async (req, res, next) => {
   try {
     const body = playSchema.parse(req.body);
     
+    // Check ban status
+    try {
+      const banCheckUrl = `${env.BAN_API_URL}/api/bans/check?uuid=${encodeURIComponent(body.account.minecraftUuid)}&username=${encodeURIComponent(body.account.minecraftUsername)}`;
+      const resBan = await fetch(banCheckUrl);
+      if (resBan.ok) {
+        const banData = await resBan.json();
+        if (banData.banned) {
+          setLaunchStatus(body.profileId, { state: "error", progress: 0, text: banData.message || "Vous êtes banni du launcher." });
+          return res.status(403).json({ message: banData.message || "Vous êtes banni du launcher." });
+        }
+      } else {
+        console.warn("[Launcher] Could not check ban status, proceeding with launch", resBan.status);
+      }
+    } catch (fetchErr) {
+      console.error("[Launcher] Failed to reach BAN_API_URL for ban check:", fetchErr);
+    }
+
     // We don't await the launch here because it takes a long time and stays open
     // We just start the process and return success
     launchMinecraft(

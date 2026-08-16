@@ -17,6 +17,7 @@ import { launcherRouter } from "./modules/launcher/launcher.routes.js";
 import { modsRouter } from "./modules/mods/modrinth.routes.js";
 import { settingsRouter } from "./modules/settings/settings.routes.js";
 import { ModrinthUnavailableError } from "./modules/mods/modrinth.service.js";
+import { shopRouter } from "./modules/shop/shop.routes.js";
 
 const app = express();
 const logger = pino({ level: "info" });
@@ -52,6 +53,7 @@ app.use("/v1/telemetry", telemetryRouter);
 app.use("/v1/launcher", launcherRouter);
 app.use("/v1/mods", modsRouter);
 app.use("/v1/settings", settingsRouter);
+app.use("/v1/shop", shopRouter);
 
 app.use(
   (

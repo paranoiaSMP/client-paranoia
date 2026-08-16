@@ -33,12 +33,16 @@ const envSchema = z.object({
   MICROSOFT_CLIENT_ID: z.string().min(1).optional(),
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_REDIRECT_URI: z.string().url().optional(),
+  BAN_API_URL: z.string().url().default("http://localhost:3000"),
+  SITE_API_URL: z.string().url().default("https://paranoiastudio.fr/api"),
+  SHOP_API_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.parse(process.env);
 
 export const env = {
   ...parsed,
+  SHOP_API_URL: parsed.SHOP_API_URL || `${parsed.SITE_API_URL}/shop`,
   allowedOrigins: [
     ...DEFAULT_ALLOWED_ORIGINS,
     ...parsed.CORS_ALLOWED_ORIGINS.split(",")

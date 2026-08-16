@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { invoke } from '@tauri-apps/api/core';
-import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle } from "lucide-react";
+import { Play, Settings, Plus, Box, Pickaxe, Server, LogOut, Menu, X, AlertTriangle, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -18,6 +18,7 @@ import { TopBar } from "./components/TopBar";
 import { ProfilsTab } from "./components/tabs/ProfilsTab";
 import { ParametresTab } from "./components/tabs/ParametresTab";
 import { ModsTab } from "./components/tabs/ModsTab";
+import { BoutiqueTab } from "./components/tabs/BoutiqueTab";
 import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
@@ -75,7 +76,7 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "boutique">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -368,6 +369,9 @@ export function App() {
                       <button onClick={() => { setActiveModal("parametres"); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative" title="Paramètres">
                         <Settings className="w-5 h-5 text-gray-400 group-hover:text-white" />
                       </button>
+                      <button onClick={() => { setActiveModal("boutique"); setMenuOpen(false); }} className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative" title="Boutique">
+                        <ShoppingCart className="w-5 h-5 text-gray-400 group-hover:text-white" />
+                      </button>
                     </div>
 
                     <div className="flex flex-col items-center mt-auto gap-4">
@@ -500,6 +504,10 @@ export function App() {
 
       <Modal isOpen={activeModal === "parametres"} onClose={() => setActiveModal("none")} title="Paramètres">
         <ParametresTab importJson={importJson} setImportJson={setImportJson} handleImportProfile={handleImportProfileAction} error={error} />
+      </Modal>
+
+      <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
+        <BoutiqueTab accountUuid={account?.minecraftUuid} />
       </Modal>
     </div>
   );

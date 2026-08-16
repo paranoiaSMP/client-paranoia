@@ -134,3 +134,20 @@ export interface RemoteConfiguration {
   graphicsModes: GraphicsModeDefinition[];
   supportedMinecraftVersions: string[];
 }
+
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  imageUrl: string;
+  category: string;
+  checkoutUrl: string;
+}
+
+export interface UserBalance {
+  balance: number;
+}
+

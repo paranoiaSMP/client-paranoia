@@ -65,6 +65,10 @@ export function getLaunchStatus(profileId: string): LaunchStatus {
   return launchStatuses.get(profileId) || { state: "idle", progress: 0, text: "" };
 }
 
+export function setLaunchStatus(profileId: string, status: LaunchStatus) {
+  launchStatuses.set(profileId, status);
+}
+
 export function cancelLaunch(profileId: string) {
   cancelFlags.set(profileId, true);
   const proc = activeProcesses.get(profileId);
