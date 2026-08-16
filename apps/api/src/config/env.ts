@@ -31,6 +31,16 @@ const envSchema = z.object({
   COSMETICS_FILE: z.string().default("./data/cosmetics.json"),
 
   /**
+   * Dossier des textures servies sur /cosmetics.
+   *
+   * <p>Le service heberge lui-meme les images plutot que de dependre d'un
+   * CDN: il s'agit de quelques fichiers de deux kilo-octets, telecharges une
+   * fois puis gardes en cache par le mod. Monter une distribution separee
+   * pour ce volume couterait plus a administrer qu'a servir.
+   */
+  COSMETICS_ASSETS_DIR: z.string().default("./data/assets"),
+
+  /**
    * Duree pendant laquelle un joueur reste "en ligne" sans donner signe de vie.
    *
    * <p>Genereusement superieur a l'intervalle de heartbeat: un lag de quelques

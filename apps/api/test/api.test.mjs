@@ -20,6 +20,15 @@ const AUTRE_UUID = "11223344-5566-4778-899a-abbccddeeff0";
 const dataDir = mkdtempSync(join(tmpdir(), "paranoia-api-"));
 const cosmeticsFile = join(dataDir, "cosmetics.json");
 
+// `config/env.ts` lit process.env une seule fois, au premier import. Tout
+// reglage pose apres coup serait ignore en silence -- et le test passerait
+// pour de mauvaises raisons, ou echouerait sans dire pourquoi.
+const assetsDir = mkdtempSync(join(tmpdir(), "paranoia-assets-"));
+process.env.COSMETICS_ASSETS_DIR = assetsDir;
+writeFileSync(join(assetsDir, "cape_fondateur.png"), "\x89PNG\r\n\x1a\nfaux-mais-suffit");
+// Un fichier qui n'a rien a faire la, comme un .env copie par erreur.
+writeFileSync(join(assetsDir, "secret.env"), "TOKEN=nesortpas");
+
 writeFileSync(
   cosmeticsFile,
   JSON.stringify({
@@ -247,5 +256,42 @@ describe("API Paranoia", () => {
       ["cape_fondateur"],
       "une faute de frappe sur le VPS ne doit pas vider les cosmetiques",
     );
+  });
+});
+
+describe("Textures des cosmetiques", () => {
+  let base;
+  let server;
+
+  before(async () => {
+    const { createApp } = await import("../src/app.ts");
+
+    server = createApp().listen(0, "127.0.0.1");
+    await new Promise((resolve) => server.once("listening", resolve));
+    base = `http://127.0.0.1:${server.address().port}`;
+  });
+
+  after(() => server?.close());
+
+  it("sert une texture sans jeton", async () => {
+    const res = await fetch(`${base}/cosmetics/cape_fondateur.png`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type") ?? "", /image\/png/);
+    assert.ok(res.headers.get("etag"), "un ETag permet au mod de revalider sans retelecharger");
+  });
+
+  it("refuse un fichier qui n'est pas une image", async () => {
+    const res = await fetch(`${base}/cosmetics/secret.env`);
+    assert.equal(res.status, 404, "un fichier depose par erreur ne doit pas sortir");
+  });
+
+  it("refuse de remonter hors du dossier", async () => {
+    const res = await fetch(`${base}/cosmetics/..%2f..%2fcosmetics.json`);
+    assert.ok(res.status >= 400, `remontee acceptee: ${res.status}`);
+  });
+
+  it("repond 404 sur une texture absente", async () => {
+    const res = await fetch(`${base}/cosmetics/inconnue.png`);
+    assert.equal(res.status, 404);
   });
 });
