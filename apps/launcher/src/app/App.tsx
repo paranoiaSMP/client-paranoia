@@ -24,8 +24,8 @@ import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { HomeActionBar } from "./components/HomeActionBar";
-import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
 import { InstanceMenu } from "./components/InstanceMenu";
+import { Wardrobe } from "./components/Wardrobe";
 import { NewsCard } from "./components/NewsCard";
 
 import { useAuth } from "./hooks/useAuth";
@@ -689,9 +689,10 @@ export function App() {
         )}
       </Modal>
 
-      <Modal isOpen={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} title="Cosmétiques">
-        <CosmetiquesTab />
-      </Modal>
+      {/* Plein ecran plutot qu'une modale: un vestiaire montre une grille, un
+          casier et un apercu cote a cote, ce qu'une boite centree ne peut pas
+          porter sans devenir illisible. */}
+      <Wardrobe open={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} />
 
       <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
         <div className="flex flex-col items-center gap-3 py-8 text-center">
