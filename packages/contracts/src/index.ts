@@ -132,6 +132,15 @@ export interface CosmeticItem {
   type: "cape" | "wings" | "halo" | "hat" | "particle" | "emote";
   name: string;
   previewUrl: string;
+  /**
+   * Texture reellement portee en jeu, quand elle differe de l'apercu.
+   *
+   * <p>L'apercu de la boutique est cadre et detoure pour etre lisible en
+   * vignette; le jeu, lui, attend la texture brute aux dimensions exactes
+   * qu'il sait plaquer. Les confondre donne une cape etiree ou tronquee.
+   * Absent, `previewUrl` fait office des deux.
+   */
+  textureUrl?: string;
   rarity: "common" | "rare" | "epic" | "legendary";
 }
 

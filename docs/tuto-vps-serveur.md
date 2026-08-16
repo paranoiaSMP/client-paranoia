@@ -1,19 +1,90 @@
-# Ce qu'il faut faire sur le VPS
+# Plugin serveur : interdire des modules sur ton SMP
 
-Le client Paranoia est terminé côté joueur. Deux de ses fonctions ne peuvent
-pas marcher sans une moitié serveur, et c'est ce que ce tutoriel installe.
+> **Le badge n'a plus besoin de ce plugin.** Il passe désormais par l'API
+> Paranoia, que tu héberges une fois pour toutes — voir
+> [`tuto-vps-api.md`](tuto-vps-api.md). C'est ce qui le fait marcher sur
+> n'importe quel serveur, y compris ceux qui n'installeront jamais rien de
+> nous. **Si tu cherches à faire marcher les badges, c'est là qu'il faut
+> aller, pas ici.**
 
-| Fonction | Pourquoi le serveur est indispensable |
+Ce plugin garde une seule utilité, mais elle est réelle : **interdire des
+modules sur ton propre serveur**. Un service central ne peut pas le faire à ta
+place — la question « le fullbright est-il autorisé ? » n'a de réponse que par
+serveur, et seul le serveur peut la donner.
+
+| Fonction | Où ça se règle |
 |---|---|
-| **Badge des utilisateurs** | Le protocole Minecraft ne transporte rien sur le logiciel du joueur d'en face. Aucun client ne peut deviner qui utilise Paranoia. Seul le serveur, qui parle à tout le monde, peut le redistribuer. |
-| **Modules interdits** | Un client ne s'auto-restreint que si on le lui demande. Le serveur envoie la liste, le menu affiche `VERROUILLÉ`. |
+| **Badge des utilisateurs** | L'API Paranoia — `tuto-vps-api.md` |
+| **Modules interdits** | Ce plugin, sur ton serveur |
 
-Tout le reste — menu, HUD, boutique, mises à jour — fonctionne déjà sans rien
-sur le VPS.
+Le plugin émet aussi la liste des utilisateurs sur `paranoia:users`. C'est
+redondant avec l'API, et conservé simplement parce que ça continue de marcher
+si l'API est injoignable : le client fait l'union des deux sources.
+
+Tout le reste — menu, HUD, boutique, mises à jour — ne demande rien au VPS.
 
 ---
 
-## 1. Ce que le VPS doit avoir
+## 1. Se connecter au VPS en SSH
+
+Il te faut trois choses, toutes dans le panneau de ton hébergeur (OVH,
+Contabo, Hetzner, Oracle…) :
+
+- **l'adresse IP** du VPS, par exemple `51.75.12.34` ;
+- **le nom d'utilisateur** — souvent `root`, parfois `ubuntu` ou `debian` ;
+- **le mot de passe**, ou la clé SSH si tu en as fourni une à la création.
+
+Sous Windows 10 et 11, `ssh` est déjà installé. Ouvre **PowerShell** (touche
+Windows, tape `powershell`) et lance :
+
+```
+ssh root@51.75.12.34
+```
+
+À la toute première connexion, il affiche une empreinte et demande
+`Are you sure you want to continue connecting?` — réponds `yes`. C'est
+normal, et ça n'arrive qu'une fois par serveur.
+
+Puis il demande le mot de passe. **Rien ne s'affiche pendant que tu le
+tapes** — pas d'étoiles, pas de points, le curseur ne bouge pas. Tape à
+l'aveugle et appuie sur Entrée.
+
+Tu es dessus quand l'invite change en quelque chose comme
+`root@vps-1234:~#`. Tout ce que tu tapes ensuite s'exécute sur le VPS, plus
+sur ton PC. `exit` pour revenir chez toi.
+
+### Ne plus retaper le mot de passe
+
+Une fois, sur ton PC :
+
+```
+ssh-keygen -t ed25519
+```
+
+Entrée à toutes les questions. Puis, en remplaçant l'adresse :
+
+```
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@51.75.12.34 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+Il demande le mot de passe une dernière fois. Ensuite `ssh root@51.75.12.34`
+entre directement — et `scp`, à l'étape 4, aussi.
+
+### Si ça ne passe pas
+
+| Message | Cause |
+|---|---|
+| `Connection timed out` | Mauvaise IP, VPS éteint, ou pare-feu qui bloque le port 22. |
+| `Permission denied` | Mauvais mot de passe, ou mauvais utilisateur — essaie `ubuntu@` ou `debian@` au lieu de `root@`. |
+| `Connection refused` | Le VPS répond mais aucun serveur SSH n'écoute. Démarre-le depuis la console web de l'hébergeur : `systemctl start ssh`. |
+
+Ton hébergeur fournit aussi une **console web** (souvent appelée VNC ou KVM)
+qui marche même quand SSH est cassé. C'est le filet de sécurité si tu te
+verrouilles dehors.
+
+---
+
+## 2. Ce que le VPS doit avoir
 
 - **Java 21**. Minecraft 1.21.x ne démarre pas en dessous.
   ```
@@ -31,7 +102,7 @@ n'écrit aucune base de données.
 
 ---
 
-## 2. Compiler le plugin
+## 3. Compiler le plugin
 
 Le code est dans ce dépôt, sous `examples/server-plugin/`. Trois fichiers :
 la classe du plugin, `plugin.yml`, `config.yml`.
@@ -46,19 +117,71 @@ gradle build
 
 Le jar sort dans `build/libs/paranoia-server-plugin-1.0.0.jar`.
 
-Si `gradle` n'est pas installé sur le VPS :
+Si `gradle` n'est pas installé :
 
 ```
 sudo apt install gradle
 ```
 
+### Si Gradle refuse le fichier
+
+Une erreur du genre :
+
+```
+Could not find method java() for arguments [...] on root project
+```
+
+ne vient pas du VPS mais de la **version de Gradle**. Celui d'`apt` est
+souvent bien plus ancien que ce que le fichier suppose. Vérifie avec
+`gradle -v`.
+
+Le `build.gradle` du dépôt a été réécrit pour tolérer les vieilles versions,
+donc commence par tirer la dernière version du dépôt. Si ça coince encore,
+n'installe pas Gradle à la main pour autant : **le plugin n'a pas besoin de
+Gradle du tout.** Il fait un seul fichier `.java` et sa seule dépendance est
+déjà sur le VPS — c'est le jar de ton serveur.
+
+Depuis `examples/server-plugin/`, en remplaçant le chemin par celui de ton
+serveur Paper :
+
+```
+SERVER_JAR=/chemin/du/serveur/paper.jar
+
+mkdir -p out
+javac -cp "$SERVER_JAR" -d out \
+  src/main/java/gg/paranoia/server/ParanoiaPlugin.java
+cp src/main/resources/plugin.yml src/main/resources/config.yml out/
+jar cf paranoia-server-plugin-1.0.0.jar -C out .
+```
+
+Le jar produit est identique à celui de Gradle. `javac` et `jar` viennent
+avec le JDK 21 installé à l'étape 2 — rien de plus à installer.
+
+Les deux `.yml` sont indispensables et doivent être **à la racine du jar**,
+pas dans un sous-dossier : sans `plugin.yml` le serveur ne voit pas le
+plugin, et sans `config.yml` la liste des modules interdits reste vide et
+aucun fichier de config n'apparaît dans `plugins/`.
+
 ---
 
-## 3. Installer
+## 4. Installer
+
+Si tu as compilé **sur le VPS**, le jar y est déjà : copie-le simplement au
+bon endroit.
 
 ```
-scp build/libs/paranoia-server-plugin-1.0.0.jar user@vps:/chemin/du/serveur/plugins/
+cp build/libs/paranoia-server-plugin-1.0.0.jar /chemin/du/serveur/plugins/
 ```
+
+Si tu as compilé **sur ton PC**, envoie-le avec `scp`, depuis PowerShell, en
+remplaçant l'adresse par la tienne :
+
+```
+scp build/libs/paranoia-server-plugin-1.0.0.jar root@51.75.12.34:/chemin/du/serveur/plugins/
+```
+
+`scp` utilise la même connexion que `ssh` : si l'étape 1 marche, celle-ci
+marche aussi.
 
 Puis, sur le VPS :
 
@@ -76,7 +199,7 @@ Dans la console, tu dois voir :
 
 ---
 
-## 4. Régler les modules interdits
+## 5. Régler les modules interdits
 
 Le fichier apparaît au premier démarrage, dans
 `plugins/ParanoiaServer/config.yml` :
@@ -97,7 +220,7 @@ Après modification, redémarre le serveur.
 
 ---
 
-## 5. Vérifier que ça marche
+## 6. Vérifier que ça marche
 
 Connecte-toi avec le launcher Paranoia, puis :
 
@@ -118,7 +241,7 @@ Si rien n'apparaît, dans cet ordre :
 
 ---
 
-## 6. Ce que ça ne fait pas
+## 7. Ce que ça ne fait pas
 
 À lire avant de compter dessus.
 
@@ -136,7 +259,7 @@ d'identité.**
 
 ---
 
-## 7. Détail technique, si tu modifies le plugin
+## 8. Détail technique, si tu modifies le plugin
 
 La charge utile n'est pas du JSON brut. Le client la lit avec
 `PacketCodecs.STRING`, qui attend **une longueur en VarInt suivie de l'UTF-8**.

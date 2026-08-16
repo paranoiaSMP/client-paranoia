@@ -75,36 +75,6 @@ jobs:
 
       # Affiche la signature reelle des API sensibles, sur chaque version.
       #
-      # Gardee en permanence, et pas seulement le temps d'un correctif: c'est
-      # l'etape qui a evite le plus d'allers-retours de ce depot. Rien ici ne
-      # peut faire echouer le build -- c'est une lecture, pas une verification.
-      # Quand une version de Minecraft sortira, ces quelques lignes diront
-      # immediatement ce qui a bouge.
-      - name: Probe Minecraft API signatures
-        working-directory: apps/client-mod
-        run: |
-          for version in 1.21.8 1.21.11; do
-            cp=$(cat "versions/$version/build/compile-classpath.txt")
-            echo "=============== $version"
-            for entry in \
-              "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
-              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
-              "net.minecraft.entity.effect.StatusEffect:getName" \
-              "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
-              "net.minecraft.entity.LivingEntity:getStatusEffects" \
-              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update" \
-              "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
-              "net.minecraft.client.network.PlayerListEntry:getProfile" \
-              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel"
-            do
-              class="${entry%%:*}"
-              members="${entry#*:}"
-              echo "--- $class"
-              javap -p -cp "$cp" "$class" 2>/dev/null \
-                | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
-            done
-          done
-
       # Un jar par version de Minecraft ciblee.
       #
       # Sans --stacktrace volontairement: Gradle affiche alors un bloc
@@ -143,6 +113,57 @@ jobs:
           fi
           echo "$found" | while read -r jar; do
             printf '%s (%s Ko)\n' "$jar" "$(( $(stat -c%s "$jar") / 1024 ))"
+          done
+
+      # Gardee en permanence, et pas seulement le temps d'un correctif: c'est
+      # l'etape qui a evite le plus d'allers-retours de ce depot. Rien ici ne
+      # peut faire echouer le build -- c'est une lecture, pas une verification.
+      # Quand une version de Minecraft sortira, ces quelques lignes diront
+      # immediatement ce qui a bouge.
+      #
+      # Placee apres le build, et non avant, pour une raison purement
+      # pratique: on ne lit ces signatures qu'a travers le journal du job, et
+      # les deux cents lignes de Gradle repoussaient la sonde hors de portee
+      # d'une lecture de la fin du journal. En queue, elle se lit d'un coup.
+      - name: Probe Minecraft API signatures
+        # Surtout quand le build echoue: c'est precisement le moment ou l'on a
+        # besoin de savoir a quoi ressemble reellement l'API. Sans ce garde-fou,
+        # deplacer la sonde apres le build l'aurait rendue muette dans le seul
+        # cas qui compte.
+        if: always()
+        working-directory: apps/client-mod
+        run: |
+          for version in 1.21.8 1.21.11; do
+            cp=$(cat "versions/$version/build/compile-classpath.txt")
+            echo "=============== $version"
+            for entry in \
+              "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
+              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
+              "net.minecraft.entity.effect.StatusEffect:getName" \
+              "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
+              "net.minecraft.entity.LivingEntity:getStatusEffects" \
+              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update" \
+              "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
+              "net.minecraft.client.network.PlayerListEntry:getProfile" \
+              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel" \
+              "net.minecraft.client.session.Session:*" \
+              "net.minecraft.client.util.Session:*" \
+              "net.minecraft.entity.player.SkinTextures:*" \
+              "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
+              "net.minecraft.client.MinecraftClient:getSession|getGameProfile"
+            do
+              class="${entry%%:*}"
+              members="${entry#*:}"
+              echo "--- $class"
+              # "*" demande la classe entiere: pour Session on ne connait pas
+              # encore le nom des accesseurs, c'est justement ce qu'on cherche.
+              if [ "$members" = "*" ]; then
+                javap -p -cp "$cp" "$class" 2>/dev/null || echo "    (classe introuvable)"
+              else
+                javap -p -cp "$cp" "$class" 2>/dev/null \
+                  | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+              fi
+            done
           done
 
       - name: Upload mod jars

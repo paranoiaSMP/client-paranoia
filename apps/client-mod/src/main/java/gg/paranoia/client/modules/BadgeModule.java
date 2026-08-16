@@ -21,8 +21,12 @@ import java.util.UUID;
  * bouge d'une version a l'autre, alors qu'un caractere s'insere dans le nom
  * existant et suit le rendu du jeu partout ou ce nom apparait.
  *
- * <p>Le module ne decide de rien: il affiche ce que le serveur annonce dans
- * {@link ParanoiaUsers}. Sans serveur qui l'annonce, aucun badge.
+ * <p>Le module ne decide de rien: il affiche ce que contient
+ * {@link ParanoiaUsers}, rempli par l'API Paranoia que le mod interroge
+ * lui-meme. C'est ce qui fait marcher le badge sur n'importe quel serveur, y
+ * compris ceux qui n'ont jamais entendu parler de nous. Tant que rien ne
+ * remplit cette liste, aucun badge n'apparait -- en afficher un par defaut
+ * reviendrait a affirmer quelque chose qu'on ne sait pas.
  */
 public final class BadgeModule extends Module {
     /** Le mixin du tab s'execute dans le rendu: il lui faut un acces direct. */

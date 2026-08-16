@@ -1,0 +1,31 @@
+{
+  "_comment": [
+    "Copie ce fichier en cosmetics.json dans le meme dossier, puis edite-le.",
+    "Le service le relit tout seul a chaque enregistrement: aucun redemarrage.",
+    "Une erreur de syntaxe est journalisee et l'ancien contenu reste en place.",
+    "Les cles de 'players' sont les UUID Minecraft, avec ou sans tirets."
+  ],
+  "items": [
+    {
+      "id": "cape_fondateur",
+      "type": "cape",
+      "name": "Cape Fondateur",
+      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "textureUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "rarity": "legendary"
+    },
+    {
+      "id": "ailes_spectre",
+      "type": "wings",
+      "name": "Ailes du Spectre",
+      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/ailes_spectre.png",
+      "rarity": "epic"
+    }
+  ],
+  "players": {
+    "00000000-0000-0000-0000-000000000000": {
+      "owned": ["cape_fondateur", "ailes_spectre"],
+      "equipped": ["cape_fondateur"]
+    }
+  }
+}

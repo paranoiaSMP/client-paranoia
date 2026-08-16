@@ -14,36 +14,63 @@ import java.util.UUID;
 /**
  * Qui, parmi les joueurs connectes, utilise le client Paranoia.
  *
- * <p>La liste est fournie par le serveur via {@link UsersPayload}. Sans serveur
- * qui l'emette, elle reste vide et aucun badge n'apparait -- ce qui est le
- * comportement voulu: afficher un badge par defaut reviendrait a affirmer
- * quelque chose qu'on ne sait pas.
+ * <p>Deux sources alimentent cette liste, et le badge s'affiche des que l'une
+ * des deux repond.
  *
- * <p>Ce que ce badge dit exactement: le serveur a recu une declaration au nom
- * de ce joueur. Pas davantage. Un client modifie peut se declarer sans utiliser
- * Paranoia, comme il peut utiliser Paranoia sans se declarer. C'est un signe de
- * reconnaissance entre joueurs, pas une preuve.
+ * <p>L'API Paranoia est la source principale: le mod lui demande directement
+ * le statut des joueurs qu'il voit. C'est ce qui fait marcher le badge sur
+ * n'importe quel serveur, y compris ceux qui n'ont jamais entendu parler de
+ * nous -- aucun serveur public n'installerait un plugin pour nos badges.
+ *
+ * <p>Un serveur peut malgre tout emettre la liste lui-meme via
+ * {@link UsersPayload}. Cette source secondaire est conservee parce qu'elle ne
+ * coute rien et qu'elle continue de fonctionner si l'API est injoignable, sur
+ * les serveurs qui ont installe le plugin.
+ *
+ * <p>Ce que ce badge dit exactement: ce joueur s'est authentifie aupres de
+ * l'API avec son compte Mojang, ou le serveur l'a declare. Pas davantage. Sur
+ * un serveur hors ligne, ou pour un client modifie, la declaration serveur
+ * reste declarative. C'est un signe de reconnaissance entre joueurs, pas une
+ * preuve, et rien en jeu ne doit en dependre.
  */
 public final class ParanoiaUsers {
     private static final Logger LOGGER = LoggerFactory.getLogger("ParanoiaClient/Users");
 
     /**
-     * Lu par le rendu du tab et des etiquettes, ecrit par le fil reseau.
+     * Lu par le rendu du tab et des etiquettes, ecrit par les fils reseau.
      *
-     * <p>Volatile et remplace d'un bloc: le rendu ne verrouille rien et voit
-     * soit l'ancienne liste, soit la nouvelle, jamais une liste a moitie ecrite.
+     * <p>Volatiles et remplacees d'un bloc: le rendu ne verrouille rien et voit
+     * soit l'ancienne liste, soit la nouvelle, jamais une liste a moitie
+     * ecrite.
+     *
+     * <p>Deux champs plutot qu'un ensemble fusionne: les sources ont des
+     * cycles de vie differents -- celle du serveur meurt avec la deconnexion,
+     * celle de l'API survit d'un serveur a l'autre. Les melanger obligerait a
+     * savoir quelle entree vient d'ou au moment de vider.
      */
-    private static volatile Set<UUID> users = Set.of();
+    private static volatile Set<UUID> serverUsers = Set.of();
+    private static volatile Set<UUID> apiUsers = Set.of();
 
     private ParanoiaUsers() {
     }
 
     public static boolean isUser(UUID uuid) {
-        return uuid != null && users.contains(uuid);
+        return uuid != null && (apiUsers.contains(uuid) || serverUsers.contains(uuid));
     }
 
     public static int count() {
-        return users.size();
+        if (serverUsers.isEmpty()) {
+            return apiUsers.size();
+        }
+
+        Set<UUID> union = new HashSet<>(apiUsers);
+        union.addAll(serverUsers);
+        return union.size();
+    }
+
+    /** Remplace la liste que l'API vient de confirmer. */
+    public static void applyFromApi(Set<UUID> users) {
+        apiUsers = Set.copyOf(users);
     }
 
     /** Remplace la liste par celle que le serveur annonce. */
@@ -56,12 +83,18 @@ public final class ParanoiaUsers {
             return;
         }
 
-        users = parsed;
+        serverUsers = parsed;
     }
 
-    /** Vide la liste: elle ne vaut que pour le serveur qui l'a envoyee. */
+    /**
+     * Vide ce qui ne vaut que pour le serveur qu'on vient de quitter.
+     *
+     * <p>La liste de l'API n'est pas touchee: elle est reconstruite a chaque
+     * interrogation a partir des joueurs reellement visibles, et la vider ici
+     * ferait disparaitre tous les badges pendant un changement de monde.
+     */
     public static void clear() {
-        users = Set.of();
+        serverUsers = Set.of();
     }
 
     private static Set<UUID> parse(String json) {
