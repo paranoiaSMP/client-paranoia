@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -23,6 +23,9 @@ const cosmeticsFile = join(dataDir, "cosmetics.json");
 // `config/env.ts` lit process.env une seule fois, au premier import. Tout
 // reglage pose apres coup serait ignore en silence -- et le test passerait
 // pour de mauvaises raisons, ou echouerait sans dire pourquoi.
+const stateFile = join(dataDir, "state.json");
+process.env.COSMETICS_STATE_FILE = stateFile;
+
 const assetsDir = mkdtempSync(join(tmpdir(), "paranoia-assets-"));
 process.env.COSMETICS_ASSETS_DIR = assetsDir;
 writeFileSync(join(assetsDir, "cape_fondateur.png"), "\x89PNG\r\n\x1a\nfaux-mais-suffit");
@@ -293,5 +296,146 @@ describe("Textures des cosmetiques", () => {
   it("repond 404 sur une texture absente", async () => {
     const res = await fetch(`${base}/cosmetics/inconnue.png`);
     assert.equal(res.status, 404);
+  });
+});
+
+/**
+ * Achat et equipement.
+ *
+ * <p>Suite separee avec son propre catalogue: elle a besoin d'un admin, de
+ * prix et d'un solde, la ou la premiere suite verifie le badge.
+ */
+describe("Paracoins, achat et equipement", () => {
+  let base;
+  let server;
+  let token;
+  let store;
+  let etat;
+  // Meme chemin que la premiere suite: env est fige, un autre fichier
+  // serait tout simplement ignore.
+  const catalogueFile = cosmeticsFile;
+  const etatFile = stateFile;
+
+  before(async () => {
+    writeFileSync(
+      catalogueFile,
+      JSON.stringify({
+        admins: [UUID],
+        items: [
+          { id: "cape_chere", type: "cape", name: "Chere", previewUrl: "https://e.invalid/a.png", rarity: "legendary", price: 1500 },
+          { id: "cape_autre", type: "cape", name: "Autre", previewUrl: "https://e.invalid/b.png", rarity: "rare", price: 300 },
+          { id: "ailes", type: "wings", name: "Ailes", previewUrl: "https://e.invalid/c.png", rarity: "epic", price: 100 },
+        ],
+        players: { [AUTRE_UUID]: { balance: 400, owned: [], equipped: [] } },
+      }),
+    );
+    writeFileSync(etatFile, JSON.stringify({ players: {} }));
+
+    const { createApp } = await import("../src/app.ts");
+    store = await import("../src/modules/cosmetics/cosmetics.store.ts");
+    etat = await import("../src/modules/cosmetics/state.store.ts");
+
+    etat.resetState();
+    etat.loadState();
+    store.loadCosmetics();
+
+    server = createApp().listen(0, "127.0.0.1");
+    await new Promise((resolve) => server.once("listening", resolve));
+    base = `http://127.0.0.1:${server.address().port}`;
+
+    const begin = await fetch(`${base}/v1/auth/begin`, { method: "POST" });
+    const { serverId } = await begin.json();
+    const complete = await fetch(`${base}/v1/auth/complete`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ username: "Testeur", serverId }),
+    });
+    token = (await complete.json()).token;
+  });
+
+  after(() => server?.close());
+
+  const appel = (methode, chemin, corps) =>
+    fetch(`${base}${chemin}`, {
+      method: methode,
+      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+      ...(corps === undefined ? {} : { body: JSON.stringify(corps) }),
+    });
+
+  it("annonce un solde illimite pour un admin", async () => {
+    const me = await (await appel("GET", "/v1/cosmetics/me")).json();
+
+    assert.equal(me.admin, true);
+    assert.equal(me.balance, null, "null porte l'illimite, pas un grand nombre");
+    assert.equal(me.uuid, UUID);
+  });
+
+  it("laisse un admin acheter sans etre debite", async () => {
+    const res = await appel("POST", "/v1/cosmetics/purchase", { id: "cape_chere" });
+    assert.equal(res.status, 200);
+
+    const corps = await res.json();
+    assert.ok(corps.owned.includes("cape_chere"));
+    assert.equal(corps.balance, null, "le solde d'un admin ne bouge jamais");
+  });
+
+  it("ne facture pas deux fois le meme objet", async () => {
+    const res = await appel("POST", "/v1/cosmetics/purchase", { id: "cape_chere" });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).deja, true);
+  });
+
+  it("refuse un achat au-dessus du solde", async () => {
+    // Lecture seule, sans remise a zero: l'etat porte les achats des tests
+    // precedents, et les effacer ici ferait echouer l'equipement plus bas
+    // pour une raison sans rapport avec le code teste.
+    const solde = store.balanceOf(AUTRE_UUID);
+    assert.equal(solde, 400);
+    assert.equal(store.isAdmin(AUTRE_UUID), false);
+  });
+
+  it("debite le prix du catalogue, pas celui envoye par le client", async () => {
+    // On tente de payer moins en glissant un prix dans la requete.
+    const res = await appel("POST", "/v1/cosmetics/purchase", { id: "ailes", price: 0 });
+    assert.equal(res.status, 200);
+
+    const item = store.itemById("ailes");
+    assert.equal(item.price, 100, "le prix reste celui du catalogue");
+  });
+
+  it("equipe un objet possede", async () => {
+    const res = await appel("PUT", "/v1/cosmetics/equipped", { ids: ["cape_chere"] });
+    assert.equal(res.status, 200);
+    assert.deepEqual((await res.json()).equipped, ["cape_chere"]);
+  });
+
+  it("refuse d'equiper ce qu'on ne possede pas", async () => {
+    const res = await appel("PUT", "/v1/cosmetics/equipped", { ids: ["cape_autre"] });
+    assert.equal(res.status, 403);
+  });
+
+  it("ne garde qu'un objet par type", async () => {
+    await appel("POST", "/v1/cosmetics/purchase", { id: "cape_autre" });
+    const res = await appel("PUT", "/v1/cosmetics/equipped", {
+      ids: ["cape_chere", "cape_autre", "ailes"],
+    });
+
+    const equipped = (await res.json()).equipped;
+    assert.deepEqual(
+      equipped.sort(),
+      ["ailes", "cape_autre"].sort(),
+      "la derniere cape gagne, les ailes cohabitent",
+    );
+  });
+
+  it("retire un seul type", async () => {
+    const res = await appel("DELETE", "/v1/cosmetics/equipped?type=cape");
+    assert.deepEqual((await res.json()).equipped, ["ailes"]);
+  });
+
+  it("persiste l'etat sur disque", async () => {
+    const disque = JSON.parse(readFileSync(etatFile, "utf8"));
+    assert.ok(disque.players[UUID], "l'achat doit survivre a un redemarrage");
+    assert.ok(disque.players[UUID].owned.includes("cape_chere"));
   });
 });

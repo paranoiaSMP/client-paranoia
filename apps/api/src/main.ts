@@ -2,7 +2,11 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
 import { loadCosmetics, watchCosmetics } from "./modules/cosmetics/cosmetics.store.js";
+import { loadState } from "./modules/cosmetics/state.store.js";
 
+// L'etat d'abord: le catalogue s'en sert pour calculer soldes et
+// possessions effectives.
+loadState();
 loadCosmetics();
 watchCosmetics();
 

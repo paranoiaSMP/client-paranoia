@@ -41,6 +41,14 @@ const envSchema = z.object({
   COSMETICS_ASSETS_DIR: z.string().default("./data/assets"),
 
   /**
+   * Etat modifie par les joueurs: achats et equipement.
+   *
+   * <p>Fichier distinct du catalogue, et le seul que le service ecrive.
+   * L'unite systemd n'ouvre l'ecriture que sur ce dossier.
+   */
+  COSMETICS_STATE_FILE: z.string().default("./data/state.json"),
+
+  /**
    * Duree pendant laquelle un joueur reste "en ligne" sans donner signe de vie.
    *
    * <p>Genereusement superieur a l'intervalle de heartbeat: un lag de quelques
