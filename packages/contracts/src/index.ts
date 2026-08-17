@@ -144,6 +144,21 @@ export interface CosmeticItem {
   rarity: "common" | "rare" | "epic" | "legendary";
 }
 
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: "paracoins" | "euros";
+  imageUrl: string;
+  category: string;
+  checkoutUrl: string;
+}
+
+export interface UserBalance {
+  paracoins: number;
+}
+
 export interface RemoteConfiguration {
   schemaVersion: string;
   releaseChannel: ReleaseChannel;

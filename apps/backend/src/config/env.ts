@@ -42,6 +42,9 @@ const envSchema = z.object({
 
   // URL of the remote API to fetch news for the launcher home screen.
   NEWS_API_URL: z.string().url().optional(),
+
+  // URL of the remote API to fetch shop catalog and balances.
+  SHOP_API_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.parse(process.env);
@@ -50,6 +53,7 @@ export const env = {
   ...parsed,
   BAN_API_URL: parsed.BAN_API_URL || `${parsed.SITE_API_URL}/bans/check`,
   NEWS_API_URL: parsed.NEWS_API_URL || `${parsed.SITE_API_URL}/news`,
+  SHOP_API_URL: parsed.SHOP_API_URL || `${parsed.SITE_API_URL}/shop`,
   allowedOrigins: [
     ...DEFAULT_ALLOWED_ORIGINS,
     ...parsed.CORS_ALLOWED_ORIGINS.split(",")
