@@ -233,6 +233,17 @@ l'ont déjà ne retéléchargent que si l'image a réellement changé.
 
 Le gabarit et le format exact sont dans `apps/api/data/templates/`.
 
+**Vérifie ta cape avant de l'envoyer** — une proportion autre que 2:1 décale
+tout le découpage sans qu'aucune erreur ne le signale :
+
+```
+node /opt/paranoia-api/apps/api/data/templates/verifier-cape.mjs ma_cape.png
+```
+
+La haute définition est autorisée : 512×256, 1024×512… La seule règle est
+largeur = 2 × hauteur, et largeur multiple de 64. Le modèle découpe la texture
+en fractions, pas en pixels, donc la résolution du fichier est libre.
+
 ---
 
 ## 8. Donner des cosmétiques
