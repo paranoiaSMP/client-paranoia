@@ -3,6 +3,9 @@ package gg.paranoia.client.platform;
 import gg.paranoia.client.menu.MenuController;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.PlayerListEntry;
+
+import java.util.UUID;
 
 /**
  * Ce que le code partage ne peut pas ecrire une seule fois.
@@ -49,4 +52,14 @@ public interface ClientPlatform {
     void pushScale(DrawContext context, float scale, int pivotX, int pivotY);
 
     void popScale(DrawContext context);
+
+    /**
+     * Identifiant du joueur derriere une entree de la liste des joueurs.
+     *
+     * <p>{@code GameProfile} vient d'authlib, pas de Minecraft, et il est passe
+     * de classe a record entre 1.21.8 et 1.21.10: {@code getId()} d'un cote,
+     * {@code id()} de l'autre. Une divergence hors du code de Mojang, mais une
+     * divergence quand meme.
+     */
+    UUID profileId(PlayerListEntry entry);
 }

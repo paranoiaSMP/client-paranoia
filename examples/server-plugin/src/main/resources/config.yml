@@ -1,0 +1,13 @@
+# Modules que ce serveur interdit.
+#
+# Les identifiants sont ceux du mod: brightness, colorhit, crosshair,
+# hitindicator, badge, coordinates, direction, armor, info, fps, cps, effects.
+#
+# Un module interdit s'affiche VERROUILLE dans le menu du joueur, en gris et
+# inerte, avec l'explication. Laisser la liste vide n'interdit rien.
+#
+# A savoir: c'est de la cooperation, pas de l'anti-triche. Un client modifie
+# ignore ce paquet. Empecher reellement un avantage demande une detection
+# cote serveur, qui est un autre chantier.
+blocked:
+  - brightness

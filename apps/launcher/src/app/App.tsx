@@ -25,8 +25,8 @@ import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateModal } from "./components/UpdateModal";
 import { HomeActionBar } from "./components/HomeActionBar";
-import { CosmetiquesTab } from "./components/tabs/CosmetiquesTab";
 import { InstanceMenu } from "./components/InstanceMenu";
+import { Wardrobe } from "./components/Wardrobe";
 import { NewsCard } from "./components/NewsCard";
 
 import { useAuth } from "./hooks/useAuth";
@@ -290,7 +290,7 @@ export function App() {
         if (found) selectedOptionsTxtPath = found.options_path;
       }
       await createInstallationManifest({ minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, locale: "fr-FR" });
-      await createProfile({ name: profileName, minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, ramMb: 4096, resolution: "1920x1080", optionsTxtPath: selectedOptionsTxtPath });
+      await createProfile({ name: profileName, minecraftVersion, profileTypeId: profileType, graphicsModeId: graphicsMode, ramMb: 4096, optionsTxtPath: selectedOptionsTxtPath });
       await refreshProfiles();
       setSetupComplete(true);
       setInstallState("done");
@@ -693,9 +693,10 @@ export function App() {
         )}
       </Modal>
 
-      <Modal isOpen={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} title="Cosmétiques">
-        <CosmetiquesTab />
-      </Modal>
+      {/* Plein ecran plutot qu'une modale: un vestiaire montre une grille, un
+          casier et un apercu cote a cote, ce qu'une boite centree ne peut pas
+          porter sans devenir illisible. */}
+      <Wardrobe open={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} />
 
       <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
         <div className="flex flex-col items-center gap-3 py-8 text-center">

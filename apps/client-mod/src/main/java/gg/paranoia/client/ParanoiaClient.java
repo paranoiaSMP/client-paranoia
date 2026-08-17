@@ -9,13 +9,17 @@ import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
 import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
+import gg.paranoia.client.net.ParanoiaUsers;
 import gg.paranoia.client.net.PolicyPayload;
+import gg.paranoia.client.net.PresenceService;
+import gg.paranoia.client.net.UsersPayload;
 import gg.paranoia.client.net.ServerTpsTracker;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.Platforms;
@@ -41,6 +45,7 @@ public final class ParanoiaClient {
     private static final Logger LOGGER = LoggerFactory.getLogger("ParanoiaClient");
     private static final HudRegistry REGISTRY = new HudRegistry();
     private static final MenuController CONTROLLER = new MenuController(REGISTRY);
+    private static final PresenceService PRESENCE = new PresenceService();
 
     /** Etat precedent de Maj droite, pour n'agir que sur le front d'appui. */
     private static boolean menuKeyDown;
@@ -62,6 +67,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new ColorHitModule());
         REGISTRY.register(new CrosshairModule());
         REGISTRY.register(new HitIndicatorModule());
+        REGISTRY.register(new BadgeModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.
@@ -70,6 +76,11 @@ public final class ParanoiaClient {
         platform.registerHudRenderer(REGISTRY::renderInGame);
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
         registerPolicyChannel();
+
+        // Source principale des badges et des cosmetiques. Elle ne demande
+        // rien au serveur Minecraft, ce qui est tout l'interet: le badge
+        // fonctionne aussi sur les serveurs qui ignorent notre existence.
+        PRESENCE.start();
 
         LOGGER.info(
             "Paranoia Client demarre pour Minecraft {} ({} modules)",
@@ -128,6 +139,15 @@ public final class ParanoiaClient {
             (payload, context) -> context.client().execute(
                 () -> ModulePolicy.apply(REGISTRY, payload.json())));
 
+        // Qui, parmi les joueurs connectes, utilise le client. Un client
+        // Minecraft ne peut pas le deviner: seul le serveur, qui recoit la
+        // declaration de chacun, peut redistribuer la liste.
+        PayloadTypeRegistry.playS2C().register(UsersPayload.ID, UsersPayload.CODEC);
+        ClientPlayNetworking.registerGlobalReceiver(
+            UsersPayload.ID,
+            (payload, context) -> context.client().execute(
+                () -> ParanoiaUsers.apply(payload.json())));
+
         // Sans ca, la politique et le TPS d'un serveur resteraient sur le
         // suivant. Le TPS est remis a zero ici plutot que par un mixin sur
         // onDisconnected: cette methode est heritee, on ne peut pas s'y injecter
@@ -135,6 +155,9 @@ public final class ParanoiaClient {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ModulePolicy.clear(REGISTRY);
             ServerTpsTracker.reset();
+            // La liste des utilisateurs ne vaut que pour le serveur qui l'a
+            // envoyee: la garder ferait apparaitre des badges sur le suivant.
+            ParanoiaUsers.clear();
         });
     }
 

@@ -1,0 +1,47 @@
+[Unit]
+Description=API Paranoia (presence, badges, cosmetiques)
+Documentation=https://github.com/paranoiaSMP/client-paranoia
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=paranoia
+Group=paranoia
+# Le service tourne depuis le clone, et non depuis une copie des fichiers
+# construits: pnpm remplit node_modules de liens symboliques vers la racine du
+# depot, et deplacer le dossier ailleurs les casse tous -- le service echoue
+# alors sur un "Cannot find module 'express'" que rien n'explique.
+WorkingDirectory=/opt/paranoia-api/apps/api
+EnvironmentFile=/opt/paranoia-api/apps/api/.env
+ExecStart=/usr/bin/node dist/main.js
+
+# Un service public redemarre tout seul. Sans cela, la moindre exception non
+# rattrapee eteint les badges de tout le monde jusqu'a intervention manuelle.
+Restart=always
+RestartSec=5
+
+# Le service n'ecrit qu'a un seul endroit: le fichier d'etat des achats et de
+# l'equipement. Presence et jetons restent en memoire, le catalogue et les
+# textures sont seulement lus. On lui retire donc l'ecriture sur tout le reste
+# du disque, y compris son propre code -- une faille dans une dependance ne
+# donne alors pas la main sur le VPS.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+
+# Seul chemin ouvert en ecriture: le service y depose l'etat des achats
+# et de l'equipement. Tout le reste du disque lui reste en lecture seule,
+# y compris son propre code.
+ReadWritePaths=/opt/paranoia-api/apps/api/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+[Install]
+WantedBy=multi-user.target

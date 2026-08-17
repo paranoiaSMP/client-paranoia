@@ -11,6 +11,7 @@
     "LightmapTextureManagerMixin",
     "LivingEntityRendererMixin",
     "ClientPlayNetworkHandlerMixin",
-    "InGameHudMixin"
+    "InGameHudMixin",
+    "PlayerListHudMixin"
   ]
 }

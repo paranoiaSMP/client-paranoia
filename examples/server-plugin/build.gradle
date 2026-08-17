@@ -1,0 +1,32 @@
+// Compatible d'une large plage de versions de Gradle.
+//
+// Le bloc `java { toolchain { ... } }` a ete retire: il date de Gradle 6.7, et
+// le Gradle fourni par apt sur beaucoup de distributions est plus ancien. Il
+// echouait sur "Could not find method java()", ce qui n'aide personne a
+// comprendre que le probleme est la version de l'outil.
+//
+// De meme, `maven { url = '...' }` avec un signe egal demande Gradle 8.2.
+plugins {
+    id 'java'
+}
+
+group = 'gg.paranoia'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    // compileOnly: l'API est fournie par le serveur. L'embarquer dans le jar
+    // provoquerait des conflits de classes au chargement.
+    compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+}
+
+sourceCompatibility = '21'
+targetCompatibility = '21'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

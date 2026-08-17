@@ -178,6 +178,14 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
           </div>
         </div>
 
+        {/* Une fenetre aux dimensions de l'ecran est indistinguable d'un plein
+            ecran, et F11 y bascule entre deux etats identiques a l'oeil. */}
+        <p className="mt-2 text-xs text-[#52525b]">
+          Taille de la fenetre de jeu. Choisis une taille plus petite que ton
+          ecran, sinon la fenetre le couvre entierement et ressemble a du plein
+          ecran.
+        </p>
+
         <label className="flex items-center gap-3 cursor-pointer group">
           <input type="checkbox" checked={fullscreen} onChange={e => setFullscreen(e.target.checked)} className="accent-accent-purple w-4 h-4" />
           <span className="text-sm text-[#a1a1aa] group-hover:text-white transition-colors">Lancer en plein écran</span>
