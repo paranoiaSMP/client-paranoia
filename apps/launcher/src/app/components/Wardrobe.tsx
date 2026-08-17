@@ -182,17 +182,21 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
           method: "POST",
           body: JSON.stringify({ id: item.id }),
         });
-      } else {
-        // Deja possede: le clic bascule entre porter et retirer.
-        const next = equipped.has(item.id)
+      }
+
+      // On enchaine sur l'equipement, y compris apres un achat: personne
+      // n'achete un cosmetique pour le laisser au placard, et exiger un
+      // second clic donnait l'impression que le premier n'avait rien fait.
+      // Seul un objet deja porte se retire.
+      const next =
+        owned.has(item.id) && equipped.has(item.id)
           ? [...equipped].filter((id) => id !== item.id)
           : [...[...equipped].filter((id) => catalogType(id) !== item.type), item.id];
 
-        await apiRequest("/v1/cosmetics/equipped", {
-          method: "PUT",
-          body: JSON.stringify({ ids: next }),
-        });
-      }
+      await apiRequest("/v1/cosmetics/equipped", {
+        method: "PUT",
+        body: JSON.stringify({ ids: next }),
+      });
 
       await refresh();
     } catch (err) {

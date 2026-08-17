@@ -25,6 +25,7 @@ import { Modal } from "./components/Modal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { HomeActionBar } from "./components/HomeActionBar";
 import { InstanceMenu } from "./components/InstanceMenu";
+import { apiRequest } from "../shared/api/http";
 import { Wardrobe } from "./components/Wardrobe";
 import { NewsCard } from "./components/NewsCard";
 
@@ -142,6 +143,7 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
+  const [lobbyCape, setLobbyCape] = useState<string | undefined>();
   const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
@@ -342,6 +344,42 @@ export function App() {
       setError(e instanceof Error ? e.message : t("settings.import_format_error"));
     }
   }
+
+  // La cape portee, pour que le personnage du lobby la montre.
+  //
+  // Relue a l'ouverture puis a chaque fermeture du vestiaire: c'est le seul
+  // moment ou l'equipement peut avoir change, et interroger en boucle pour
+  // une donnee qui bouge deux fois par session serait du gaspillage.
+  const vestiaireOuvert = activeModal === "cosmetiques";
+  useEffect(() => {
+    let annule = false;
+
+    void (async () => {
+      try {
+        const [items, me] = await Promise.all([
+          apiRequest<{ id: string; type: string; textureUrl?: string; previewUrl: string }[]>(
+            "/v1/cosmetics/catalog",
+          ),
+          apiRequest<{ equipped: string[] }>("/v1/cosmetics/me"),
+        ]);
+
+        const cape = items.find((item) => item.type === "cape" && me.equipped.includes(item.id));
+        if (!annule) {
+          setLobbyCape(cape?.textureUrl ?? cape?.previewUrl);
+        }
+      } catch {
+        // Service injoignable ou aucun compte connecte: le personnage
+        // s'affiche sans cape, ce qui est exactement ce qu'il faut montrer.
+        if (!annule) {
+          setLobbyCape(undefined);
+        }
+      }
+    })();
+
+    return () => {
+      annule = true;
+    };
+  }, [vestiaireOuvert]);
 
   if (bootstrapFailed && !config) {
     return (
@@ -643,6 +681,7 @@ export function App() {
                 <SkinViewer3D 
                   className="w-full h-full"
                   skinUrl={account?.minecraftUsername ? `https://minotar.net/skin/${account.minecraftUsername}` : "https://minotar.net/skin/Steve"} 
+                  {...(lobbyCape ? { capeUrl: lobbyCape } : {})}
                   paused={installState === "running"}
                 />
               </div>
