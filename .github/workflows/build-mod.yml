@@ -149,6 +149,10 @@ jobs:
               "net.minecraft.client.session.Session:*" \
               "net.minecraft.client.util.Session:*" \
               "net.minecraft.entity.player.SkinTextures:*" \
+              "net.minecraft.util.AssetInfo:*" \
+              "net.minecraft.client.texture.TextureManager:registerTexture|getTexture|destroyTexture" \
+              "net.minecraft.client.texture.NativeImageBackedTexture:*" \
+              "net.minecraft.client.render.entity.feature.CapeFeatureRenderer:*" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
               "net.minecraft.client.MinecraftClient:getSession|getGameProfile"
             do

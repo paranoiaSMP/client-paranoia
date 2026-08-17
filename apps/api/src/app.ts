@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import { resolve } from "node:path";
 
 import { env } from "./config/env.js";
 import { httpLogger } from "./lib/logger.js";
@@ -33,6 +34,39 @@ export function createApp() {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+
+  // Textures des cosmetiques, servies telles quelles.
+  //
+  // `express.static` refuse deja les chemins qui remontent hors du dossier,
+  // mais on restreint en plus aux extensions d'image: ce dossier est celui
+  // ou l'on depose des fichiers a la main, et une erreur de copie ne doit
+  // pas rendre un .env ou une cle publiquement telechargeable.
+  const IMAGE = /\.(png|jpe?g|webp)$/i;
+
+  app.use(
+    "/cosmetics",
+    // Le filtre passe avant, pas apres: une fois que `express.static` a
+    // repondu, il est trop tard pour refuser. Ce dossier recoit des fichiers
+    // deposes a la main, et une copie maladroite ne doit pas rendre un .env
+    // publiquement telechargeable.
+    (req, res, next) => {
+      if (!IMAGE.test(req.path)) {
+        res.status(404).json({ error: "Texture inconnue" });
+        return;
+      }
+      next();
+    },
+    express.static(resolve(env.COSMETICS_ASSETS_DIR), {
+      index: false,
+      dotfiles: "ignore",
+      // Une heure, avec ETag: le mod revalide sans retelecharger, et
+      // remplacer une texture se propage dans l'heure sans purge a faire.
+      maxAge: "1h",
+    }),
+    (_req, res) => {
+      res.status(404).json({ error: "Texture inconnue" });
+    },
+  );
 
   app.use("/v1/auth", authRouter);
   app.use("/v1/presence", presenceRouter);

@@ -21,15 +21,21 @@ ExecStart=/usr/bin/node dist/main.js
 Restart=always
 RestartSec=5
 
-# Le service n'a besoin d'ecrire nulle part: tout son etat est en memoire, et
-# le fichier des cosmetiques est seulement lu. On lui retire donc l'ecriture
-# sur l'ensemble du disque -- une faille dans une dependance ne donne alors
-# pas la main sur le VPS.
+# Le service n'ecrit qu'a un seul endroit: le fichier d'etat des achats et de
+# l'equipement. Presence et jetons restent en memoire, le catalogue et les
+# textures sont seulement lus. On lui retire donc l'ecriture sur tout le reste
+# du disque, y compris son propre code -- une faille dans une dependance ne
+# donne alors pas la main sur le VPS.
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
+
+# Seul chemin ouvert en ecriture: le service y depose l'etat des achats
+# et de l'equipement. Tout le reste du disque lui reste en lecture seule,
+# y compris son propre code.
+ReadWritePaths=/opt/paranoia-api/apps/api/data
 ProtectKernelTunables=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true

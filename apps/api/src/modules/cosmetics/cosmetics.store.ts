@@ -6,6 +6,7 @@ import { z } from "zod";
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
 import { normalizeUuid } from "../../lib/uuid.js";
+import { playerState } from "./state.store.js";
 
 const itemSchema = z.object({
   id: z.string().min(1),
@@ -15,13 +16,26 @@ const itemSchema = z.object({
   /** Texture reellement portee en jeu, quand elle differe de l'apercu. */
   textureUrl: z.string().url().optional(),
   rarity: z.enum(["common", "rare", "epic", "legendary"]),
+  /** Prix en paracoins. 0 = offert a tout le monde. */
+  price: z.number().int().min(0).default(0),
 });
 
 const fileSchema = z.object({
+  /**
+   * Comptes aux paracoins illimites, par UUID.
+   *
+   * <p>Par UUID et jamais par pseudo: un pseudo Minecraft se change, et
+   * celui qu'on libere redevient disponible pour n'importe qui. Une liste
+   * d'admins par pseudo se transfererait donc toute seule au premier venu
+   * qui reprend le nom.
+   */
+  admins: z.array(z.string()).default([]),
   items: z.array(itemSchema).default([]),
   players: z
     .record(
       z.object({
+        /** Paracoins accordes a la main. Les depenses viennent de l'etat. */
+        balance: z.number().int().min(0).default(0),
         owned: z.array(z.string()).default([]),
         equipped: z.array(z.string()).default([]),
       }),
@@ -31,13 +45,26 @@ const fileSchema = z.object({
 
 export type CosmeticDefinition = z.infer<typeof itemSchema>;
 
-interface Catalog {
-  items: CosmeticDefinition[];
-  /** UUID normalise -> identifiants d'objets reellement portes. */
-  equipped: Map<string, string[]>;
+interface GrantedPlayer {
+  balance: number;
+  owned: string[];
+  equipped: string[];
 }
 
-let catalog: Catalog = { items: [], equipped: new Map() };
+interface Catalog {
+  items: CosmeticDefinition[];
+  byId: Map<string, CosmeticDefinition>;
+  admins: Set<string>;
+  /** UUID normalise -> ce que l'edition manuelle lui accorde. */
+  granted: Map<string, GrantedPlayer>;
+}
+
+let catalog: Catalog = {
+  items: [],
+  byId: new Map(),
+  admins: new Set(),
+  granted: new Map(),
+};
 
 /**
  * Relit le fichier des cosmetiques.
@@ -70,7 +97,7 @@ export function loadCosmetics(): void {
   }
 
   const known = new Set(parsed.items.map((item) => item.id));
-  const equipped = new Map<string, string[]>();
+  const granted = new Map<string, GrantedPlayer>();
 
   for (const [rawUuid, entry] of Object.entries(parsed.players)) {
     const uuid = normalizeUuid(rawUuid);
@@ -95,14 +122,27 @@ export function loadCosmetics(): void {
       return true;
     });
 
-    if (worn.length > 0) {
-      equipped.set(uuid, worn);
+    granted.set(uuid, { balance: entry.balance, owned: [...owned], equipped: worn });
+  }
+
+  const admins = new Set<string>();
+  for (const rawUuid of parsed.admins) {
+    const uuid = normalizeUuid(rawUuid);
+    if (uuid) {
+      admins.add(uuid);
+    } else {
+      logger.warn({ rawUuid }, "Admin ignore: ce n'est pas un UUID");
     }
   }
 
-  catalog = { items: parsed.items, equipped };
+  catalog = {
+    items: parsed.items,
+    byId: new Map(parsed.items.map((item) => [item.id, item])),
+    admins,
+    granted,
+  };
   logger.info(
-    { items: parsed.items.length, porteurs: equipped.size },
+    { items: parsed.items.length, joueurs: granted.size, admins: admins.size },
     "Catalogue de cosmetiques charge",
   );
 }
@@ -134,6 +174,61 @@ export function catalogItems(): CosmeticDefinition[] {
   return catalog.items;
 }
 
+export function itemById(id: string): CosmeticDefinition | undefined {
+  return catalog.byId.get(id);
+}
+
+export function isAdmin(uuid: string): boolean {
+  return catalog.admins.has(uuid);
+}
+
+/** Ce que l'edition manuelle accorde a ce joueur, avant ses propres achats. */
+export function grantedFor(uuid: string): GrantedPlayer {
+  return catalog.granted.get(uuid) ?? { balance: 0, owned: [], equipped: [] };
+}
+
+/**
+ * Objets reellement possedes: donnes a la main, plus achetes.
+ *
+ * <p>L'union et non l'un ou l'autre: retirer un objet du catalogue ne doit
+ * pas reprendre celui qu'un joueur a paye, et un achat ne doit pas effacer
+ * un don.
+ */
+export function ownedBy(uuid: string): string[] {
+  const union = new Set(grantedFor(uuid).owned);
+  for (const id of playerState(uuid).owned) {
+    union.add(id);
+  }
+  return [...union];
+}
+
+/**
+ * Paracoins restants. `null` signifie illimite.
+ *
+ * <p>Les admins ne detiennent pas un tres grand nombre: le controle de solde
+ * est purement contourne pour eux. Un nombre finirait par etre decremente,
+ * affiche, compare -- et un jour epuise.
+ */
+export function balanceOf(uuid: string): number | null {
+  if (isAdmin(uuid)) {
+    return null;
+  }
+  return Math.max(0, grantedFor(uuid).balance - playerState(uuid).spent);
+}
+
+/**
+ * Ce que le joueur porte, en ecartant ce qu'il ne possede plus.
+ *
+ * <p>Son propre choix prime sur celui du catalogue; sans choix de sa part,
+ * l'equipement accorde a la main s'applique.
+ */
 export function equippedFor(uuid: string): string[] {
-  return catalog.equipped.get(uuid) ?? [];
+  const chosen = playerState(uuid).equipped;
+  const wanted = chosen ?? grantedFor(uuid).equipped;
+  if (wanted.length === 0) {
+    return [];
+  }
+
+  const owned = new Set(ownedBy(uuid));
+  return wanted.filter((id) => owned.has(id) && catalog.byId.has(id));
 }

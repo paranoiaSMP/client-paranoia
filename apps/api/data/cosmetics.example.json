@@ -3,29 +3,45 @@
     "Copie ce fichier en cosmetics.json dans le meme dossier, puis edite-le.",
     "Le service le relit tout seul a chaque enregistrement: aucun redemarrage.",
     "Une erreur de syntaxe est journalisee et l'ancien contenu reste en place.",
-    "Les cles de 'players' sont les UUID Minecraft, avec ou sans tirets."
+    "Les cles de 'players' sont les UUID Minecraft, avec ou sans tirets.",
+    "",
+    "Ce fichier est le tien: le service n'y ecrit jamais. Les achats et",
+    "l'equipement choisis par les joueurs vont dans state.json, a cote.",
+    "Recharger quelqu'un se fait donc en augmentant son 'balance' ici, sans",
+    "toucher a ce qu'il a deja depense."
   ],
+
+  "_comment_admins": [
+    "Paracoins illimites. Par UUID et jamais par pseudo: un pseudo Minecraft",
+    "se change, et celui qu'on libere redevient disponible pour n'importe qui.",
+    "Trouve les UUID sur https://mcuuid.net a partir des pseudos."
+  ],
+  "admins": [],
+
   "items": [
     {
       "id": "cape_fondateur",
       "type": "cape",
       "name": "Cape Fondateur",
-      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
-      "textureUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
-      "rarity": "legendary"
+      "previewUrl": "https://api.paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "rarity": "legendary",
+      "price": 1500
     },
     {
-      "id": "ailes_spectre",
-      "type": "wings",
-      "name": "Ailes du Spectre",
-      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/ailes_spectre.png",
-      "rarity": "epic"
+      "id": "cape_debut",
+      "type": "cape",
+      "name": "Cape des Debuts",
+      "previewUrl": "https://api.paranoiastudio.fr/cosmetics/cape_debut.png",
+      "rarity": "common",
+      "price": 0
     }
   ],
+
   "players": {
     "00000000-0000-0000-0000-000000000000": {
-      "owned": ["cape_fondateur", "ailes_spectre"],
-      "equipped": ["cape_fondateur"]
+      "balance": 900,
+      "owned": ["cape_debut"],
+      "equipped": ["cape_debut"]
     }
   }
 }

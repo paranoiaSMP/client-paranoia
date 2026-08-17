@@ -75,3 +75,8 @@ apps/client-mod/versions/*/versions.properties
 # Cosmetiques reels du service heberge: contient les UUID des joueurs qui
 # possedent quoi. Le modele est dans apps/api/data/cosmetics.example.json.
 apps/api/data/cosmetics.json
+
+# Textures de cosmetiques deposees sur le VPS. Les gabarits, eux, sont
+# versionnes dans apps/api/data/templates/.
+apps/api/data/assets/*
+!apps/api/data/assets/.gitkeep

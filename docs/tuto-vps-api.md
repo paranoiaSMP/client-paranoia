@@ -202,7 +202,51 @@ Si rien n'apparaît, dans cet ordre :
 
 ---
 
-## 7. Donner des cosmétiques
+## 7. Envoyer une texture de cape
+
+Les images se déposent dans `/opt/paranoia-api/apps/api/data/assets/`, et le
+service les sert lui-même sur `/cosmetics`. Pas de CDN à monter : il s'agit de
+fichiers de deux kilo-octets, téléchargés une fois puis gardés en cache par le
+mod.
+
+Depuis ton PC, dans PowerShell, en te plaçant là où est ton PNG :
+
+```
+scp cape_fondateur.png root@147.79.21.77:/opt/paranoia-api/apps/api/data/assets/
+```
+
+L'image est alors disponible immédiatement, sans redémarrer quoi que ce soit :
+
+```
+https://api.paranoiastudio.fr/cosmetics/cape_fondateur.png
+```
+
+Ouvre cette adresse dans ton navigateur pour vérifier — tu dois voir l'image.
+
+Deux garde-fous : seuls les fichiers `.png`, `.jpg` et `.webp` sont servis, et
+rien ne peut être lu en dehors de ce dossier. Un fichier déposé par erreur
+(un `.env`, une clé) répond `404` au lieu d'être distribué.
+
+Pour remplacer une cape, réenvoie le fichier sous le même nom. Le changement se
+propage dans l'heure — les réponses portent un `ETag`, donc les clients qui
+l'ont déjà ne retéléchargent que si l'image a réellement changé.
+
+Le gabarit et le format exact sont dans `apps/api/data/templates/`.
+
+**Vérifie ta cape avant de l'envoyer** — une proportion autre que 2:1 décale
+tout le découpage sans qu'aucune erreur ne le signale :
+
+```
+node /opt/paranoia-api/apps/api/data/templates/verifier-cape.mjs ma_cape.png
+```
+
+La haute définition est autorisée : 512×256, 1024×512… La seule règle est
+largeur = 2 × hauteur, et largeur multiple de 64. Le modèle découpe la texture
+en fractions, pas en pixels, donc la résolution du fichier est libre.
+
+---
+
+## 8. Donner des cosmétiques
 
 Édite `/opt/paranoia-api/apps/api/data/cosmetics.json`. Le service **relit le fichier
 tout seul** à chaque enregistrement, aucun redémarrage :
@@ -214,7 +258,7 @@ tout seul** à chaque enregistrement, aucun redémarrage :
       "id": "cape_fondateur",
       "type": "cape",
       "name": "Cape Fondateur",
-      "previewUrl": "https://cdn.paranoiastudio.fr/cosmetics/cape_fondateur.png",
+      "previewUrl": "https://api.paranoiastudio.fr/cosmetics/cape_fondateur.png",
       "rarity": "legendary"
     }
   ],
@@ -236,7 +280,7 @@ résoudre.
 
 ---
 
-## 8. Mettre à jour
+## 9. Mettre à jour
 
 ```
 cd /opt/paranoia-api
@@ -254,7 +298,7 @@ mods refont le handshake dans la seconde. Personne ne voit rien.
 
 ---
 
-## 9. Ce que ce service sait, et ce qu'il ignore
+## 10. Ce que ce service sait, et ce qu'il ignore
 
 | Il connaît | Il n'a jamais |
 |---|---|
@@ -270,7 +314,7 @@ ligne après ligne, qui joue avec qui.
 Il n'existe **aucune route qui liste les utilisateurs**. On ne peut que
 vérifier des identifiants qu'on connaît déjà, avec un jeton.
 
-## 10. Ce que ça ne fait pas
+## 11. Ce que ça ne fait pas
 
 **Le badge n'est pas une preuve d'identité.** Il signifie : *ce joueur s'est
 authentifié auprès de l'API avec son compte Mojang*. C'est solide — le
