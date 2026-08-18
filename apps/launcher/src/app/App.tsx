@@ -25,7 +25,6 @@ import { ProfileCreation } from "./components/ProfileCreation";
 import { Modal } from "./components/Modal";
 import { UpdateModal } from "./components/UpdateModal";
 import { HomeActionBar } from "./components/HomeActionBar";
-import { BoutiqueTab } from "./components/tabs/BoutiqueTab";
 import { InstanceMenu } from "./components/InstanceMenu";
 import { apiRequest } from "../shared/api/http";
 import { Wardrobe } from "./components/Wardrobe";
@@ -721,11 +720,7 @@ export function App() {
       {/* Plein ecran plutot qu'une modale: un vestiaire montre une grille, un
           casier et un apercu cote a cote, ce qu'une boite centree ne peut pas
           porter sans devenir illisible. */}
-      <Wardrobe open={activeModal === "cosmetiques"} onClose={() => setActiveModal("none")} />
-
-      <Modal isOpen={activeModal === "boutique"} onClose={() => setActiveModal("none")} title="Boutique">
-        <BoutiqueTab uuid={account?.minecraftUuid} />
-      </Modal>
+      <Wardrobe open={activeModal === "cosmetiques" || activeModal === "boutique"} onClose={() => setActiveModal("none")} />
 
       <Modal isOpen={activeModal === "profils"} onClose={() => setActiveModal("none")} title="Gérer les profils">
         <ProfilsTab 
