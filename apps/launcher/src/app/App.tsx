@@ -142,12 +142,8 @@ export function App() {
   const [setupComplete, setSetupComplete] = useState(false);
 
   // Layout State (Modals)
-<<<<<<< HEAD
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique" | "comptes">("none");
-=======
   const [lobbyCape, setLobbyCape] = useState<string | undefined>();
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique">("none");
->>>>>>> 0b2581a08a6467565852fc3088f16378e6ef6dc6
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique" | "comptes">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
