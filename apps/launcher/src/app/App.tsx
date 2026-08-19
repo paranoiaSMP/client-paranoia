@@ -10,8 +10,9 @@ import { SkinViewer3D } from "../components/SkinViewer3D";
 import type { RemoteConfiguration, NewsItem, LauncherProfile } from "@paranoia/contracts";
 
 import { createInstallationManifest, fetchRemoteConfiguration } from "../shared/api/catalogClient";
-import { createProfile, importProfile } from "../shared/api/profilesClient";
+import { createProfile, importProfile, importArchive } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
+import { listen } from "@tauri-apps/api/event";
 import { listInstalledMods } from "../shared/api/modsClient";
 import { waitForApi } from "../shared/api/http";
 import { launchMinecraftGame, getLaunchStatus, LaunchStatusResponse, cancelLaunch } from "../shared/api/launcherClient";
@@ -22,6 +23,7 @@ import { ParametresTab } from "./components/tabs/ParametresTab";
 import { ModsTab } from "./components/tabs/ModsTab";
 import { ComptesTab } from "./components/tabs/ComptesTab";
 import { ProfileCreation } from "./components/ProfileCreation";
+import { MigrationModal } from "./components/MigrationModal";
 import { Modal } from "./components/Modal";
 import { UpdateModal } from "./components/UpdateModal";
 import { HomeActionBar } from "./components/HomeActionBar";
@@ -142,7 +144,7 @@ export function App() {
 
   // Layout State (Modals)
   const [lobbyCape, setLobbyCape] = useState<string | undefined>();
-  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique" | "comptes">("none");
+  const [activeModal, setActiveModal] = useState<"none" | "profils" | "create_profile" | "migrate_profile" | "mods" | "parametres" | "instance" | "cosmetiques" | "boutique" | "comptes">("none");
   const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -273,6 +275,36 @@ export function App() {
     }
     bootstrap();
   }, [bootstrapAttempt]);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    async function setupDragDrop() {
+      unlisten = await listen<{ paths: string[] }>("tauri://file-drop", async (event) => {
+        const paths = event.payload.paths;
+        if (paths && paths.length > 0) {
+          const file = paths[0];
+          if (file && (file.endsWith(".mrpack") || file.endsWith(".zip"))) {
+            if (confirm(`Voulez-vous importer l'archive ${file} ?`)) {
+              try {
+                setLoading(true);
+                await importArchive(file as string);
+                await refreshProfiles();
+                alert("Archive importée avec succès !");
+              } catch (e: any) {
+                alert("Erreur lors de l'import : " + e.message);
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        }
+      });
+    }
+    setupDragDrop();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
 
   const selectedType = useMemo(() => config?.profileTypes.find((x) => x.id === profileType), [config, profileType]);
   const selectedGraphics = useMemo(() => config?.graphicsModes.find((x) => x.id === graphicsMode), [config, graphicsMode]);
@@ -722,11 +754,17 @@ export function App() {
           porter sans devenir illisible. */}
       <Wardrobe open={activeModal === "cosmetiques" || activeModal === "boutique"} onClose={() => setActiveModal("none")} />
 
+      <Modal isOpen={activeModal === "migrate_profile"} onClose={() => setActiveModal("none")} title="">
+        <MigrationModal onClose={() => setActiveModal("none")} onRefresh={refreshProfiles} />
+      </Modal>
+
       <Modal isOpen={activeModal === "profils"} onClose={() => setActiveModal("none")} title="Gérer les profils">
         <ProfilsTab 
           profiles={profiles} selectedProfileId={selectedProfileId} setSelectedProfileId={setSelectedProfileId}
-          isCreatingProfile={isCreatingProfile} setIsCreatingProfile={setIsCreatingProfile} onFavorite={handleFavoriteProfile}
-          onDelete={handleDeleteProfile} onPlay={handleLaunchGame}
+          isCreatingProfile={isCreatingProfile} setIsCreatingProfile={setIsCreatingProfile}
+          onFavorite={handleFavoriteProfile} onDelete={handleDeleteProfile}
+          onPlay={() => { setActiveModal("none"); if(mainProfile) handleLaunchGame(mainProfile.id); }}
+          onMigrate={() => { setActiveModal("migrate_profile"); setIsCreatingProfile(false); }}
         />
       </Modal>
 

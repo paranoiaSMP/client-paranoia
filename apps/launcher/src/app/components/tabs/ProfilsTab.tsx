@@ -11,6 +11,7 @@ type ProfilsTabProps = {
   onFavorite: (id: string) => void;
   onDelete: (id: string) => void;
   onPlay: (id: string) => void;
+  onMigrate: () => void;
 };
 
 export function ProfilsTab({
@@ -21,7 +22,8 @@ export function ProfilsTab({
   setIsCreatingProfile,
   onFavorite,
   onDelete,
-  onPlay
+  onPlay,
+  onMigrate
 }: ProfilsTabProps) {
   const { t } = useTranslation();
   
@@ -49,6 +51,12 @@ export function ProfilsTab({
           >
             <Plus className="w-4 h-4" />
             {isCreatingProfile ? t("profiles.cancel") : t("profiles.new")}
+          </button>
+          <button 
+            onClick={onMigrate}
+            className="px-4 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors shrink-0"
+          >
+            Migrer
           </button>
         </div>
 

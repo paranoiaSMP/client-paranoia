@@ -269,33 +269,72 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     // 5. Lunar Client
     if !userprofile.is_empty() {
         let lunar_dir = Path::new(&userprofile).join(".lunarclient");
-        if lunar_dir.exists() {
+        let lunar_options_1 = lunar_dir.join("offline").join("multiver").join("options.txt");
+        let lunar_options_2 = lunar_dir.join("settings").join("game").join("options.txt");
+        
+        let valid_lunar_options = if lunar_options_1.exists() {
+            Some(lunar_options_1)
+        } else if lunar_options_2.exists() {
+            Some(lunar_options_2)
+        } else {
+            None
+        };
+
+        if let Some(opts) = valid_lunar_options {
             profiles.push(DetectedProfile {
                 id: "lunar_default".to_string(),
-                label: "Lunar Client (Défaut)".to_string(),
-                options_path: lunar_dir.to_string_lossy().into_owned(),
+                label: "Lunar Client".to_string(),
+                options_path: opts.to_string_lossy().into_owned(),
                 launcher: "Lunar Client".to_string(),
             });
         }
     }
 
-    // 6. MultiMC
+    // 5.b Feather Client
     if !appdata.is_empty() {
-        let multimc_dir = Path::new(&appdata).join("MultiMC").join("instances");
-        if multimc_dir.exists() {
-            if let Ok(entries) = fs::read_dir(multimc_dir) {
-                for entry in entries.flatten() {
-                    let instance_dir = entry.path();
-                    let mc_dir = instance_dir.join(".minecraft");
-                    let options_path = mc_dir.join("options.txt");
-                    if options_path.exists() {
-                        let name = entry.file_name().to_string_lossy().into_owned();
-                        profiles.push(DetectedProfile {
-                            id: format!("multimc_{}", name),
-                            label: format!("MultiMC : {}", name),
-                            options_path: options_path.to_string_lossy().into_owned(),
-                            launcher: "MultiMC".to_string(),
-                        });
+        let feather_dir = Path::new(&appdata).join(".feather");
+        let feather_options = feather_dir.join("user-profile").join("options.txt");
+        if feather_options.exists() {
+            profiles.push(DetectedProfile {
+                id: "feather_default".to_string(),
+                label: "Feather Client".to_string(),
+                options_path: feather_options.to_string_lossy().into_owned(),
+                launcher: "Feather Client".to_string(),
+            });
+        }
+    }
+
+    // 6. MultiMC & Forks (Prism Launcher, etc.)
+    let multimc_forks = [
+        ("MultiMC", "MultiMC"),
+        ("PrismLauncher", "Prism Launcher"),
+        ("ATLauncher", "ATLauncher"),
+        ("gdlauncher_next", "GDLauncher"),
+    ];
+    
+    if !appdata.is_empty() {
+        for (dir_name, launcher_name) in multimc_forks.iter() {
+            let instances_dir = Path::new(&appdata).join(dir_name).join("instances");
+            if instances_dir.exists() {
+                if let Ok(entries) = fs::read_dir(instances_dir) {
+                    for entry in entries.flatten() {
+                        let instance_dir = entry.path();
+                        // GDLauncher et ATLauncher peuvent avoir la racine dans l'instance
+                        let mut mc_dir = instance_dir.join(".minecraft");
+                        if !mc_dir.exists() {
+                            mc_dir = instance_dir.clone();
+                        }
+                        
+                        let options_path = mc_dir.join("options.txt");
+                        if options_path.exists() {
+                            let name = entry.file_name().to_string_lossy().into_owned();
+                            profiles.push(DetectedProfile {
+                                id: format!("{}_{}", dir_name, name),
+                                label: format!("{} : {}", launcher_name, name),
+                                options_path: options_path.to_string_lossy().into_owned(),
+                                launcher: launcher_name.to_string(),
+                            });
+                        }
                     }
                 }
             }

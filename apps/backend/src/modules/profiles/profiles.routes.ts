@@ -133,6 +133,51 @@ profilesRouter.get("/:id/export", (req, res) => {
   return res.json(profile);
 });
 
+import { importMrPack } from "./mrpack.service.js";
+import { dirname } from "node:path";
+import { cpSync } from "node:fs";
+
+profilesRouter.post("/import-archive", async (req, res, next) => {
+  try {
+    const { archivePath } = req.body;
+    if (!archivePath) {
+      return res.status(400).json({ message: "archivePath is required" });
+    }
+    const profile = await importMrPack(archivePath);
+    return res.status(201).json(profile);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+profilesRouter.post("/migrate", async (req, res, next) => {
+  try {
+    const input = profileCreateSchema.parse(req.body);
+    const optionsPath = input.optionsTxtPath;
+    if (!optionsPath) {
+      return res.status(400).json({ message: "optionsTxtPath is required for migration" });
+    }
+    
+    // Create profile
+    const profile = createProfile(input);
+    await ensureInstanceLayout(profile.id);
+    const instDir = instanceDir(profile.id);
+
+    // Copy entire instance contents from the other launcher
+    const sourceDir = dirname(optionsPath);
+    try {
+      cpSync(sourceDir, instDir, { recursive: true, force: false });
+    } catch (e) {
+      console.error("Failed to copy instance data", e);
+    }
+
+    await prepareInstance(profile);
+    return res.status(201).json(profile);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 profilesRouter.post("/import", async (req, res, next) => {
   try {
     const input = profileCreateSchema.parse(req.body);

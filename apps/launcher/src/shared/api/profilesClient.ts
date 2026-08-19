@@ -61,3 +61,19 @@ export async function importProfile(
     body: JSON.stringify(input),
   });
 }
+
+export async function migrateProfile(
+  input: CreateLauncherProfileRequest,
+): Promise<LauncherProfile> {
+  return apiRequest<LauncherProfile>("/v1/profiles/migrate", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function importArchive(archivePath: string): Promise<LauncherProfile> {
+  return apiRequest<LauncherProfile>("/v1/profiles/import-archive", {
+    method: "POST",
+    body: JSON.stringify({ archivePath }),
+  });
+}
