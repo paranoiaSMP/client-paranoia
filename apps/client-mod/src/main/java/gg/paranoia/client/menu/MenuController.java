@@ -27,7 +27,7 @@ public final class MenuController {
     private final ModuleWindow window;
     private final HudEditor editor;
 
-    private Mode mode = Mode.FENETRE;
+    private Mode mode = Mode.EDITION;
 
     // Dimensions et police de l'ecran hote, rafraichies a chaque image.
     private int width;
@@ -62,7 +62,7 @@ public final class MenuController {
      */
     public void onClosed() {
         registry.save();
-        mode = Mode.FENETRE;
+        mode = Mode.EDITION;
         window.reset();
         editor.reset();
     }

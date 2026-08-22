@@ -79,6 +79,28 @@ public final class HudEditor {
         }
 
         renderBar(context, font, width, height, mouseX, mouseY);
+        drawMenuModButton(context, font, width, height, mouseX, mouseY);
+    }
+
+    private int[] getMenuModButtonBox(int width, int height) {
+        int w = 180;
+        int h = 32;
+        int x = (width - w) / 2;
+        int y = (height - h) / 2;
+        return new int[]{x, y, w, h};
+    }
+
+    private void drawMenuModButton(
+        DrawContext context, TextRenderer font, int width, int height, int mouseX, int mouseY) {
+        int[] box = getMenuModButtonBox(width, height);
+        boolean hovered = MenuTheme.inside(mouseX, mouseY, box[0], box[1], box[2], box[3]);
+
+        // Fond violet translucide
+        int bgColor = hovered ? 0x994B0082 : 0x774B0082;
+        MenuTheme.panel(context, box[0], box[1], box[2], box[3], bgColor);
+        
+        // Texte
+        MenuTheme.centered(context, font, "PARANOIA MENU MOD", box[0], box[2], box[1] + (box[3] - font.fontHeight) / 2 + 1, 0xFFFFFFFF);
     }
 
     private void renderBar(
@@ -122,10 +144,16 @@ public final class HudEditor {
     /** @return true si le clic ferme le mode edition. */
     public boolean mouseClicked(
         TextRenderer font, int width, int height, int mouseX, int mouseY, int button) {
+        int[] btnBox = getMenuModButtonBox(width, height);
+        if (MenuTheme.inside(mouseX, mouseY, btnBox[0], btnBox[1], btnBox[2], btnBox[3])) {
+            return true;
+        }
+
         int barY = height - BAR_HEIGHT + 4;
         int barHeight = BAR_HEIGHT - 8;
 
         if (MenuTheme.inside(mouseX, mouseY, doneX(width), barY, BUTTON_WIDTH, barHeight)) {
+            // "TERMINE" button -> Maybe close or go to FENETRE
             registry.save();
             return true;
         }
