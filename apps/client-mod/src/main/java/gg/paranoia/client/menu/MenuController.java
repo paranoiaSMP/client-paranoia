@@ -73,6 +73,10 @@ public final class MenuController {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
 
+        // Le menu dessine les HUD lui-meme: c'est une image a part entiere, et
+        // les instantanes du rendu en jeu ne valent plus pour elle.
+        HudElement.beginFrame();
+
         if (mode == Mode.EDITION) {
             editor.render(context, font, width, height, mouseX, mouseY);
             return;

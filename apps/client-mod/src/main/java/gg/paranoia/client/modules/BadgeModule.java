@@ -64,6 +64,17 @@ public final class BadgeModule extends Module {
     private final ColorSetting color =
         add(new ColorSetting("color", "Couleur", 0xFFB07CFF));
 
+    // Prefixe pret a l'emploi, refait uniquement quand un reglage bouge.
+    //
+    // `decorate` est appelee une fois par joueur et par image tant que le Tab
+    // est ouvert: sur un serveur a cent joueurs, reconstruire ici la chaine du
+    // glyphe, le Style et le TextColor represente trois cents objets par image
+    // qui portent tous exactement la meme valeur.
+    private String prefix = "";
+    private Style prefixStyle = Style.EMPTY;
+    private Symbol builtFrom;
+    private int builtColor;
+
     public BadgeModule() {
         super("badge", "Badge Paranoia", ModuleCategory.VISUEL, true);
         instance = this;
@@ -82,7 +93,32 @@ public final class BadgeModule extends Module {
     }
 
     /**
+     * Remet le prefixe a jour si le symbole ou la couleur ont change.
+     *
+     * <p>Deux comparaisons -- une reference d'enum et un entier -- contre la
+     * construction d'une chaine, d'un Style et d'un TextColor. Le cas courant
+     * est celui ou rien n'a bouge depuis l'image precedente.
+     */
+    private void ensurePrefix() {
+        Symbol current = symbol.get();
+        int argb = color.argb();
+        if (current == builtFrom && argb == builtColor) {
+            return;
+        }
+
+        builtFrom = current;
+        builtColor = argb;
+        prefix = current.glyph() + " ";
+        prefixStyle = Style.EMPTY.withColor(TextColor.fromRgb(argb & 0x00FFFFFF));
+    }
+
+    /**
      * Ajoute le badge devant un nom, si ce joueur est un utilisateur declare.
+     *
+     * <p>Le Text renvoye reste construit a chaque appel: le nom differe d'un
+     * joueur a l'autre, et le mettre en cache demanderait de comparer deux
+     * arbres de Text -- plus couteux que l'objet qu'on economiserait. Ce qui
+     * est mis en cache, c'est tout ce qui ne depend pas du nom.
      *
      * @return le nom d'origine quand il n'y a rien a ajouter -- jamais null.
      */
@@ -98,8 +134,9 @@ public final class BadgeModule extends Module {
             return name;
         }
 
-        MutableText badge = Text.literal(module.symbol.get().glyph() + " ");
-        badge.setStyle(Style.EMPTY.withColor(TextColor.fromRgb(module.color.argb() & 0x00FFFFFF)));
+        module.ensurePrefix();
+        MutableText badge = Text.literal(module.prefix);
+        badge.setStyle(module.prefixStyle);
         return badge.append(name);
     }
 }
