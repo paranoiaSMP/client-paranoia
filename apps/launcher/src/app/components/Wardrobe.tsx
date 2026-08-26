@@ -111,14 +111,29 @@ function Price({ value, owned }: { value: number; owned: boolean }) {
   );
 }
 
+/**
+ * Le catalogue survit a la fermeture du vestiaire.
+ *
+ * <p>Hors du composant, donc conserve entre deux ouvertures. C'est une vitrine
+ * publique qui change quelques fois par semaine, alors que le vestiaire
+ * s'ouvre et se ferme des dizaines de fois par session: le recharger a chaque
+ * fois remplacait la grille par un sablier pour reafficher exactement la meme
+ * chose.
+ *
+ * <p>Le profil, lui, n'est jamais mis en cache: le solde, les possessions et
+ * l'equipement changent a chaque achat, et les montrer perimes serait pire que
+ * de les faire attendre.
+ */
+let catalogCache: CosmeticItem[] | null = null;
+
 export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [catalog, setCatalog] = useState<CosmeticItem[]>([]);
+  const [catalog, setCatalog] = useState<CosmeticItem[]>(catalogCache ?? []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [category, setCategory] = useState<CosmeticType | "tout">("tout");
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(catalogCache === null);
   const [skinUrl, setSkinUrl] = useState<string | undefined>();
 
   const refresh = useCallback(async () => {
@@ -128,6 +143,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
         apiRequest<CosmeticItem[]>("/v1/cosmetics/catalog"),
         apiRequest<Profile>("/v1/cosmetics/me"),
       ]);
+      catalogCache = items;
       setCatalog(items);
       setProfile(me);
 
@@ -148,10 +164,14 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setLoading(true);
-      void refresh();
+    if (!open) {
+      return;
     }
+    // Un catalogue deja charge s'affiche immediatement; on le rafraichit quand
+    // meme, mais en arriere-plan et sans ecran d'attente. Le sablier n'apparait
+    // donc qu'a la toute premiere ouverture.
+    setLoading(catalogCache === null);
+    void refresh();
   }, [open, refresh]);
 
   const owned = useMemo(() => new Set(profile?.owned ?? []), [profile]);
