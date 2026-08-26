@@ -17,6 +17,7 @@ import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
+import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
 import gg.paranoia.client.net.ParanoiaUsers;
@@ -71,6 +72,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new CrosshairModule());
         REGISTRY.register(new HitIndicatorModule());
         REGISTRY.register(new BadgeModule());
+        REGISTRY.register(new ParticleBudgetModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.
@@ -78,6 +80,9 @@ public final class ParanoiaClient {
 
         platform.registerHudRenderer(REGISTRY::renderInGame);
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
+        // En debut de tick: le budget doit etre reconduit avant les naissances
+        // de particules, pas apres.
+        ClientTickEvents.START_CLIENT_TICK.register(client -> ParticleBudgetModule.beginTick());
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
