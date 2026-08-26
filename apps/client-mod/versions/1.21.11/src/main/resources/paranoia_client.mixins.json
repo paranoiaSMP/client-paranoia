@@ -12,6 +12,7 @@
     "LivingEntityRendererMixin",
     "ClientPlayNetworkHandlerMixin",
     "InGameHudMixin",
-    "PlayerListHudMixin"
+    "PlayerListHudMixin",
+    "PlayerListEntryMixin"
   ]
 }

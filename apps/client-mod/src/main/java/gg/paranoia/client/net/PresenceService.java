@@ -1,6 +1,7 @@
 package gg.paranoia.client.net;
 
 import gg.paranoia.client.cosmetics.CosmeticTextures;
+import gg.paranoia.client.cosmetics.CosmeticsCatalog;
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.platform.Platforms;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -186,12 +187,37 @@ public final class PresenceService {
         }
     }
 
+    /**
+     * Charge le catalogue s'il manque encore.
+     *
+     * <p>Sans jeton et avant toute authentification: c'est une vitrine
+     * publique, et l'avoir en main des le depart evite qu'un joueur apparaisse
+     * sans sa cape le temps d'un aller-retour. Un echec n'est pas fatal -- on
+     * reessaiera au cycle suivant, et d'ici la les capes ne s'affichent
+     * simplement pas.
+     */
+    private void ensureCatalog() {
+        if (!CosmeticsCatalog.isEmpty()) {
+            return;
+        }
+
+        try {
+            CosmeticsCatalog.apply(api.catalog());
+        } catch (InterruptedException err) {
+            Thread.currentThread().interrupt();
+        } catch (Exception err) {
+            LOGGER.debug("Catalogue des cosmetiques indisponible: {}", err.getMessage());
+        }
+    }
+
     private int runOnce() throws Exception {
         if (!inGame) {
             // Hors jeu, on ne signale rien: la presence veut dire "en train de
             // jouer", pas "launcher ouvert".
             return interval;
         }
+
+        ensureCatalog();
 
         SessionInfo current = session;
         if (current == null || !current.usable()) {

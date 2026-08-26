@@ -1,5 +1,6 @@
 package gg.paranoia.client;
 
+import gg.paranoia.client.cosmetics.CosmeticCapes;
 import gg.paranoia.client.cosmetics.CosmeticTextures;
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.hud.HudRegistry;
@@ -165,6 +166,7 @@ public final class ParanoiaClient {
             // serveur ne doit pas se faire avec la memoire graphique du
             // precedent encore occupee.
             CosmeticsRegistry.clear();
+            CosmeticCapes.clear();
             CosmeticTextures.clear();
         });
     }

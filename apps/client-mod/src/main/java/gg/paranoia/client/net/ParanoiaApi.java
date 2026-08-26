@@ -69,6 +69,18 @@ public final class ParanoiaApi {
     public record Lookup(Set<UUID> users, Map<UUID, List<String>> cosmetics) {
     }
 
+    /**
+     * Un objet du catalogue, reduit a ce dont le rendu a besoin.
+     *
+     * <p>Le lookup ne transporte que des identifiants d'objets: c'est le
+     * catalogue qui dit a quoi ils ressemblent. La separation est voulue --
+     * le catalogue change quelques fois par semaine, la liste des porteurs
+     * a chaque cycle, et les melanger ferait retransiter les memes adresses
+     * de textures toutes les trente secondes.
+     */
+    public record CatalogItem(String id, String type, String textureUrl) {
+    }
+
     /** Echec cote serveur, avec le code pour distinguer un 401 du reste. */
     public static final class ApiException extends IOException {
         private final int status;
@@ -160,6 +172,54 @@ public final class ParanoiaApi {
 
         JsonObject body = post("/v1/users/lookup", payload.toString(), token);
         return new Lookup(parseUsers(body), parseCosmetics(body));
+    }
+
+    /**
+     * Catalogue des cosmetiques.
+     *
+     * <p>Sans jeton: c'est une vitrine publique, et la demander avant d'etre
+     * authentifie permet d'avoir les textures pretes quand le premier porteur
+     * apparait.
+     */
+    public List<CatalogItem> catalog() throws IOException, InterruptedException {
+        HttpResponse<String> response =
+            send(request(URI.create(baseUrl + "/v1/cosmetics/catalog")).GET().build());
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new ApiException(response.statusCode(), "Catalogue indisponible");
+        }
+
+        JsonElement parsed = JsonParser.parseString(response.body());
+        if (!parsed.isJsonArray()) {
+            throw new ApiException(response.statusCode(), "Catalogue illisible");
+        }
+
+        List<CatalogItem> items = new ArrayList<>();
+        for (JsonElement element : parsed.getAsJsonArray()) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject item = element.getAsJsonObject();
+
+            String id = optional(item, "id");
+            String type = optional(item, "type");
+            // `textureUrl` est facultatif cote API: quand l'apercu et la texture
+            // portee sont la meme image, seul `previewUrl` est renseigne.
+            String texture = optional(item, "textureUrl");
+            if (texture == null) {
+                texture = optional(item, "previewUrl");
+            }
+
+            if (id != null && type != null && texture != null) {
+                items.add(new CatalogItem(id, type, texture));
+            }
+        }
+        return List.copyOf(items);
+    }
+
+    private static String optional(JsonObject body, String key) {
+        JsonElement element = body.get(key);
+        return element != null && element.isJsonPrimitive() ? element.getAsString() : null;
     }
 
     private static Set<UUID> parseUsers(JsonObject body) {
