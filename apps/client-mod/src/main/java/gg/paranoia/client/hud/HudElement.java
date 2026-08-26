@@ -19,6 +19,17 @@ public abstract class HudElement extends Module {
     /** Marge entre le texte et le bord du fond. */
     protected static final int PADDING = 3;
 
+    /**
+     * Numero de l'image en cours de dessin.
+     *
+     * <p>Statique parce que tous les elements avancent ensemble: il n'existe
+     * qu'une image a la fois.
+     */
+    private static int frame;
+
+    /** Derniere image pour laquelle cet element a prepare son contenu. */
+    private int preparedFor = -1;
+
     private final HudLayout layout = new HudLayout();
 
     protected HudElement(String id, String name, boolean enabledByDefault) {
@@ -27,6 +38,41 @@ public abstract class HudElement extends Module {
 
     public HudLayout layout() {
         return layout;
+    }
+
+    /** Ouvre une nouvelle image: les instantanes precedents sont perimes. */
+    public static void beginFrame() {
+        frame++;
+    }
+
+    /**
+     * Prepare le contenu de l'image en cours, une seule fois.
+     *
+     * <p>{@link #width}, {@link #height}, {@link #visibleInGame} et
+     * {@link #renderContent} sont appeles chacun au moins une fois par image,
+     * et parfois davantage: mesurer une colonne demande de parcourir les memes
+     * lignes que les dessiner. Sans ce garde-fou, un panneau d'informations
+     * reconstruit six fois par image une liste que le joueur ne voit qu'une
+     * fois -- soit, a 240 images par seconde, un millier et demi de listes
+     * jetees chaque seconde pour afficher six lignes de texte.
+     */
+    public final void prepare() {
+        if (preparedFor == frame) {
+            return;
+        }
+        preparedFor = frame;
+        refresh();
+    }
+
+    /**
+     * Recalcule ce que l'element affichera pendant cette image.
+     *
+     * <p>Les implementations gardent leur contenu dans des champs et ne le
+     * reconstruisent que si les valeurs sources ont change: entre deux images,
+     * des coordonnees ou un nombre d'images par seconde restent le plus souvent
+     * identiques, et reformater un texte inchange ne produit que du dechet.
+     */
+    protected void refresh() {
     }
 
     /** Position par defaut, en fraction d'ecran, au premier lancement. */

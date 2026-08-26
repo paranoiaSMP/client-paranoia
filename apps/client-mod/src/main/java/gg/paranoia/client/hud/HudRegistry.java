@@ -17,24 +17,38 @@ import java.util.Map;
 public final class HudRegistry {
     private final Map<String, Module> modules = new LinkedHashMap<>();
 
+    // Les modules s'enregistrent au demarrage et plus jamais ensuite. Ces deux
+    // vues sont donc construites une fois: `hudElements()` est parcourue a
+    // chaque image, et l'editeur l'appelle plusieurs fois par image.
+    private List<Module> allView;
+    private List<HudElement> hudView;
+
     public void register(Module module) {
         if (modules.putIfAbsent(module.id(), module) != null) {
             throw new IllegalStateException("module deja enregistre: " + module.id());
         }
+        allView = null;
+        hudView = null;
     }
 
     public List<Module> all() {
-        return List.copyOf(modules.values());
+        if (allView == null) {
+            allView = List.copyOf(modules.values());
+        }
+        return allView;
     }
 
     public List<HudElement> hudElements() {
-        List<HudElement> elements = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof HudElement hud) {
-                elements.add(hud);
+        if (hudView == null) {
+            List<HudElement> elements = new ArrayList<>();
+            for (Module module : modules.values()) {
+                if (module instanceof HudElement hud) {
+                    elements.add(hud);
+                }
             }
+            hudView = Collections.unmodifiableList(elements);
         }
-        return Collections.unmodifiableList(elements);
+        return hudView;
     }
 
     public void load() {
@@ -66,8 +80,16 @@ public final class HudRegistry {
         int screenWidth = client.getWindow().getScaledWidth();
         int screenHeight = client.getWindow().getScaledHeight();
 
+        HudElement.beginFrame();
+
         for (HudElement element : hudElements()) {
-            if (!element.enabled() || !element.visibleInGame()) {
+            if (!element.enabled()) {
+                continue;
+            }
+            // Avant `visibleInGame()`: certains elements repondent en lisant
+            // leur contenu, qui doit donc etre celui de cette image.
+            element.prepare();
+            if (!element.visibleInGame()) {
                 continue;
             }
             draw(context, textRenderer, element, screenWidth, screenHeight);
@@ -82,6 +104,7 @@ public final class HudRegistry {
      */
     public static void draw(
         DrawContext context, TextRenderer textRenderer, HudElement element, int screenWidth, int screenHeight) {
+        element.prepare();
         float scale = element.layout().scale();
 
         // Les positions sont calculees dans l'espace mis a l'echelle: sinon un
@@ -107,6 +130,10 @@ public final class HudRegistry {
     /** Rectangle occupe a l'ecran, en pixels reels: sert au glisser-deposer. */
     public static int[] bounds(
         HudElement element, TextRenderer textRenderer, int screenWidth, int screenHeight) {
+        // L'editeur mesure avant de dessiner, et re-mesure a chaque element
+        // pendant l'aimantation: c'est le premier appel de l'image qui prepare,
+        // les suivants relisent le meme instantane.
+        element.prepare();
         float scale = element.layout().scale();
         int scaledWidth = (int) (screenWidth / scale);
         int scaledHeight = (int) (screenHeight / scale);

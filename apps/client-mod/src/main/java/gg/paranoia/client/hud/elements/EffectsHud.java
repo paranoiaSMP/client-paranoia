@@ -35,58 +35,108 @@ public final class EffectsHud extends HudElement {
         placeAt(0.01, 0.5);
     }
 
+    /**
+     * Une ligne, reutilisee d'une image a l'autre.
+     *
+     * <p>Mutable, contrairement au record qu'elle remplace: le nom d'un effet
+     * s'obtient en rendant un {@code Text} en chaine, ce qui parcourt l'arbre
+     * du texte et alloue. Or ce nom ne change que si l'effet ou son niveau
+     * change -- c'est-a-dire presque jamais, alors que le temps restant, lui,
+     * change une fois par seconde. On garde donc les deux separement, avec ce
+     * dont chacun decoule.
+     */
+    private static final class Entry {
+        String name = "";
+        String time = "";
+
+        Object effect;
+        int amplifier = Integer.MIN_VALUE;
+        int seconds = Integer.MIN_VALUE;
+        boolean withDuration;
+    }
+
+    private final List<Entry> pool = new ArrayList<>();
+    private int count;
+
     @Override
     public boolean visibleInGame() {
-        return !entries().isEmpty();
+        return count > 0;
     }
 
-    /** Une ligne = le nom de l'effet et son temps restant. */
-    private record Entry(String name, String time) {
-    }
+    @Override
+    protected void refresh() {
+        count = 0;
 
-    private List<Entry> entries() {
-        List<Entry> entries = new ArrayList<>();
         ClientPlayerEntity player = client() == null ? null : client().player;
         if (player == null) {
-            return entries;
+            return;
         }
+
+        boolean durationNow = showDuration.get();
 
         for (StatusEffectInstance instance : player.getStatusEffects()) {
             if (hideAmbient.get() && instance.isAmbient()) {
                 continue;
             }
 
-            String name = instance.getEffectType().value().getName().getString();
+            Entry entry = entryAt(count++);
+            // `var`: le type de l'effet ne se nomme pas de la meme facon d'une
+            // version a l'autre, et on n'a besoin que de son identite et de son
+            // nom -- deux choses que toutes les versions offrent pareil.
+            var effect = instance.getEffectType().value();
             int amplifier = instance.getAmplifier();
-            if (amplifier > 0 && amplifier < LEVELS.length) {
-                name = name + " " + LEVELS[amplifier];
+
+            if (effect != entry.effect || amplifier != entry.amplifier) {
+                entry.effect = effect;
+                entry.amplifier = amplifier;
+
+                String name = effect.getName().getString();
+                entry.name = amplifier > 0 && amplifier < LEVELS.length
+                    ? name + " " + LEVELS[amplifier]
+                    : name;
             }
 
-            entries.add(new Entry(name, showDuration.get() ? formatDuration(instance) : ""));
+            // Une duree negative signale un effet sans fin (balise de conduit,
+            // mode creatif): afficher un compte a rebours y serait faux.
+            int ticks = instance.getDuration();
+            int seconds = ticks < 0 ? -1 : ticks / 20;
+
+            if (seconds != entry.seconds || durationNow != entry.withDuration) {
+                entry.seconds = seconds;
+                entry.withDuration = durationNow;
+                entry.time = durationNow ? formatDuration(seconds) : "";
+            }
         }
-        return entries;
     }
 
-    /**
-     * Temps restant en m:ss.
-     *
-     * <p>Une duree negative signale un effet sans fin (balise de conduit, mode
-     * creatif): afficher un compte a rebours y serait faux.
-     */
-    private static String formatDuration(StatusEffectInstance instance) {
-        int ticks = instance.getDuration();
-        if (ticks < 0) {
+    private Entry entryAt(int index) {
+        while (pool.size() <= index) {
+            pool.add(new Entry());
+        }
+        return pool.get(index);
+    }
+
+    /** Temps restant en m:ss, sans passer par {@code String.format}. */
+    private static String formatDuration(int seconds) {
+        if (seconds < 0) {
             return "--";
         }
 
-        int seconds = ticks / 20;
-        return (seconds / 60) + ":" + String.format("%02d", seconds % 60);
+        int rest = seconds % 60;
+        return (seconds / 60) + (rest < 10 ? ":0" : ":") + rest;
     }
 
+    /**
+     * Largeur de la colonne des noms.
+     *
+     * <p>Recalculee a chaque appel, mais sans rien construire: le parcours porte
+     * sur des chaines deja pretes. C'est la reconstruction de la liste, pas la
+     * mesure, qui coutait.
+     */
     private int nameWidth(TextRenderer textRenderer) {
         int widest = 0;
-        for (Entry entry : entries()) {
-            widest = Math.max(widest, textRenderer.getWidth(entry.name()));
+        for (int index = 0; index < count; index++) {
+            widest = Math.max(widest, textRenderer.getWidth(pool.get(index).name));
         }
         return widest;
     }
@@ -95,30 +145,29 @@ public final class EffectsHud extends HudElement {
     public int width(TextRenderer textRenderer) {
         int widest = 0;
         int names = nameWidth(textRenderer);
-        for (Entry entry : entries()) {
-            int time = entry.time().isEmpty() ? 0 : textRenderer.getWidth(entry.time()) + 6;
-            widest = Math.max(widest, names + time);
+        for (int index = 0; index < count; index++) {
+            String time = pool.get(index).time;
+            widest = Math.max(widest, names + (time.isEmpty() ? 0 : textRenderer.getWidth(time) + 6));
         }
         return widest + PADDING * 2;
     }
 
     @Override
     public int height(TextRenderer textRenderer) {
-        return Math.max(1, entries().size()) * textRenderer.fontHeight + PADDING * 2;
+        return Math.max(1, count) * textRenderer.fontHeight + PADDING * 2;
     }
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        List<Entry> entries = entries();
         int names = nameWidth(textRenderer);
 
-        for (int index = 0; index < entries.size(); index++) {
+        for (int index = 0; index < count; index++) {
+            Entry entry = pool.get(index);
             int lineY = y + index * textRenderer.fontHeight;
-            drawLine(context, textRenderer, entries.get(index).name(), x, lineY, nameColor.argb());
+            drawLine(context, textRenderer, entry.name, x, lineY, nameColor.argb());
 
-            String time = entries.get(index).time();
-            if (!time.isEmpty()) {
-                drawLine(context, textRenderer, time, x + names + 6, lineY, timeColor.argb());
+            if (!entry.time.isEmpty()) {
+                drawLine(context, textRenderer, entry.time, x + names + 6, lineY, timeColor.argb());
             }
         }
     }

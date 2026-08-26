@@ -283,6 +283,16 @@ describe("Textures des cosmetiques", () => {
     assert.ok(res.headers.get("etag"), "un ETag permet au mod de revalider sans retelecharger");
   });
 
+  it("autorise le chargement depuis une autre origine", async () => {
+    const res = await fetch(`${base}/cosmetics/cape_fondateur.png`);
+
+    // Sans cet en-tete, l'apercu 3D du vestiaire reste vide: charger une
+    // image dans une texture WebGL exige l'accord du serveur, la poser en
+    // fond CSS non.
+    assert.equal(res.headers.get("access-control-allow-origin"), "*");
+    assert.equal(res.headers.get("cross-origin-resource-policy"), "cross-origin");
+  });
+
   it("refuse un fichier qui n'est pas une image", async () => {
     const res = await fetch(`${base}/cosmetics/secret.env`);
     assert.equal(res.status, 404, "un fichier depose par erreur ne doit pas sortir");

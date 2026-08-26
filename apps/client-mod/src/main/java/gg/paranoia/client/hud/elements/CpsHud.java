@@ -39,9 +39,9 @@ public final class CpsHud extends HudElement {
     /**
      * Releve les fronts d'appui.
      *
-     * <p>Appele depuis le calcul de la largeur, donc a chaque image ou le HUD
-     * est affiche. Compter les clics quand personne ne les regarde n'aurait
-     * aucun interet, et l'ecart de mesure ne se verrait pas.
+     * <p>Appele a chaque image ou le HUD est affiche, et une seule fois par
+     * image. Compter les clics quand personne ne les regarde n'aurait aucun
+     * interet, et l'ecart de mesure ne se verrait pas.
      */
     private void poll() {
         MinecraftClient client = client();
@@ -74,21 +74,45 @@ public final class CpsHud extends HudElement {
         }
     }
 
-    private String text() {
+    // Le releve reste a chaque image -- c'est tout l'interet du module -- mais
+    // le texte ne se refait que quand un compteur change de valeur.
+    private String text = "0 CPS";
+    private int lastLeft = Integer.MIN_VALUE;
+    private int lastRight = Integer.MIN_VALUE;
+    private boolean lastShowLeft;
+    private boolean lastShowRight;
+
+    @Override
+    protected void refresh() {
         poll();
 
-        if (showLeft.get() && showRight.get()) {
-            return leftClicks.size() + " | " + rightClicks.size() + " CPS";
+        int left = leftClicks.size();
+        int right = rightClicks.size();
+        boolean showLeftNow = showLeft.get();
+        boolean showRightNow = showRight.get();
+
+        if (left == lastLeft && right == lastRight
+            && showLeftNow == lastShowLeft && showRightNow == lastShowRight) {
+            return;
         }
-        if (showRight.get()) {
-            return rightClicks.size() + " CPS";
+
+        lastLeft = left;
+        lastRight = right;
+        lastShowLeft = showLeftNow;
+        lastShowRight = showRightNow;
+
+        if (showLeftNow && showRightNow) {
+            text = left + " | " + right + " CPS";
+        } else if (showRightNow) {
+            text = right + " CPS";
+        } else {
+            text = left + " CPS";
         }
-        return leftClicks.size() + " CPS";
     }
 
     @Override
     public int width(TextRenderer textRenderer) {
-        return textRenderer.getWidth(text()) + PADDING * 2;
+        return textRenderer.getWidth(text) + PADDING * 2;
     }
 
     @Override
@@ -98,6 +122,6 @@ public final class CpsHud extends HudElement {
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        drawLine(context, textRenderer, text(), x, y, color.argb());
+        drawLine(context, textRenderer, text, x, y, color.argb());
     }
 }

@@ -46,16 +46,32 @@ public final class DirectionHud extends HudElement {
         };
     }
 
-    private String text() {
-        ClientPlayerEntity player = client().player;
+    // Un joueur regarde dans quatre directions: le texte ne peut prendre que
+    // huit valeurs, et il en change beaucoup moins souvent qu'il n'y a d'images.
+    private String text = label(Direction.NORTH);
+    private Direction lastFacing;
+    private boolean lastAxis;
+
+    @Override
+    protected void refresh() {
+        ClientPlayerEntity player = client() == null ? null : client().player;
         Direction facing = player != null ? player.getHorizontalFacing() : Direction.NORTH;
+        boolean axisNow = showAxis.get();
+
+        if (facing == lastFacing && axisNow == lastAxis) {
+            return;
+        }
+
+        lastFacing = facing;
+        lastAxis = axisNow;
+
         String name = label(facing);
-        return showAxis.get() ? name + " (" + axis(facing) + ")" : name;
+        text = axisNow ? name + " (" + axis(facing) + ")" : name;
     }
 
     @Override
     public int width(TextRenderer textRenderer) {
-        return textRenderer.getWidth(text()) + PADDING * 2;
+        return textRenderer.getWidth(text) + PADDING * 2;
     }
 
     @Override
@@ -65,6 +81,6 @@ public final class DirectionHud extends HudElement {
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        drawLine(context, textRenderer, text(), x, y, color.argb());
+        drawLine(context, textRenderer, text, x, y, color.argb());
     }
 }

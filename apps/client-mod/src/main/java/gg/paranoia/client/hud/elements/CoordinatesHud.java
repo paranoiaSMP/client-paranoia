@@ -16,6 +16,18 @@ public final class CoordinatesHud extends HudElement {
     private final ColorSetting color =
         add(new ColorSetting("color", "Couleur du texte", 0xFFFFFFFF));
 
+    // Contenu de l'image en cours, et les valeurs dont il decoule. Un joueur
+    // qui marche change de bloc vingt fois par seconde au plus, alors que le
+    // jeu dessine dix fois plus souvent: le cas courant est celui ou rien n'a
+    // bouge depuis l'image precedente.
+    private String[] lines = {"0 / 64 / 0"};
+    private int lastX = Integer.MIN_VALUE;
+    private int lastY = Integer.MIN_VALUE;
+    private int lastZ = Integer.MIN_VALUE;
+    private boolean lastCompact;
+    private boolean lastNether;
+    private boolean lastHadPlayer;
+
     public CoordinatesHud() {
         super("coordinates", "Coordonnees", true);
         placeAt(0.01, 0.02);
@@ -26,35 +38,50 @@ public final class CoordinatesHud extends HudElement {
         return client() != null && client().player != null;
     }
 
-    private String[] lines() {
-        ClientPlayerEntity player = client().player;
-        if (player == null) {
-            // Le menu peut s'ouvrir depuis l'ecran titre: on montre un exemple
-            // plutot qu'un cadre vide impossible a positionner.
-            return compact.get() ? new String[] {"0 / 64 / 0"} : new String[] {"X 0", "Y 64", "Z 0"};
+    @Override
+    protected void refresh() {
+        ClientPlayerEntity player = client() == null ? null : client().player;
+
+        boolean hasPlayer = player != null;
+        boolean compactNow = compact.get();
+        boolean netherNow = showNether.get();
+
+        // Le menu peut s'ouvrir depuis l'ecran titre: on montre un exemple
+        // plutot qu'un cadre vide impossible a positionner.
+        int x = hasPlayer ? (int) Math.floor(player.getX()) : 0;
+        int y = hasPlayer ? (int) Math.floor(player.getY()) : 64;
+        int z = hasPlayer ? (int) Math.floor(player.getZ()) : 0;
+
+        if (hasPlayer == lastHadPlayer
+            && x == lastX && y == lastY && z == lastZ
+            && compactNow == lastCompact && netherNow == lastNether) {
+            return;
         }
 
-        int x = (int) Math.floor(player.getX());
-        int y = (int) Math.floor(player.getY());
-        int z = (int) Math.floor(player.getZ());
+        lastHadPlayer = hasPlayer;
+        lastX = x;
+        lastY = y;
+        lastZ = z;
+        lastCompact = compactNow;
+        lastNether = netherNow;
 
-        if (compact.get()) {
+        if (compactNow) {
             String main = x + " / " + y + " / " + z;
-            return showNether.get()
+            lines = netherNow
                 ? new String[] {main, "Nether " + (x / 8) + " / " + (z / 8)}
                 : new String[] {main};
+            return;
         }
 
-        if (showNether.get()) {
-            return new String[] {"X " + x, "Y " + y, "Z " + z, "Nether " + (x / 8) + " / " + (z / 8)};
-        }
-        return new String[] {"X " + x, "Y " + y, "Z " + z};
+        lines = netherNow
+            ? new String[] {"X " + x, "Y " + y, "Z " + z, "Nether " + (x / 8) + " / " + (z / 8)}
+            : new String[] {"X " + x, "Y " + y, "Z " + z};
     }
 
     @Override
     public int width(TextRenderer textRenderer) {
         int widest = 0;
-        for (String line : lines()) {
+        for (String line : lines) {
             widest = Math.max(widest, textRenderer.getWidth(line));
         }
         return widest + PADDING * 2;
@@ -62,12 +89,11 @@ public final class CoordinatesHud extends HudElement {
 
     @Override
     public int height(TextRenderer textRenderer) {
-        return lines().length * textRenderer.fontHeight + PADDING * 2;
+        return lines.length * textRenderer.fontHeight + PADDING * 2;
     }
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        String[] lines = lines();
         for (int i = 0; i < lines.length; i++) {
             drawLine(context, textRenderer, lines[i], x, y + i * textRenderer.fontHeight, color.argb());
         }

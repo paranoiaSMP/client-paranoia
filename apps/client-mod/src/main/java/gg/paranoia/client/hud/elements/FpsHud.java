@@ -24,15 +24,31 @@ public final class FpsHud extends HudElement {
         placeAt(0.01, 0.16);
     }
 
-    private String text() {
+    // Le compteur du jeu ne bouge qu'une fois par seconde: formater ce nombre a
+    // chaque image reviendrait a jeter deux cent trente-neuf chaines sur deux
+    // cent quarante, toutes identiques.
+    private String text = "0 FPS";
+    private int lastFps = Integer.MIN_VALUE;
+    private boolean lastLabel;
+
+    @Override
+    protected void refresh() {
         MinecraftClient client = client();
         int fps = client == null ? 0 : client.getCurrentFps();
-        return showLabel.get() ? fps + " FPS" : String.valueOf(fps);
+        boolean labelNow = showLabel.get();
+
+        if (fps == lastFps && labelNow == lastLabel) {
+            return;
+        }
+
+        lastFps = fps;
+        lastLabel = labelNow;
+        text = labelNow ? fps + " FPS" : String.valueOf(fps);
     }
 
     @Override
     public int width(TextRenderer textRenderer) {
-        return textRenderer.getWidth(text()) + PADDING * 2;
+        return textRenderer.getWidth(text) + PADDING * 2;
     }
 
     @Override
@@ -42,6 +58,6 @@ public final class FpsHud extends HudElement {
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        drawLine(context, textRenderer, text(), x, y, color.argb());
+        drawLine(context, textRenderer, text, x, y, color.argb());
     }
 }

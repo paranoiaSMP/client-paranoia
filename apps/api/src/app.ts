@@ -62,6 +62,21 @@ export function createApp() {
       // Une heure, avec ETag: le mod revalide sans retelecharger, et
       // remplacer une texture se propage dans l'heure sans purge a faire.
       maxAge: "1h",
+      setHeaders: (res) => {
+        // Ouvert a toutes les origines, et c'est necessaire, pas laxiste.
+        //
+        // Une image posee en fond CSS s'affiche sans rien demander, mais la
+        // charger dans une texture WebGL -- ce que fait l'apercu 3D du
+        // vestiaire -- oblige le navigateur a verifier que le serveur
+        // l'autorise. Sans cet en-tete, l'apercu reste vide sans qu'aucune
+        // erreur visible n'explique pourquoi.
+        //
+        // Aucun risque a l'accorder ici: ces fichiers sont des images
+        // publiques, servies sans cookie ni jeton. Il n'y a rien a proteger
+        // qu'un lien direct ne donnerait pas deja.
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      },
     }),
     (_req, res) => {
       res.status(404).json({ error: "Texture inconnue" });
