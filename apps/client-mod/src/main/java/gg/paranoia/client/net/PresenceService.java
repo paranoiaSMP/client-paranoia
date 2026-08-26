@@ -50,6 +50,15 @@ public final class PresenceService {
 
     private static final int MAX_BACKOFF_SECONDS = 600;
 
+    /**
+     * Au-dela de ce delai, on reinterroge meme si personne n'est arrive ni parti.
+     *
+     * <p>Sans ce plancher, un joueur qui lance Paranoia alors qu'on est deja sur
+     * le serveur n'obtiendrait jamais son badge chez nous: rien dans la liste
+     * des joueurs visibles n'aurait change, et on ne redemanderait jamais.
+     */
+    private static final long LOOKUP_REFRESH_MILLIS = 120_000;
+
     private final ParanoiaApi api;
     private final ScheduledExecutorService worker;
 
@@ -58,6 +67,16 @@ public final class PresenceService {
     private volatile SessionInfo session;
     private volatile boolean inGame;
 
+    /**
+     * Leve par le fil du jeu en quittant un monde, baisse apres l'interrogation.
+     *
+     * <p>Quitter un serveur oublie les cosmetiques. Si l'on revient sur le meme
+     * serveur avec exactement les memes joueurs presents, la liste des joueurs
+     * visibles serait identique et l'optimisation ci-dessous sauterait
+     * l'interrogation -- laissant tout le monde sans cape pendant deux minutes.
+     */
+    private volatile boolean lookupStale = true;
+
     /** Compteur d'echantillonnage, lu et ecrit par le seul fil du jeu. */
     private int ticks;
 
@@ -65,6 +84,8 @@ public final class PresenceService {
     private String token;
     private int interval = 30;
     private int consecutiveFailures;
+    private Set<UUID> lastAsked = Set.of();
+    private long lastLookup;
 
     public PresenceService() {
         this(new ParanoiaApi());
@@ -111,7 +132,11 @@ public final class PresenceService {
 
         // `world` plutot que `getNetworkHandler`: on ne veut compter comme
         // "en jeu" ni l'ecran de connexion, ni le temps de chargement.
-        inGame = client.world != null;
+        boolean nowInGame = client.world != null;
+        if (inGame && !nowInGame) {
+            lookupStale = true;
+        }
+        inGame = nowInGame;
 
         if (++ticks < SAMPLE_INTERVAL_TICKS) {
             return;
@@ -207,15 +232,42 @@ public final class PresenceService {
         return issued.value();
     }
 
+    /**
+     * Demande le statut des joueurs visibles, quand il y a lieu de le demander.
+     *
+     * <p>C'est la requete la plus lourde du cycle: la liste des joueurs qu'on a
+     * sous les yeux, envoyee entiere. Sur un serveur stable, la renvoyer toutes
+     * les trente secondes revient a redemander la meme chose a une reponse qui
+     * n'a pas bouge. On la saute donc tant que personne n'est arrive ni parti,
+     * avec le plancher de {@link #LOOKUP_REFRESH_MILLIS} pour continuer de
+     * decouvrir ceux qui s'authentifient en cours de partie.
+     *
+     * <p>On renvoie bien la liste <em>entiere</em>, jamais un differentiel: la
+     * reponse remplace l'etat au lieu de le completer, et n'interroger que les
+     * nouveaux venus ferait disparaitre le badge de tous les autres.
+     */
     private void refreshUsers() throws Exception {
         Set<UUID> asked = visible;
         if (asked.isEmpty()) {
             return;
         }
 
+        long now = System.currentTimeMillis();
+        if (!lookupStale
+            && asked.equals(lastAsked)
+            && now - lastLookup < LOOKUP_REFRESH_MILLIS) {
+            return;
+        }
+
         ParanoiaApi.Lookup lookup = api.lookup(token, asked);
         ParanoiaUsers.applyFromApi(lookup.users());
         CosmeticsRegistry.apply(lookup.cosmetics());
+
+        // Apres la reponse, pas avant: une requete qui echoue doit laisser le
+        // cycle suivant reessayer, pas croire que c'est fait.
+        lastAsked = asked;
+        lastLookup = now;
+        lookupStale = false;
     }
 
     /**
