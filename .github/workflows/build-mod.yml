@@ -152,6 +152,8 @@ jobs:
               "net.minecraft.util.AssetInfo:*" \
               "net.minecraft.client.texture.TextureManager:registerTexture|getTexture|destroyTexture" \
               "net.minecraft.client.texture.NativeImageBackedTexture:*" \
+              "net.minecraft.client.texture.NativeImage:read|getWidth|getHeight|close" \
+              "net.minecraft.util.Identifier:of|ofVanilla|tryParse" \
               "net.minecraft.client.render.entity.feature.CapeFeatureRenderer:*" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
               "net.minecraft.client.MinecraftClient:getSession|getGameProfile"

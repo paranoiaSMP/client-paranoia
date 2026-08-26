@@ -1,5 +1,7 @@
 package gg.paranoia.client;
 
+import gg.paranoia.client.cosmetics.CosmeticTextures;
+import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.hud.HudRegistry;
 import gg.paranoia.client.hud.elements.ArmorHud;
 import gg.paranoia.client.hud.elements.CoordinatesHud;
@@ -158,6 +160,12 @@ public final class ParanoiaClient {
             // La liste des utilisateurs ne vaut que pour le serveur qui l'a
             // envoyee: la garder ferait apparaitre des badges sur le suivant.
             ParanoiaUsers.clear();
+            // Les cosmetiques aussi. Les textures sont rendues dans la foulee
+            // plutot qu'au bout d'une minute d'inactivite: rejoindre un autre
+            // serveur ne doit pas se faire avec la memoire graphique du
+            // precedent encore occupee.
+            CosmeticsRegistry.clear();
+            CosmeticTextures.clear();
         });
     }
 

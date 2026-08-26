@@ -1,5 +1,6 @@
 package gg.paranoia.client.net;
 
+import gg.paranoia.client.cosmetics.CosmeticTextures;
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.platform.Platforms;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -146,6 +147,12 @@ public final class PresenceService {
         } catch (Exception err) {
             nextDelay = backoff(err);
         }
+
+        // Hors du bloc precedent, et sans condition: c'est le seul battement
+        // regulier qui continue quand l'API est injoignable ou quand plus aucun
+        // porteur n'est visible -- precisement les moments ou il y a de la
+        // memoire graphique a rendre.
+        CosmeticTextures.sweep();
 
         try {
             worker.schedule(this::cycle, nextDelay, TimeUnit.SECONDS);

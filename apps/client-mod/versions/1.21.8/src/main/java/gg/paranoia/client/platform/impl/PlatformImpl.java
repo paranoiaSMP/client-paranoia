@@ -5,9 +5,13 @@ import gg.paranoia.client.menu.ParanoiaMenuScreen;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.HudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.util.Identifier;
 
 import java.util.UUID;
 
@@ -48,5 +52,20 @@ public final class PlatformImpl implements ClientPlatform {
     public UUID profileId(PlayerListEntry entry) {
         // GameProfile est une classe dans cette version.
         return entry.getProfile().getId();
+    }
+
+    @Override
+    public Identifier registerCosmeticTexture(String path, NativeImage image) {
+        Identifier id = Identifier.of("paranoia", path);
+        // L'etiquette est une chaine de journalisation, evaluee paresseusement
+        // par le jeu quand il decrit ses textures.
+        MinecraftClient.getInstance().getTextureManager()
+            .registerTexture(id, new NativeImageBackedTexture(id::toString, image));
+        return id;
+    }
+
+    @Override
+    public void unregisterCosmeticTexture(Identifier id) {
+        MinecraftClient.getInstance().getTextureManager().destroyTexture(id);
     }
 }

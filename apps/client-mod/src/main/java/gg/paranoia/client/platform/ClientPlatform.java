@@ -4,6 +4,8 @@ import gg.paranoia.client.menu.MenuController;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.util.Identifier;
 
 import java.util.UUID;
 
@@ -62,4 +64,24 @@ public interface ClientPlatform {
      * divergence quand meme.
      */
     UUID profileId(PlayerListEntry entry);
+
+    /**
+     * Charge une image telechargee dans le jeu et rend son identifiant.
+     *
+     * <p>Deux choses divergent ici. Le constructeur de
+     * {@code NativeImageBackedTexture} a gagne une etiquette, passee en
+     * premier, dans les versions recentes -- une chaine de journalisation, mais
+     * qui change la signature. Et {@code Identifier} se construit depuis un
+     * espace de noms et un chemin dont la fabrique a change de nom au fil des
+     * versions. Le reste du cache est commun.
+     *
+     * <p>A appeler depuis le fil de rendu uniquement: c'est un envoi vers la
+     * carte graphique.
+     *
+     * @param path chemin dans l'espace de noms Paranoia, deja normalise.
+     */
+    Identifier registerCosmeticTexture(String path, NativeImage image);
+
+    /** Libere la texture et sa memoire graphique. Fil de rendu uniquement. */
+    void unregisterCosmeticTexture(Identifier id);
 }
