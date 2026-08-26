@@ -163,8 +163,10 @@ jobs:
               "net.minecraft.client.util.Window:ramerate|ocus" \
               "net.minecraft.client.option.GameOptions:getMaxFps|getInactivityFpsLimit" \
               "net.minecraft.client.particle.ParticleManager:addParticle|addEmitter|tick|renderParticles|particles" \
-              "net.minecraft.client.render.WorldRenderer:renderEntity|shouldRenderEntity|renderEntities" \
-              "net.minecraft.client.render.entity.EntityRenderDispatcher:shouldRender|getRenderer" \
+              "net.minecraft.client.option.InactivityFpsLimiter:*" \
+              "net.minecraft.client.option.InactivityFpsLimit:*" \
+              "net.minecraft.client.render.WorldRenderer:ntit|rustum|ulling" \
+              "net.minecraft.client.render.entity.EntityRenderDispatcher:*" \
               "net.minecraft.client.render.Frustum:isVisible"
             do
               class="${entry%%:*}"
