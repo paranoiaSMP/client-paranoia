@@ -158,7 +158,14 @@ jobs:
               "net.minecraft.util.Identifier:of|ofVanilla|tryParse" \
               "net.minecraft.client.render.entity.feature.CapeFeatureRenderer:*" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
-              "net.minecraft.client.MinecraftClient:getSession|getGameProfile"
+              "net.minecraft.client.MinecraftClient:getSession|getGameProfile" \
+              "net.minecraft.client.MinecraftClient:ramerate|ocus|nactivity" \
+              "net.minecraft.client.util.Window:ramerate|ocus" \
+              "net.minecraft.client.option.GameOptions:getMaxFps|getInactivityFpsLimit" \
+              "net.minecraft.client.particle.ParticleManager:addParticle|addEmitter|tick|renderParticles|particles" \
+              "net.minecraft.client.render.WorldRenderer:renderEntity|shouldRenderEntity|renderEntities" \
+              "net.minecraft.client.render.entity.EntityRenderDispatcher:shouldRender|getRenderer" \
+              "net.minecraft.client.render.Frustum:isVisible"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
