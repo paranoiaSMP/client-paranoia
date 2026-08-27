@@ -16,6 +16,7 @@ import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
+import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.FocusFpsModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
 import gg.paranoia.client.modules.ParticleBudgetModule;
@@ -75,6 +76,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new BadgeModule());
         REGISTRY.register(new ParticleBudgetModule());
         REGISTRY.register(new FocusFpsModule());
+        REGISTRY.register(new EntityCullingModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.

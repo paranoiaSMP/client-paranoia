@@ -139,7 +139,7 @@ jobs:
             for entry in \
               "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
               "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
-              "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel" \
+              "net.minecraft.client.render.entity.EntityRenderer:shouldRender|renderLabelIfPresent|hasLabel" \
               "net.minecraft.client.network.PlayerListEntry:getProfile|SkinTexture" \
               "net.minecraft.entity.player.SkinTextures:*" \
               "net.minecraft.client.util.SkinTextures:*" \
