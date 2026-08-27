@@ -73,7 +73,7 @@ public final class EntityCullingModule extends Module {
     }
 
     public EntityCullingModule() {
-        super("entityCulling", "Alleger le decor lointain", ModuleCategory.VISUEL, false);
+        super("entityCulling", "Alleger le decor lointain", ModuleCategory.OPTIMISATION, false);
         instance = this;
     }
 

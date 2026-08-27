@@ -33,7 +33,20 @@ public abstract class HudElement extends Module {
     private final HudLayout layout = new HudLayout();
 
     protected HudElement(String id, String name, boolean enabledByDefault) {
-        super(id, name, ModuleCategory.HUD, enabledByDefault);
+        this(id, name, ModuleCategory.HUD, enabledByDefault);
+    }
+
+    /**
+     * Meme chose, range ailleurs que dans l'onglet HUD.
+     *
+     * <p>Un element de HUD reste deplacable a la souris et redimensionnable
+     * quelle que soit sa categorie: l'editeur travaille sur le type, pas sur
+     * l'onglet. La categorie ne decide que de l'endroit ou on va le chercher --
+     * et un panneau de diagnostic se cherche avec les optimisations qu'il
+     * mesure, pas au milieu des coordonnees et de la boussole.
+     */
+    protected HudElement(String id, String name, ModuleCategory category, boolean enabledByDefault) {
+        super(id, name, category, enabledByDefault);
     }
 
     public HudLayout layout() {

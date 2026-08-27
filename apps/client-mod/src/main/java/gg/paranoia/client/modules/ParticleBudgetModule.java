@@ -51,7 +51,7 @@ public final class ParticleBudgetModule extends Module {
     }
 
     public ParticleBudgetModule() {
-        super("particles", "Budget de particules", ModuleCategory.VISUEL, false);
+        super("particles", "Budget de particules", ModuleCategory.OPTIMISATION, false);
         instance = this;
     }
 

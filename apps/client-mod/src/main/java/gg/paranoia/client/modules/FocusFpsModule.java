@@ -33,7 +33,7 @@ public final class FocusFpsModule extends Module {
         "limit", "Images par seconde hors focus", 30, 5, 120, 5, " FPS"));
 
     public FocusFpsModule() {
-        super("focusFps", "Ralentir hors focus", ModuleCategory.VISUEL, false);
+        super("focusFps", "Ralentir hors focus", ModuleCategory.OPTIMISATION, false);
         instance = this;
     }
 
