@@ -1,5 +1,6 @@
 package gg.paranoia.client.modules;
 
+import gg.paranoia.client.diag.Rate;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
@@ -55,6 +56,22 @@ public final class EntityCullingModule extends Module {
     private final SliderSetting armorStandDistance = add(new SliderSetting(
         "armorStandsDistance", "Porte-armures au-dela de", 48, 8, 128, 4, " blocs"));
 
+    /** Ce que le module a reellement ecarte, pour le panneau de diagnostic. */
+    private final Rate skipped = new Rate();
+
+    public static int skippedPerSecond() {
+        EntityCullingModule module = instance;
+        return module == null ? 0 : module.skipped.perSecond();
+    }
+
+    /** A appeler une fois par tick: ferme la fenetre de comptage. */
+    public static void beginTick() {
+        EntityCullingModule module = instance;
+        if (module != null) {
+            module.skipped.tick();
+        }
+    }
+
     public EntityCullingModule() {
         super("entityCulling", "Alleger le decor lointain", ModuleCategory.VISUEL, false);
         instance = this;
@@ -69,6 +86,16 @@ public final class EntityCullingModule extends Module {
         if (module == null || !module.enabled() || entity == null) {
             return false;
         }
+
+        boolean skip = decide(module, entity, squaredDistance);
+        if (skip) {
+            module.skipped.hit();
+        }
+        return skip;
+    }
+
+    /** Le test lui-meme, sans comptage: cinq chemins de retour, un seul appelant. */
+    private static boolean decide(EntityCullingModule module, Entity entity, double squaredDistance) {
 
         // La garde qui compte, et elle vient en premier: rien de vivant n'est
         // jamais escamote. `PlayerEntity` est redondant avec `LivingEntity`,

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Transport vers l'API Paranoia, et vers Mojang pour le handshake.
@@ -42,6 +43,19 @@ public final class ParanoiaApi {
 
     private static final String MOJANG_JOIN_URL =
         "https://sessionserver.mojang.com/session/minecraft/join";
+
+    /**
+     * Requetes emises depuis le lancement, tous points d'entree confondus.
+     *
+     * <p>Ecrit par le fil reseau, lu par le rendu: d'ou l'atomique. Le panneau
+     * de diagnostic en tire un debit, ce qui rend visible d'un coup d'oeil le
+     * fait que l'interrogation soit bien sautee quand rien ne bouge.
+     */
+    private static final AtomicInteger REQUESTS = new AtomicInteger();
+
+    public static int requestCount() {
+        return REQUESTS.get();
+    }
 
     private final String baseUrl;
     private final HttpClient http;
@@ -313,6 +327,7 @@ public final class ParanoiaApi {
 
     private HttpResponse<String> send(HttpRequest request)
         throws IOException, InterruptedException {
+        REQUESTS.incrementAndGet();
         return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 

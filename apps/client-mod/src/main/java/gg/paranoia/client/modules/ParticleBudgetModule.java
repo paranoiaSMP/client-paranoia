@@ -1,5 +1,6 @@
 package gg.paranoia.client.modules;
 
+import gg.paranoia.client.diag.Rate;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.module.SliderSetting;
@@ -41,6 +42,14 @@ public final class ParticleBudgetModule extends Module {
     /** Compteur du tick en cours. Fil de jeu uniquement. */
     private int spawned;
 
+    /** Ce que le plafond a reellement ecarte, pour le panneau de diagnostic. */
+    private final Rate dropped = new Rate();
+
+    public static int droppedPerSecond() {
+        ParticleBudgetModule module = instance;
+        return module == null ? 0 : module.dropped.perSecond();
+    }
+
     public ParticleBudgetModule() {
         super("particles", "Budget de particules", ModuleCategory.VISUEL, false);
         instance = this;
@@ -51,6 +60,7 @@ public final class ParticleBudgetModule extends Module {
         ParticleBudgetModule module = instance;
         if (module != null) {
             module.spawned = 0;
+            module.dropped.tick();
         }
     }
 
@@ -64,6 +74,10 @@ public final class ParticleBudgetModule extends Module {
         }
         // Incremente meme au-dela du plafond: sans cela le compteur resterait
         // colle a la limite et le premier tick suivant repartirait fausse.
-        return ++module.spawned > module.perTick.getInt();
+        boolean refuse = ++module.spawned > module.perTick.getInt();
+        if (refuse) {
+            module.dropped.hit();
+        }
+        return refuse;
     }
 }

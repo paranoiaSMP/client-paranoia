@@ -8,6 +8,7 @@ import gg.paranoia.client.hud.elements.ArmorHud;
 import gg.paranoia.client.hud.elements.CoordinatesHud;
 import gg.paranoia.client.hud.elements.CpsHud;
 import gg.paranoia.client.hud.elements.DirectionHud;
+import gg.paranoia.client.hud.elements.DiagnosticsHud;
 import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
 import gg.paranoia.client.hud.elements.InfoHud;
@@ -69,6 +70,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new FpsHud());
         REGISTRY.register(new CpsHud());
         REGISTRY.register(new EffectsHud());
+        REGISTRY.register(new DiagnosticsHud());
         REGISTRY.register(new BrightnessModule());
         REGISTRY.register(new ColorHitModule());
         REGISTRY.register(new CrosshairModule());
@@ -86,7 +88,10 @@ public final class ParanoiaClient {
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
         // En debut de tick: le budget doit etre reconduit avant les naissances
         // de particules, pas apres.
-        ClientTickEvents.START_CLIENT_TICK.register(client -> ParticleBudgetModule.beginTick());
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            ParticleBudgetModule.beginTick();
+            EntityCullingModule.beginTick();
+        });
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
