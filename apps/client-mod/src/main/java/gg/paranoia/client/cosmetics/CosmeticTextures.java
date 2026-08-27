@@ -165,6 +165,22 @@ public final class CosmeticTextures {
         }
     }
 
+    /**
+     * Textures reellement chargees sur la carte graphique.
+     *
+     * <p>C'est le chiffre qui prouve le partage: trente joueurs portant la meme
+     * cape doivent en afficher une, pas trente.
+     */
+    public static int liveCount() {
+        int live = 0;
+        for (Entry entry : entries.values()) {
+            if (entry.id != null) {
+                live++;
+            }
+        }
+        return live;
+    }
+
     /** Tout liberer: changement de serveur, ou fermeture. */
     public static void clear() {
         for (Iterator<Map.Entry<String, Entry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
