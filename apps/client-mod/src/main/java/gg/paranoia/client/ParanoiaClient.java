@@ -1,5 +1,6 @@
 package gg.paranoia.client;
 
+import gg.paranoia.client.cosmetics.CosmeticCapes;
 import gg.paranoia.client.cosmetics.CosmeticTextures;
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.hud.HudRegistry;
@@ -15,7 +16,10 @@ import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
+import gg.paranoia.client.modules.EntityCullingModule;
+import gg.paranoia.client.modules.FocusFpsModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
+import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
 import gg.paranoia.client.net.ParanoiaUsers;
@@ -70,6 +74,9 @@ public final class ParanoiaClient {
         REGISTRY.register(new CrosshairModule());
         REGISTRY.register(new HitIndicatorModule());
         REGISTRY.register(new BadgeModule());
+        REGISTRY.register(new ParticleBudgetModule());
+        REGISTRY.register(new FocusFpsModule());
+        REGISTRY.register(new EntityCullingModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.
@@ -77,6 +84,9 @@ public final class ParanoiaClient {
 
         platform.registerHudRenderer(REGISTRY::renderInGame);
         ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
+        // En debut de tick: le budget doit etre reconduit avant les naissances
+        // de particules, pas apres.
+        ClientTickEvents.START_CLIENT_TICK.register(client -> ParticleBudgetModule.beginTick());
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
@@ -165,6 +175,7 @@ public final class ParanoiaClient {
             // serveur ne doit pas se faire avec la memoire graphique du
             // precedent encore occupee.
             CosmeticsRegistry.clear();
+            CosmeticCapes.clear();
             CosmeticTextures.clear();
         });
     }
