@@ -139,35 +139,22 @@ jobs:
             for entry in \
               "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
               "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
-              "net.minecraft.entity.effect.StatusEffect:getName" \
-              "net.minecraft.client.MinecraftClient:getCurrentFps|getStatusEffect" \
-              "net.minecraft.entity.LivingEntity:getStatusEffects" \
-              "net.minecraft.client.render.LightmapTextureManager:getBrightness|update" \
-              "net.minecraft.client.gui.hud.PlayerListHud:getPlayerName" \
-              "net.minecraft.client.network.PlayerListEntry:getProfile|SkinTexture|Skin|Cape" \
               "net.minecraft.client.render.entity.EntityRenderer:renderLabelIfPresent|hasLabel" \
-              "net.minecraft.client.session.Session:*" \
-              "net.minecraft.client.util.Session:*" \
+              "net.minecraft.client.network.PlayerListEntry:getProfile|SkinTexture" \
               "net.minecraft.entity.player.SkinTextures:*" \
               "net.minecraft.client.util.SkinTextures:*" \
-              "net.minecraft.util.AssetInfo:*" \
               "net.minecraft.util.AssetInfo\$TextureAsset:*" \
-              "net.minecraft.client.texture.TextureManager:registerTexture|getTexture|destroyTexture" \
-              "net.minecraft.client.texture.NativeImageBackedTexture:*" \
-              "net.minecraft.client.texture.NativeImage:read|getWidth|getHeight|close" \
-              "net.minecraft.util.Identifier:of|ofVanilla|tryParse" \
-              "net.minecraft.client.render.entity.feature.CapeFeatureRenderer:*" \
-              "net.minecraft.client.network.ClientPlayNetworkHandler:getPlayerList|getPlayerUuids|getListedPlayerListEntries|getPlayerListEntry" \
-              "net.minecraft.client.MinecraftClient:getSession|getGameProfile" \
-              "net.minecraft.client.MinecraftClient:ramerate|ocus|nactivity" \
-              "net.minecraft.client.util.Window:ramerate|ocus" \
-              "net.minecraft.client.option.GameOptions:getMaxFps|getInactivityFpsLimit" \
-              "net.minecraft.client.particle.ParticleManager:addParticle|addEmitter|tick|renderParticles|particles" \
-              "net.minecraft.client.option.InactivityFpsLimiter:*" \
-              "net.minecraft.client.option.InactivityFpsLimit:*" \
-              "net.minecraft.client.render.WorldRenderer:ntit|rustum|ulling" \
-              "net.minecraft.client.render.entity.EntityRenderDispatcher:*" \
-              "net.minecraft.client.render.Frustum:isVisible"
+              "net.minecraft.client.particle.ParticleManager:addParticle|addEmitter|tick" \
+              "net.minecraft.client.option.InactivityFpsLimiter:update|setMaxFps|onInput" \
+              "net.minecraft.client.render.WorldRenderer:ntit|rustum" \
+              "net.minecraft.client.render.Frustum:isVisible" \
+              "net.minecraft.client.network.ClientPlayerInteractionManager:stopUsingItem|interactItem|interactBlock" \
+              "net.minecraft.client.world.ClientWorld:addEntity|removeEntity|getEntityById" \
+              "net.minecraft.client.network.ClientPlayNetworkHandler:onEntitySpawn|onEntity" \
+              "net.minecraft.entity.projectile.ProjectileEntity:setVelocity|setOwner|getOwner" \
+              "net.minecraft.entity.projectile.PersistentProjectileEntity:setVelocity|setCritical|setSound" \
+              "net.minecraft.item.BowItem:onStoppedUsing|getPullProgress" \
+              "net.minecraft.entity.Entity:setPosition|setVelocity|setYaw|setPitch|setId|discard"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
