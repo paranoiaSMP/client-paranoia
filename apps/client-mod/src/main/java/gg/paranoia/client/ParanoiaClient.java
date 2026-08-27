@@ -13,6 +13,7 @@ import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
 import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
@@ -120,15 +121,25 @@ public final class ParanoiaClient {
             return;
         }
 
+        long window = client.getWindow().getHandle();
+
+        // La capture d'une touche passe avant tout le reste: sans cela, lier le
+        // menu a « B » l'ouvrirait au moment meme ou on appuie pour le lier.
+        KeySetting.tick(window);
+        if (KeySetting.isCapturing()) {
+            menuKeyDown = true;
+            return;
+        }
+
         int code = MenuKeyModule.code();
-        if (code < 0) {
-            // Ouverture au clavier desactivee: on relache l'etat pour ne pas
-            // declencher au moment ou le joueur la reactive.
+        if (code == KeySetting.NONE) {
+            // Ouverture au clavier desactivee ou touche deliee: on relache
+            // l'etat pour ne pas declencher au moment ou elle revient.
             menuKeyDown = false;
             return;
         }
 
-        boolean down = GLFW.glfwGetKey(client.getWindow().getHandle(), code) == GLFW.GLFW_PRESS;
+        boolean down = GLFW.glfwGetKey(window, code) == GLFW.GLFW_PRESS;
 
         // Front montant uniquement: sans ca le menu clignoterait tant que la
         // touche reste enfoncee.
