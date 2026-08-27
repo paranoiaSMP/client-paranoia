@@ -158,7 +158,9 @@ jobs:
               "net.minecraft.entity.projectile.ArrowEntity:*" \
               "net.minecraft.world.RaycastContext:*" \
               "net.minecraft.world.BlockView:raycast" \
-              "net.minecraft.block.BlockState:isOpaqueFullCube|isOpaque|isSolidBlock"
+              "net.minecraft.block.BlockState:paque|olid|ranslucent" \
+              "net.minecraft.util.math.Box:minX|getCenter" \
+              "net.minecraft.entity.Entity:getBoundingBox|getId|squaredDistanceTo"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
