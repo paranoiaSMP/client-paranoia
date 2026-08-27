@@ -117,6 +117,57 @@ async function main() {
     run("chmod", ["+x", exePath]);
   }
 
+  // Copy Prisma query engines to the launcher's search path
+  try {
+    const fs = await import("node:fs");
+    const targetPrismaDir = join(repoRoot, "apps", "launcher", ".prisma", "client");
+    
+    // Potential directories to search for query engine binaries
+    const candidateDirs = [
+      // Resolve via prisma node package
+      (() => {
+        try {
+          return dirname(require.resolve("prisma/package.json"));
+        } catch {
+          return "";
+        }
+      })(),
+      // Resolve via @prisma/client node package
+      (() => {
+        try {
+          return join(dirname(require.resolve("@prisma/client/package.json")), "..", ".prisma", "client");
+        } catch {
+          return "";
+        }
+      })(),
+      join(repoRoot, "node_modules", "prisma"),
+      join(repoRoot, "node_modules", ".prisma", "client"),
+      join(backendDir, "node_modules", "prisma"),
+      join(backendDir, "node_modules", ".prisma", "client"),
+    ].filter(Boolean);
+
+    let copiedAny = false;
+    fs.mkdirSync(targetPrismaDir, { recursive: true });
+
+    for (const dir of candidateDirs) {
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+          if (file.includes("query_engine")) {
+            fs.copyFileSync(join(dir, file), join(targetPrismaDir, file));
+            console.log(`[sidecar] Copied Prisma engine from ${dir}: ${file}`);
+            copiedAny = true;
+          }
+        }
+      }
+    }
+    if (!copiedAny) {
+      console.warn("[sidecar] Warning: No Prisma query engine binaries were found in candidates.");
+    }
+  } catch (err) {
+    console.warn("[sidecar] Warning: failed to copy Prisma engines:", err);
+  }
+
   console.log(`[sidecar] genere: ${exePath}`);
 }
 
