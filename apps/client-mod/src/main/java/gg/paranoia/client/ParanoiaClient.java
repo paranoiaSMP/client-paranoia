@@ -20,6 +20,7 @@ import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.FocusFpsModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
+import gg.paranoia.client.modules.MenuKeyModule;
 import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
 import gg.paranoia.client.net.ModulePolicy;
@@ -54,7 +55,7 @@ public final class ParanoiaClient {
     private static final MenuController CONTROLLER = new MenuController(REGISTRY);
     private static final PresenceService PRESENCE = new PresenceService();
 
-    /** Etat precedent de Maj droite, pour n'agir que sur le front d'appui. */
+    /** Etat precedent de la touche, pour n'agir que sur le front d'appui. */
     private static boolean menuKeyDown;
 
     private ParanoiaClient() {
@@ -79,6 +80,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new ParticleBudgetModule());
         REGISTRY.register(new FocusFpsModule());
         REGISTRY.register(new EntityCullingModule());
+        REGISTRY.register(new MenuKeyModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.
@@ -105,21 +107,28 @@ public final class ParanoiaClient {
     }
 
     /**
-     * Ouverture et fermeture sur Maj droite.
+     * Ouverture et fermeture du menu, sur la touche choisie dans les reglages.
      *
      * <p>La touche est lue directement via GLFW plutot qu'avec un KeyBinding
      * Fabric: le constructeur de KeyBinding attend une categorie sous forme de
      * chaine en 1.21.8 et d'objet en 1.21.11, alors que GLFW est identique
      * partout. En contrepartie la touche n'apparait pas dans les commandes du
-     * jeu -- le menu proposera son propre reglage.
+     * jeu, d'ou le reglage propre au mod dans l'onglet Parametres.
      */
     private static void pollMenuKey(MinecraftClient client) {
         if (client == null || client.getWindow() == null) {
             return;
         }
 
-        boolean down =
-            GLFW.glfwGetKey(client.getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+        int code = MenuKeyModule.code();
+        if (code < 0) {
+            // Ouverture au clavier desactivee: on relache l'etat pour ne pas
+            // declencher au moment ou le joueur la reactive.
+            menuKeyDown = false;
+            return;
+        }
+
+        boolean down = GLFW.glfwGetKey(client.getWindow().getHandle(), code) == GLFW.GLFW_PRESS;
 
         // Front montant uniquement: sans ca le menu clignoterait tant que la
         // touche reste enfoncee.

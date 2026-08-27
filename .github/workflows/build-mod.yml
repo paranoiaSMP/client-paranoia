@@ -154,7 +154,11 @@ jobs:
               "net.minecraft.entity.projectile.ProjectileEntity:setVelocity|setOwner|getOwner" \
               "net.minecraft.entity.projectile.PersistentProjectileEntity:setVelocity|setCritical|setSound" \
               "net.minecraft.item.BowItem:onStoppedUsing|getPullProgress" \
-              "net.minecraft.entity.Entity:setPosition|setVelocity|setYaw|setPitch|setId|discard"
+              "net.minecraft.entity.Entity:setPosition|setVelocity|setYaw|setPitch|setId|discard" \
+              "net.minecraft.entity.projectile.ArrowEntity:*" \
+              "net.minecraft.world.RaycastContext:*" \
+              "net.minecraft.world.BlockView:raycast" \
+              "net.minecraft.block.BlockState:isOpaqueFullCube|isOpaque|isSolidBlock"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
