@@ -22,7 +22,7 @@ import net.minecraft.world.World;
  *       cachee le reste generalement plus longtemps que trois images;
  *   <li>on s'arrete au premier rayon qui passe, et le centre est teste en
  *       premier: une entite bien visible coute donc un seul rayon;
- *   <li>un budget par image plafonne les nouveaux calculs; au-dela, on garde
+ *   <li>un budget par tick plafonne les nouveaux calculs; au-dela, on garde
  *       la reponse precedente plutot que de payer.
  * </ul>
  *
@@ -35,8 +35,25 @@ final class EntityVisibility {
     /** Duree de validite d'une reponse, en millisecondes. */
     private static final long CACHE_MILLIS = 250;
 
-    /** Nouveaux calculs autorises par image. */
-    private static final int BUDGET_PER_FRAME = 24;
+    /**
+     * Nouveaux calculs autorises par tick.
+     *
+     * <p>Par tick et non par image, parce que c'est de la que vient l'appel --
+     * le budget est reconduit depuis {@code START_CLIENT_TICK}. La difference
+     * n'est pas cosmetique: le cout est ainsi plafonne a vingt-quatre calculs
+     * vingt fois par seconde quelle que soit la fluidite, au lieu de grimper
+     * avec elle. A cent vingt images par seconde, ces vingt-quatre calculs se
+     * repartissent sur six images au lieu d'etre refaits a chaque fois.
+     *
+     * <p>Consequence a connaitre: au-dela d'environ cent vingt entites
+     * candidates simultanees, toutes ne sont pas testees dans la duree de vie
+     * d'une reponse, et les non testees restent affichees. L'allegement est
+     * alors partiel -- jamais faux, seulement incomplet, ce qui est le bon sens
+     * dans lequel se tromper. Les entites deja connues repondent sans consommer
+     * de budget, donc celui-ci va naturellement aux inconnues et la couverture
+     * s'etend d'un tick a l'autre.
+     */
+    private static final int BUDGET_PER_TICK = 24;
 
     /**
      * Nombre de cases du cache. Puissance de deux: le modulo devient un ET.
@@ -65,17 +82,17 @@ final class EntityVisibility {
      *
      * <p>Deux entites peuvent tomber sur la meme case. La perdante est alors
      * recalculee au prochain passage, ce qui est sans consequence: le budget par
-     * image plafonne deja ce travail, et la reponse rendue entre-temps est
+     * tick plafonne deja ce travail, et la reponse rendue entre-temps est
      * « visible », le cote sur lequel on a le droit de se tromper.
      */
     private static final int[] slotEntity = new int[SLOTS];
     private static final long[] slotCheckedAt = new long[SLOTS];
     private static final boolean[] slotVisible = new boolean[SLOTS];
 
-    private static int budget = BUDGET_PER_FRAME;
+    private static int budget = BUDGET_PER_TICK;
 
     /**
-     * La camera de l'image en cours, reutilisee d'une entite a l'autre.
+     * La camera du tick en cours, reutilisee d'une entite a l'autre.
      *
      * <p>Elle ne bouge pas pendant une image, et {@code raycast} demande un
      * {@link Vec3d}: sans cette memoire, chaque entite testee en allouait un
@@ -89,9 +106,9 @@ final class EntityVisibility {
     private EntityVisibility() {
     }
 
-    /** Ouvre une image: le budget de calculs est reconduit. */
-    static void beginFrame() {
-        budget = BUDGET_PER_FRAME;
+    /** Ouvre un tick: le budget de calculs est reconduit. */
+    static void beginTick() {
+        budget = BUDGET_PER_TICK;
     }
 
     /**
@@ -114,7 +131,7 @@ final class EntityVisibility {
         }
 
         // Budget epuise: on repond ce qu'on savait, sans recalculer. La reponse
-        // vieillit d'une image, ce qui ne se voit pas. Si la case appartient a
+        // vieillit d'un tick, ce qui ne se voit pas. Si la case appartient a
         // une autre entite, on n'a rien appris sur celle-ci: elle est visible.
         if (budget <= 0) {
             return !mine || slotVisible[slot];

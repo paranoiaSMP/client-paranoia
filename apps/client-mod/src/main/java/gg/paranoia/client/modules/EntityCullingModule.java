@@ -87,7 +87,7 @@ public final class EntityCullingModule extends Module {
         if (module != null) {
             module.skipped.tick();
         }
-        EntityVisibility.beginFrame();
+        EntityVisibility.beginTick();
     }
 
     public EntityCullingModule() {
