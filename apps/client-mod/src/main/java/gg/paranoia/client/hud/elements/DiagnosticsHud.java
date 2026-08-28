@@ -5,6 +5,7 @@ import gg.paranoia.client.hud.HudElement;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.ColorSetting;
 import gg.paranoia.client.module.ModuleCategory;
+import gg.paranoia.client.modules.BlockEntityCullingModule;
 import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.net.ParanoiaApi;
@@ -72,12 +73,14 @@ public final class DiagnosticsHud extends HudElement {
     private String requestsText = "0";
     private String particlesText = "0/s";
     private String entitiesText = "0/s";
+    private String blocksText = "0/s";
     private String memoryText = "0 Mo";
 
     private int lastTextures = Integer.MIN_VALUE;
     private int lastRequests = Integer.MIN_VALUE;
     private int lastParticles = Integer.MIN_VALUE;
     private int lastEntities = Integer.MIN_VALUE;
+    private int lastBlocks = Integer.MIN_VALUE;
     private int lastMemory = Integer.MIN_VALUE;
 
     @Override
@@ -119,6 +122,17 @@ public final class DiagnosticsHud extends HudElement {
                 entitiesText = entities + "/s";
             }
             add("Entites ecartees", entitiesText);
+
+            // Ce compteur a une seconde fonction: l'injection qui alimente
+            // l'allegement des blocs animes est la seule du mod qui ait le droit
+            // d'echouer en silence. Un zero obstine alors que le module est
+            // actif et qu'on est entoure de coffres en est la preuve.
+            int blocks = BlockEntityCullingModule.skippedPerSecond();
+            if (blocks != lastBlocks) {
+                lastBlocks = blocks;
+                blocksText = blocks + "/s";
+            }
+            add("Blocs animes ecartes", blocksText);
         }
 
         if (showMemory.get()) {

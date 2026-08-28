@@ -15,6 +15,7 @@ import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.menu.MenuController;
 import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
+import gg.paranoia.client.modules.BlockEntityCullingModule;
 import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
@@ -81,6 +82,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new ParticleBudgetModule());
         REGISTRY.register(new FocusFpsModule());
         REGISTRY.register(new EntityCullingModule());
+        REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
@@ -94,6 +96,7 @@ public final class ParanoiaClient {
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             ParticleBudgetModule.beginTick();
             EntityCullingModule.beginTick();
+            BlockEntityCullingModule.beginTick();
         });
         registerPolicyChannel();
 
