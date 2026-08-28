@@ -8,10 +8,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 /**
  * L'entite est-elle visible, ou un bloc la cache-t-il ?
  *
@@ -42,39 +38,60 @@ final class EntityVisibility {
     /** Nouveaux calculs autorises par image. */
     private static final int BUDGET_PER_FRAME = 24;
 
-    /** Au-dela, une entree n'a plus de porteur visible et encombre. */
-    private static final long FORGET_MILLIS = 5_000;
+    /**
+     * Nombre de cases du cache. Puissance de deux: le modulo devient un ET.
+     *
+     * <p>Deux mille personnes ou objets simultanement assez loin pour meriter
+     * un test d'occlusion n'arrive pas; la table est donc dimensionnee pour
+     * n'avoir en pratique jamais a arbitrer entre deux entites.
+     */
+    private static final int SLOTS = 2048;
 
-    private static final Map<Integer, Entry> cache = new HashMap<>();
+    /**
+     * Table a adressage direct, volontairement imparfaite.
+     *
+     * <p>Le premier jet utilisait une {@code HashMap<Integer, Entry>}. Elle
+     * etait correcte et couteuse pour une raison invisible a la lecture: la cle
+     * est un {@code int}, et {@code get} prend un {@code Object}. Chaque
+     * consultation emballait donc l'identifiant dans un {@code Integer} neuf --
+     * au-dela de 127, le cache de la JVM ne sert plus a rien. Une base pleine
+     * d'objets au sol produisait des milliers d'objets jetables par seconde,
+     * exactement dans le module cense en economiser.
+     *
+     * <p>Trois tableaux paralleles reglent ca: rien n'est alloue, la memoire est
+     * bornee une fois pour toutes, et le balayage periodique qui empechait la
+     * table de grossir toute la partie n'a plus de raison d'etre -- une entite
+     * disparue laisse une case qui sera simplement reprise par la suivante.
+     *
+     * <p>Deux entites peuvent tomber sur la meme case. La perdante est alors
+     * recalculee au prochain passage, ce qui est sans consequence: le budget par
+     * image plafonne deja ce travail, et la reponse rendue entre-temps est
+     * « visible », le cote sur lequel on a le droit de se tromper.
+     */
+    private static final int[] slotEntity = new int[SLOTS];
+    private static final long[] slotCheckedAt = new long[SLOTS];
+    private static final boolean[] slotVisible = new boolean[SLOTS];
 
     private static int budget = BUDGET_PER_FRAME;
-    private static long lastSweep = System.currentTimeMillis();
+
+    /**
+     * La camera de l'image en cours, reutilisee d'une entite a l'autre.
+     *
+     * <p>Elle ne bouge pas pendant une image, et {@code raycast} demande un
+     * {@link Vec3d}: sans cette memoire, chaque entite testee en allouait un
+     * identique au precedent.
+     */
+    private static Vec3d camera = Vec3d.ZERO;
+    private static double cameraAtX = Double.NaN;
+    private static double cameraAtY = Double.NaN;
+    private static double cameraAtZ = Double.NaN;
 
     private EntityVisibility() {
-    }
-
-    private static final class Entry {
-        boolean visible = true;
-        long checkedAt;
     }
 
     /** Ouvre une image: le budget de calculs est reconduit. */
     static void beginFrame() {
         budget = BUDGET_PER_FRAME;
-
-        long now = System.currentTimeMillis();
-        if (now - lastSweep < FORGET_MILLIS) {
-            return;
-        }
-        lastSweep = now;
-
-        // Les entites disparaissent sans prevenir -- mort, deconnexion,
-        // eloignement. Sans ce balayage la table grossirait toute la partie.
-        for (Iterator<Map.Entry<Integer, Entry>> it = cache.entrySet().iterator(); it.hasNext(); ) {
-            if (now - it.next().getValue().checkedAt > FORGET_MILLIS) {
-                it.remove();
-            }
-        }
     }
 
     /**
@@ -87,28 +104,52 @@ final class EntityVisibility {
             return true;
         }
 
-        Entry entry = cache.get(entity.getId());
+        int id = entity.getId();
+        int slot = slotOf(id);
+        boolean mine = slotCheckedAt[slot] != 0 && slotEntity[slot] == id;
         long now = System.currentTimeMillis();
 
-        if (entry != null && now - entry.checkedAt < CACHE_MILLIS) {
-            return entry.visible;
+        if (mine && now - slotCheckedAt[slot] < CACHE_MILLIS) {
+            return slotVisible[slot];
         }
 
         // Budget epuise: on repond ce qu'on savait, sans recalculer. La reponse
-        // vieillit d'une image, ce qui ne se voit pas.
+        // vieillit d'une image, ce qui ne se voit pas. Si la case appartient a
+        // une autre entite, on n'a rien appris sur celle-ci: elle est visible.
         if (budget <= 0) {
-            return entry == null || entry.visible;
+            return !mine || slotVisible[slot];
         }
         budget--;
 
-        if (entry == null) {
-            entry = new Entry();
-            cache.put(entity.getId(), entry);
-        }
+        boolean answer = reachable(world, entity, camera(cameraX, cameraY, cameraZ));
 
-        entry.checkedAt = now;
-        entry.visible = reachable(world, entity, new Vec3d(cameraX, cameraY, cameraZ));
-        return entry.visible;
+        slotEntity[slot] = id;
+        slotCheckedAt[slot] = now;
+        slotVisible[slot] = answer;
+        return answer;
+    }
+
+    /**
+     * Disperse les identifiants voisins.
+     *
+     * <p>Les entites nees ensemble portent des identifiants consecutifs -- une
+     * pile d'objets lachee a la mort d'un joueur, par exemple. Prendre les bits
+     * de poids faible tels quels les rangerait cote a cote, ce qui n'est pas un
+     * probleme ici; melanger les bits hauts evite en revanche que deux vagues
+     * espacees de 2048 naissances se marchent systematiquement dessus.
+     */
+    private static int slotOf(int id) {
+        return (id ^ (id >>> 16)) & (SLOTS - 1);
+    }
+
+    private static Vec3d camera(double x, double y, double z) {
+        if (x != cameraAtX || y != cameraAtY || z != cameraAtZ) {
+            cameraAtX = x;
+            cameraAtY = y;
+            cameraAtZ = z;
+            camera = new Vec3d(x, y, z);
+        }
+        return camera;
     }
 
     /**
@@ -119,10 +160,10 @@ final class EntityVisibility {
      * l'entite dont seule une extremite depasse d'un mur -- s'arreter au centre
      * l'aurait fait disparaitre alors qu'on en voit une partie.
      */
-    private static boolean reachable(World world, Entity entity, Vec3d camera) {
+    private static boolean reachable(World world, Entity entity, Vec3d from) {
         Box box = entity.getBoundingBox();
 
-        if (clear(world, entity, camera, box.getCenter())) {
+        if (clear(world, entity, from, box.getCenter())) {
             return true;
         }
 
@@ -140,7 +181,7 @@ final class EntityVisibility {
                 (corner & 1) == 0 ? minX : maxX,
                 (corner & 2) == 0 ? minY : maxY,
                 (corner & 4) == 0 ? minZ : maxZ);
-            if (clear(world, entity, camera, point)) {
+            if (clear(world, entity, from, point)) {
                 return true;
             }
         }

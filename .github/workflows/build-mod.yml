@@ -136,31 +136,23 @@ jobs:
           for version in 1.21.8 1.21.11; do
             cp=$(cat "versions/$version/build/compile-classpath.txt")
             echo "=============== $version"
+            # Les quatre premieres entrees sont des cibles de mixin en service:
+            # gardees en permanence, elles signaleront le jour ou une version de
+            # Minecraft les deplacera. Les suivantes sont les questions encore
+            # ouvertes -- ici, escamoter aussi les blocs animes de loin.
+            #
+            # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
+            # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
-              "net.minecraft.client.gui.screen.Screen:keyPressed|charTyped|mouseScrolled|renderBackground" \
-              "net.minecraft.entity.effect.StatusEffectInstance:getEffectType|getAmplifier|getDuration|isAmbient" \
-              "net.minecraft.client.render.entity.EntityRenderer:shouldRender|renderLabelIfPresent|hasLabel" \
-              "net.minecraft.client.network.PlayerListEntry:getProfile|SkinTexture" \
-              "net.minecraft.entity.player.SkinTextures:*" \
-              "net.minecraft.client.util.SkinTextures:*" \
-              "net.minecraft.util.AssetInfo\$TextureAsset:*" \
-              "net.minecraft.client.particle.ParticleManager:addParticle|addEmitter|tick" \
-              "net.minecraft.client.option.InactivityFpsLimiter:update|setMaxFps|onInput" \
-              "net.minecraft.client.render.WorldRenderer:ntit|rustum" \
+              "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
+              "net.minecraft.client.particle.ParticleManager:addParticle" \
+              "net.minecraft.client.option.InactivityFpsLimiter:update" \
               "net.minecraft.client.render.Frustum:isVisible" \
-              "net.minecraft.client.network.ClientPlayerInteractionManager:stopUsingItem|interactItem|interactBlock" \
-              "net.minecraft.client.world.ClientWorld:addEntity|removeEntity|getEntityById" \
-              "net.minecraft.client.network.ClientPlayNetworkHandler:onEntitySpawn|onEntity" \
-              "net.minecraft.entity.projectile.ProjectileEntity:setVelocity|setOwner|getOwner" \
-              "net.minecraft.entity.projectile.PersistentProjectileEntity:setVelocity|setCritical|setSound" \
-              "net.minecraft.item.BowItem:onStoppedUsing|getPullProgress" \
-              "net.minecraft.entity.Entity:setPosition|setVelocity|setYaw|setPitch|setId|discard" \
-              "net.minecraft.entity.projectile.ArrowEntity:*" \
-              "net.minecraft.world.RaycastContext:*" \
-              "net.minecraft.world.BlockView:raycast" \
-              "net.minecraft.block.BlockState:paque|olid|ranslucent" \
-              "net.minecraft.util.math.Box:minX|getCenter" \
-              "net.minecraft.entity.Entity:getBoundingBox|getId|squaredDistanceTo"
+              "net.minecraft.client.render.WorldRenderer:ntit|rustum|lockEntity" \
+              "net.minecraft.client.render.block.entity.BlockEntityRenderer:*" \
+              "net.minecraft.client.render.block.entity.BlockEntityRenderManager:get|render|ender" \
+              "net.minecraft.block.entity.BlockEntity:getPos|getWorld|getType" \
+              "net.minecraft.block.AbstractBlock\$AbstractBlockState:paque|olid|uffer"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
