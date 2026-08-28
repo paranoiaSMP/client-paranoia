@@ -4,6 +4,7 @@ import gg.paranoia.client.cosmetics.CosmeticTextures;
 import gg.paranoia.client.hud.HudElement;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.ColorSetting;
+import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.net.ParanoiaApi;
@@ -52,7 +53,7 @@ public final class DiagnosticsHud extends HudElement {
         add(new ColorSetting("valueColor", "Couleur des valeurs", 0xFF7CFF9E));
 
     public DiagnosticsHud() {
-        super("diagnostics", "Diagnostic Paranoia", false);
+        super("diagnostics", "Diagnostic Paranoia", ModuleCategory.OPTIMISATION, false);
         placeAt(0.99, 0.35);
     }
 

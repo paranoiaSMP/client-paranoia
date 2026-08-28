@@ -6,6 +6,7 @@ import gg.paranoia.client.hud.HudRegistry;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.ColorSetting;
 import gg.paranoia.client.module.EnumSetting;
+import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.module.Setting;
@@ -504,6 +505,11 @@ public final class ModuleWindow {
             renderBar(context, rowY, (float) slider.fraction());
         } else if (setting instanceof EnumSetting<?> choice) {
             renderValue(context, font, choice.display(), rowY);
+        } else if (setting instanceof KeySetting key) {
+            // L'invite se distingue de la valeur: sinon on ne sait pas si le
+            // champ attend une frappe ou affiche une touche nommee ainsi.
+            MenuTheme.right(context, font, key.display(), gridX(), gridWidth() - 2, rowY,
+                key.waiting() ? MenuTheme.TEXT : MenuTheme.ACCENT);
         } else if (setting instanceof ColorSetting color) {
             int swatchX = gridX() + gridWidth() - 26;
             context.fill(swatchX, rowY + 1, swatchX + 24, rowY + 8, color.argb());
@@ -693,6 +699,13 @@ public final class ModuleWindow {
             slider.setFraction(barFraction(mouseX));
         } else if (setting instanceof EnumSetting<?> choice) {
             choice.cycle(direction);
+        } else if (setting instanceof KeySetting key) {
+            // Un second clic annule l'attente: on ne reste pas coince dedans.
+            if (key.waiting()) {
+                KeySetting.cancelCapture();
+            } else {
+                key.beginCapture();
+            }
         } else if (setting instanceof ColorSetting color) {
             // Palette courte plutot qu'un selecteur complet: suffisant pour un
             // HUD, et ca evite un composant entier a maintenir par version.

@@ -31,7 +31,8 @@ public abstract class EntityRendererCullingMixin {
         Entity entity, Frustum frustum, double cameraX, double cameraY, double cameraZ,
         CallbackInfoReturnable<Boolean> info) {
 
-        if (EntityCullingModule.shouldSkip(entity, entity.squaredDistanceTo(cameraX, cameraY, cameraZ))) {
+        double squared = entity.squaredDistanceTo(cameraX, cameraY, cameraZ);
+        if (EntityCullingModule.shouldSkip(entity, squared, cameraX, cameraY, cameraZ)) {
             info.setReturnValue(false);
         }
     }

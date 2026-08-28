@@ -28,10 +28,9 @@ import net.minecraft.entity.player.PlayerEntity;
  * rend jamais un coup: objets au sol, orbes d'experience, et les porte-armures
  * si on le lui demande explicitement.
  *
- * <p>Ce n'est que la moitie distance de l'occlusion. Ne pas dessiner ce qui est
- * cache derriere un mur viendra ensuite: cela demande un test de visibilite
- * reel, avec son propre cout et son propre risque, la ou celui-ci n'est qu'une
- * comparaison de distances.
+ * <p>Deux raisons d'ecarter, cumulables: la distance, et l'occlusion -- un mur
+ * entre la camera et l'entite. La seconde se regle a part et reste, elle aussi,
+ * cantonnee aux memes categories.
  */
 public final class EntityCullingModule extends Module {
     /** Le mixin s'execute dans le rendu: acces direct requis. */
@@ -56,6 +55,24 @@ public final class EntityCullingModule extends Module {
     private final SliderSetting armorStandDistance = add(new SliderSetting(
         "armorStandsDistance", "Porte-armures au-dela de", 48, 8, 128, 4, " blocs"));
 
+    /**
+     * Ne pas dessiner ce qui est derriere un mur.
+     *
+     * <p>Ne s'applique qu'aux memes categories que le reste du module -- objets
+     * au sol, orbes, porte-armures -- et jamais aux joueurs ni aux creatures.
+     * Ce n'est pas de la prudence de principe: le test tire un rayon et tient
+     * pour opaque tout bloc qui l'arrete, verre et feuillage compris. Un joueur
+     * derriere une vitre serait donc escamote alors qu'on le voit parfaitement.
+     * Distinguer le verre d'un mur demande de lire l'opacite du bloc, une API
+     * que la sonde n'a pas encore rendue; tant qu'elle manque, l'occlusion
+     * reste cantonnee a ce dont la disparition ne coute rien.
+     */
+    private final BooleanSetting occlusion = add(new BooleanSetting(
+        "occlusion", "Ignorer ce qui est derriere un mur", false));
+
+    private final SliderSetting occlusionDistance = add(new SliderSetting(
+        "occlusionDistance", "Occlusion au-dela de", 12, 4, 64, 2, " blocs"));
+
     /** Ce que le module a reellement ecarte, pour le panneau de diagnostic. */
     private final Rate skipped = new Rate();
 
@@ -70,10 +87,11 @@ public final class EntityCullingModule extends Module {
         if (module != null) {
             module.skipped.tick();
         }
+        EntityVisibility.beginTick();
     }
 
     public EntityCullingModule() {
-        super("entityCulling", "Alleger le decor lointain", ModuleCategory.VISUEL, false);
+        super("entityCulling", "Alleger le decor lointain", ModuleCategory.OPTIMISATION, false);
         instance = this;
     }
 
@@ -81,44 +99,69 @@ public final class EntityCullingModule extends Module {
      * @param squaredDistance distance au carre entre la camera et l'entite.
      * @return true si cette entite peut etre passee pour cette image.
      */
-    public static boolean shouldSkip(Entity entity, double squaredDistance) {
+    public static boolean shouldSkip(
+        Entity entity, double squaredDistance, double cameraX, double cameraY, double cameraZ) {
         EntityCullingModule module = instance;
         if (module == null || !module.enabled() || entity == null) {
             return false;
         }
 
-        boolean skip = decide(module, entity, squaredDistance);
+        // La categorie decide seule de ce qu'on a le droit d'ecarter: les deux
+        // tests qui suivent ne s'appliquent qu'a ce qu'elle autorise.
+        if (!culpable(module, entity)) {
+            return false;
+        }
+
+        boolean skip = tooFar(module, entity, squaredDistance)
+            || hidden(module, entity, squaredDistance, cameraX, cameraY, cameraZ);
+
         if (skip) {
             module.skipped.hit();
         }
         return skip;
     }
 
-    /** Le test lui-meme, sans comptage: cinq chemins de retour, un seul appelant. */
-    private static boolean decide(EntityCullingModule module, Entity entity, double squaredDistance) {
-
-        // La garde qui compte, et elle vient en premier: rien de vivant n'est
-        // jamais escamote. `PlayerEntity` est redondant avec `LivingEntity`,
-        // et c'est voulu -- si la hierarchie de Minecraft change un jour, le
-        // joueur reste protege par son propre test.
-        if (entity instanceof PlayerEntity || entity instanceof LivingEntity) {
-            if (!(entity instanceof ArmorStandEntity)) {
-                return false;
-            }
-            // Un porte-armure est un LivingEntity, mais il ne rend pas de coup.
-            return module.cullArmorStands.get()
-                && beyond(squaredDistance, module.armorStandDistance.getInt());
+    /**
+     * L'occlusion, quand elle est activee et que l'entite est assez loin.
+     *
+     * <p>Le seuil de distance n'est pas qu'une economie: tout pres, la camera
+     * peut se trouver dans un bloc ou coller a un mur, et le rayon rapporterait
+     * un contact qui n'a rien a voir avec ce que le joueur voit.
+     */
+    private static boolean hidden(
+        EntityCullingModule module, Entity entity, double squaredDistance,
+        double cameraX, double cameraY, double cameraZ) {
+        if (!module.occlusion.get() || !beyond(squaredDistance, module.occlusionDistance.getInt())) {
+            return false;
         }
+        return !EntityVisibility.visible(entity, cameraX, cameraY, cameraZ);
+    }
 
+    /**
+     * Cette entite peut-elle etre ecartee, quelle que soit la raison ?
+     *
+     * <p>La garde qui compte, et elle vient avant tout le reste: rien de vivant
+     * n'est jamais escamote. {@code PlayerEntity} y figure alors que
+     * {@code LivingEntity} suffirait, et c'est voulu -- si la hierarchie de
+     * Minecraft change un jour, le joueur reste protege par son propre test.
+     */
+    private static boolean culpable(EntityCullingModule module, Entity entity) {
+        if (entity instanceof PlayerEntity || entity instanceof LivingEntity) {
+            // Un porte-armure est un LivingEntity, mais il ne rend pas de coup.
+            return entity instanceof ArmorStandEntity && module.cullArmorStands.get();
+        }
+        return entity instanceof ExperienceOrbEntity || entity instanceof ItemEntity;
+    }
+
+    /** Le seuil de distance propre a la categorie. */
+    private static boolean tooFar(EntityCullingModule module, Entity entity, double squaredDistance) {
+        if (entity instanceof ArmorStandEntity) {
+            return beyond(squaredDistance, module.armorStandDistance.getInt());
+        }
         if (entity instanceof ExperienceOrbEntity) {
             return beyond(squaredDistance, module.orbDistance.getInt());
         }
-
-        if (entity instanceof ItemEntity) {
-            return beyond(squaredDistance, module.itemDistance.getInt());
-        }
-
-        return false;
+        return beyond(squaredDistance, module.itemDistance.getInt());
     }
 
     private static boolean beyond(double squaredDistance, int blocks) {
