@@ -21,16 +21,18 @@ import net.minecraft.entity.player.PlayerEntity;
  * centaines apres n'importe quel combat. A quarante blocs, aucun d'eux ne
  * represente plus de trois pixels a l'ecran.
  *
- * <p><strong>Une regle ne se negocie pas: un joueur n'est jamais escamote.</strong>
- * Ni aucune creature vivante. En PvP, un adversaire qu'on ne voit pas parce que
- * le client a decide de l'economiser est le pire defaut possible -- pire que
- * n'importe quelle chute de framerate. Le module ne touche donc qu'a ce qui ne
- * rend jamais un coup: objets au sol, orbes d'experience, et les porte-armures
- * si on le lui demande explicitement.
+ * <p><strong>Aucun etre vivant n'est jamais ecarte pour cause de distance.</strong>
+ * En PvP, un adversaire qu'on ne voit pas parce que le client a decide de
+ * l'economiser est le pire defaut possible -- pire que n'importe quelle chute
+ * de framerate. La distance ne s'applique donc qu'a ce qui ne rend jamais un
+ * coup: objets au sol, orbes d'experience, et les porte-armures si on le
+ * demande explicitement.
  *
- * <p>Deux raisons d'ecarter, cumulables: la distance, et l'occlusion -- un mur
- * entre la camera et l'entite. La seconde se regle a part et reste, elle aussi,
- * cantonnee aux memes categories.
+ * <p>L'occlusion -- un mur entre la camera et l'entite -- est le second motif,
+ * et le seul qui puisse s'etendre aux joueurs. Cela demande un reglage separe,
+ * desactive par defaut, et n'a de sens que parce que le test ne s'arrete qu'aux
+ * cubes pleins et opaques: un adversaire derriere une vitre reste affiche. Le
+ * detail des precautions est sur le reglage lui-meme.
  */
 public final class EntityCullingModule extends Module {
     /** Le mixin s'execute dans le rendu: acces direct requis. */
@@ -56,22 +58,52 @@ public final class EntityCullingModule extends Module {
         "armorStandsDistance", "Porte-armures au-dela de", 48, 8, 128, 4, " blocs"));
 
     /**
-     * Ne pas dessiner ce qui est derriere un mur.
-     *
-     * <p>Ne s'applique qu'aux memes categories que le reste du module -- objets
-     * au sol, orbes, porte-armures -- et jamais aux joueurs ni aux creatures.
-     * Ce n'est pas de la prudence de principe: le test tire un rayon et tient
-     * pour opaque tout bloc qui l'arrete, verre et feuillage compris. Un joueur
-     * derriere une vitre serait donc escamote alors qu'on le voit parfaitement.
-     * Distinguer le verre d'un mur demande de lire l'opacite du bloc, une API
-     * que la sonde n'a pas encore rendue; tant qu'elle manque, l'occlusion
-     * reste cantonnee a ce dont la disparition ne coute rien.
+     * Ne pas dessiner le decor situe derriere un mur.
      */
     private final BooleanSetting occlusion = add(new BooleanSetting(
         "occlusion", "Ignorer ce qui est derriere un mur", false));
 
     private final SliderSetting occlusionDistance = add(new SliderSetting(
         "occlusionDistance", "Occlusion au-dela de", 12, 4, 64, 2, " blocs"));
+
+    /**
+     * Etendre l'occlusion aux joueurs et aux creatures.
+     *
+     * <p>C'est le seul reglage du mod qui peut faire disparaitre un adversaire,
+     * et il est donc le seul a etre entoure d'autant de precautions. Il ne
+     * s'applique <strong>qu'a</strong> l'occlusion: aucune creature n'est jamais
+     * ecartee pour cause de distance, quelle que soit la configuration.
+     *
+     * <p>Trois choses le rendent defendable:
+     *
+     * <ul>
+     *   <li>le test ne s'arrete qu'aux cubes pleins et opaques -- une vitre, une
+     *       trappe ou un feuillage ne cache personne;
+     *   <li>la reponse n'est gardee qu'un tick, contre un quart de seconde pour
+     *       le decor: un joueur qui sort d'un mur reapparait a l'image suivante,
+     *       pas cinq ticks plus tard;
+     *   <li>neuf rayons sont tires vers la boite entiere, et un seul qui passe
+     *       suffit a garder l'adversaire affiche -- une epaule qui depasse le
+     *       maintient visible.
+     * </ul>
+     *
+     * <p>Desactive par defaut, et il doit le rester pour quiconque n'a pas
+     * verifie le comportement sur son propre serveur. Un gain de framerate ne
+     * vaut jamais un adversaire manque.
+     */
+    private final BooleanSetting occludeLiving = add(new BooleanSetting(
+        "occludeLiving", "Inclure joueurs et creatures", false));
+
+    /**
+     * Distance minimale avant d'escamoter un etre vivant.
+     *
+     * <p>Plus haute que pour le decor, et pour une raison de combat: a bout
+     * portant, la moindre erreur du test se paie immediatement. Au-dela de vingt
+     * blocs, un adversaire entierement derriere un mur plein n'est pas en train
+     * de porter un coup.
+     */
+    private final SliderSetting livingDistance = add(new SliderSetting(
+        "livingDistance", "Joueurs et creatures au-dela de", 20, 8, 64, 2, " blocs"));
 
     /** Ce que le module a reellement ecarte, pour le panneau de diagnostic. */
     private final Rate skipped = new Rate();
@@ -106,19 +138,51 @@ public final class EntityCullingModule extends Module {
             return false;
         }
 
-        // La categorie decide seule de ce qu'on a le droit d'ecarter: les deux
-        // tests qui suivent ne s'appliquent qu'a ce qu'elle autorise.
-        if (!culpable(module, entity)) {
-            return false;
-        }
-
-        boolean skip = tooFar(module, entity, squaredDistance)
-            || hidden(module, entity, squaredDistance, cameraX, cameraY, cameraZ);
-
+        boolean skip = decide(module, entity, squaredDistance, cameraX, cameraY, cameraZ);
         if (skip) {
             module.skipped.hit();
         }
         return skip;
+    }
+
+    /**
+     * Deux regimes, et la frontiere entre eux est la seule chose qui compte.
+     *
+     * <p>Ce qui rend des coups n'est jamais ecarte pour cause de distance --
+     * seulement, et si on le lui demande, parce qu'un mur plein s'interpose. Le
+     * decor, lui, releve des deux tests.
+     */
+    private static boolean decide(
+        EntityCullingModule module, Entity entity, double squaredDistance,
+        double cameraX, double cameraY, double cameraZ) {
+
+        // Un porte-armure est un LivingEntity, mais il ne rend pas de coup: il
+        // suit le regime du decor, et seulement si on l'a autorise.
+        if (entity instanceof ArmorStandEntity) {
+            return module.cullArmorStands.get()
+                && (beyond(squaredDistance, module.armorStandDistance.getInt())
+                    || hidden(module, entity, false, squaredDistance, module.occlusionDistance.getInt(),
+                        cameraX, cameraY, cameraZ));
+        }
+
+        // PlayerEntity figure ici alors que LivingEntity suffirait, et c'est
+        // voulu: si la hierarchie de Minecraft change un jour, le joueur reste
+        // protege par son propre test.
+        if (entity instanceof PlayerEntity || entity instanceof LivingEntity) {
+            return module.occludeLiving.get()
+                && hidden(module, entity, true, squaredDistance, module.livingDistance.getInt(),
+                    cameraX, cameraY, cameraZ);
+        }
+
+        if (!(entity instanceof ExperienceOrbEntity || entity instanceof ItemEntity)) {
+            return false;
+        }
+
+        return beyond(squaredDistance, entity instanceof ExperienceOrbEntity
+                ? module.orbDistance.getInt()
+                : module.itemDistance.getInt())
+            || hidden(module, entity, false, squaredDistance, module.occlusionDistance.getInt(),
+                cameraX, cameraY, cameraZ);
     }
 
     /**
@@ -129,39 +193,13 @@ public final class EntityCullingModule extends Module {
      * un contact qui n'a rien a voir avec ce que le joueur voit.
      */
     private static boolean hidden(
-        EntityCullingModule module, Entity entity, double squaredDistance,
+        EntityCullingModule module, Entity entity, boolean living,
+        double squaredDistance, int minimumBlocks,
         double cameraX, double cameraY, double cameraZ) {
-        if (!module.occlusion.get() || !beyond(squaredDistance, module.occlusionDistance.getInt())) {
+        if (!module.occlusion.get() || !beyond(squaredDistance, minimumBlocks)) {
             return false;
         }
-        return !EntityVisibility.visible(entity, cameraX, cameraY, cameraZ);
-    }
-
-    /**
-     * Cette entite peut-elle etre ecartee, quelle que soit la raison ?
-     *
-     * <p>La garde qui compte, et elle vient avant tout le reste: rien de vivant
-     * n'est jamais escamote. {@code PlayerEntity} y figure alors que
-     * {@code LivingEntity} suffirait, et c'est voulu -- si la hierarchie de
-     * Minecraft change un jour, le joueur reste protege par son propre test.
-     */
-    private static boolean culpable(EntityCullingModule module, Entity entity) {
-        if (entity instanceof PlayerEntity || entity instanceof LivingEntity) {
-            // Un porte-armure est un LivingEntity, mais il ne rend pas de coup.
-            return entity instanceof ArmorStandEntity && module.cullArmorStands.get();
-        }
-        return entity instanceof ExperienceOrbEntity || entity instanceof ItemEntity;
-    }
-
-    /** Le seuil de distance propre a la categorie. */
-    private static boolean tooFar(EntityCullingModule module, Entity entity, double squaredDistance) {
-        if (entity instanceof ArmorStandEntity) {
-            return beyond(squaredDistance, module.armorStandDistance.getInt());
-        }
-        if (entity instanceof ExperienceOrbEntity) {
-            return beyond(squaredDistance, module.orbDistance.getInt());
-        }
-        return beyond(squaredDistance, module.itemDistance.getInt());
+        return !EntityVisibility.visible(entity, living, cameraX, cameraY, cameraZ);
     }
 
     private static boolean beyond(double squaredDistance, int blocks) {

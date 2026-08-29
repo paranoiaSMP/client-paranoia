@@ -16,6 +16,7 @@
     "PlayerListEntryMixin",
     "ParticleManagerMixin",
     "InactivityFpsLimiterMixin",
-    "EntityRendererCullingMixin"
+    "EntityRendererCullingMixin",
+    "BlockEntityRendererCullingMixin"
   ]
 }

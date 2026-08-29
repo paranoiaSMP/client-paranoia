@@ -2,18 +2,26 @@ package gg.paranoia.client.modules;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * L'entite est-elle visible, ou un bloc la cache-t-il ?
  *
- * <p>Un rayon part de la camera vers l'entite: s'il touche un bloc avant, elle
- * est cachee. C'est le principe, et tout le reste consiste a le rendre assez
- * bon marche pour que la question coute moins cher que la reponse.
+ * <p>Un rayon part de la camera vers l'entite: s'il rencontre un cube plein et
+ * opaque avant de l'atteindre, elle est cachee. C'est le principe, et tout le
+ * reste consiste a le rendre assez bon marche pour que la question coute moins
+ * cher que la reponse.
+ *
+ * <p>« Opaque » au sens strict, et c'est ce qui permet d'appliquer le test aux
+ * joueurs: le verre, les feuillages, les dalles et les clotures ne cachent
+ * personne et ne comptent pas.
  *
  * <p>Trois garde-fous pour ca:
  *
@@ -32,8 +40,23 @@ import net.minecraft.world.World;
  * escamote quelque chose qu'il fallait voir.
  */
 final class EntityVisibility {
-    /** Duree de validite d'une reponse, en millisecondes. */
-    private static final long CACHE_MILLIS = 250;
+    /** Duree de validite d'une reponse pour le decor, en millisecondes. */
+    static final long DECOR_CACHE_MILLIS = 250;
+
+    /**
+     * Duree de validite pour ce qui rend des coups. Un tick, pas davantage.
+     *
+     * <p>C'est le chiffre le plus important du fichier. Un quart de seconde de
+     * memoire sur un objet au sol ne se voit pas; la meme memoire sur un joueur
+     * qui sort d'un mur, c'est cinq ticks pendant lesquels un adversaire bien
+     * visible reste efface. En duel, ce defaut coute plus cher que tout ce que
+     * l'allegement peut rapporter.
+     *
+     * <p>Cinquante millisecondes, donc: la reponse est refaite a chaque tick, et
+     * le cache ne sert plus qu'a eviter de retirer les memes rayons plusieurs
+     * fois dans la meme image quand le framerate depasse la cadence du jeu.
+     */
+    static final long LIVING_CACHE_MILLIS = 50;
 
     /**
      * Nouveaux calculs autorises par tick.
@@ -89,7 +112,22 @@ final class EntityVisibility {
     private static final long[] slotCheckedAt = new long[SLOTS];
     private static final boolean[] slotVisible = new boolean[SLOTS];
 
+    /**
+     * Budget distinct pour ce qui rend des coups.
+     *
+     * <p>Separe, et pas seulement plus grand: si les joueurs puisaient dans le
+     * meme budget que le decor, une base pleine d'objets au sol pourrait le
+     * vider avant qu'un seul adversaire ait ete teste -- ou l'inverse. Les deux
+     * populations n'ont ni la meme taille ni la meme urgence, elles ne se
+     * disputent donc rien.
+     *
+     * <p>Trente-deux suffit largement: on compte les joueurs visibles par
+     * dizaines, jamais par centaines.
+     */
+    private static final int LIVING_BUDGET_PER_TICK = 32;
+
     private static int budget = BUDGET_PER_TICK;
+    private static int livingBudget = LIVING_BUDGET_PER_TICK;
 
     /**
      * La camera du tick en cours, reutilisee d'une entite a l'autre.
@@ -109,12 +147,16 @@ final class EntityVisibility {
     /** Ouvre un tick: le budget de calculs est reconduit. */
     static void beginTick() {
         budget = BUDGET_PER_TICK;
+        livingBudget = LIVING_BUDGET_PER_TICK;
     }
 
     /**
+     * @param living true si l'entite rend des coups: memoire courte et budget
+     *     a part. Voir {@link #LIVING_CACHE_MILLIS}.
      * @return false uniquement si un bloc cache l'entite de facon certaine.
      */
-    static boolean visible(Entity entity, double cameraX, double cameraY, double cameraZ) {
+    static boolean visible(
+        Entity entity, boolean living, double cameraX, double cameraY, double cameraZ) {
         MinecraftClient client = MinecraftClient.getInstance();
         World world = client == null ? null : client.world;
         if (world == null) {
@@ -126,17 +168,24 @@ final class EntityVisibility {
         boolean mine = slotCheckedAt[slot] != 0 && slotEntity[slot] == id;
         long now = System.currentTimeMillis();
 
-        if (mine && now - slotCheckedAt[slot] < CACHE_MILLIS) {
+        if (mine && now - slotCheckedAt[slot] < (living ? LIVING_CACHE_MILLIS : DECOR_CACHE_MILLIS)) {
             return slotVisible[slot];
         }
 
         // Budget epuise: on repond ce qu'on savait, sans recalculer. La reponse
         // vieillit d'un tick, ce qui ne se voit pas. Si la case appartient a
         // une autre entite, on n'a rien appris sur celle-ci: elle est visible.
-        if (budget <= 0) {
-            return !mine || slotVisible[slot];
+        if (living) {
+            if (livingBudget <= 0) {
+                return !mine || slotVisible[slot];
+            }
+            livingBudget--;
+        } else {
+            if (budget <= 0) {
+                return !mine || slotVisible[slot];
+            }
+            budget--;
         }
-        budget--;
 
         boolean answer = reachable(world, entity, camera(cameraX, cameraY, cameraZ));
 
@@ -180,7 +229,7 @@ final class EntityVisibility {
     private static boolean reachable(World world, Entity entity, Vec3d from) {
         Box box = entity.getBoundingBox();
 
-        if (clear(world, entity, from, box.getCenter())) {
+        if (clear(world, from, box.getCenter())) {
             return true;
         }
 
@@ -198,19 +247,46 @@ final class EntityVisibility {
                 (corner & 1) == 0 ? minX : maxX,
                 (corner & 2) == 0 ? minY : maxY,
                 (corner & 4) == 0 ? minZ : maxZ);
-            if (clear(world, entity, from, point)) {
+            if (clear(world, from, point)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean clear(World world, Entity entity, Vec3d from, Vec3d to) {
-        // COLLIDER et non VISUAL: on veut savoir si un bloc plein s'interpose,
-        // pas si une texture passe devant. NONE pour les fluides -- l'eau ne
-        // cache pas ce qu'il y a derriere.
-        HitResult hit = world.raycast(new RaycastContext(
-            from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, entity));
-        return hit.getType() == HitResult.Type.MISS;
+    /**
+     * Un bloc reellement opaque s'interpose-t-il entre ces deux points ?
+     *
+     * <p>Le premier jet tirait un rayon de collision et tenait pour bouche tout
+     * ce qui l'arretait. C'etait suffisant pour du decor, et inutilisable pour
+     * un joueur: une vitre, une trappe, une feuille arretent le rayon sans rien
+     * cacher, et l'adversaire qu'on voit parfaitement aurait disparu.
+     *
+     * <p>On parcourt donc les blocs traverses un par un et on ne s'arrete qu'au
+     * premier cube plein et opaque. {@code isOpaqueFullCube} est exactement la
+     * question posee: le bloc remplit-il son cube et la lumiere s'y arrete-t-elle.
+     * Le verre, les feuillages, les dalles, les escaliers et les clotures
+     * repondent non et laissent passer -- ce qui, pour une fois, est a la fois
+     * plus correct et moins cher que la version precedente, qui allait chercher
+     * la forme de collision de chaque bloc.
+     *
+     * <p>Un bloc dans un morceau non charge se lit comme de l'air: il ne bouche
+     * pas. C'est le bon sens dans lequel se tromper.
+     */
+    private static boolean clear(World world, Vec3d from, Vec3d to) {
+        Boolean blocked = BlockView.raycast(from, to, world, OPAQUE_STOP, MISS);
+        return blocked == null || !blocked;
     }
+
+    /**
+     * Appele pour chaque bloc traverse; une reponse non nulle arrete le trajet.
+     *
+     * <p>Constantes et non lambdas construites a l'appel: elles ne capturent
+     * rien -- le monde arrive par le parametre de contexte -- donc une seule
+     * instance sert pour toute la partie.
+     */
+    private static final BiFunction<World, BlockPos, Boolean> OPAQUE_STOP =
+        (world, pos) -> world.getBlockState(pos).isOpaqueFullCube() ? Boolean.TRUE : null;
+
+    private static final Function<World, Boolean> MISS = world -> Boolean.FALSE;
 }
