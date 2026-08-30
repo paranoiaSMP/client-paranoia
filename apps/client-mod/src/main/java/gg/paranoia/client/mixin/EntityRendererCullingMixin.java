@@ -31,6 +31,13 @@ public abstract class EntityRendererCullingMixin {
         Entity entity, Frustum frustum, double cameraX, double cameraY, double cameraZ,
         CallbackInfoReturnable<Boolean> info) {
 
+        // La question avant le calcul: sans ce garde, la distance de chaque
+        // entite a la camera etait mesuree a chaque image meme pour quelqu'un
+        // qui n'a jamais active la fonction.
+        if (!EntityCullingModule.active()) {
+            return;
+        }
+
         double squared = entity.squaredDistanceTo(cameraX, cameraY, cameraZ);
         if (EntityCullingModule.shouldSkip(entity, squared, cameraX, cameraY, cameraZ)) {
             info.setReturnValue(false);

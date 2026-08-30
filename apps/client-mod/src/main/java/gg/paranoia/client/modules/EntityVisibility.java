@@ -40,8 +40,30 @@ import java.util.function.Function;
  * escamote quelque chose qu'il fallait voir.
  */
 final class EntityVisibility {
-    /** Duree de validite d'une reponse pour le decor, en millisecondes. */
-    static final long DECOR_CACHE_MILLIS = 250;
+    /**
+     * Combien de temps garder une reponse, selon ce qu'elle disait.
+     *
+     * <p>Les deux cas ne se valent pas, et les traiter pareil etait une erreur.
+     *
+     * <p>Une entite <strong>cachee</strong> n'est pas dessinee. Si elle
+     * reapparait et qu'on ne le sait pas encore, le joueur ne voit pas quelque
+     * chose qu'il devrait voir: il faut redemander vite.
+     *
+     * <p>Une entite <strong>visible</strong> est deja dessinee. Si elle passe
+     * derriere un mur et qu'on ne le sait pas encore, on dessine quelque chose
+     * en trop pendant un instant -- on perd un peu d'economie, on ne se trompe
+     * sur rien. On peut donc redemander bien plus tard.
+     *
+     * <p>Ce n'est pas qu'une economie de calcul: le budget par tick est
+     * plafonne, et les entites franchement visibles sont de loin les plus
+     * nombreuses. Tant qu'elles se faisaient reinterroger au meme rythme que les
+     * autres, elles consommaient le budget que les entites jamais testees
+     * attendaient. Les relacher etend la couverture du module sans rien
+     * accelerer.
+     */
+    static final long DECOR_HIDDEN_MILLIS = 250;
+
+    static final long DECOR_VISIBLE_MILLIS = 750;
 
     /**
      * Duree de validite pour ce qui rend des coups. Un tick, pas davantage.
@@ -55,8 +77,15 @@ final class EntityVisibility {
      * <p>Cinquante millisecondes, donc: la reponse est refaite a chaque tick, et
      * le cache ne sert plus qu'a eviter de retirer les memes rayons plusieurs
      * fois dans la meme image quand le framerate depasse la cadence du jeu.
+     *
+     * <p>Cela vaut pour l'adversaire <em>cache</em>, celui qu'il faut faire
+     * reapparaitre sans delai. Celui qu'on voit deja peut attendre davantage:
+     * le manquer une fraction de seconde de plus ne coute qu'un peu d'economie,
+     * et c'est le cas le plus frequent de tous.
      */
-    static final long LIVING_CACHE_MILLIS = 50;
+    static final long LIVING_HIDDEN_MILLIS = 50;
+
+    static final long LIVING_VISIBLE_MILLIS = 200;
 
     /**
      * Nouveaux calculs autorises par tick.
@@ -152,7 +181,7 @@ final class EntityVisibility {
 
     /**
      * @param living true si l'entite rend des coups: memoire courte et budget
-     *     a part. Voir {@link #LIVING_CACHE_MILLIS}.
+     *     a part. Voir {@link #LIVING_HIDDEN_MILLIS}.
      * @return false uniquement si un bloc cache l'entite de facon certaine.
      */
     static boolean visible(
@@ -168,7 +197,7 @@ final class EntityVisibility {
         boolean mine = slotCheckedAt[slot] != 0 && slotEntity[slot] == id;
         long now = System.currentTimeMillis();
 
-        if (mine && now - slotCheckedAt[slot] < (living ? LIVING_CACHE_MILLIS : DECOR_CACHE_MILLIS)) {
+        if (mine && now - slotCheckedAt[slot] < ttl(living, slotVisible[slot])) {
             return slotVisible[slot];
         }
 
@@ -193,6 +222,14 @@ final class EntityVisibility {
         slotCheckedAt[slot] = now;
         slotVisible[slot] = answer;
         return answer;
+    }
+
+    /** Duree de validite de la reponse qu'on a deja, selon ce qu'elle dit. */
+    private static long ttl(boolean living, boolean wasVisible) {
+        if (living) {
+            return wasVisible ? LIVING_VISIBLE_MILLIS : LIVING_HIDDEN_MILLIS;
+        }
+        return wasVisible ? DECOR_VISIBLE_MILLIS : DECOR_HIDDEN_MILLIS;
     }
 
     /**
@@ -242,11 +279,17 @@ final class EntityVisibility {
         double maxY = box.maxY - 0.01;
         double maxZ = box.maxZ - 0.01;
 
+        // Les quatre coins hauts d'abord. Ce qui depasse d'un obstacle depasse
+        // presque toujours par le haut -- une tete au-dessus d'un mur, un
+        // adversaire en surplomb, un objet sur un rebord. L'ordre precedent
+        // parcourait les quatre coins bas avant d'y arriver, donc le cas qui
+        // compte le plus coutait cinq rayons la ou il en faut deux.
         for (int corner = 0; corner < 8; corner++) {
+            boolean high = corner < 4;
             Vec3d point = new Vec3d(
                 (corner & 1) == 0 ? minX : maxX,
-                (corner & 2) == 0 ? minY : maxY,
-                (corner & 4) == 0 ? minZ : maxZ);
+                high ? maxY : minY,
+                (corner & 2) == 0 ? minZ : maxZ);
             if (clear(world, from, point)) {
                 return true;
             }
