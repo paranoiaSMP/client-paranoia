@@ -83,12 +83,38 @@ async function main() {
     throw new Error("aucun dossier dans versions/");
   }
 
+  // Une version que Fabric n'a pas encore outillee est attendue, pas fautive.
+  // Minecraft sort avant yarn, et il s'ecoule des jours ou des semaines avant
+  // que des mappings existent -- personne ne peut compiler pour cette version
+  // pendant ce temps, pas seulement nous. Faire echouer tout le build pour
+  // cela bloquerait aussi les versions qui, elles, sont pretes.
+  //
+  // On la signale, on passe, et le sous-projet correspondant est ignore par
+  // settings.gradle faute de versions.properties. Le jour ou les mappings
+  // paraissent, le build suivant la prend sans qu'on touche a quoi que ce soit.
+  const skipped = [];
+
   for (const minecraftVersion of minecraftVersions) {
-    const [yarn, loader, fabricApi] = await Promise.all([
-      resolveYarn(minecraftVersion),
-      resolveLoader(minecraftVersion),
-      resolveFabricApi(minecraftVersion),
-    ]);
+    let yarn;
+    let loader;
+    let fabricApi;
+
+    try {
+      [yarn, loader, fabricApi] = await Promise.all([
+        resolveYarn(minecraftVersion),
+        resolveLoader(minecraftVersion),
+        resolveFabricApi(minecraftVersion),
+      ]);
+    } catch (err) {
+      skipped.push(`${minecraftVersion} (${err.message})`);
+      // Un versions.properties perime ferait compiler contre les mappings de
+      // la resolution precedente, et le jar porterait un numero faux.
+      await fs.rm(
+        path.join(modRoot, "versions", minecraftVersion, "versions.properties"),
+        { force: true },
+      );
+      continue;
+    }
 
     const contents = [
       "# Genere par scripts/resolve-fabric-versions.mjs -- ne pas editer a la main.",
@@ -108,6 +134,17 @@ async function main() {
     console.log(
       `${minecraftVersion}: yarn=${yarn} loader=${loader} fabric-api=${fabricApi}`,
     );
+  }
+
+  for (const entry of skipped) {
+    console.log(`::warning::pas encore outille par Fabric, ignore: ${entry}`);
+  }
+
+  // Aucune version resolue: la panne n'est plus amont mais chez nous -- reseau
+  // coupe, meta.fabricmc.net en vrac, dossier versions/ vide de tout ce qui
+  // marchait hier. La, il faut bien echouer.
+  if (skipped.length === minecraftVersions.length) {
+    throw new Error("aucune version n'a pu etre resolue");
   }
 }
 

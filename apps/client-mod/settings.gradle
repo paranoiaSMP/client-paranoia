@@ -15,6 +15,19 @@ rootProject.name = 'paranoia-client-mod'
 def targets = ['1.21.8', '1.21.10', '1.21.11', '26.1.2']
 
 targets.each { version ->
+    // versions.properties est ecrit par scripts/resolve-fabric-versions.mjs, et
+    // seulement pour les versions que Fabric a deja outillees. Son absence veut
+    // donc dire « yarn ne publie pas encore pour cette version de Minecraft ».
+    //
+    // On ignore le sous-projet plutot que d'echouer: la version est declaree
+    // ici a l'avance, elle se construira d'elle-meme au premier build qui suit
+    // la publication des mappings, et en attendant les autres versions
+    // continuent de sortir normalement.
+    if (!file("versions/${version}/versions.properties").exists()) {
+        println "settings.gradle: ${version} ignore, pas de mappings Fabric publies"
+        return
+    }
+
     include version
     project(":${version}").projectDir = file("versions/${version}")
 }
