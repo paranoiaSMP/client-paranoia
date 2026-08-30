@@ -133,7 +133,7 @@ jobs:
         if: always()
         working-directory: apps/client-mod
         run: |
-          for version in 1.21.8 1.21.11; do
+          for version in 1.21.8 1.21.11 26.1.2; do
             cp=$(cat "versions/$version/build/compile-classpath.txt")
             echo "=============== $version"
             # Les quatre premieres entrees sont des cibles de mixin en service:

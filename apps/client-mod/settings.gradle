@@ -12,7 +12,7 @@ rootProject.name = 'paranoia-client-mod'
 // (src/main/java a la racine) sont recompilees dans chacun d'eux, contre le jar
 // Minecraft de sa version: c'est ce qui permet au menu et aux HUD d'utiliser
 // DrawContext et Screen sans etre ecrits deux fois.
-def targets = ['1.21.8', '1.21.10', '1.21.11']
+def targets = ['1.21.8', '1.21.10', '1.21.11', '26.1.2']
 
 targets.each { version ->
     include version
