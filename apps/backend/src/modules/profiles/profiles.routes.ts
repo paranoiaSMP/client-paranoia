@@ -6,6 +6,7 @@ import { importProfilesFromPaths } from "./profiles.import.js";
 import { importMrPack } from "./mrpack.service.js";
 import { dirname } from "node:path";
 import { cpSync } from "node:fs";
+import { ensurePerformanceMods } from "../launcher/performanceMods.js";
 import {
 	createProfile,
 	deleteProfile,
@@ -87,6 +88,21 @@ async function prepareInstance(profile: {
 				err,
 			);
 		});
+
+	// Les mods d'optimisation suivent le meme regime que Fabric API: en tache de
+	// fond, jamais bloquants. Ils sont un confort, pas une condition -- un profil
+	// sans Sodium reste un profil qui se lance, et le joueur peut les retirer
+	// depuis l'onglet Mods sans qu'on les lui remette.
+	void ensurePerformanceMods(
+		profile.id,
+		instanceDir(profile.id),
+		profile.minecraftVersion,
+	).catch((err) => {
+		console.warn(
+			`[Profils] mods d'optimisation non installes pour ${profile.id}:`,
+			err,
+		);
+	});
 }
 
 profilesRouter.post("/", async (req, res, next) => {
