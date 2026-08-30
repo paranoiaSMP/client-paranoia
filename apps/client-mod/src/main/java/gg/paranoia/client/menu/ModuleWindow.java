@@ -41,6 +41,15 @@ public final class ModuleWindow {
     private static final int GAP = 5;
     private static final int ROW_HEIGHT = 12;
 
+    /** Place gardee a droite de tout libelle de reglage, pour sa valeur. */
+    private static final int LABEL_RESERVE = 80;
+
+    /** Ecart entre le chiffre d'un curseur et sa barre. */
+    private static final int VALUE_GAP = 5;
+
+    /** Ce qu'on laisse au libelle d'un reglage, meme dans la fenetre la plus etroite. */
+    private static final int MIN_LABEL_WIDTH = 60;
+
     /** Onglets du bandeau. Lunar en a un troisieme, Waypoints, sans objet ici. */
     private enum Tab {
         MODULES("MODULES"),
@@ -497,12 +506,18 @@ public final class ModuleWindow {
             context.fill(gridX(), rowY - 1, gridX() + gridWidth(), rowY + ROW_HEIGHT - 2, MenuTheme.ROW_HOVER);
         }
 
-        renderLabel(context, font, setting.label(), rowY);
+        renderLabel(context, font, setting.label(), rowY, reserve(font, setting));
 
         if (setting instanceof BooleanSetting value) {
             renderValue(context, font, value.get() ? "Oui" : "Non", rowY);
         } else if (setting instanceof SliderSetting slider) {
             renderBar(context, rowY, (float) slider.fraction());
+            // Le chiffre a gauche de la barre. La barre dit la proportion, le
+            // chiffre dit la valeur: sans lui, on voit bien qu'on a pousse le
+            // curseur aux deux tiers, mais pas si cela fait quarante blocs ou
+            // soixante -- et c'est la seule chose qu'on cherchait a savoir.
+            MenuTheme.right(context, font, slider.display(),
+                gridX(), barX() - gridX() - VALUE_GAP, rowY, MenuTheme.ACCENT);
         } else if (setting instanceof EnumSetting<?> choice) {
             renderValue(context, font, choice.display(), rowY);
         } else if (setting instanceof KeySetting key) {
@@ -517,9 +532,36 @@ public final class ModuleWindow {
         }
     }
 
-    private void renderLabel(DrawContext context, TextRenderer font, String label, int rowY) {
-        MenuTheme.text(context, font, MenuTheme.fit(font, label, gridWidth() - 80),
+    private void renderLabel(
+        DrawContext context, TextRenderer font, String label, int rowY, int reserve) {
+        MenuTheme.text(context, font, MenuTheme.fit(font, label, gridWidth() - reserve),
             gridX() + 2, rowY, MenuTheme.TEXT);
+    }
+
+    /**
+     * La place a garder a droite du libelle, pour ne pas ecrire par-dessus la
+     * valeur du reglage.
+     *
+     * <p>Un curseur en demande davantage depuis qu'il affiche son chiffre: la
+     * barre, l'ecart, et le plus large des libelles que ce curseur puisse
+     * produire. C'est bien la valeur la plus large qu'on mesure, et non la
+     * valeur courante -- sinon le libelle se tronquerait et se retablirait au
+     * fil du glissement.
+     */
+    private int reserve(TextRenderer font, Setting<?> setting) {
+        if (!(setting instanceof SliderSetting slider)) {
+            return LABEL_RESERVE;
+        }
+
+        int wanted = LABEL_RESERVE + VALUE_GAP + font.getWidth(slider.widestDisplay());
+
+        // La fenetre descend jusqu'a deux cents pixels de large, ce qui ne
+        // laisse qu'une centaine de pixels de grille. Reserver la place du
+        // chiffre telle quelle ne laisserait alors au libelle qu'une largeur
+        // negative, et la troncature rendrait « ... » a la place du nom du
+        // reglage. On prefere serrer le chiffre contre un libelle court plutot
+        // que d'effacer le libelle: c'est lui qui dit de quoi on parle.
+        return Math.min(wanted, Math.max(LABEL_RESERVE, gridWidth() - MIN_LABEL_WIDTH));
     }
 
     private void renderValue(DrawContext context, TextRenderer font, String value, int rowY) {

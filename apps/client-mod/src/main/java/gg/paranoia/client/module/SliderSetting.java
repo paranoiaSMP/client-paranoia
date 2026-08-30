@@ -54,7 +54,30 @@ public final class SliderSetting extends Setting<Double> {
     }
 
     public String display() {
-        String number = step >= 1 ? String.valueOf(getInt()) : String.format("%.2f", value);
+        return format(value);
+    }
+
+    /**
+     * Le libelle le plus large que ce curseur puisse afficher.
+     *
+     * <p>Sert a reserver la place du chiffre une fois pour toutes. Mesurer la
+     * valeur courante ferait sauter le libelle du reglage pendant qu'on fait
+     * glisser le curseur, au moment precis ou l'on regarde ailleurs.
+     *
+     * <p>Les deux bornes sont comparees plutot que la seule borne haute: un
+     * curseur qui descendrait sous zero ecrit son minimum plus large que son
+     * maximum, signe moins compris.
+     */
+    public String widestDisplay() {
+        String low = format(min);
+        String high = format(max);
+        return low.length() > high.length() ? low : high;
+    }
+
+    private String format(double raw) {
+        String number = step >= 1
+            ? String.valueOf((int) Math.round(raw))
+            : String.format("%.2f", raw);
         return unit.isEmpty() ? number : number + unit;
     }
 
