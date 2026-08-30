@@ -63,8 +63,22 @@ public final class CosmeticTextures {
      */
     private static final int MAX_BYTES = 4 * 1024 * 1024;
 
-    /** 4096x2048 en RGBA font deja 32 Mo une fois sur la carte graphique. */
-    private static final int MAX_PIXELS = 4096 * 2048;
+    /**
+     * Plafond de definition, et donc de memoire graphique.
+     *
+     * <p>Le plafond precedent, 4096x2048, laissait passer trente-trois
+     * megaoctets de memoire video par cosmetique une fois l'image decompressee.
+     * Le plafond d'octets ne protege pas de ca: une image de couleurs plates se
+     * compresse enormement, et quatre megaoctets de PNG peuvent en donner dix
+     * fois plus une fois deplies.
+     *
+     * <p>Une cape vanilla mesure 64x32. A 2048x1024 on accepte encore
+     * trente-deux fois cette definition dans chaque sens, ce qu'aucun
+     * cosmetique legitime n'atteindra jamais -- mais le pire cas passe de
+     * trente-trois a huit megaoctets. C'est un garde-fou contre une entree
+     * malencontreuse du catalogue, pas une contrainte sur ce qu'on peut vendre.
+     */
+    private static final int MAX_PIXELS = 2048 * 1024;
 
     /** Delai sans demande au-dela duquel une texture est liberee. */
     private static final long UNUSED_TTL_MILLIS = 60_000;
