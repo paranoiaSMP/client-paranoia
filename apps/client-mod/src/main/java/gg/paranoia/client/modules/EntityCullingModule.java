@@ -128,6 +128,20 @@ public final class EntityCullingModule extends Module {
     }
 
     /**
+     * Le module a-t-il quelque chose a dire ?
+     *
+     * <p>A interroger avant tout calcul. Le mixin mesurait la distance de chaque
+     * entite a la camera avant meme de savoir si le module etait actif -- et il
+     * est desactive par defaut, donc tout le monde payait ce calcul pour rien.
+     * C'est peu de chose par entite; ce n'est plus rien du tout quand on
+     * n'allume jamais la fonction.
+     */
+    public static boolean active() {
+        EntityCullingModule module = instance;
+        return module != null && module.enabled();
+    }
+
+    /**
      * @param squaredDistance distance au carre entre la camera et l'entite.
      * @return true si cette entite peut etre passee pour cette image.
      */

@@ -64,6 +64,12 @@ public final class BlockEntityCullingModule extends Module {
         instance = this;
     }
 
+    /** Le module a-t-il quelque chose a dire ? A interroger avant tout calcul. */
+    public static boolean active() {
+        BlockEntityCullingModule module = instance;
+        return module != null && module.enabled();
+    }
+
     /**
      * @param vanillaDistance la portee que ce rendu reclame pour lui-meme.
      * @return true si ce bloc anime peut etre passe.

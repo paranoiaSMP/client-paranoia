@@ -47,6 +47,12 @@ public interface BlockEntityRendererCullingMixin {
     private void paranoia$cullDistantBlockEntities(
         BlockEntity blockEntity, Vec3d cameraPos, CallbackInfoReturnable<Boolean> info) {
 
+        // La question avant l'appel: inutile d'interroger la portee du rendu
+        // pour quelqu'un qui n'a jamais active la fonction.
+        if (!BlockEntityCullingModule.active()) {
+            return;
+        }
+
         // Type brut volontaire: l'interface porte deux parametres de type sur
         // les versions recentes et le nombre a deja bouge par le passe. Le type
         // brut traverse ces changements sans que le mixin ait a les suivre, et
