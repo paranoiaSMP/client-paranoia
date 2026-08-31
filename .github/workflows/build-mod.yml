@@ -152,6 +152,9 @@ jobs:
             for entry in \
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
               "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress" \
+              "net.minecraft.entity.player.ItemCooldownManager:*" \
+              "net.minecraft.client.network.ClientPlayerInteractionManager:clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \
               "net.minecraft.client.option.InactivityFpsLimiter:update" \
               "net.minecraft.client.render.Frustum:isVisible" \
