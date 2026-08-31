@@ -479,19 +479,19 @@ public final class ModuleWindow {
         }
 
         if (options instanceof HudElement hud) {
-            renderLabel(context, font, "Opacite", rowY);
+            renderLabel(context, font, "Opacite", rowY, 120);
             renderBar(context, rowY, hud.layout().opacity());
             rowY += ROW_HEIGHT;
 
-            renderLabel(context, font, "Taille", rowY);
+            renderLabel(context, font, "Taille", rowY, 120);
             renderBar(context, rowY, (hud.layout().scale() - 0.5f) / 2.5f);
             rowY += ROW_HEIGHT;
 
-            renderLabel(context, font, "Fond", rowY);
+            renderLabel(context, font, "Fond", rowY, LABEL_RESERVE);
             renderValue(context, font, hud.layout().background().label(), rowY);
             rowY += ROW_HEIGHT;
 
-            renderLabel(context, font, "Ombre du texte", rowY);
+            renderLabel(context, font, "Ombre du texte", rowY, LABEL_RESERVE);
             renderValue(context, font, hud.layout().textShadow() ? "Oui" : "Non", rowY);
         }
     }
