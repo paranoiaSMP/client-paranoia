@@ -151,6 +151,7 @@ jobs:
             # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
+              "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \
               "net.minecraft.client.option.InactivityFpsLimiter:update" \
               "net.minecraft.client.render.Frustum:isVisible" \

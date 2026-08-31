@@ -5,6 +5,7 @@ import gg.paranoia.client.cosmetics.CosmeticTextures;
 import gg.paranoia.client.cosmetics.CosmeticsRegistry;
 import gg.paranoia.client.hud.HudRegistry;
 import gg.paranoia.client.hud.elements.ArmorHud;
+import gg.paranoia.client.hud.elements.AttackChargeHud;
 import gg.paranoia.client.hud.elements.CoordinatesHud;
 import gg.paranoia.client.hud.elements.CpsHud;
 import gg.paranoia.client.hud.elements.DirectionHud;
@@ -72,6 +73,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new InfoHud());
         REGISTRY.register(new FpsHud());
         REGISTRY.register(new CpsHud());
+        REGISTRY.register(new AttackChargeHud());
         REGISTRY.register(new EffectsHud());
         REGISTRY.register(new DiagnosticsHud());
         REGISTRY.register(new BrightnessModule());
