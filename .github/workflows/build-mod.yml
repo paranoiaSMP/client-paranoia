@@ -133,7 +133,13 @@ jobs:
         if: always()
         working-directory: apps/client-mod
         run: |
-          for version in 1.21.8 1.21.11; do
+          for version in 1.21.8 1.21.11 26.1.2; do
+            # Une version que Fabric n'outille pas encore n'a ni classpath ni
+            # jar: la sonde n'a rien a lire et ce n'est pas une erreur.
+            if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then
+              echo "=============== $version (pas encore construite, ignoree)"
+              continue
+            fi
             cp=$(cat "versions/$version/build/compile-classpath.txt")
             echo "=============== $version"
             # Les quatre premieres entrees sont des cibles de mixin en service:

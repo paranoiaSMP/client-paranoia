@@ -15,6 +15,7 @@ import { latestStableLoader } from "./fabricVersions.js";
 import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
 import { ensureFabricApi, findInstalledFabricApi } from "./fabricApi.js";
+import { applyGraphicsPreset } from "./graphicsPreset.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 import { env } from "../../config/env.js";
 
@@ -431,6 +432,19 @@ export async function launchMinecraft(
 				}
 			}
 		}
+
+		// Le prereglage graphique se pose ici et pas a la creation du profil, pour
+		// deux raisons qui tiennent toutes deux au bloc ci-dessus.
+		//
+		// La copie n'a lieu que si options.txt n'existe pas encore. Ecrire le
+		// prereglage plus tot creait donc le fichier, et le joueur qui importait
+		// ses reglages depuis un autre launcher ne les recevait plus jamais.
+		//
+		// Ici, la copie a deja eu lieu: le prereglage se pose par-dessus, et
+		// seulement sur les quelques cles qui le concernent. Une seule fois dans
+		// la vie du profil -- son propre temoin s'en charge -- pour que ce que le
+		// joueur reglera ensuite dans le jeu lui reste acquis.
+		await applyGraphicsPreset(gameDir, profile.graphicsModeId);
 
 		// Le mode d'affichage est ecrit apres la copie: sinon la valeur du fichier
 		// source ecraserait le choix du joueur.
