@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use serde::Serialize;
 use sha2::{Digest, Sha256};
+use std::env;
 use std::fs;
 use std::io::Write;
-use serde::Serialize;
 use std::path::Path;
-use std::env;
 use std::sync::Mutex;
 use tauri::Manager;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
@@ -20,31 +20,39 @@ const BACKEND_PORT: &str = "47820";
 struct BackendProcess(Mutex<Option<CommandChild>>);
 
 #[tauri::command]
-async fn download_and_verify(url: String, destination: String, expected_sha256: String) -> Result<(), String> {
-    let response = reqwest::get(&url)
+async fn download_and_verify(
+    url: String,
+    destination: String,
+    expected_sha256: String,
+) -> Result<(), String> {
+    let mut response = reqwest::get(&url)
         .await
         .map_err(|e| format!("download error: {e}"))?;
-
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("bytes error: {e}"))?;
-
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-    let actual = hex::encode(hasher.finalize());
-
-    if actual != expected_sha256.to_lowercase() {
-        return Err("sha256 mismatch".into());
-    }
 
     if let Some(parent) = std::path::Path::new(&destination).parent() {
         fs::create_dir_all(parent).map_err(|e| format!("create dir error: {e}"))?;
     }
 
     let mut file = fs::File::create(&destination).map_err(|e| format!("file create error: {e}"))?;
-    file.write_all(&bytes)
-        .map_err(|e| format!("file write error: {e}"))?;
+    let mut hasher = Sha256::new();
+
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|e| format!("chunk error: {e}"))?
+    {
+        hasher.update(&chunk);
+        file.write_all(&chunk)
+            .map_err(|e| format!("file write error: {e}"))?;
+    }
+
+    let actual = hex::encode(hasher.finalize());
+
+    if actual != expected_sha256.to_lowercase() {
+        drop(file);
+        let _ = fs::remove_file(&destination);
+        return Err("sha256 mismatch".into());
+    }
 
     Ok(())
 }
@@ -53,7 +61,7 @@ async fn download_and_verify(url: String, destination: String, expected_sha256: 
 async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), String> {
     use tauri::{Emitter, Manager};
     let app_handle = app.clone();
-    
+
     // We run it on the main thread
     let _ = tauri::WebviewWindowBuilder::new(
         &app,
@@ -101,7 +109,11 @@ fn paranoia_data_dir() -> Option<std::path::PathBuf> {
         let base = env::var("XDG_DATA_HOME")
             .ok()
             .map(std::path::PathBuf::from)
-            .or_else(|| env::var("HOME").ok().map(|h| Path::new(&h).join(".local").join("share")))?;
+            .or_else(|| {
+                env::var("HOME")
+                    .ok()
+                    .map(|h| Path::new(&h).join(".local").join("share"))
+            })?;
         Some(base.join("paranoia-client"))
     }
 }
@@ -246,7 +258,10 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
 
     // 4. CurseForge
     if !userprofile.is_empty() {
-        let curse_dir = Path::new(&userprofile).join("curseforge").join("minecraft").join("Instances");
+        let curse_dir = Path::new(&userprofile)
+            .join("curseforge")
+            .join("minecraft")
+            .join("Instances");
         if curse_dir.exists() {
             if let Ok(entries) = fs::read_dir(curse_dir) {
                 for entry in entries.flatten() {
@@ -269,9 +284,12 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     // 5. Lunar Client
     if !userprofile.is_empty() {
         let lunar_dir = Path::new(&userprofile).join(".lunarclient");
-        let lunar_options_1 = lunar_dir.join("offline").join("multiver").join("options.txt");
+        let lunar_options_1 = lunar_dir
+            .join("offline")
+            .join("multiver")
+            .join("options.txt");
         let lunar_options_2 = lunar_dir.join("settings").join("game").join("options.txt");
-        
+
         let valid_lunar_options = if lunar_options_1.exists() {
             Some(lunar_options_1)
         } else if lunar_options_2.exists() {
@@ -311,7 +329,7 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
         ("ATLauncher", "ATLauncher"),
         ("gdlauncher_next", "GDLauncher"),
     ];
-    
+
     if !appdata.is_empty() {
         for (dir_name, launcher_name) in multimc_forks.iter() {
             let instances_dir = Path::new(&appdata).join(dir_name).join("instances");
@@ -324,7 +342,7 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                         if !mc_dir.exists() {
                             mc_dir = instance_dir.clone();
                         }
-                        
+
                         let options_path = mc_dir.join("options.txt");
                         if options_path.exists() {
                             let name = entry.file_name().to_string_lossy().into_owned();
@@ -374,6 +392,7 @@ fn spawn_backend(app: &tauri::AppHandle) -> Result<CommandChild, String> {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
@@ -406,7 +425,13 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![download_and_verify, get_detected_profiles, open_microsoft_login, open_instance_folder, open_external_url])
+        .invoke_handler(tauri::generate_handler![
+            download_and_verify,
+            get_detected_profiles,
+            open_microsoft_login,
+            open_instance_folder,
+            open_external_url
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

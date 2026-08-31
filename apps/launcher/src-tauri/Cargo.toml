@@ -19,3 +19,11 @@ serde_json = "1"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 sha2 = "0.10"
 hex = "0.4"
+tauri-plugin-dialog = "2"
+
+[profile.release]
+panic = "abort" # Retire le stack trace pour reduire la taille
+codegen-units = 1 # Meilleure optimisation, compilation plus longue
+lto = true # Link-time optimization (reduit drastiquement la taille)
+strip = true # Retire les symboles de debug
+opt-level = "s" # Optimise pour la taille ("z" ou "s")

@@ -62,6 +62,7 @@ import { InstanceMenu } from "./components/InstanceMenu";
 import { apiRequest } from "../shared/api/http";
 import { Wardrobe } from "./components/Wardrobe";
 import { NewsCard } from "./components/NewsCard";
+import { useFileDrop} from "./hooks/useFileDrop";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
@@ -77,6 +78,10 @@ import { useProfiles } from "./hooks/useProfiles";
  * le personnage. Les valeurs restent basses volontairement -- le fond ne doit
  * pas concurrencer les vignettes, qui portent deja leur propre degrade.
  */
+
+
+
+
 const BACKGROUND: CSSProperties = {
 	backgroundImage: [
 		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.16) 0%, rgba(147, 9, 239, 0) 55%)",
@@ -162,6 +167,7 @@ function InstanceCard({
 export function App() {
 	const { t } = useTranslation();
 
+
 	// App Global State
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -214,6 +220,10 @@ export function App() {
 		handleDeleteProfile,
 		handleFavoriteProfile,
 	} = useProfiles(setError);
+
+	const { isDragging, isProcessing } = useFileDrop(() => {
+		refreshProfiles();
+	});
 
 	// Profile Creation State
 	const [step, setStep] = useState<SetupStep>(1);
@@ -362,39 +372,6 @@ export function App() {
 		}
 		bootstrap();
 	}, [bootstrapAttempt]);
-
-	useEffect(() => {
-		let unlisten: (() => void) | undefined;
-		async function setupDragDrop() {
-			unlisten = await listen<{ paths: string[] }>(
-				"tauri://file-drop",
-				async (event) => {
-					const paths = event.payload.paths;
-					if (paths && paths.length > 0) {
-						const file = paths[0];
-						if (file && (file.endsWith(".mrpack") || file.endsWith(".zip"))) {
-							if (confirm(`Voulez-vous importer l'archive ${file} ?`)) {
-								try {
-									setLoading(true);
-									await importArchive(file as string);
-									await refreshProfiles();
-									alert("Archive importée avec succès !");
-								} catch (e: any) {
-									alert("Erreur lors de l'import : " + e.message);
-								} finally {
-									setLoading(false);
-								}
-							}
-						}
-					}
-				},
-			);
-		}
-		setupDragDrop();
-		return () => {
-			if (unlisten) unlisten();
-		};
-	}, []);
 
 	const selectedType = useMemo(
 		() => config?.profileTypes.find((x) => x.id === profileType),
@@ -1110,6 +1087,23 @@ export function App() {
 			>
 				<LogsTab />
 			</Modal>
+
+			{isDragging && !isProcessing && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[#9309ef]/20 backdrop-blur-md">
+					<div className="rounded-2xl border-2 border-[#9309ef] bg-[#1a1621] px-8 py-6 shadow-2xl">
+						<h2 className="text-2xl font-bold text-white">Relâcher pour importer le profil</h2>
+					</div>
+				</div>
+			)}
+			
+			{isProcessing && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
+					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-[#1a1621] px-8 py-6 shadow-2xl">
+						<div className="h-12 w-12 animate-spin rounded-full border-4 border-[#9309ef] border-t-transparent"></div>
+						<h2 className="text-xl font-bold text-white">Importation en cours...</h2>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
