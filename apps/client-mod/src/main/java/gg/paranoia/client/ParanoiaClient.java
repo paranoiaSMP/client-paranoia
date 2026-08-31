@@ -13,6 +13,7 @@ import gg.paranoia.client.hud.elements.DiagnosticsHud;
 import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
 import gg.paranoia.client.hud.elements.InfoHud;
+import gg.paranoia.client.hud.elements.ShieldHud;
 import gg.paranoia.client.hud.elements.TotemHud;
 import gg.paranoia.client.menu.MenuController;
 import gg.paranoia.client.module.KeySetting;
@@ -76,6 +77,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new CpsHud());
         REGISTRY.register(new AttackChargeHud());
         REGISTRY.register(new TotemHud());
+        REGISTRY.register(new ShieldHud());
         REGISTRY.register(new EffectsHud());
         REGISTRY.register(new DiagnosticsHud());
         REGISTRY.register(new BrightnessModule());
