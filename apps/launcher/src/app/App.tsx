@@ -649,15 +649,21 @@ export function App() {
 					  (lg:w-[55%] xl:w-[50%]) qui devaient rester d'accord avec ceux du
 					  personnage. Ils ne l'etaient pas toujours.
 					*/}
+					{/* Le panneau du personnage monte jusqu'en haut de la fenetre: la
+					    barre de raccourcis ne couvre plus que la colonne de gauche. Les
+					    deux colonnes sont donc soeurs au premier niveau, et la barre
+					    descend d'un cran dans celle de gauche. */}
 					<section
 						aria-label="Interface principale du jeu"
-						className="absolute inset-0 flex h-full w-full flex-col gap-4 overflow-hidden p-6 lg:p-8"
+						className="absolute inset-0 flex h-full w-full gap-5 overflow-hidden p-6 lg:p-8"
 						style={BACKGROUND}
 					>
+						{/* Sans `relative`: le menu deroulant est ancre dans cette colonne
+						    mais doit se placer par rapport a la fenetre. Rendre la colonne
+						    positionnee le collait au coin des actualites. */}
+						<div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
 						{/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
-						{/* La reserve a droite est celle du menu deroulant, qui reste en
-						    position absolue parce qu'il s'ouvre par-dessus le reste. */}
-						<div className="flex shrink-0 flex-col gap-3 pr-[72px]">
+						<div className="flex shrink-0 flex-col gap-3">
 							<HomeActionBar
 								modCount={modCount}
 								instanceCount={profiles.length}
@@ -813,13 +819,11 @@ export function App() {
 							)}
 						</motion.div>
 
-						{/* CORPS: actualites, instances et lancement a gauche, personnage
-						    a droite. */}
-						<div className="flex min-h-0 flex-1 gap-5">
-							<div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-								{/* ACTUALITÉS */}
-								<NewsCard news={news} />
+							{/* ACTUALITÉS */}
+							<NewsCard news={news} />
 
+							{/* Instances et lancement, colles en bas de la colonne. */}
+							<div className="mt-auto flex min-w-0 flex-col gap-4">
 								{/* Piste des instances: le bouton d'ajout reste en dehors de
                     la piste. Place a l'interieur, il sortait du champ des la
                     troisieme instance et donnait l'impression qu'on ne pouvait
@@ -896,13 +900,7 @@ export function App() {
 									</button>
 								</div>
 
-								{/* Le lancement suit les vignettes, il n'est pas colle en bas
-                    de la colonne. Colle en bas, il s'eloignait de l'instance
-                    choisie a mesure que la fenetre grandissait: on cliquait une
-                    vignette en haut pour aller lancer trois cents pixels plus
-                    bas. Le vide se retrouve sous le bouton, ou il se lit comme
-                    une marge. */}
-								<div className="mt-1 flex w-full max-w-[440px] shrink-0 items-center gap-3">
+								<div className="flex w-full max-w-[440px] shrink-0 items-center gap-3">
 									<button
 										aria-label={installState === "running" ? "Arrêter" : "Lancer"}
 										disabled={!mainProfile}
@@ -976,30 +974,35 @@ export function App() {
 									</button>
 								</div>
 							</div>
+						</div>
 
-							{/* PERSONNAGE 3D */}
-							{/* Dans un cadre, et non pose sur le fond. Sans bord, le
-							    personnage flottait dans le vide a droite et la fenetre
-							    paraissait vide de ce cote; encadre, c'est un panneau qui
-							    equilibre la colonne de gauche. Masque sous md: la place
-							    n'y suffit plus, et l'amputer profiterait a personne.
+						{/* PERSONNAGE 3D */}
+						{/* Dans un cadre, et non pose sur le fond. Sans bord, le
+						    personnage flottait dans le vide a droite et la fenetre
+						    paraissait vide de ce cote; encadre, c'est un panneau qui
+						    equilibre la colonne de gauche. Masque sous md: la place
+						    n'y suffit plus, et l'amputer profiterait a personne.
 
-							    Le cadrage recule par rapport au vestiaire: dans un panneau
-							    etroit et haut, le zoom d'origine coupait la tete et les
-							    pieds. */}
-							<div className="bubble-frame hidden w-[32%] min-w-[220px] max-w-[360px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
-								<SkinViewer3D
-									className="h-full w-full"
-									zoom={0.62}
-									skinUrl={
-										account?.minecraftUsername
-											? `https://minotar.net/skin/${account.minecraftUsername}`
-											: "https://minotar.net/skin/Steve"
-									}
-									{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
-									paused={installState === "running"}
-								/>
-							</div>
+						    Le panneau part du haut de la fenetre et non du bas de la
+						    barre: c'est la seule facon de lui donner de la hauteur sans
+						    empieter sur la colonne de gauche. Le bouton du menu se pose
+						    sur son coin.
+
+						    Le cadrage recule par rapport au vestiaire: dans un panneau
+						    etroit et haut, le zoom d'origine coupait la tete et les
+						    pieds. */}
+						<div className="bubble-frame hidden w-[36%] min-w-[250px] max-w-[400px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
+							<SkinViewer3D
+								className="h-full w-full"
+								zoom={0.62}
+								skinUrl={
+									account?.minecraftUsername
+										? `https://minotar.net/skin/${account.minecraftUsername}`
+										: "https://minotar.net/skin/Steve"
+								}
+								{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
+								paused={installState === "running"}
+							/>
 						</div>
 					</section>
 				</div>

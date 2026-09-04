@@ -121,12 +121,12 @@ export function NewsCard({ news }: NewsCardProps) {
 			<motion.div
 				{...(latest ? { layoutId: `card-${latest.title}-${id}` } : {})}
 				onClick={() => latest && setActive(latest)}
-				className="bubble flex h-[108px] w-full shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-4 transition-[border-color] hover:border-white/15"
+				className="bubble mx-4 flex h-[144px] shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-4 transition-[border-color] hover:border-white/15"
 			>
 				{latest?.imageUrl && (
 					<motion.div
 						layoutId={`image-${latest.title}-${id}`}
-						className="hidden h-full w-[128px] shrink-0 overflow-hidden rounded-[16px] sm:block"
+						className="hidden h-full w-[168px] shrink-0 overflow-hidden rounded-[16px] sm:block"
 					>
 						<img
 							src={latest.imageUrl}
@@ -155,7 +155,7 @@ export function NewsCard({ news }: NewsCardProps) {
 							</motion.h3>
 							<motion.p
 								layoutId={`description-${latest.title}-${id}`}
-								className="mt-1 line-clamp-2 text-[11px] leading-snug text-[#9a92b6]"
+								className="mt-1.5 line-clamp-4 text-[11px] leading-relaxed text-[#9a92b6]"
 							>
 								{latest.excerpt}
 							</motion.p>

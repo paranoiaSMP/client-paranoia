@@ -148,7 +148,12 @@ export function HomeActionBar({
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] shadow-lg shadow-[#8b5cf6]/20">
           <ShoppingBag className="h-4 w-4" />
         </span>
-        <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">
+        {/* Le libelle ne reapparait qu'a partir de lg. La barre ne couvre plus
+            que la colonne de gauche depuis que le panneau du personnage monte
+            jusqu'en haut: sur une fenetre moyenne, ces quatre-vingt-dix pixels
+            de texte coutaient un raccourci entier dans la piste, alors que
+            l'icone du sac suffit a reconnaitre la boutique. */}
+        <span className="hidden lg:inline text-xs font-bold uppercase tracking-wide">
           Boutique
         </span>
       </button>
