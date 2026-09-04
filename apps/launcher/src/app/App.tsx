@@ -84,9 +84,12 @@ import { useProfiles } from "./hooks/useProfiles";
 
 const BACKGROUND: CSSProperties = {
 	backgroundImage: [
-		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.16) 0%, rgba(147, 9, 239, 0) 55%)",
-		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.22) 0%, rgba(97, 6, 158, 0) 60%)",
-		"linear-gradient(160deg, #1a1529 0%, #141416 45%, #0e0e10 100%)",
+		// Les deux lueurs gagnent un peu, le fond descend beaucoup: c'est en
+		// creusant l'ecart, et non en eclaircissant, qu'on obtient de la
+		// profondeur. Eclaircir les lueurs seules aurait donne un fond delave.
+		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.2) 0%, rgba(147, 9, 239, 0) 55%)",
+		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.26) 0%, rgba(97, 6, 158, 0) 60%)",
+		"linear-gradient(160deg, #120e20 0%, #0a0812 45%, #050409 100%)",
 	].join(", "),
 };
 
@@ -120,7 +123,7 @@ type DetectedProfile = {
  * suivante. Les deux partagent desormais la meme taille, et la rangee se lit
  * comme une suite de cases dont la derniere est vide.
  */
-const CARD_SIZE = "h-[150px] w-[112px] xl:h-[172px] xl:w-[140px]";
+const CARD_SIZE = "h-[144px] w-[112px] xl:h-[172px] xl:w-[140px]";
 
 /**
  * Vignette d'instance.
@@ -649,15 +652,25 @@ export function App() {
 					  (lg:w-[55%] xl:w-[50%]) qui devaient rester d'accord avec ceux du
 					  personnage. Ils ne l'etaient pas toujours.
 					*/}
+					{/* Le panneau du personnage monte jusqu'en haut de la fenetre et la
+					    barre de raccourcis passe par-dessus, sur toute la largeur.
+					    C'est la seule facon d'avoir les deux: une barre logee dans la
+					    colonne de gauche la raccourcissait au point de n'y laisser que
+					    deux raccourcis, et un panneau commencant sous la barre perdait
+					    cent pixels de hauteur. En surimpression, aucun des deux ne paie
+					    pour l'autre. */}
 					<section
 						aria-label="Interface principale du jeu"
-						className="absolute inset-0 flex h-full w-full flex-col gap-4 overflow-hidden p-6 lg:p-8"
+						className="absolute inset-0 flex h-full w-full gap-7 overflow-hidden p-7 lg:p-10"
 						style={BACKGROUND}
 					>
 						{/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
-						{/* La reserve a droite est celle du menu deroulant, qui reste en
-						    position absolue parce qu'il s'ouvre par-dessus le reste. */}
-						<div className="flex shrink-0 flex-col gap-3 pr-[72px]">
+						{/* La barre va jusqu'au bord droit et le carre du menu se pose
+						    dessus, plutot que d'etre range a cote. En le rangeant a cote,
+						    l'ecart entre les deux laissait passer un morceau de bordure du
+						    panneau -- un trait violet errant entre la barre et le carre.
+						    La place du carre est reservee a l'interieur de la barre. */}
+						<div className="absolute inset-x-7 top-7 z-30 flex flex-col gap-3 lg:inset-x-10 lg:top-10">
 							<HomeActionBar
 								modCount={modCount}
 								instanceCount={profiles.length}
@@ -703,8 +716,8 @@ export function App() {
 						<motion.div
 							{...(prefersReducedMotion
 								? {}
-								: { animate: { height: menuOpen ? 480 : 56 } })}
-							className={`absolute right-6 top-6 z-20 flex w-14 flex-col overflow-hidden rounded-[16px] lg:right-8 lg:top-8 ${
+								: { animate: { height: menuOpen ? 480 : 64 } })}
+							className={`absolute right-7 top-7 z-40 flex w-16 flex-col overflow-hidden rounded-[18px] lg:right-10 lg:top-10 ${
 								menuOpen ? "border border-[#2c2447] bg-[#1e1832]" : ""
 							}`}
 							initial={false}
@@ -713,7 +726,11 @@ export function App() {
 							}}
 						>
 							{/* TOP HEADER - Toujours visible et parfaitement centré */}
-							<div className="flex h-[54px] w-full shrink-0 items-center justify-center">
+							{/* Replie, le carre fait exactement la hauteur de la barre sur
+							    laquelle il se pose: 64 pixels, bords alignes en haut comme
+							    en bas. Un carre plus petit aurait flotte au milieu d'elle
+							    au lieu de la terminer. */}
+							<div className="flex h-16 w-full shrink-0 items-center justify-center">
 								<button
 									aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
 									aria-expanded={menuOpen}
@@ -722,7 +739,7 @@ export function App() {
 									className={`group flex shrink-0 items-center justify-center transition-[filter,background-color] ${
 										menuOpen
 											? "h-10 w-10 rounded-[10px] hover:bg-[#2c2447]"
-											: "bubble-primary h-14 w-14 rounded-[16px] hover:brightness-110"
+											: "bubble-primary h-16 w-16 rounded-[18px] hover:brightness-110"
 									}`}
 								>
 									{menuOpen ? (
@@ -813,13 +830,14 @@ export function App() {
 							)}
 						</motion.div>
 
-						{/* CORPS: actualites, instances et lancement a gauche, personnage
-						    a droite. */}
-						<div className="flex min-h-0 flex-1 gap-5">
-							<div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-								{/* ACTUALITÉS */}
-								<NewsCard news={news} />
+						{/* La reserve en haut est celle de la barre en surimpression:
+						    hauteur de la barre, des points, et de leur ecart. */}
+						<div className="flex min-h-0 min-w-0 flex-1 flex-col pt-[100px]">
+							{/* ACTUALITÉS */}
+							<NewsCard news={news} />
 
+							{/* Instances et lancement, colles en bas de la colonne. */}
+							<div className="mt-auto flex min-w-0 flex-col gap-5">
 								{/* Piste des instances: le bouton d'ajout reste en dehors de
                     la piste. Place a l'interieur, il sortait du champ des la
                     troisieme instance et donnait l'impression qu'on ne pouvait
@@ -896,13 +914,7 @@ export function App() {
 									</button>
 								</div>
 
-								{/* Le lancement suit les vignettes, il n'est pas colle en bas
-                    de la colonne. Colle en bas, il s'eloignait de l'instance
-                    choisie a mesure que la fenetre grandissait: on cliquait une
-                    vignette en haut pour aller lancer trois cents pixels plus
-                    bas. Le vide se retrouve sous le bouton, ou il se lit comme
-                    une marge. */}
-								<div className="mt-1 flex w-full max-w-[440px] shrink-0 items-center gap-3">
+								<div className="flex w-full max-w-[440px] shrink-0 items-center gap-4">
 									<button
 										aria-label={installState === "running" ? "Arrêter" : "Lancer"}
 										disabled={!mainProfile}
@@ -976,30 +988,35 @@ export function App() {
 									</button>
 								</div>
 							</div>
+						</div>
 
-							{/* PERSONNAGE 3D */}
-							{/* Dans un cadre, et non pose sur le fond. Sans bord, le
-							    personnage flottait dans le vide a droite et la fenetre
-							    paraissait vide de ce cote; encadre, c'est un panneau qui
-							    equilibre la colonne de gauche. Masque sous md: la place
-							    n'y suffit plus, et l'amputer profiterait a personne.
+						{/* PERSONNAGE 3D */}
+						{/* Dans un cadre, et non pose sur le fond. Sans bord, le
+						    personnage flottait dans le vide a droite et la fenetre
+						    paraissait vide de ce cote; encadre, c'est un panneau qui
+						    equilibre la colonne de gauche. Masque sous md: la place
+						    n'y suffit plus, et l'amputer profiterait a personne.
 
-							    Le cadrage recule par rapport au vestiaire: dans un panneau
-							    etroit et haut, le zoom d'origine coupait la tete et les
-							    pieds. */}
-							<div className="bubble-frame hidden w-[32%] min-w-[220px] max-w-[360px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
-								<SkinViewer3D
-									className="h-full w-full"
-									zoom={0.62}
-									skinUrl={
-										account?.minecraftUsername
-											? `https://minotar.net/skin/${account.minecraftUsername}`
-											: "https://minotar.net/skin/Steve"
-									}
-									{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
-									paused={installState === "running"}
-								/>
-							</div>
+						    Le panneau part du haut de la fenetre et non du bas de la
+						    barre: c'est la seule facon de lui donner de la hauteur sans
+						    empieter sur la colonne de gauche. Le bouton du menu se pose
+						    sur son coin.
+
+						    Le cadrage recule par rapport au vestiaire: dans un panneau
+						    etroit et haut, le zoom d'origine coupait la tete et les
+						    pieds. */}
+						<div className="bubble-frame hidden w-[36%] min-w-[250px] max-w-[400px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
+							<SkinViewer3D
+								className="h-full w-full"
+								zoom={0.62}
+								skinUrl={
+									account?.minecraftUsername
+										? `https://minotar.net/skin/${account.minecraftUsername}`
+										: "https://minotar.net/skin/Steve"
+								}
+								{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
+								paused={installState === "running"}
+							/>
 						</div>
 					</section>
 				</div>
