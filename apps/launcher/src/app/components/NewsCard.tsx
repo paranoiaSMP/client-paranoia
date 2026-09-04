@@ -112,41 +112,65 @@ export function NewsCard({ news }: NewsCardProps) {
 				) : null}
 			</AnimatePresence>
 
+			{/*
+			  Bandeau, et non plus vignette. En colonne etroite le titre se
+			  tronquait en deux lignes et l'extrait en quatre, ce qui ne laissait
+			  lire ni l'un ni l'autre. Sur toute la largeur, la vignette passe a
+			  gauche et le texte respire a cote.
+			*/}
 			<motion.div
 				{...(latest ? { layoutId: `card-${latest.title}-${id}` } : {})}
 				onClick={() => latest && setActive(latest)}
-				className="mt-6 flex h-[168px] w-[240px] shrink-0 flex-col overflow-hidden rounded-[18px] border border-[#292142] bg-gradient-to-br from-[#221733] via-[#1a1a1f] to-[#161225] p-4 cursor-pointer hover:border-accent-purple/50 transition-colors"
+				className="bubble flex h-[108px] w-full shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-4 transition-[border-color] hover:border-white/15"
 			>
-				<div className="flex items-center gap-2">
-					<Newspaper className="h-3.5 w-3.5 shrink-0 text-accent-purple" />
-					<span className="text-[10px] font-bold uppercase tracking-widest text-accent-purple">
-						Actualités
-					</span>
-				</div>
-
-				{latest ? (
-					<div className="mt-3 min-h-0 flex-1 flex flex-col">
-						<motion.h3
-							layoutId={`title-${latest.title}-${id}`}
-							className="line-clamp-2 text-sm font-semibold leading-snug text-white"
-						>
-							{latest.title}
-						</motion.h3>
-						<motion.p
-							layoutId={`description-${latest.title}-${id}`}
-							className="mt-1.5 line-clamp-4 text-[11px] leading-snug text-[#9a92b6]"
-						>
-							{latest.excerpt}
-						</motion.p>
-					</div>
-				) : (
-					<div className="mt-3 flex flex-1 flex-col justify-center">
-						<p className="text-sm font-semibold text-white">Rien à annoncer</p>
-						<p className="mt-1 text-[11px] leading-snug text-[#7a7194]">
-							Les annonces du serveur s'afficheront ici.
-						</p>
-					</div>
+				{latest?.imageUrl && (
+					<motion.div
+						layoutId={`image-${latest.title}-${id}`}
+						className="hidden h-full w-[128px] shrink-0 overflow-hidden rounded-[16px] sm:block"
+					>
+						<img
+							src={latest.imageUrl}
+							alt=""
+							aria-hidden="true"
+							className="h-full w-full object-cover"
+						/>
+					</motion.div>
 				)}
+
+				<div className="flex min-w-0 flex-1 flex-col justify-center py-1">
+					<div className="flex items-center gap-2">
+						<Newspaper className="h-3.5 w-3.5 shrink-0 text-accent-purple" />
+						<span className="text-[10px] font-bold uppercase tracking-widest text-accent-purple">
+							Actualités
+						</span>
+					</div>
+
+					{latest ? (
+						<>
+							<motion.h3
+								layoutId={`title-${latest.title}-${id}`}
+								className="mt-1.5 truncate text-sm font-semibold leading-snug text-white"
+							>
+								{latest.title}
+							</motion.h3>
+							<motion.p
+								layoutId={`description-${latest.title}-${id}`}
+								className="mt-1 line-clamp-2 text-[11px] leading-snug text-[#9a92b6]"
+							>
+								{latest.excerpt}
+							</motion.p>
+						</>
+					) : (
+						<>
+							<p className="mt-1.5 text-sm font-semibold text-white">
+								Rien à annoncer
+							</p>
+							<p className="mt-1 text-[11px] leading-snug text-[#7a7194]">
+								Les annonces du serveur s'afficheront ici.
+							</p>
+						</>
+					)}
+				</div>
 			</motion.div>
 		</>
 	);

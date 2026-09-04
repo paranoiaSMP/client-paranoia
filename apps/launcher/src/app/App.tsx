@@ -113,12 +113,27 @@ type DetectedProfile = {
 };
 
 /**
+ * Gabarit commun aux vignettes d'instance et au bouton d'ajout.
+ *
+ * <p>Le bouton d'ajout faisait 80 pixels de cote a cote de vignettes de 180:
+ * il se lisait comme un bouton egare dans la rangee plutot que comme la case
+ * suivante. Les deux partagent desormais la meme taille, et la rangee se lit
+ * comme une suite de cases dont la derniere est vide.
+ */
+const CARD_SIZE = "h-[150px] w-[112px] xl:h-[172px] xl:w-[140px]";
+
+/**
  * Vignette d'instance.
  *
  * <p>Le degrade et la lueur ne sont pas decoratifs seulement: une vignette
  * pleine d'un aplat uni ne se distinguait de sa voisine que par la couleur de
  * sa bordure, difficile a voir de loin. La version selectionnee est violette et
  * eclairee, les autres restent sombres.
+ *
+ * <p>La version est dans une pastille et non dans la ligne de detail: c'est la
+ * seule information qu'on cherche en balayant la rangee -- savoir laquelle est
+ * en 1.21.11 -- et une pastille se trouve d'un coup d'oeil la ou une ligne de
+ * texte gris demande de lire.
  */
 function InstanceCard({
 	label,
@@ -136,7 +151,7 @@ function InstanceCard({
 	return (
 		<article
 			onClick={onClick}
-			className={`group relative flex h-[180px] w-[184px] shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[22px] p-4 transition-[box-shadow,border-color] ${
+			className={`group relative flex ${CARD_SIZE} shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[22px] p-3 transition-[box-shadow,border-color] ${
 				isSelected ? "bubble-active" : "bubble hover:border-white/15"
 			}`}
 		>
@@ -149,13 +164,22 @@ function InstanceCard({
 			/>
 
 			<div className="relative z-10 min-w-0">
-				<p className="truncate text-sm font-medium leading-normal text-white">
+				<p className="truncate text-[13px] font-medium leading-normal text-white">
 					{label}
 				</p>
-				{(version || detail) && (
-					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">
-						{[version, detail].filter(Boolean).join(" · ")}
-					</p>
+				{detail && (
+					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">{detail}</p>
+				)}
+				{version && (
+					<span
+						className={`mt-1.5 inline-block max-w-full truncate rounded-[7px] border px-1.5 py-0.5 text-[10px] font-semibold ${
+							isSelected
+								? "border-[#8b5cf6]/60 bg-[#8b5cf6]/15 text-[#cfa8ff]"
+								: "border-white/10 bg-black/30 text-[#9a92b6]"
+						}`}
+					>
+						{version}
+					</span>
 				)}
 			</div>
 		</article>
@@ -617,13 +641,23 @@ export function App() {
 
 			<main className="flex-1 flex items-center justify-center min-h-[520px]">
 				<div className="w-full h-full relative">
+					{/*
+					  Deux colonnes, et non plus une colonne avec deux elements poses
+					  par-dessus. Le personnage et le menu etaient en position absolue,
+					  donc hors du flux: la colonne de gauche ignorait leur existence et
+					  se reservait la place a la main, en pourcentages
+					  (lg:w-[55%] xl:w-[50%]) qui devaient rester d'accord avec ceux du
+					  personnage. Ils ne l'etaient pas toujours.
+					*/}
 					<section
 						aria-label="Interface principale du jeu"
-						className="absolute inset-0 w-full h-full overflow-hidden p-8 lg:p-12 flex flex-col"
+						className="absolute inset-0 flex h-full w-full flex-col gap-4 overflow-hidden p-6 lg:p-8"
 						style={BACKGROUND}
 					>
 						{/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
-						<div className="flex flex-col gap-5">
+						{/* La reserve a droite est celle du menu deroulant, qui reste en
+						    position absolue parce qu'il s'ouvre par-dessus le reste. */}
+						<div className="flex shrink-0 flex-col gap-3 pr-[72px]">
 							<HomeActionBar
 								modCount={modCount}
 								instanceCount={profiles.length}
@@ -655,36 +689,46 @@ export function App() {
 							<img
 								alt=""
 								aria-hidden="true"
-								className="h-2 w-[104px] ml-6"
+								className="ml-4 h-2 w-[104px]"
 								src="/assets/slide-indicators.svg"
 							/>
 						</div>
 
-						{/* ACTUALITÉS */}
-						<NewsCard news={news} />
-
 						{/* SLIDING MENU */}
+						{/* Replie, c'est le carre violet du coin: la seule pastille de
+						    couleur du haut de l'ecran, donc la premiere chose que l'oeil
+						    trouve quand il cherche le menu. Deplie, le carre redevient
+						    sobre -- une colonne de six icones sur un degrade violet ne se
+						    lirait plus. */}
 						<motion.div
-							aria-hidden="true"
 							{...(prefersReducedMotion
 								? {}
 								: { animate: { height: menuOpen ? 480 : 56 } })}
-							className="absolute right-[32px] top-[32px] z-20 w-14 overflow-hidden rounded-[14px] border border-[#2c2447] bg-[#1e1832] flex flex-col"
+							className={`absolute right-6 top-6 z-20 flex w-14 flex-col overflow-hidden rounded-[16px] lg:right-8 lg:top-8 ${
+								menuOpen ? "border border-[#2c2447] bg-[#1e1832]" : ""
+							}`}
 							initial={false}
 							transition={{
 								height: { duration: 0.3, ease: "easeInOut" },
 							}}
 						>
 							{/* TOP HEADER - Toujours visible et parfaitement centré */}
-							<div className="h-[54px] w-full shrink-0 flex items-center justify-center">
+							<div className="flex h-[54px] w-full shrink-0 items-center justify-center">
 								<button
+									aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+									aria-expanded={menuOpen}
+									type="button"
 									onClick={() => setMenuOpen(!menuOpen)}
-									className="w-10 h-10 shrink-0 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group"
+									className={`group flex shrink-0 items-center justify-center transition-[filter,background-color] ${
+										menuOpen
+											? "h-10 w-10 rounded-[10px] hover:bg-[#2c2447]"
+											: "bubble-primary h-14 w-14 rounded-[16px] hover:brightness-110"
+									}`}
 								>
 									{menuOpen ? (
-										<X className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
+										<X className="h-6 w-6 text-gray-400 transition-colors group-hover:text-white" />
 									) : (
-										<Menu className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
+										<Menu className="h-6 w-6" />
 									)}
 								</button>
 							</div>
@@ -769,157 +813,184 @@ export function App() {
 							)}
 						</motion.div>
 
-						{/* PROFILES & PLAY BUTTON */}
-						<div className="mt-auto flex flex-col items-start gap-8 pb-4 relative z-10 w-full lg:w-[55%] xl:w-[50%] lg:pr-8">
-							<div className="flex max-w-full flex-row items-center gap-6">
-								{/* Piste des instances: trois vignettes visibles, molette pour
-                    atteindre les suivantes. Le bouton d'ajout reste en dehors:
-                    place a l'interieur, il sortait du champ des la troisieme
-                    instance et donnait l'impression qu'on ne pouvait pas en
-                    creer davantage. */}
-								<div
-									onWheel={(event) => {
-										// Meme conversion que la barre du haut: une molette de
-										// souris ne produit que du deplacement vertical.
-										if (event.deltaY !== 0) {
-											event.currentTarget.scrollLeft += event.deltaY;
-										}
-									}}
-									className="no-scrollbar flex max-w-full lg:max-w-[616px] flex-row flex-nowrap items-center gap-8 overflow-x-auto scroll-smooth py-1"
-								>
-									{displayProfiles.map((profile, index) => {
-										const isSelected = profile
-											? profile.id === mainProfile?.id
-											: false;
-										const label = profile
-											? profile.name
-											: t("home.new_instance", "Nouvelle instance");
-										return (
-											<InstanceCard
-												key={profile ? profile.id : "vide"}
-												label={label}
-												{...(profile
-													? {
-															version: profile.minecraftVersion,
-															detail: profile.profileTypeId,
+						{/* CORPS: actualites, instances et lancement a gauche, personnage
+						    a droite. */}
+						<div className="flex min-h-0 flex-1 gap-5">
+							<div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+								{/* ACTUALITÉS */}
+								<NewsCard news={news} />
+
+								{/* Piste des instances: le bouton d'ajout reste en dehors de
+                    la piste. Place a l'interieur, il sortait du champ des la
+                    troisieme instance et donnait l'impression qu'on ne pouvait
+                    pas en creer davantage. */}
+								<div className="flex min-w-0 flex-row items-center gap-3 xl:gap-4">
+									<div
+										onWheel={(event) => {
+											// Meme conversion que la barre du haut: une molette de
+											// souris ne produit que du deplacement vertical.
+											if (event.deltaY !== 0) {
+												event.currentTarget.scrollLeft += event.deltaY;
+											}
+										}}
+										// Sans flex-1: la piste doit se dimensionner sur ses
+										// vignettes et ne se resserrer que faute de place. En
+										// flex-1 elle prenait toute la largeur libre, ce qui
+										// repoussait le bouton d'ajout a l'autre bout de la
+										// rangee -- separe des cases dont il est la suite.
+										className="no-scrollbar flex min-w-0 flex-row flex-nowrap items-center gap-3 overflow-x-auto scroll-smooth py-1 xl:gap-4"
+									>
+										{displayProfiles.map((profile) => {
+											const isSelected = profile
+												? profile.id === mainProfile?.id
+												: false;
+											const label = profile
+												? profile.name
+												: t("home.new_instance", "Nouvelle instance");
+											return (
+												<InstanceCard
+													key={profile ? profile.id : "vide"}
+													label={label}
+													{...(profile
+														? {
+																version: profile.minecraftVersion,
+																detail: profile.profileTypeId,
+															}
+														: {})}
+													isSelected={isSelected}
+													onClick={() => {
+														if (profile) {
+															// Selection d'abord: le menu qui s'ouvre, le bouton
+															// Jouer et le compteur de mods parlent tous de
+															// l'instance courante.
+															setSelectedProfileId(profile.id);
+															setActiveModal("instance");
+														} else {
+															setStep(connected ? 2 : 1);
+															setIsCreatingProfile(true);
+															setActiveModal("create_profile");
 														}
-													: {})}
-												isSelected={isSelected}
-												onClick={() => {
-													if (profile) {
-														// Selection d'abord: le menu qui s'ouvre, le bouton
-														// Jouer et le compteur de mods parlent tous de
-														// l'instance courante.
-														setSelectedProfileId(profile.id);
-														setActiveModal("instance");
-													} else {
-														setStep(connected ? 2 : 1);
-														setIsCreatingProfile(true);
-														setActiveModal("create_profile");
-													}
-												}}
-											/>
-										);
-									})}
+													}}
+												/>
+											);
+										})}
+									</div>
+
+									<button
+										aria-label="Ajouter une instance"
+										title="Nouvelle instance"
+										className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-[#8b5cf6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]`}
+										onClick={() => {
+											setStep(connected ? 2 : 1);
+											setIsCreatingProfile(true);
+											setActiveModal("create_profile");
+										}}
+										type="button"
+									>
+										<img
+											alt=""
+											aria-hidden="true"
+											className="size-10 opacity-60 transition-opacity group-hover:opacity-100"
+											src="/assets/plus-square.svg"
+										/>
+									</button>
 								</div>
 
-								<button
-									aria-label="Ajouter une instance"
-									title="Nouvelle instance"
-									className="grid size-20 shrink-0 place-items-center rounded-2xl border border-[#2c2447] bg-[#1e1e1e] hover:border-[#8b5cf6] hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]"
-									onClick={() => {
-										setStep(connected ? 2 : 1);
-										setIsCreatingProfile(true);
-										setActiveModal("create_profile");
-									}}
-									type="button"
-								>
-									<img
-										alt=""
-										aria-hidden="true"
-										className="size-10"
-										src="/assets/plus-square.svg"
-									/>
-								</button>
-							</div>
-
-							<div className="flex h-[74px] w-[350px] shrink-0 items-center gap-3">
-								<button
-									aria-label={installState === "running" ? "Arrêter" : "Lancer"}
-									disabled={!mainProfile}
-									className={`flex h-[61px] w-full px-6 relative items-center justify-center overflow-hidden rounded-full text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${installState === "running" ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
-									onClick={() => {
-										if (!mainProfile) return;
-										if (installState === "running") {
-											handleCancelLaunch();
-										} else {
-											handleLaunchGame(mainProfile.id);
-										}
-									}}
-									type="button"
-								>
-									{installState === "running" && launchStatus && (
-										<div
-											className="absolute inset-0 bg-red-800"
-											style={{ width: `${launchStatus.progress * 100}%` }}
-										/>
-									)}
-									<span className="relative z-10 flex items-center justify-center gap-2">
-										{installState === "running" ? (
-											<>
-												<X className="w-5 h-5 fill-current" />
-												{t("home.stop", "Arrêter")}
-											</>
-										) : (
-											<>
-												<Play className="w-4 h-4 fill-current" />
-												{t("home.play", "Jouer")}
-											</>
+								{/* Le lancement suit les vignettes, il n'est pas colle en bas
+                    de la colonne. Colle en bas, il s'eloignait de l'instance
+                    choisie a mesure que la fenetre grandissait: on cliquait une
+                    vignette en haut pour aller lancer trois cents pixels plus
+                    bas. Le vide se retrouve sous le bouton, ou il se lit comme
+                    une marge. */}
+								<div className="mt-1 flex w-full max-w-[440px] shrink-0 items-center gap-3">
+									<button
+										aria-label={installState === "running" ? "Arrêter" : "Lancer"}
+										disabled={!mainProfile}
+										className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${installState === "running" ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
+										onClick={() => {
+											if (!mainProfile) return;
+											if (installState === "running") {
+												handleCancelLaunch();
+											} else {
+												handleLaunchGame(mainProfile.id);
+											}
+										}}
+										type="button"
+									>
+										{installState === "running" && launchStatus && (
+											<div
+												className="absolute inset-0 bg-red-800"
+												style={{ width: `${launchStatus.progress * 100}%` }}
+											/>
 										)}
-									</span>
-								</button>
+										<span className="relative z-10 flex items-center justify-center gap-2">
+											{installState === "running" ? (
+												<>
+													<X className="h-5 w-5 fill-current" />
+													{t("home.stop", "Arrêter")}
+												</>
+											) : (
+												<>
+													<Play className="h-4 w-4 fill-current" />
+													{t("home.play", "Jouer")}
+												</>
+											)}
+										</span>
+									</button>
 
-								{/* Gestionnaire de mods Modrinth. Il n'etait plus atteignable
-                    que par le menu replie en haut a droite, ou personne ne le
-                    trouvait. */}
-								<button
-									aria-label="Gerer les mods"
-									title="Installer des mods depuis Modrinth"
-									disabled={!mainProfile}
-									onClick={() => setActiveModal("mods")}
-									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#2c2447] bg-gradient-to-b from-[#242429] to-[#1b1630] px-4 text-white transition-colors hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
-									type="button"
-								>
-									<Pickaxe className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
-										{modCount === null
-											? "Mods"
-											: `${modCount} mod${modCount > 1 ? "s" : ""}`}
-									</span>
-								</button>
+									{/* Gestionnaire de mods Modrinth. Il n'etait plus atteignable
+                      que par le menu replie en haut a droite, ou personne ne le
+                      trouvait.
 
-								{/* Logs du jeu */}
-								<button
-									aria-label="Consulter les logs"
-									title="Consulter les logs du jeu"
-									disabled={!mainProfile}
-									onClick={() => setActiveModal("logs")}
-									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#2c2447] bg-gradient-to-b from-[#242429] to-[#1b1630] px-4 text-white transition-colors hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
-									type="button"
-								>
-									<Terminal className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
-										Logs
-									</span>
-								</button>
+                      Carres, et de la hauteur du bouton de lancement: la
+                      largeur variable du compteur -- « Mods », puis « 12 mods »
+                      -- faisait glisser le bouton des journaux d'un cote a
+                      l'autre selon le profil ouvert. */}
+									<button
+										aria-label="Gerer les mods"
+										title="Installer des mods depuis Modrinth"
+										disabled={!mainProfile}
+										onClick={() => setActiveModal("mods")}
+										className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+										type="button"
+									>
+										<Pickaxe className="h-5 w-5" />
+										<span className="text-[10px] leading-none text-[#9a92b6]">
+											{modCount ?? "Mods"}
+										</span>
+									</button>
+
+									{/* Logs du jeu */}
+									<button
+										aria-label="Consulter les logs"
+										title="Consulter les logs du jeu"
+										disabled={!mainProfile}
+										onClick={() => setActiveModal("logs")}
+										className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+										type="button"
+									>
+										<Terminal className="h-5 w-5" />
+										<span className="text-[10px] leading-none text-[#9a92b6]">
+											Logs
+										</span>
+									</button>
+								</div>
 							</div>
-						</div>
 
-						{/* PERSONNAGE 3D */}
-						<div className="absolute right-0 bottom-0 pointer-events-none hidden lg:flex h-full w-[45%] xl:w-[50%] justify-center items-end pb-4">
-							<div className="pointer-events-auto w-full max-w-[550px] h-[85%] max-h-[850px]">
+							{/* PERSONNAGE 3D */}
+							{/* Dans un cadre, et non pose sur le fond. Sans bord, le
+							    personnage flottait dans le vide a droite et la fenetre
+							    paraissait vide de ce cote; encadre, c'est un panneau qui
+							    equilibre la colonne de gauche. Masque sous md: la place
+							    n'y suffit plus, et l'amputer profiterait a personne.
+
+							    Le cadrage recule par rapport au vestiaire: dans un panneau
+							    etroit et haut, le zoom d'origine coupait la tete et les
+							    pieds. */}
+							<div className="bubble-frame hidden w-[32%] min-w-[220px] max-w-[360px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
 								<SkinViewer3D
-									className="w-full h-full"
+									className="h-full w-full"
+									zoom={0.62}
 									skinUrl={
 										account?.minecraftUsername
 											? `https://minotar.net/skin/${account.minecraftUsername}`
