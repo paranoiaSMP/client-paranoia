@@ -81,7 +81,7 @@ export function InstanceMenu({
 
         <button
           onClick={onOpenMods}
-          className="flex items-center justify-center gap-2 rounded-lg border border-[#27272a] bg-[#18181b] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex items-center justify-center gap-2 rounded-lg border border-[#241d3c] bg-[#1a1529] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
           type="button"
         >
           <Package className="h-4 w-4" />
@@ -93,13 +93,13 @@ export function InstanceMenu({
       <div>
         <button
           onClick={openFolder}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#27272a] bg-[#18181b] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#241d3c] bg-[#1a1529] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
           type="button"
         >
           <FolderOpen className="h-4 w-4" />
           Ouvrir le dossier de l'instance
         </button>
-        <p className="mt-2 text-[11px] text-[#52525b]">
+        <p className="mt-2 text-[11px] text-[#463a70]">
           Contient les sauvegardes, les captures, les mods et options.txt.
         </p>
         {folderError && (
@@ -108,13 +108,13 @@ export function InstanceMenu({
       </div>
 
       {/* Actions secondaires */}
-      <div className="flex items-center gap-3 border-t border-[#27272a] pt-4">
+      <div className="flex items-center gap-3 border-t border-[#241d3c] pt-4">
         <button
           onClick={onFavorite}
           className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
             profile.favorite
               ? "text-amber-400 hover:bg-amber-400/10"
-              : "text-[#a1a1aa] hover:bg-[#27272a] hover:text-white"
+              : "text-[#9a92b6] hover:bg-[#241d3c] hover:text-white"
           }`}
           type="button"
         >
@@ -137,8 +137,8 @@ export function InstanceMenu({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[#27272a] bg-[#131316] px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-[#52525b]">
+    <div className="rounded-lg border border-[#241d3c] bg-[#161225] px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-[#463a70]">
         {label}
       </p>
       <p className="mt-0.5 truncate text-sm font-semibold capitalize text-white">

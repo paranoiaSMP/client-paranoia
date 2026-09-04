@@ -86,7 +86,7 @@ const BACKGROUND: CSSProperties = {
 	backgroundImage: [
 		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.16) 0%, rgba(147, 9, 239, 0) 55%)",
 		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.22) 0%, rgba(97, 6, 158, 0) 60%)",
-		"linear-gradient(160deg, #1a1621 0%, #141416 45%, #0e0e10 100%)",
+		"linear-gradient(160deg, #1a1529 0%, #141416 45%, #0e0e10 100%)",
 	].join(", "),
 };
 
@@ -136,17 +136,15 @@ function InstanceCard({
 	return (
 		<article
 			onClick={onClick}
-			className={`group relative flex h-[180px] w-[184px] shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[18px] border-2 p-4 transition-colors ${
-				isSelected
-					? "border-[#9309ef] bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
-					: "border-[#333] bg-gradient-to-br from-[#26262b] via-[#1d1d21] to-[#161619] hover:border-[#555]"
+			className={`group relative flex h-[180px] w-[184px] shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[22px] p-4 transition-[box-shadow,border-color] ${
+				isSelected ? "bubble-active" : "bubble hover:border-white/15"
 			}`}
 		>
 			{/* Lueur d'angle, derriere le contenu. */}
 			<div
 				aria-hidden="true"
 				className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
-					isSelected ? "bg-[#9309ef]/40" : "bg-white/5 group-hover:bg-white/10"
+					isSelected ? "bg-[#8b5cf6]/40" : "bg-white/5 group-hover:bg-white/10"
 				}`}
 			/>
 
@@ -155,7 +153,7 @@ function InstanceCard({
 					{label}
 				</p>
 				{(version || detail) && (
-					<p className="mt-0.5 truncate text-[11px] text-[#a1a1aa]">
+					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">
 						{[version, detail].filter(Boolean).join(" · ")}
 					</p>
 				)}
@@ -530,7 +528,7 @@ export function App() {
 
 	if (bootstrapFailed && !config) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-[#0d0d0f] p-8">
+			<div className="min-h-screen flex items-center justify-center bg-[#100c1c] p-8">
 				<div className="max-w-md w-full text-center flex flex-col items-center gap-4">
 					<AlertTriangle
 						className="w-12 h-12 text-accent-red"
@@ -539,9 +537,9 @@ export function App() {
 					<h1 className="text-white text-lg font-bold">
 						{t("app.error_title")}
 					</h1>
-					<p className="text-[#a1a1aa] text-sm">{t("app.error_hint")}</p>
+					<p className="text-[#9a92b6] text-sm">{t("app.error_hint")}</p>
 					{error && (
-						<p className="text-[#71717a] text-xs font-mono bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 w-full break-words">
+						<p className="text-[#7a7194] text-xs font-mono bg-[#1a1529] border border-[#241d3c] rounded-lg px-3 py-2 w-full break-words">
 							{error}
 						</p>
 					)}
@@ -558,7 +556,7 @@ export function App() {
 
 	if (loading || !config) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-[#0d0d0f]">
+			<div className="min-h-screen flex items-center justify-center bg-[#100c1c]">
 				<div className="animate-pulse flex flex-col items-center gap-4">
 					<Pickaxe
 						className="w-16 h-16 text-accent-purple-dark animate-bounce"
@@ -610,7 +608,7 @@ export function App() {
 		profiles.length > 0 ? profiles : [null];
 
 	return (
-		<div className="h-screen w-full flex overflow-hidden bg-[#0b0b0b] relative">
+		<div className="h-screen w-full flex overflow-hidden bg-[#0a0810] relative">
 			<UpdateModal
 				state={updateState}
 				onInstall={installUpdate}
@@ -671,7 +669,7 @@ export function App() {
 							{...(prefersReducedMotion
 								? {}
 								: { animate: { height: menuOpen ? 480 : 56 } })}
-							className="absolute right-[32px] top-[32px] z-20 w-14 overflow-hidden rounded-[14px] border border-[#333] bg-[#212121] flex flex-col"
+							className="absolute right-[32px] top-[32px] z-20 w-14 overflow-hidden rounded-[14px] border border-[#2c2447] bg-[#1e1832] flex flex-col"
 							initial={false}
 							transition={{
 								height: { duration: 0.3, ease: "easeInOut" },
@@ -681,7 +679,7 @@ export function App() {
 							<div className="h-[54px] w-full shrink-0 flex items-center justify-center">
 								<button
 									onClick={() => setMenuOpen(!menuOpen)}
-									className="w-10 h-10 shrink-0 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group"
+									className="w-10 h-10 shrink-0 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group"
 								>
 									{menuOpen ? (
 										<X className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
@@ -703,7 +701,7 @@ export function App() {
 												setActiveModal("comptes");
 												setMenuOpen(false);
 											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative"
+											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
 											title="Comptes"
 										>
 											<User className="w-5 h-5 text-gray-400 group-hover:text-white" />
@@ -713,7 +711,7 @@ export function App() {
 												setActiveModal("profils");
 												setMenuOpen(false);
 											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative"
+											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
 											title="Gérer les profils"
 										>
 											<Box className="w-5 h-5 text-gray-400 group-hover:text-white" />
@@ -723,7 +721,7 @@ export function App() {
 												setActiveModal("mods");
 												setMenuOpen(false);
 											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative"
+											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
 											title="Mods"
 										>
 											<Pickaxe className="w-5 h-5 text-gray-400 group-hover:text-white" />
@@ -733,7 +731,7 @@ export function App() {
 												setActiveModal("parametres");
 												setMenuOpen(false);
 											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative"
+											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
 											title="Paramètres"
 										>
 											<Settings className="w-5 h-5 text-gray-400 group-hover:text-white" />
@@ -743,7 +741,7 @@ export function App() {
 												setActiveModal("logs");
 												setMenuOpen(false);
 											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#333] transition-colors group relative"
+											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
 											title="Logs de jeu"
 										>
 											<Terminal className="w-5 h-5 text-gray-400 group-hover:text-white" />
@@ -752,10 +750,10 @@ export function App() {
 
 									<div className="flex flex-col items-center mt-auto gap-4">
 										{/* Logo Paranoia, juste au-dessus de la sortie. */}
-										<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#9309ef] to-[#61069e] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#9309ef]/20">
+										<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#8b5cf6]/20">
 											P
 										</div>
-										<div className="w-6 h-[1px] bg-[#333]" />
+										<div className="w-6 h-[1px] bg-[#2c2447]" />
 										<button
 											onClick={() => {
 												handleLogout();
@@ -828,7 +826,7 @@ export function App() {
 								<button
 									aria-label="Ajouter une instance"
 									title="Nouvelle instance"
-									className="grid size-20 shrink-0 place-items-center rounded-2xl border border-[#333] bg-[#1e1e1e] hover:border-[#9309ef] hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9309ef]"
+									className="grid size-20 shrink-0 place-items-center rounded-2xl border border-[#2c2447] bg-[#1e1e1e] hover:border-[#8b5cf6] hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]"
 									onClick={() => {
 										setStep(connected ? 2 : 1);
 										setIsCreatingProfile(true);
@@ -849,7 +847,7 @@ export function App() {
 								<button
 									aria-label={installState === "running" ? "Arrêter" : "Lancer"}
 									disabled={!mainProfile}
-									className={`flex h-[61px] w-full px-6 relative items-center justify-center overflow-hidden rounded-[10px] text-sm font-normal text-white transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${installState === "running" ? "bg-red-600 focus-visible:outline-red-500" : "bg-[#61069e] focus-visible:outline-[#9309ef]"}`}
+									className={`flex h-[61px] w-full px-6 relative items-center justify-center overflow-hidden rounded-full text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${installState === "running" ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
 									onClick={() => {
 										if (!mainProfile) return;
 										if (installState === "running") {
@@ -889,11 +887,11 @@ export function App() {
 									title="Installer des mods depuis Modrinth"
 									disabled={!mainProfile}
 									onClick={() => setActiveModal("mods")}
-									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#333] bg-gradient-to-b from-[#242429] to-[#1a1a1e] px-4 text-white transition-colors hover:border-[#9309ef] disabled:cursor-not-allowed disabled:opacity-50"
+									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#2c2447] bg-gradient-to-b from-[#242429] to-[#1b1630] px-4 text-white transition-colors hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Pickaxe className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#a1a1aa]">
+									<span className="text-[10px] leading-none text-[#9a92b6]">
 										{modCount === null
 											? "Mods"
 											: `${modCount} mod${modCount > 1 ? "s" : ""}`}
@@ -906,11 +904,11 @@ export function App() {
 									title="Consulter les logs du jeu"
 									disabled={!mainProfile}
 									onClick={() => setActiveModal("logs")}
-									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#333] bg-gradient-to-b from-[#242429] to-[#1a1a1e] px-4 text-white transition-colors hover:border-[#9309ef] disabled:cursor-not-allowed disabled:opacity-50"
+									className="flex h-[61px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] border border-[#2c2447] bg-gradient-to-b from-[#242429] to-[#1b1630] px-4 text-white transition-colors hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Terminal className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#a1a1aa]">
+									<span className="text-[10px] leading-none text-[#9a92b6]">
 										Logs
 									</span>
 								</button>
@@ -1089,8 +1087,8 @@ export function App() {
 			</Modal>
 
 			{isDragging && !isProcessing && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[#9309ef]/20 backdrop-blur-md">
-					<div className="rounded-2xl border-2 border-[#9309ef] bg-[#1a1621] px-8 py-6 shadow-2xl">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[#8b5cf6]/20 backdrop-blur-md">
+					<div className="rounded-2xl border-2 border-[#8b5cf6] bg-[#1a1529] px-8 py-6 shadow-2xl">
 						<h2 className="text-2xl font-bold text-white">Relâcher pour importer le profil</h2>
 					</div>
 				</div>
@@ -1098,8 +1096,8 @@ export function App() {
 			
 			{isProcessing && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
-					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-[#1a1621] px-8 py-6 shadow-2xl">
-						<div className="h-12 w-12 animate-spin rounded-full border-4 border-[#9309ef] border-t-transparent"></div>
+					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-[#1a1529] px-8 py-6 shadow-2xl">
+						<div className="h-12 w-12 animate-spin rounded-full border-4 border-[#8b5cf6] border-t-transparent"></div>
 						<h2 className="text-xl font-bold text-white">Importation en cours...</h2>
 					</div>
 				</div>

@@ -48,7 +48,7 @@ export function TopBar({
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 bg-[#18181b] border border-[#27272a] px-3 py-1.5 rounded-lg hover:border-[#3f3f46] transition-colors"
+              className="flex items-center gap-2 bg-[#1a1529] border border-[#241d3c] px-3 py-1.5 rounded-lg hover:border-[#372d58] transition-colors"
             >
               <img
                 src={`https://minotar.net/helm/${account.minecraftUsername}/24`}
@@ -59,7 +59,7 @@ export function TopBar({
                 {account.minecraftUsername}
               </span>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-[#71717a] transition-transform ${menuOpen ? "rotate-180" : ""}`}
+                className={`w-3.5 h-3.5 text-[#7a7194] transition-transform ${menuOpen ? "rotate-180" : ""}`}
               />
             </button>
 
@@ -69,9 +69,9 @@ export function TopBar({
                   className="fixed inset-0 z-40"
                   onClick={() => setMenuOpen(false)}
                 ></div>
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#18181b] border border-[#27272a] rounded-xl shadow-2xl z-50 overflow-hidden">
-                  <div className="p-3 border-b border-[#27272a]">
-                    <p className="text-[10px] text-[#52525b] uppercase tracking-wider mb-2">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1529] border border-[#241d3c] rounded-xl shadow-2xl z-50 overflow-hidden">
+                  <div className="p-3 border-b border-[#241d3c]">
+                    <p className="text-[10px] text-[#463a70] uppercase tracking-wider mb-2">
                       Compte actif
                     </p>
                     <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export function TopBar({
                         <p className="text-white text-sm font-bold">
                           {account.minecraftUsername}
                         </p>
-                        <p className="text-[#52525b] text-[10px] font-mono">
+                        <p className="text-[#463a70] text-[10px] font-mono">
                           {account.minecraftUuid.slice(0, 8)}...
                         </p>
                       </div>
@@ -92,8 +92,8 @@ export function TopBar({
                   </div>
 
                   {accounts.filter((a) => a.id !== account.id).length > 0 && (
-                    <div className="p-2 border-b border-[#27272a]">
-                      <p className="text-[10px] text-[#52525b] uppercase tracking-wider px-1 mb-1">
+                    <div className="p-2 border-b border-[#241d3c]">
+                      <p className="text-[10px] text-[#463a70] uppercase tracking-wider px-1 mb-1">
                         Autres comptes
                       </p>
                       {accounts
@@ -105,14 +105,14 @@ export function TopBar({
                               onSwitchAccount(a);
                               setMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[#27272a] transition-colors"
+                            className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[#241d3c] transition-colors"
                           >
                             <img
                               src={`https://minotar.net/helm/${a.minecraftUsername}/24`}
                               alt=""
                               className="w-6 h-6 rounded"
                             />
-                            <span className="text-[#a1a1aa] text-sm">
+                            <span className="text-[#9a92b6] text-sm">
                               {a.minecraftUsername}
                             </span>
                           </button>
@@ -126,7 +126,7 @@ export function TopBar({
                         onConnectMicrosoft();
                         setMenuOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[#27272a] transition-colors text-[#a1a1aa] text-sm"
+                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[#241d3c] transition-colors text-[#9a92b6] text-sm"
                     >
                       <Plus className="w-4 h-4" />
                       Ajouter un compte
@@ -151,7 +151,7 @@ export function TopBar({
             {devModeAvailable && (
               <button
                 onClick={onLocalDevContinue}
-                className="px-3 py-1.5 text-xs text-[#52525b] hover:text-white transition-colors"
+                className="px-3 py-1.5 text-xs text-[#463a70] hover:text-white transition-colors"
               >
                 {t("topbar.devMode")}
               </button>

@@ -36,8 +36,8 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
               title={t(tab.labelKey)}
               className={`w-full aspect-square rounded-lg flex items-center justify-center transition-colors ${
                 active 
-                  ? 'bg-[#18181b] text-white' 
-                  : 'text-[#52525b] hover:text-[#a1a1aa] hover:bg-[#18181b]/50'
+                  ? 'bg-[#1a1529] text-white' 
+                  : 'text-[#463a70] hover:text-[#9a92b6] hover:bg-[#1a1529]/50'
               }`}
             >
               <Icon className="w-5 h-5" />

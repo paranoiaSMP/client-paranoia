@@ -1,17 +1,36 @@
 @import "tailwindcss";
 
+/*
+ * Violet sombre.
+ *
+ * La regle qui tient tout: le violet est la source de lumiere, pas la peinture.
+ * Les neutres ne sont pas gris, ils penchent vers le violet -- c'est ce qui
+ * separe une interface qui a une couleur d'une interface peinte en violet.
+ *
+ * Le violet sature n'apparait qu'a quatre endroits: le bouton de lancement, la
+ * boutique, l'element selectionne, et la lueur derriere le personnage. Ajouter
+ * un cinquieme endroit veut dire en retirer un autre.
+ */
 @theme {
   --color-accent-red: #ff4d4d;
   --color-accent-red-glow: #ff7676;
-  --color-accent-purple: #a855f7;
-  --color-accent-purple-dark: #7e22ce;
+  --color-accent-purple: #8b5cf6;
+  --color-accent-purple-dark: #6d35e0;
+  --color-accent-purple-hot: #b47cff;
+
+  /* Fond de fenetre, puis les deux tons d'une bulle: le haut et le bas. */
+  --color-void: #0a0810;
+  --color-surface: #151122;
+  --color-surface-hi: #1c1730;
+  --color-raised: #241d3c;
+
   --font-inter: "Inter", sans-serif;
   --font-outfit: "Outfit", sans-serif;
 }
 
 body {
   @apply text-white min-h-screen m-0 font-inter antialiased;
-  background-color: #0b0b0b;
+  background-color: #0a0810;
   /* Optionnel : un très léger bruit de fond pour texturer sans casser l'aspect sombre */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
 }
@@ -60,4 +79,58 @@ h1, h2, h3, h4, h5, h6 {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * L'effet bulle, en trois couches et pas une de plus.
+ *
+ * 1. Le volume: un degrade vertical tres court, quatre pour cent d'ecart. Assez
+ *    pour que la surface ne soit plus plate, trop peu pour qu'on voie un
+ *    degrade -- un degrade visible fait bon marche.
+ * 2. La lumiere: un liseré clair d'un pixel sur le bord haut. C'est le detail
+ *    le moins cher de toute la direction et celui qui fait le plus: il donne un
+ *    bord eclaire, donc une epaisseur.
+ * 3. Le decollement: une ombre large, basse et tres diffuse. L'objet flotte au
+ *    lieu d'etre pose. Une ombre nette donnerait du papier decoupe.
+ *
+ * A poser sur une carte a la place de son fond et de sa bordure. Le rayon reste
+ * au choix de l'appelant: 1rem pour une vignette, 1.6rem pour une vraie bulle.
+ */
+.bubble {
+  background-image: linear-gradient(180deg, var(--color-surface-hi), var(--color-surface));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -16px 26px -22px rgba(0, 0, 0, 0.9),
+    0 16px 36px -20px rgba(0, 0, 0, 0.85);
+}
+
+/* Meme matiere, posee et non flottante: pour ce qui remplit deja un cadre. */
+.bubble-flat {
+  background-image: linear-gradient(180deg, var(--color-surface-hi), var(--color-surface));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* L'element choisi. La lueur remplace l'ombre: il s'eclaire au lieu de flotter. */
+.bubble-active {
+  background-image: linear-gradient(180deg, var(--color-raised), #1a1430);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 30px -10px rgba(139, 92, 246, 0.45);
+}
+
+/*
+ * L'action principale. Le seul degrade franc de toute l'interface, et le seul
+ * endroit ou le texte est sombre sur fond clair: c'est ce qui le detache de
+ * tout le reste sans avoir besoin d'etre plus gros.
+ */
+.bubble-primary {
+  color: #150c28;
+  background-image: linear-gradient(180deg, #cfa8ff, var(--color-accent-purple));
+  border: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 14px 34px -12px rgba(139, 92, 246, 0.5);
 }
