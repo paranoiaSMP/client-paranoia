@@ -121,7 +121,7 @@ export function NewsCard({ news }: NewsCardProps) {
 			<motion.div
 				{...(latest ? { layoutId: `card-${latest.title}-${id}` } : {})}
 				onClick={() => latest && setActive(latest)}
-				className="bubble mx-4 flex h-[144px] shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-4 transition-[border-color] hover:border-white/15"
+				className="bubble mx-4 flex h-[128px] shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-5 transition-[border-color] hover:border-white/15"
 			>
 				{latest?.imageUrl && (
 					<motion.div
