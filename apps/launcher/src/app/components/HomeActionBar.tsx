@@ -42,13 +42,15 @@ const GAP = 8;
 const STEP = BUTTON + GAP;
 
 /**
- * Largeur de la piste, calee sur exactement trois boutons.
+ * Largeur maximale de la piste, calee sur quatre boutons.
  *
- * <p>Elle etait en {@code flex-1}: sur une fenetre large, les cinq raccourcis
- * tenaient sans deborder, donc rien ne defilait et on en voyait cinq. Une
- * largeur fixe est ce qui garantit qu'il y en ait trois, et seulement trois.
+ * <p>C'est un plafond et non une largeur fixe. En largeur fixe, la piste ne
+ * retrecissait pas: sur une fenetre etroite elle debordait de la barre et
+ * poussait la boutique hors du cadre. Le plafond garde le compte voulu quand
+ * la place existe, et la piste se resserre quand elle manque -- la molette et
+ * les fleches restent le moyen d'atteindre le reste dans les deux cas.
  */
-const TRACK_WIDTH = BUTTON * 3 + GAP * 2;
+const TRACK_WIDTH = BUTTON * 4 + GAP * 3;
 
 /**
  * Barre d'actions de l'accueil.
@@ -73,7 +75,7 @@ export function HomeActionBar({
   }
 
   return (
-    <div className="sticky top-0 z-30 flex h-[64px] w-full lg:w-[75%] shrink-0 items-center gap-2 rounded-[22px] bubble px-3 backdrop-blur">
+    <div className="sticky top-0 z-30 flex h-[64px] w-full shrink-0 items-center gap-2 rounded-[22px] bubble px-3 backdrop-blur">
       <button
         onClick={() => scrollBy(-1)}
         aria-label="Raccourcis precedents"
@@ -93,8 +95,8 @@ export function HomeActionBar({
             event.currentTarget.scrollLeft += event.deltaY;
           }
         }}
-        style={{ width: TRACK_WIDTH }}
-        className="no-scrollbar flex shrink-0 items-center gap-2 overflow-x-auto scroll-smooth"
+        style={{ maxWidth: TRACK_WIDTH }}
+        className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scroll-smooth"
       >
         {ACTIONS.map((action) => {
           const Icon = action.icon;

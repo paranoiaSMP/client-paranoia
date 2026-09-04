@@ -7,6 +7,16 @@ interface SkinViewer3DProps {
   className?: string; // Replace hardcoded width/height with Tailwind classes
   animation?: 'idle' | 'walk' | 'run' | 'none';
   paused?: boolean;
+  /**
+   * Distance de la camera. Plus la valeur est basse, plus le personnage est
+   * loin -- donc entier.
+   *
+   * <p>Le viewer cadre sur la largeur disponible: dans un panneau etroit et
+   * haut, le zoom du vestiaire coupe la tete et les pieds. C'est un reglage de
+   * cadrage, pas de style, et il appartient donc a l'appelant qui connait la
+   * forme de son cadre.
+   */
+  zoom?: number;
 }
 
 /**
@@ -26,7 +36,8 @@ export function SkinViewer3D({
   capeUrl,
   className = "w-full h-full",
   animation = 'none',
-  paused = false
+  paused = false,
+  zoom = 0.9
 }: SkinViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -140,6 +151,15 @@ export function SkinViewer3D({
       viewer.animation = null;
     }
   }, [animation]);
+
+  // Applique le cadrage ici plutot qu'a la construction: l'effet de
+  // construction ne depend de rien et ne rejoue jamais, il figerait donc la
+  // valeur du premier rendu.
+  useEffect(() => {
+    if (viewerRef.current) {
+      viewerRef.current.zoom = zoom;
+    }
+  }, [zoom]);
 
   useEffect(() => {
     if (viewerRef.current) {

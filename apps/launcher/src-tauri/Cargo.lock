@@ -2260,7 +2260,7 @@ dependencies = [
 
 [[package]]
 name = "paranoia-launcher"
-version = "0.7.6"
+version = "0.7.7"
 dependencies = [
  "hex",
  "reqwest 0.12.28",
