@@ -151,6 +151,12 @@ jobs:
             # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
+              "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress|getItemCooldownManager" \
+              "net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket$Action:*" \
+              "net.minecraft.client.MinecraftClient:handleInputEvents|doItemUse" \
+              "net.minecraft.entity.player.ItemCooldownManager:*" \
+              "net.minecraft.client.network.ClientPlayerInteractionManager:clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \
               "net.minecraft.client.option.InactivityFpsLimiter:update" \
               "net.minecraft.client.render.Frustum:isVisible" \

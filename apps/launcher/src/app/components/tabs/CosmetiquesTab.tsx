@@ -4,7 +4,7 @@ import type { CosmeticItem } from "@paranoia/contracts";
 import { fetchCosmetics } from "../../../shared/api/cosmeticsClient";
 
 const RARITY_COLORS: Record<CosmeticItem["rarity"], string> = {
-  common: "border-[#3f3f46] text-[#a1a1aa]",
+  common: "border-[#372d58] text-[#9a92b6]",
   rare: "border-sky-500/60 text-sky-300",
   epic: "border-fuchsia-500/60 text-fuchsia-300",
   legendary: "border-amber-500/60 text-amber-300",
@@ -42,7 +42,7 @@ export function CosmetiquesTab() {
 
   if (items === null) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-[#71717a]">
+      <div className="flex items-center justify-center gap-2 py-10 text-sm text-[#7a7194]">
         <Loader2 className="h-4 w-4 animate-spin" />
         Chargement du catalogue...
       </div>
@@ -52,11 +52,11 @@ export function CosmetiquesTab() {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-10 text-center">
-        <Shirt className="h-10 w-10 text-[#3f3f46]" />
+        <Shirt className="h-10 w-10 text-[#372d58]" />
         <p className="text-sm font-semibold text-white">
           Aucun cosmetique pour l'instant
         </p>
-        <p className="max-w-sm text-xs text-[#71717a]">
+        <p className="max-w-sm text-xs text-[#7a7194]">
           Le catalogue est servi par le backend et ne contient encore aucune
           piece. Les capes, ailes et particules apparaitront ici des qu'elles y
           seront ajoutees.
@@ -71,7 +71,7 @@ export function CosmetiquesTab() {
       {items.map((item) => (
         <article
           key={item.id}
-          className={`overflow-hidden rounded-xl border bg-[#131316] ${RARITY_COLORS[item.rarity]}`}
+          className={`overflow-hidden rounded-xl border bg-[#161225] ${RARITY_COLORS[item.rarity]}`}
         >
           <img
             src={item.previewUrl}

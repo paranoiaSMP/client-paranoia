@@ -55,7 +55,7 @@ export function NewsCard({ news }: NewsCardProps) {
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0, transition: { duration: 0.05 } }}
-							className="flex absolute top-4 right-4 items-center justify-center bg-[#27272a] hover:bg-[#3f3f46] transition-colors rounded-full h-8 w-8 z-10"
+							className="flex absolute top-4 right-4 items-center justify-center bg-[#241d3c] hover:bg-[#372d58] transition-colors rounded-full h-8 w-8 z-10"
 							onClick={() => setActive(null)}
 						>
 							<X className="w-4 h-4 text-white" />
@@ -64,7 +64,7 @@ export function NewsCard({ news }: NewsCardProps) {
 						<motion.div
 							layoutId={`card-${active.title}-${id}`}
 							ref={ref as any}
-							className="w-full max-w-[600px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-[#131316] border border-[#2e2e33] sm:rounded-3xl overflow-hidden shadow-2xl"
+							className="w-full max-w-[600px] h-full md:h-fit md:max-h-[90%] flex flex-col bg-[#161225] border border-[#292142] sm:rounded-3xl overflow-hidden shadow-2xl"
 						>
 							{active.imageUrl && (
 								<motion.div layoutId={`image-${active.title}-${id}`}>
@@ -89,7 +89,7 @@ export function NewsCard({ news }: NewsCardProps) {
 										</motion.h3>
 										<motion.p
 											layoutId={`description-${active.title}-${id}`}
-											className="text-[#a1a1aa] text-sm mt-1"
+											className="text-[#9a92b6] text-sm mt-1"
 										>
 											{active.excerpt}
 										</motion.p>
@@ -102,7 +102,7 @@ export function NewsCard({ news }: NewsCardProps) {
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										exit={{ opacity: 0 }}
-										className="text-[#d4d4d8] text-sm md:text-base pb-6 flex flex-col items-start gap-4"
+										className="text-[#cfc9de] text-sm md:text-base pb-6 flex flex-col items-start gap-4"
 										dangerouslySetInnerHTML={{ __html: active.contentHtml }}
 									/>
 								</div>
@@ -115,7 +115,7 @@ export function NewsCard({ news }: NewsCardProps) {
 			<motion.div
 				{...(latest ? { layoutId: `card-${latest.title}-${id}` } : {})}
 				onClick={() => latest && setActive(latest)}
-				className="mt-6 flex h-[168px] w-[240px] shrink-0 flex-col overflow-hidden rounded-[18px] border border-[#2e2e33] bg-gradient-to-br from-[#221733] via-[#1a1a1f] to-[#131316] p-4 cursor-pointer hover:border-accent-purple/50 transition-colors"
+				className="mt-6 flex h-[168px] w-[240px] shrink-0 flex-col overflow-hidden rounded-[18px] border border-[#292142] bg-gradient-to-br from-[#221733] via-[#1a1a1f] to-[#161225] p-4 cursor-pointer hover:border-accent-purple/50 transition-colors"
 			>
 				<div className="flex items-center gap-2">
 					<Newspaper className="h-3.5 w-3.5 shrink-0 text-accent-purple" />
@@ -134,7 +134,7 @@ export function NewsCard({ news }: NewsCardProps) {
 						</motion.h3>
 						<motion.p
 							layoutId={`description-${latest.title}-${id}`}
-							className="mt-1.5 line-clamp-4 text-[11px] leading-snug text-[#a1a1aa]"
+							className="mt-1.5 line-clamp-4 text-[11px] leading-snug text-[#9a92b6]"
 						>
 							{latest.excerpt}
 						</motion.p>
@@ -142,7 +142,7 @@ export function NewsCard({ news }: NewsCardProps) {
 				) : (
 					<div className="mt-3 flex flex-1 flex-col justify-center">
 						<p className="text-sm font-semibold text-white">Rien à annoncer</p>
-						<p className="mt-1 text-[11px] leading-snug text-[#71717a]">
+						<p className="mt-1 text-[11px] leading-snug text-[#7a7194]">
 							Les annonces du serveur s'afficheront ici.
 						</p>
 					</div>

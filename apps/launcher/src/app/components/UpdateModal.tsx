@@ -17,7 +17,7 @@ export function UpdateModal({ state, onInstall, onDismiss }: UpdateModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-[480px] rounded-2xl border-2 border-[#9309ef] bg-[#212121] p-8 shadow-2xl flex flex-col gap-6">
+      <div className="relative w-full max-w-[480px] rounded-2xl border-2 border-[#8b5cf6] bg-[#1e1832] p-8 shadow-2xl flex flex-col gap-6">
         
         {/* HEADER */}
         <div className="flex flex-col gap-2">
@@ -57,14 +57,14 @@ export function UpdateModal({ state, onInstall, onDismiss }: UpdateModalProps) {
             <>
               <button
                 onClick={onDismiss}
-                className="px-8 py-2.5 rounded-full bg-[#555] hover:bg-[#666] text-white text-sm font-medium transition-colors min-w-[120px]"
+                className="px-8 py-2.5 rounded-full bg-[#4b4166] hover:bg-[#666] text-white text-sm font-medium transition-colors min-w-[120px]"
               >
                 {t("update.ignore", "Ignorer")}
               </button>
               
               <button
                 onClick={onInstall}
-                className="px-8 py-2.5 rounded-full bg-[#3a3a3a] hover:bg-[#444] text-white text-sm font-medium transition-colors min-w-[120px]"
+                className="px-8 py-2.5 rounded-full bg-[#3a3a3a] hover:bg-[#3d3358] text-white text-sm font-medium transition-colors min-w-[120px]"
               >
                 {t("update.install", "Installer")}
               </button>
@@ -74,7 +74,7 @@ export function UpdateModal({ state, onInstall, onDismiss }: UpdateModalProps) {
           {state.status === "error" && (
             <button
               onClick={onDismiss}
-              className="px-8 py-2.5 rounded-full bg-[#555] hover:bg-[#666] text-white text-sm font-medium transition-colors"
+              className="px-8 py-2.5 rounded-full bg-[#4b4166] hover:bg-[#666] text-white text-sm font-medium transition-colors"
             >
               Fermer
             </button>
