@@ -57,7 +57,7 @@ const TRACK_WIDTH = BUTTON * 4 + GAP * 3;
  *
  * <p>La boutique est ancree a droite, hors de la piste: c'est le seul bouton
  * qui doit rester atteignable sans rien faire defiler. Les autres tiennent sur
- * une piste large de trois, que la molette fait defiler -- les fleches sont la
+ * une piste large de quatre, que la molette fait defiler -- les fleches sont la
  * pour que ce defilement se voie, une piste sans indice ne s'essaie pas.
  *
  * <p>La barre est {@code sticky}: elle reste en place quand le contenu defile
@@ -124,7 +124,7 @@ export function HomeActionBar({
               <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{action.label}</span>
               {badge !== null && badge > 0 && (
-                <span className="shrink-0 rounded-full bg-[#100c1c] px-1.5 py-0.5 text-[10px] font-bold text-[#9a92b6]">
+                <span className="shrink-0 rounded-full bg-sunken px-1.5 py-0.5 text-[10px] font-bold text-[#9a92b6]">
                   {badge}
                 </span>
               )}

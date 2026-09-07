@@ -1,13 +1,28 @@
-﻿import React, { useEffect } from "react";
+﻿import type { RefObject } from "react";
+import { useEffect } from "react";
 
+/**
+ * Appelle {@code callback} quand on clique en dehors de {@code ref}.
+ *
+ * <p>Les deux ecouteurs sont poses sur {@code document}: souris et tactile, un
+ * appareil pouvant avoir les deux.
+ */
 export const useOutsideClick = (
-  ref: React.RefObject<HTMLElement | null>,
-  callback: Function
+  ref: RefObject<HTMLElement | null>,
+  // `Function` acceptait n'importe quoi d'appelable, y compris avec la
+  // mauvaise signature, et ne disait rien de ce qui est passe au rappel.
+  callback: (event: MouseEvent | TouchEvent) => void,
 ) => {
   useEffect(() => {
-    const listener = (event: any) => {
-      // DO NOTHING if the element being clicked is the target element or their children
-      if (!ref.current || ref.current.contains(event.target)) {
+    const listener = (event: MouseEvent | TouchEvent) => {
+      // `event.target` est un EventTarget, que `contains` n'accepte pas: le
+      // cas reel est toujours un Node, mais il faut le dire.
+      const cible = event.target;
+      if (
+        !ref.current ||
+        !(cible instanceof Node) ||
+        ref.current.contains(cible)
+      ) {
         return;
       }
       callback(event);

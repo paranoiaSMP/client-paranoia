@@ -27,6 +27,17 @@
    * cartes.
    */
   --color-void: #050409;
+  /*
+   * Le creux: champs de saisie, cartes d'option, pastilles de compteur. Plus
+   * sombre qu'une surface, plus clair que le fond de fenetre -- c'est ce qui
+   * le fait lire comme une entaille et non comme un trou.
+   *
+   * Il existait deja, ecrit en dur treize fois sous la forme #100c1c. Le
+   * nommer est ce qui a permis de decouvrir que les dix autres occurrences,
+   * elles, visaient le fond de fenetre et avaient donc cesse de le suivre
+   * quand celui-ci a ete assombri.
+   */
+  --color-sunken: #100c1c;
   --color-surface: #151122;
   --color-surface-hi: #1c1730;
   --color-raised: #241d3c;

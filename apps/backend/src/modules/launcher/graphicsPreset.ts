@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { logger } from "../../logger.js";
 
 /**
  * Fait arriver le mode graphique du profil jusqu'au jeu.
@@ -135,7 +136,7 @@ export async function applyGraphicsPreset(
       "utf-8",
     );
 
-    console.log(
+    logger.info(
       `[Graphismes] prereglage « ${graphicsModeId} » applique (${Object.keys(preset).length} reglages)`,
     );
   } catch (err) {

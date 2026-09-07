@@ -3,20 +3,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { createProfile } from "./profiles.store.js";
 import { importLunarPack } from "./lunar.importer.js";
+import { logger } from "../../logger.js";
 
 export async function importProfilesFromPaths(paths: string[]) {
 	for (const filePath of paths) {
-		console.log("[Import] Traitement du fichier:", filePath);
+		logger.info({ filePath }, "[Import] Traitement du fichier");
 		if (!fs.existsSync(filePath)) {
 			console.error("[Import] Le fichier n'existe pas:", filePath);
 			continue;
 		}
 
 		const ext = path.extname(filePath).toLowerCase();
-		console.log("[Import] Extension détectée:", ext);
+		logger.info({ ext }, "[Import] Extension détectée");
 		
 		if (ext === ".paraconf") {
-			console.log("[Import] Traitement paraconf...");
+			logger.info("[Import] Traitement paraconf...");
 			const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 			createProfile({
 				name: content.name || "Profil importé",
@@ -28,7 +29,7 @@ export async function importProfilesFromPaths(paths: string[]) {
 				optionsTxtPath: content.optionsTxtPath
 			});
 		} else if (ext === ".lcpack") {
-			console.log("[Import] Traitement lcpack (Lunar)...");
+			logger.info("[Import] Traitement lcpack (Lunar)...");
 			await importLunarPack(filePath);
 		} else if (ext === ".mrpack" || ext === ".zip") {
             // Lecture ZIP (CurseForge/Modrinth/Prism) à faire avec jszip

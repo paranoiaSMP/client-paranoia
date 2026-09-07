@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, createWriteStream, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, createWriteStream } from "node:fs";
 import { join, dirname } from "node:path";
 import AdmZip from "adm-zip";
 import axios from "axios";
@@ -6,6 +6,7 @@ import { createProfile } from "./profiles.store.js";
 import { ensureInstanceLayout, instanceDir } from "../launcher/paths.js";
 import { ensureFabricApi } from "../launcher/fabricApi.js";
 import { pipeline } from "node:stream/promises";
+import { logger } from "../../logger.js";
 
 export async function importMrPack(archivePath: string) {
   if (!existsSync(archivePath)) {
@@ -56,7 +57,7 @@ export async function importMrPack(archivePath: string) {
         }
         
         try {
-          console.log(`Téléchargement de ${url} vers ${targetPath}`);
+          logger.info(`Téléchargement de ${url} vers ${targetPath}`);
           const response = await axios({
             url,
             method: 'GET',

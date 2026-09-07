@@ -67,7 +67,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
               </button>
             )}
             
-            <div className="flex-1 overflow-y-auto p-6 bg-[#0a0810]">
+            <div className="flex-1 overflow-y-auto p-6 bg-void">
               {children}
             </div>
           </motion.div>

@@ -196,8 +196,14 @@ export async function launchMinecraft(
 						);
 					}
 				}
-			} catch (err: any) {
-				if (err.message && err.message.startsWith("Vous êtes banni")) {
+			} catch (err) {
+				// `err.message` sur une valeur non-Error levait une seconde
+				// exception ici meme -- dans le bloc cense rattraper la premiere,
+				// et sur le chemin qui decide si un joueur banni peut lancer.
+				if (
+					err instanceof Error &&
+					err.message.startsWith("Vous êtes banni")
+				) {
 					throw err; // On relance l'erreur de ban pour bloquer le lancement
 				}
 				console.warn(

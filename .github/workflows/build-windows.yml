@@ -10,6 +10,13 @@ on:
       # Pousser `release/vX.Y.Z` publie la version X.Y.Z, exactement comme le
       # tag correspondant. Voir l'etape "Determine release tag".
       - "release/**"
+      # Les branches de travail ne se construisaient que par leur pull request.
+      # Une fois celle-ci fusionnee, la branche continuait d'accepter des
+      # commits sans qu'aucun build ne tourne: deux commits sont ainsi partis
+      # sans la moindre verification, et le silence ressemblait a s'y meprendre
+      # a une file d'attente. Le meme declencheur que build-mod.yml, qui lui les
+      # couvrait deja.
+      - "claude/**"
     tags:
       - "v*"
   pull_request:

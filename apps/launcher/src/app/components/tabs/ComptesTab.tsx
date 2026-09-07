@@ -1,5 +1,4 @@
-import { Plus, User, Check } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Plus, Check } from "lucide-react";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
 type ComptesTabProps = {
@@ -17,7 +16,6 @@ export function ComptesTab({
   onConnectMicrosoft,
   onSwitchAccount,
 }: ComptesTabProps) {
-  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col gap-6">

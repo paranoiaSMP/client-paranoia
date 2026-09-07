@@ -32,7 +32,7 @@ launcherRouter.post("/play", async (req, res, next) => {
 			body.minecraftVersion,
 			body.ramMb,
 			body.account,
-		).catch((err: any) => {
+		).catch((err: unknown) => {
 			console.error("[Launcher] Game launch failed:", err);
 		});
 
@@ -52,11 +52,11 @@ launcherRouter.post("/cancel/:profileId", (req, res) => {
 	res.json({ status: "canceled" });
 });
 
-launcherRouter.get("/logs", (req, res) => {
+launcherRouter.get("/logs", (_req, res) => {
 	res.json({ logs: getGameLogs() });
 });
 
-launcherRouter.post("/logs/clear", (req, res) => {
+launcherRouter.post("/logs/clear", (_req, res) => {
 	clearGameLogs();
 	res.json({ status: "cleared" });
 });

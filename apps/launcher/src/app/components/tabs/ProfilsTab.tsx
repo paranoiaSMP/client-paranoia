@@ -88,7 +88,7 @@ export function ProfilsTab({
                       className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity duration-300" 
                       style={{ backgroundImage: "url('/hero-bg.png')" }}
                     ></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0810] via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent"></div>
                   </div>
 
                   {/* Nom du profil */}

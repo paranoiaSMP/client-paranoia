@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { installMod, listProjectVersions } from "../mods/modrinth.service.js";
+import { logger } from "../../logger.js";
 
 /**
  * Pose les mods d'optimisation dans une instance neuve.
@@ -144,7 +145,7 @@ export async function ensurePerformanceMods(
     if (present.some((name) => name.endsWith(".jar") && mod.fileName.test(name))) {
       // Deja la, dans une version qu'on n'a pas choisie. On la laisse: elle
       // fonctionne, et deux exemplaires empecheraient le jeu de demarrer.
-      console.log(`[Perf] ${mod.label} deja present, laisse tel quel`);
+      logger.info(`[Perf] ${mod.label} deja present, laisse tel quel`);
       installed.add(mod.projectId);
       posed += 1;
       continue;
@@ -177,7 +178,7 @@ export async function ensurePerformanceMods(
       // Marque apres coup seulement: un echec doit pouvoir etre retente.
       installed.add(mod.projectId);
       posed += 1;
-      console.log(`[Perf] ${mod.label} installe (${mod.role})`);
+      logger.info(`[Perf] ${mod.label} installe (${mod.role})`);
     } catch (err) {
       console.warn(
         `[Perf] ${mod.label} non installe:`,

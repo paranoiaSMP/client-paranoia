@@ -137,7 +137,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             value={javaPath}
             onChange={e => setJavaPath(e.target.value)}
             placeholder="C:\Program Files\Java\jdk-21\bin\javaw.exe"
-            className="w-full bg-[#0a0810] border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors"
+            className="w-full bg-void border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors"
           />
         </div>
 
@@ -147,7 +147,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             type="text" 
             value={jvmArgs}
             onChange={e => setJvmArgs(e.target.value)}
-            className="w-full bg-[#0a0810] border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors"
+            className="w-full bg-void border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors"
           />
           <p className="text-[#463a70] text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
         </div>
@@ -164,7 +164,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
               type="number" 
               value={resolution.width}
               onChange={e => setResolution(r => ({ ...r, width: Number(e.target.value) }))}
-              className="w-full bg-[#0a0810] border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-void border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
             />
           </div>
           <div>
@@ -173,7 +173,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
               type="number" 
               value={resolution.height}
               onChange={e => setResolution(r => ({ ...r, height: Number(e.target.value) }))}
-              className="w-full bg-[#0a0810] border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-void border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
             />
           </div>
         </div>
@@ -214,7 +214,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
         <select 
           value={i18n.language}
           onChange={(e) => i18n.changeLanguage(e.target.value)}
-          className="w-full bg-[#0a0810] border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors cursor-pointer"
+          className="w-full bg-void border border-[#241d3c] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors cursor-pointer"
         >
           <option value="fr">Français</option>
           <option value="en">English</option>
@@ -256,7 +256,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
         <h3 className="text-white font-bold mb-1">{t("settings.import_title")}</h3>
         <p className="text-[#463a70] text-xs mb-4">{t("settings.import_desc")}</p>
         <textarea 
-          className="w-full h-28 bg-[#0a0810] border border-[#241d3c] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors mb-3 resize-none"
+          className="w-full h-28 bg-void border border-[#241d3c] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#372d58] focus:outline-none focus:border-accent-purple transition-colors mb-3 resize-none"
           value={importJson} 
           onChange={(e) => setImportJson(e.target.value)} 
           placeholder='{ "name": "Mon profil", "minecraftVersion": "1.21.11" }' 

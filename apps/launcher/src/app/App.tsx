@@ -1,21 +1,19 @@
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
 	Play,
 	Settings,
-	Plus,
 	Box,
 	Pickaxe,
-	Server,
 	LogOut,
 	Menu,
 	X,
 	AlertTriangle,
-	ShoppingBag,
 	User,
 	Terminal,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -31,15 +29,10 @@ import {
 	createInstallationManifest,
 	fetchRemoteConfiguration,
 } from "../shared/api/catalogClient";
-import {
-	createProfile,
-	importProfile,
-	importArchive,
-} from "../shared/api/profilesClient";
+import { createProfile, importProfile } from "../shared/api/profilesClient";
 import { fetchNews } from "../shared/api/launcherInfoClient";
-import { listen } from "@tauri-apps/api/event";
 import { listInstalledMods } from "../shared/api/modsClient";
-import { waitForApi } from "../shared/api/http";
+import { apiRequest, waitForApi } from "../shared/api/http";
 import {
 	launchMinecraftGame,
 	getLaunchStatus,
@@ -54,21 +47,23 @@ import { ModsTab } from "./components/tabs/ModsTab";
 import { ComptesTab } from "./components/tabs/ComptesTab";
 import { LogsTab } from "./components/tabs/LogsTab";
 import { ProfileCreation } from "./components/ProfileCreation";
+import type {
+	DetectedProfile,
+	ImportOptions,
+	SetupStep,
+} from "./components/ProfileCreation";
 import { MigrationModal } from "./components/MigrationModal";
 import { Modal } from "./components/Modal";
 import { UpdateModal } from "./components/UpdateModal";
 import { HomeActionBar } from "./components/HomeActionBar";
 import { InstanceMenu } from "./components/InstanceMenu";
-import { apiRequest } from "../shared/api/http";
 import { Wardrobe } from "./components/Wardrobe";
 import { NewsCard } from "./components/NewsCard";
-import { useFileDrop} from "./hooks/useFileDrop";
+import { useFileDrop } from "./hooks/useFileDrop";
 
 import { useAuth } from "./hooks/useAuth";
 import { useUpdater } from "./hooks/useUpdater";
 import { useProfiles } from "./hooks/useProfiles";
-
-// No more SHOP_URL constant since boutique is native.
 
 /**
  * Fond de l'application.
@@ -78,10 +73,6 @@ import { useProfiles } from "./hooks/useProfiles";
  * le personnage. Les valeurs restent basses volontairement -- le fond ne doit
  * pas concurrencer les vignettes, qui portent deja leur propre degrade.
  */
-
-
-
-
 const BACKGROUND: CSSProperties = {
 	backgroundImage: [
 		// Les deux lueurs gagnent un peu, le fond descend beaucoup: c'est en
@@ -93,27 +84,44 @@ const BACKGROUND: CSSProperties = {
 	].join(", "),
 };
 
-const DESIGN_WIDTH = 860;
-const DESIGN_HEIGHT = 520;
+/**
+ * Les ecrans que l'accueil peut ouvrir par-dessus lui.
+ *
+ * <p>C'etait une union anonyme ecrite dans l'appel a {@code useState}: rien ne
+ * pouvait s'y referer, et le menu deroulant reproduisait donc les memes noms a
+ * la main sans qu'aucun controle ne les relie.
+ */
+type ActiveModal =
+	| "none"
+	| "profils"
+	| "create_profile"
+	| "migrate_profile"
+	| "mods"
+	| "parametres"
+	| "logs"
+	| "instance"
+	| "cosmetiques"
+	| "boutique"
+	| "comptes";
 
-const SETTINGS_HEIGHTS = [
-	57, 57, 65, 77, 82, 95, 111, 144, 192, 245, 326, 352, 387, 401, 424, 448, 474,
-	504, 504,
+/**
+ * Le menu deroulant du coin.
+ *
+ * <p>Ses cinq boutons etaient ecrits cinq fois, avec la meme centaine de
+ * caracteres de classes recopiee a l'identique. En ajouter un sixieme
+ * demandait de recopier une sixieme fois, et corriger un espacement demandait
+ * cinq modifications dont on pouvait en oublier une.
+ */
+const MENU_ITEMS: { modal: ActiveModal; icon: LucideIcon; title: string }[] = [
+	{ modal: "comptes", icon: User, title: "Comptes" },
+	{ modal: "profils", icon: Box, title: "Gérer les profils" },
+	{ modal: "mods", icon: Pickaxe, title: "Mods" },
+	{ modal: "parametres", icon: Settings, title: "Paramètres" },
+	{ modal: "logs", icon: Terminal, title: "Logs de jeu" },
 ];
 
-const SETTINGS_TIMES = [
-	0, 0.0075, 0.0385, 0.0636, 0.0861, 0.1098, 0.137, 0.1662, 0.2006, 0.2314,
-	0.2638, 0.2926, 0.3226, 0.3432, 0.3691, 0.3961, 0.4267, 0.459, 1,
-];
-
-type SetupStep = 1 | 2 | 3 | 4 | 5;
-
-type DetectedProfile = {
-	id: string;
-	name: string;
-	options_path: string;
-	launcher: string;
-};
+const MENU_BUTTON =
+	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative";
 
 /**
  * Gabarit commun aux vignettes d'instance et au bouton d'ajout.
@@ -199,23 +207,10 @@ export function App() {
 	const [config, setConfig] = useState<RemoteConfiguration | null>(null);
 	const [news, setNews] = useState<NewsItem[]>([]);
 	const [modCount, setModCount] = useState<number | null>(null);
-	const [setupComplete, setSetupComplete] = useState(false);
 
 	// Layout State (Modals)
 	const [lobbyCape, setLobbyCape] = useState<string | undefined>();
-	const [activeModal, setActiveModal] = useState<
-		| "none"
-		| "profils"
-		| "create_profile"
-		| "migrate_profile"
-		| "mods"
-		| "parametres"
-		| "logs"
-		| "instance"
-		| "cosmetiques"
-		| "boutique"
-		| "comptes"
-	>("none");
+	const [activeModal, setActiveModal] = useState<ActiveModal>("none");
 	const [menuOpen, setMenuOpen] = useState(false);
 	const prefersReducedMotion = useReducedMotion();
 
@@ -238,7 +233,6 @@ export function App() {
 	} = useUpdater();
 	const {
 		profiles,
-		setProfiles,
 		selectedProfileId,
 		setSelectedProfileId,
 		refreshProfiles,
@@ -262,7 +256,7 @@ export function App() {
 	const [detectedProfiles, setDetectedProfiles] = useState<DetectedProfile[]>(
 		[],
 	);
-	const [importOptions, setImportOptions] = useState({
+	const [importOptions, setImportOptions] = useState<ImportOptions>({
 		keybinds: true,
 		sensitivity: true,
 		graphics: false,
@@ -387,7 +381,6 @@ export function App() {
 				const defaultGraphicsMode = remoteConfig.graphicsModes[0];
 				if (defaultGraphicsMode) setGraphicsMode(defaultGraphicsMode.id);
 				setNews(latestNews);
-				setSetupComplete(true);
 			} catch (e) {
 				setError(e instanceof Error ? e.message : t("app.error_load"));
 				setBootstrapFailed(true);
@@ -433,7 +426,6 @@ export function App() {
 				optionsTxtPath: selectedOptionsTxtPath,
 			});
 			await refreshProfiles();
-			setSetupComplete(true);
 			setInstallState("done");
 			setIsCreatingProfile(false);
 			setStep(1);
@@ -555,7 +547,7 @@ export function App() {
 
 	if (bootstrapFailed && !config) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-[#100c1c] p-8">
+			<div className="min-h-screen flex items-center justify-center bg-sunken p-8">
 				<div className="max-w-md w-full text-center flex flex-col items-center gap-4">
 					<AlertTriangle
 						className="w-12 h-12 text-accent-red"
@@ -583,7 +575,7 @@ export function App() {
 
 	if (loading || !config) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-[#100c1c]">
+			<div className="min-h-screen flex items-center justify-center bg-sunken">
 				<div className="animate-pulse flex flex-col items-center gap-4">
 					<Pickaxe
 						className="w-16 h-16 text-accent-purple-dark animate-bounce"
@@ -635,7 +627,7 @@ export function App() {
 		profiles.length > 0 ? profiles : [null];
 
 	return (
-		<div className="h-screen w-full flex overflow-hidden bg-[#0a0810] relative">
+		<div className="h-screen w-full flex overflow-hidden bg-void relative">
 			<UpdateModal
 				state={updateState}
 				onInstall={installUpdate}
@@ -757,56 +749,20 @@ export function App() {
 									className="flex flex-col items-center flex-1 w-full mt-4 pb-4"
 								>
 									<div className="flex flex-col items-center gap-4">
-										<button
-											onClick={() => {
-												setActiveModal("comptes");
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
-											title="Comptes"
-										>
-											<User className="w-5 h-5 text-gray-400 group-hover:text-white" />
-										</button>
-										<button
-											onClick={() => {
-												setActiveModal("profils");
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
-											title="Gérer les profils"
-										>
-											<Box className="w-5 h-5 text-gray-400 group-hover:text-white" />
-										</button>
-										<button
-											onClick={() => {
-												setActiveModal("mods");
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
-											title="Mods"
-										>
-											<Pickaxe className="w-5 h-5 text-gray-400 group-hover:text-white" />
-										</button>
-										<button
-											onClick={() => {
-												setActiveModal("parametres");
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
-											title="Paramètres"
-										>
-											<Settings className="w-5 h-5 text-gray-400 group-hover:text-white" />
-										</button>
-										<button
-											onClick={() => {
-												setActiveModal("logs");
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative"
-											title="Logs de jeu"
-										>
-											<Terminal className="w-5 h-5 text-gray-400 group-hover:text-white" />
-										</button>
+										{MENU_ITEMS.map(({ modal, icon: Icon, title }) => (
+											<button
+												key={modal}
+												type="button"
+												onClick={() => {
+													setActiveModal(modal);
+													setMenuOpen(false);
+												}}
+												className={MENU_BUTTON}
+												title={title}
+											>
+												<Icon className="w-5 h-5 text-gray-400 group-hover:text-white" />
+											</button>
+										))}
 									</div>
 
 									<div className="flex flex-col items-center mt-auto gap-4">
@@ -1032,8 +988,8 @@ export function App() {
 				title={t("home.add_instance", "Nouvelle instance")}
 			>
 				<ProfileCreation
-					step={step as number}
-					setStep={setStep as any}
+					step={step}
+					setStep={setStep}
 					connected={connected}
 					error={error}
 					profileName={profileName}

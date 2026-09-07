@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Download, Trash2, Package, Loader2, AlertTriangle, X, FolderOpen, Heart, Plus, Check, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Download,
+  Trash2,
+  Package,
+  Loader2,
+  AlertTriangle,
+  X,
+  FolderOpen,
+  Plus,
+  Check,
+} from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LauncherProfile } from "@paranoia/contracts";
 import {
