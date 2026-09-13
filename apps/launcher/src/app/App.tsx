@@ -33,12 +33,14 @@ import { useUpdater } from "./hooks/useUpdater";
  */
 const BACKGROUND: CSSProperties = {
 	backgroundImage: [
-		// Les deux lueurs gagnent un peu, le fond descend beaucoup: c'est en
-		// creusant l'ecart, et non en eclaircissant, qu'on obtient de la
-		// profondeur. Eclaircir les lueurs seules aurait donne un fond delave.
-		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.2) 0%, rgba(147, 9, 239, 0) 55%)",
-		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.26) 0%, rgba(97, 6, 158, 0) 60%)",
-		"linear-gradient(160deg, #120e20 0%, #0a0812 45%, #050409 100%)",
+		// Les deux lueurs restent hautes, mais elles ne portent plus la couleur a
+		// elles seules: le degrade lui-meme est violet d'un bout a l'autre. Il
+		// etait descendu a #050409 en cherchant de la profondeur, et cette
+		// profondeur-la etait du noir -- une lueur violette posee sur du noir
+		// donne un ecran noir avec une tache, pas un ecran violet.
+		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.22) 0%, rgba(147, 9, 239, 0) 55%)",
+		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.28) 0%, rgba(97, 6, 158, 0) 60%)",
+		"linear-gradient(160deg, #241a3d 0%, #1b1330 45%, #120c22 100%)",
 	].join(", "),
 };
 
@@ -63,6 +65,7 @@ export function App() {
 
 	const {
 		connected,
+		restoringSession,
 		account,
 		accounts,
 		connectingMicrosoft,
@@ -132,7 +135,13 @@ export function App() {
 		return <BootstrapErrorScreen error={error} onRetry={retry} />;
 	}
 
-	if (loading || !config) {
+	// `restoringSession` compte autant que `loading`. Il etait expose par
+	// useAuth et personne ne le lisait: pendant que le jeton Microsoft se
+	// renouvelait -- un aller-retour reseau jusqu'a login.live.com -- l'ecran
+	// « Connexion requise » s'affichait a un joueur deja connecte, puis basculait
+	// tout seul. On attendait donc devant un ecran qui disait le contraire de ce
+	// qui se passait.
+	if (loading || restoringSession || !config) {
 		return <LoadingScreen />;
 	}
 

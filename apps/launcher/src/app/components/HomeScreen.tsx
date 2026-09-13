@@ -285,15 +285,22 @@ export function HomeScreen({
 						{/* ACTUALITÉS */}
 						<NewsCard news={news} />
 
-						{/* La rangee prend toute la place laissee entre les actualites et
-						    le lancement, et la donne a ses vignettes. Les bornes evitent
-						    les deux exces: des vignettes ecrasees sur une fenetre courte,
-						    et des vignettes demesurees sur un grand ecran.
+						{/* La rangee prend tout ce qui reste entre les actualites et le
+						    lancement, dans la limite de ses bornes: pas de vignettes
+						    ecrasees sur un ecran court, pas de vignettes demesurees sur un
+						    grand.
+
+						    Il faut les deux reglages, et c'est ce qui manquait. Avec flex-1
+						    seul, une fois le plafond atteint l'espace restant n'allait a
+						    personne et le lancement remontait au milieu de la colonne. Avec
+						    une hauteur calculee seule, la rangee ne prenait pas la place
+						    disponible et les vignettes devenaient carrees. flex-1 les fait
+						    grandir, le mt-auto du lancement absorbe ce qui depasse.
 
 						    Le bouton d'ajout reste en dehors de la piste. Place a
 						    l'interieur, il sortait du champ des la troisieme instance et
-						    donnait l'impression qu'on ne pouvait pas en creer davantage. */}
-						<div className="flex min-h-[112px] max-h-[210px] min-w-0 flex-1 flex-row items-stretch gap-3 xl:gap-4">
+						    donnait l'impression qu'on ne pouvait pas en creer plus. */}
+							<div className="flex min-h-[116px] max-h-[212px] min-w-0 flex-1 flex-row items-stretch gap-3 xl:gap-4">
 								<div
 									onWheel={(event) => {
 										// Meme conversion que la barre du haut: une molette de
@@ -357,7 +364,7 @@ export function HomeScreen({
 								</button>
 							</div>
 
-							<div className="flex w-full max-w-[440px] shrink-0 items-center gap-4">
+							<div className="mt-auto flex w-full max-w-[440px] shrink-0 items-center gap-4">
 								<button
 									aria-label={running ? "Arrêter" : "Lancer"}
 									disabled={!mainProfile}

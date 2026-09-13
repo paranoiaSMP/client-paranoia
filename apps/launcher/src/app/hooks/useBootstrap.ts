@@ -46,11 +46,19 @@ export function useBootstrap({
 			setFailed(false);
 			try {
 				await waitForApi();
-				const [remoteConfig] = await Promise.all([
+				// Les trois partent ensemble. Les actualites attendaient les deux
+				// autres pour rien: elles n'en dependent pas, et leur aller-retour
+				// s'ajoutait tel quel au temps de demarrage.
+				//
+				// Leur echec ne fait plus echouer le demarrage non plus. Un fil
+				// d'actualites injoignable renvoyait le joueur sur l'ecran d'erreur,
+				// alors que le launcher marche parfaitement sans: il montre un
+				// bandeau vide, ce qui est exactement ce qu'il faut montrer.
+				const [remoteConfig, latestNews] = await Promise.all([
 					fetchRemoteConfiguration(),
+					fetchNews().catch(() => [] as NewsItem[]),
 					refreshProfiles(),
 				]);
-				const latestNews = await fetchNews();
 				if (cancelled) return;
 				setConfig(remoteConfig);
 				setNews(latestNews);

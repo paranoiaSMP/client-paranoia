@@ -36,6 +36,12 @@ async function errorMessage(response: Response): Promise<string> {
 export async function waitForApi(timeoutMs = 30_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
+  // Serre au debut, puis relache. A 250 ms fixes, un backend pret en 310 ms
+  // faisait attendre jusqu'a 500: on payait un quart de seconde d'attente pure
+  // a chaque demarrage, pour rien. Les premiers essais sont donc rapproches,
+  // et l'ecart grandit ensuite -- inutile de marteler un service qui met
+  // visiblement du temps.
+  let delay = 50;
 
   while (Date.now() < deadline) {
     try {
@@ -48,7 +54,8 @@ export async function waitForApi(timeoutMs = 30_000): Promise<void> {
       lastError = err;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    delay = Math.min(delay * 1.5, 400);
   }
 
   throw new Error(
