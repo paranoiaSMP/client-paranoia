@@ -21,12 +21,15 @@ export function setIdlePresence() {
 
 export function setPlayingPresence(version: string, username: string) {
   if (!rpc || !isConnected) return;
-  
+
   rpc.setActivity({
     details: 'Joue sur Paranoia SMP',
     state: `Pseudo: ${username}`,
     largeImageKey: 'logo',
-    largeImageText: 'Paranoia SMP',
+    // La version arrivait jusqu'ici depuis le lancement, puis etait jetee: le
+    // parametre existait, personne ne le lisait. L'infobulle repetait
+    // « Paranoia SMP », deja affiche juste au-dessus.
+    largeImageText: `Paranoia SMP — Minecraft ${version}`,
     startTimestamp: new Date(),
     instance: false,
   }).catch((err) => console.error("Erreur RPC:", err));

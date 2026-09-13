@@ -17,6 +17,7 @@ import {
 	setFavorite,
 	updateProfile,
 } from "./profiles.store.js";
+import { logger } from "../../logger.js";
 
 export const profilesRouter = Router();
 
@@ -37,20 +38,27 @@ profilesRouter.get("/", (_req, res) => {
 });
 
 profilesRouter.post("/import-paths", async (req, res) => {
-	console.log("[Import] Requête reçue sur /import-paths avec body:", req.body);
+	// Le corps en champ structure et non en second argument: `req.body` etant
+	// typé `any`, la forme console.log passait le controle de types puis
+	// partait en interpolation printf, sans rien afficher du corps.
+	logger.info({ body: req.body }, "[Import] Requête reçue sur /import-paths");
 	try {
 		const { paths } = req.body;
 		if (!Array.isArray(paths)) {
 			console.error("[Import] Erreur: paths n'est pas un tableau");
 			return res.status(400).json({ error: "paths array required" });
 		}
-		console.log("[Import] Chemins à importer:", paths);
+		logger.info({ paths }, "[Import] Chemins à importer");
 		await importProfilesFromPaths(paths);
-		console.log("[Import] Import terminé avec succès !");
+		logger.info("[Import] Import terminé avec succès !");
 		res.json({ success: true });
-	} catch (err: any) {
-		console.error("[Import] Erreur:", err);
-		res.status(500).json({ error: err.message });
+	} catch (err) {
+		logger.error({ err }, "[Import] Erreur");
+		// Une exception qui n'est pas une Error renvoyait `{ error: undefined }`,
+		// donc une 500 muette cote launcher.
+		res
+			.status(500)
+			.json({ error: err instanceof Error ? err.message : String(err) });
 	}
 });
 
@@ -75,7 +83,7 @@ async function prepareInstance(profile: {
 		() => {},
 	)
 		.then((installed) => {
-			console.log(
+			logger.info(
 				installed
 					? `[Profils] Fabric API pret pour ${profile.id}`
 					: `[Profils] pas de Fabric API pour Minecraft ${profile.minecraftVersion}`,

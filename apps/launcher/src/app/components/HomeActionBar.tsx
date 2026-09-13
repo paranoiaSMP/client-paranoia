@@ -35,7 +35,7 @@ const ACTIONS: { id: HomeAction; label: string; icon: LucideIcon }[] = [
 ];
 
 /** Largeur d'un bouton, et espace qui le suit. */
-const BUTTON = 120;
+const BUTTON = 112;
 const GAP = 8;
 
 /** Un cran de defilement: un bouton. */
@@ -57,7 +57,7 @@ const TRACK_WIDTH = BUTTON * 4 + GAP * 3;
  *
  * <p>La boutique est ancree a droite, hors de la piste: c'est le seul bouton
  * qui doit rester atteignable sans rien faire defiler. Les autres tiennent sur
- * une piste large de trois, que la molette fait defiler -- les fleches sont la
+ * une piste large de quatre, que la molette fait defiler -- les fleches sont la
  * pour que ce defilement se voie, une piste sans indice ne s'essaie pas.
  *
  * <p>La barre est {@code sticky}: elle reste en place quand le contenu defile
@@ -75,7 +75,9 @@ export function HomeActionBar({
   }
 
   return (
-    <div className="sticky top-0 z-30 flex h-[64px] w-full shrink-0 items-center gap-2 rounded-[22px] bubble px-3 backdrop-blur">
+    // La reserve a droite est celle du carre du menu, qui se pose sur la barre
+    // au lieu d'etre range a cote: 64 pixels de carre et 12 de respiration.
+    <div className="sticky top-0 z-30 flex h-[64px] w-full shrink-0 items-center gap-2 rounded-[22px] bubble pl-3 pr-[76px] backdrop-blur">
       <button
         onClick={() => scrollBy(-1)}
         aria-label="Raccourcis precedents"
@@ -113,12 +115,16 @@ export function HomeActionBar({
               onClick={() => onAction(action.id)}
               title={action.label}
               type="button"
-              className="flex h-11 w-[120px] shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#2c2447] bg-[#241d3c] px-3 text-xs font-semibold text-[#cfc9de] transition-colors hover:border-[#8b5cf6] hover:text-white"
+              // Les raccourcis etaient des aplats poses dans la barre. Ils
+              // recoivent la meme matiere que le reste -- liseré clair en haut,
+              // ombre courte dessous -- pour flotter dedans plutot qu'y etre
+              // decoupes.
+              className="flex h-11 w-[112px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-white/[0.07] bg-gradient-to-b from-[#2a2247] to-[#211a38] px-2.5 text-xs font-semibold text-[#cfc9de] shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_4px_10px_-4px_rgba(0,0,0,0.8)] transition-colors hover:border-[#8b5cf6] hover:text-white"
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{action.label}</span>
               {badge !== null && badge > 0 && (
-                <span className="shrink-0 rounded-full bg-[#100c1c] px-1.5 py-0.5 text-[10px] font-bold text-[#9a92b6]">
+                <span className="shrink-0 rounded-full bg-sunken px-1.5 py-0.5 text-[10px] font-bold text-[#9a92b6]">
                   {badge}
                 </span>
               )}

@@ -94,8 +94,8 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			});
 			onRefresh();
 			onClose();
-		} catch (e: any) {
-			setError(e.message || "Erreur lors de la migration");
+		} catch (e) {
+			setError(e instanceof Error ? e.message : "Erreur lors de la migration");
 		} finally {
 			setLoading(false);
 		}
@@ -119,8 +119,10 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			
 			onRefresh();
 			onClose();
-		} catch (e: any) {
-			setError(e.message || "Erreur lors de l'importation du pack");
+		} catch (e) {
+			setError(
+				e instanceof Error ? e.message : "Erreur lors de l'importation du pack",
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -150,7 +152,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 							className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${
 								selectedProfileId === p.id
 									? "bg-[#1a1529] border-white/20"
-									: "bg-[#100c1c] border-[#251e3d] hover:border-[#403565]"
+									: "bg-sunken border-[#251e3d] hover:border-[#403565]"
 							}`}
 						>
 							<div>

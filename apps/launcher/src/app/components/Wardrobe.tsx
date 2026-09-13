@@ -260,7 +260,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex flex-col bg-[#0a0810]/95 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex flex-col bg-void/95 backdrop-blur-md"
         >
           {/* ---- Barre du haut ---- */}
           <header className="flex shrink-0 items-center gap-4 px-8 py-5">

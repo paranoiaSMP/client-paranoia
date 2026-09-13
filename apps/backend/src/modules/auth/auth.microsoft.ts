@@ -1,3 +1,4 @@
+import { logger } from "../../logger.js";
 const MINECRAFT_CLIENT_ID = "00000000402b5328"; // Official Minecraft Client ID
 
 const TOKEN_ENDPOINT = "https://login.live.com/oauth20_token.srf";
@@ -129,7 +130,7 @@ async function resolveMinecraftAccount(
     throw new Error(`Failed to fetch Minecraft profile: ${profileRes.status}`);
   }
   const profileData = await profileRes.json();
-  console.log(`[AUTH] Successfully logged in as ${profileData.name}`);
+  logger.info(`[AUTH] Successfully logged in as ${profileData.name}`);
 
   return {
     minecraftUuid: profileData.id,

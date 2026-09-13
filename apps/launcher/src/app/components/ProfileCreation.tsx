@@ -1,10 +1,63 @@
+import type { Dispatch, SetStateAction } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { RemoteConfiguration } from "@paranoia/contracts";
+import type {
+  GraphicsModeDefinition,
+  ProfileTypeDefinition,
+  RemoteConfiguration,
+} from "@paranoia/contracts";
 
+/** Les cinq ecrans de l'assistant, dans l'ordre. */
+export type SetupStep = 1 | 2 | 3 | 4 | 5;
+
+/**
+ * Un profil trouve dans un autre launcher installe sur la machine.
+ *
+ * <p>Les champs sont ceux de la structure Rust {@code DetectedProfile}, seule
+ * source de verite: c'est elle qui remplit la reponse de la commande Tauri
+ * {@code get_detected_profiles}. Le type declarait auparavant {@code name} la
+ * ou Rust envoie {@code label}; personne ne s'en apercevait parce que la liste
+ * etait passee en {@code any[]}.
+ */
+export type DetectedProfile = {
+  id: string;
+  label: string;
+  options_path: string;
+  launcher: string;
+};
+
+/** Ce que l'on reprend d'un profil existant. */
+export type ImportOptions = {
+  keybinds: boolean;
+  sensitivity: boolean;
+  graphics: boolean;
+};
+
+/**
+ * Les deux deplacements dans l'assistant, bornes aux ecrans qui existent.
+ *
+ * <p>Les boutons calculaient {@code step - 1} et {@code step + 1}, ce qui rend
+ * un {@code number} quelconque. Les bornes etaient tenues ailleurs -- par
+ * l'attribut {@code disabled} du premier bouton et par la condition
+ * {@code step < 5} du second -- donc a distance de l'endroit ou le calcul se
+ * fait. Les mettre ici les rend verifiables.
+ */
+const stepBefore = (step: SetupStep): SetupStep =>
+  step === 1 ? 1 : ((step - 1) as SetupStep);
+
+const stepAfter = (step: SetupStep): SetupStep =>
+  step === 5 ? 5 : ((step + 1) as SetupStep);
+
+/*
+ * Sept proprietes etaient en `any`, dont les deux definitions choisies et la
+ * liste des profils detectes -- alors que leurs types existent, l'un dans les
+ * contrats partages, l'autre a deux fichiers de la. Le cout se voyait chez
+ * l'appelant: App.tsx devait ecrire `setStep as any` pour faire passer son
+ * SetupStep dans un parametre declare `number`.
+ */
 type ProfileCreationProps = {
-  step: number;
-  setStep: (step: number) => void;
+  step: SetupStep;
+  setStep: Dispatch<SetStateAction<SetupStep>>;
   connected: boolean;
   error: string | null;
   profileName: string;
@@ -16,15 +69,15 @@ type ProfileCreationProps = {
   setImportSettings: (v: boolean) => void;
   keybindSource: string;
   setKeybindSource: (v: string) => void;
-  detectedProfiles: any[];
-  importOptions: any;
-  setImportOptions: (o: any) => void;
+  detectedProfiles: DetectedProfile[];
+  importOptions: ImportOptions;
+  setImportOptions: Dispatch<SetStateAction<ImportOptions>>;
   profileType: string;
   setProfileType: (t: string) => void;
   graphicsMode: string;
   setGraphicsMode: (g: string) => void;
-  selectedType: any;
-  selectedGraphics: any;
+  selectedType: ProfileTypeDefinition | undefined;
+  selectedGraphics: GraphicsModeDefinition | undefined;
   handleInstall: () => void;
   installState: string;
 };
@@ -105,7 +158,7 @@ export function ProfileCreation({
               type="text"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
-              className="w-full bg-[#100c1c] border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-sunken border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors"
               placeholder={t("wizard.name_placeholder")}
             />
           </div>
@@ -116,7 +169,7 @@ export function ProfileCreation({
             <select
               value={minecraftVersion}
               onChange={(e) => setMinecraftVersion(e.target.value)}
-              className="w-full bg-[#100c1c] border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors appearance-none"
+              className="w-full bg-sunken border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors appearance-none"
             >
               {config?.supportedMinecraftVersions.map((v) => (
                 <option key={v} value={v}>
@@ -143,7 +196,7 @@ export function ProfileCreation({
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
-                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent-purple border-accent-purple" : "bg-[#100c1c] border-[#251e3d] group-hover:border-[#403565]"}`}
+                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
               >
                 {importSettings && (
                   <CheckCircle2
@@ -196,7 +249,7 @@ export function ProfileCreation({
                 <div className="space-y-3 pt-1">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent-purple border-accent-purple" : "bg-[#100c1c] border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
                     >
                       {importOptions.keybinds && (
                         <CheckCircle2
@@ -223,7 +276,7 @@ export function ProfileCreation({
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent-purple border-accent-purple" : "bg-[#100c1c] border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
                     >
                       {importOptions.sensitivity && (
                         <CheckCircle2
@@ -250,7 +303,7 @@ export function ProfileCreation({
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent-purple border-accent-purple" : "bg-[#100c1c] border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
                     >
                       {importOptions.graphics && (
                         <CheckCircle2
@@ -289,7 +342,7 @@ export function ProfileCreation({
               <div
                 key={t.id}
                 onClick={() => setProfileType(t.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent-purple/20 border-accent-purple" : "bg-[#100c1c] border-[#251e3d] hover:border-[#403565]"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-[#251e3d] hover:border-[#403565]"}`}
               >
                 <div className="font-black text-white">{t.label}</div>
                 <div className="text-sm font-medium text-[#8d84a8]">
@@ -309,7 +362,7 @@ export function ProfileCreation({
               <div
                 key={g.id}
                 onClick={() => setGraphicsMode(g.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent-purple/20 border-accent-purple" : "bg-[#100c1c] border-[#251e3d] hover:border-[#403565]"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-[#251e3d] hover:border-[#403565]"}`}
               >
                 <div className="font-black text-white">{g.label}</div>
                 <div className="text-sm font-medium text-[#8d84a8]">
@@ -324,7 +377,7 @@ export function ProfileCreation({
       {step === 5 && (
         <div className="space-y-6">
           <h4 className="text-lg font-bold text-white">{t("wizard.step5")}</h4>
-          <div className="p-6 bg-[#100c1c] rounded border-2 border-[#251e3d] space-y-3 font-medium">
+          <div className="p-6 bg-sunken rounded border-2 border-[#251e3d] space-y-3 font-medium">
             <div className="flex justify-between border-b border-[#251e3d] pb-3">
               <span className="text-[#8d84a8]">{t("wizard.version")}</span>
               <span className="font-black text-white">{minecraftVersion}</span>
@@ -349,7 +402,7 @@ export function ProfileCreation({
 
       <div className="flex justify-between mt-8 pt-6 border-t border-[#251e3d]">
         <button
-          onClick={() => setStep(step - 1)}
+          onClick={() => setStep(stepBefore(step))}
           disabled={step === 1 || (step === 2 && connected)}
           className="px-6 py-2 rounded text-[#8d84a8] font-bold hover:text-white hover:bg-[#251e3d] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
@@ -358,7 +411,7 @@ export function ProfileCreation({
 
         {step < 5 ? (
           <button
-            onClick={() => setStep(step + 1)}
+            onClick={() => setStep(stepAfter(step))}
             disabled={step === 1 && !connected}
             className="px-8 py-2 bg-white text-black font-black rounded hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[4px_4px_0px_rgba(157,13,242,0.5)] active:translate-x-1 active:translate-y-1 active:shadow-none"
           >

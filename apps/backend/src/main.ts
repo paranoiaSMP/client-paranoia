@@ -1,8 +1,8 @@
 import cors from "cors";
 import express from "express";
-import pino from "pino";
 import { initDiscordRPC } from './modules/discord/discord.service.js';
 import { pinoHttp } from "pino-http";
+import { logger } from "./logger.js";
 import { ZodError } from "zod";
 import { env } from "./config/env.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -19,7 +19,6 @@ import { settingsRouter } from "./modules/settings/settings.routes.js";
 import { ModrinthUnavailableError } from "./modules/mods/modrinth.service.js";
 
 const app = express();
-const logger = pino({ level: "info" });
 
 // L'API tourne sur la machine du joueur: avec un CORS ouvert, n'importe quel
 // site visite dans un navigateur pouvait appeler /v1/launcher/play ou lire les
