@@ -121,7 +121,11 @@ export function NewsCard({ news }: NewsCardProps) {
 			<motion.div
 				{...(latest ? { layoutId: `card-${latest.title}-${id}` } : {})}
 				onClick={() => latest && setActive(latest)}
-				className="bubble mx-4 flex h-[128px] shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-5 transition-[border-color] hover:border-white/15"
+				// Plus court sur une fenetre basse. A 485 pixels de haut -- la taille
+				// d'origine du launcher -- les 128 pixels fixes poussaient le bouton
+				// de lancement hors du cadre, et la section etant en overflow-hidden,
+				// il etait rogne en silence plutot que de faire apparaitre une barre.
+				className="bubble mx-4 flex h-[112px] shrink-0 cursor-pointer items-stretch gap-4 overflow-hidden rounded-[22px] p-3 pr-5 transition-[border-color] hover:border-white/15 xl:h-[132px]"
 			>
 				{latest?.imageUrl && (
 					<motion.div
