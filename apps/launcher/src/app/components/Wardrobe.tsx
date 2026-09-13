@@ -99,11 +99,11 @@ function Price({ value, owned }: { value: number; owned: boolean }) {
     );
   }
   if (value === 0) {
-    return <span className="text-[11px] font-semibold text-[#9a92b6]">Offert</span>;
+    return <span className="text-[11px] font-semibold text-muted">Offert</span>;
   }
   return (
     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white">
-      <span className="grid h-3 w-3 place-items-center rounded-full bg-[#8b5cf6] text-[8px] font-black">
+      <span className="grid h-3 w-3 place-items-center rounded-full bg-accent-purple text-[8px] font-black">
         P
       </span>
       {value.toLocaleString("fr-FR")}
@@ -268,7 +268,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
 
             <div className="ml-auto flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-[14px] border border-[#2c2447] bg-[#1b1630] px-4 py-2">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] text-[10px] font-black text-white">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-accent-purple to-[#6d35e0] text-[10px] font-black text-white">
                   P
                 </span>
                 {profile?.balance === null ? (
@@ -288,7 +288,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
               <button
                 onClick={onClose}
                 aria-label="Fermer le vestiaire"
-                className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#2c2447] bg-[#1b1630] text-[#9a92b6] transition-colors hover:border-[#8b5cf6] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5cf6]"
+                className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#2c2447] bg-[#1b1630] text-muted transition-colors hover:border-accent-purple hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -314,10 +314,10 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                   <button
                     key={entry.id}
                     onClick={() => setCategory(entry.id)}
-                    className={`flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5cf6] ${
+                    className={`flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple ${
                       category === entry.id
-                        ? "bg-gradient-to-r from-[#8b5cf6]/25 to-transparent text-white"
-                        : "text-[#9a92b6] hover:bg-[#1e1e22] hover:text-white"
+                        ? "bg-gradient-to-r from-accent-purple/25 to-transparent text-white"
+                        : "text-muted hover:bg-[#1e1e22] hover:text-white"
                     }`}
                   >
                     <span>{entry.label}</span>
@@ -360,9 +360,9 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                           void act(item);
                         }}
                         disabled={working || !affordable}
-                        className={`group relative flex flex-col overflow-hidden rounded-[18px] border-2 bg-gradient-to-br from-[#282141] via-[#1d1d21] to-[#161619] p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5cf6] ${
+                        className={`group relative flex flex-col overflow-hidden rounded-[18px] border-2 bg-gradient-to-br from-[#282141] via-[#1d1d21] to-[#161619] p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple ${
                           isWorn
-                            ? "border-[#8b5cf6]"
+                            ? "border-accent-purple"
                             : "border-[#272040] hover:border-[#4b4166] disabled:hover:border-[#272040]"
                         } ${!affordable ? "cursor-not-allowed opacity-55" : ""}`}
                       >
@@ -395,7 +395,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
 
                           {!affordable && !working && (
                             <span className="absolute inset-0 grid place-items-center rounded-[12px] bg-black/45">
-                              <Lock className="h-5 w-5 text-[#9a92b6]" />
+                              <Lock className="h-5 w-5 text-muted" />
                             </span>
                           )}
                         </div>
@@ -415,7 +415,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                         </span>
 
                         {isWorn && (
-                          <span className="relative mt-2 rounded-[8px] bg-[#8b5cf6] py-1 text-center text-[11px] font-bold text-white">
+                          <span className="relative mt-2 rounded-[8px] bg-accent-purple py-1 text-center text-[11px] font-bold text-white">
                             EQUIPE
                           </span>
                         )}
@@ -462,7 +462,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                       key={slot.type}
                       className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 p-2 transition-colors ${
                         worn
-                          ? "border-[#8b5cf6] bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
+                          ? "border-accent-purple bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
                           : "border-dashed border-[#3a3a41] bg-[#18181c]"
                       }`}
                     >
@@ -485,7 +485,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                             onClick={() => void clearSlot(slot.type)}
                             disabled={working}
                             aria-label={`Retirer ${worn.name}`}
-                            className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-[#9a92b6] transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#8b5cf6]"
+                            className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-muted transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-purple"
                           >
                             {working ? (
                               <Loader2 className="h-3 w-3 animate-spin" />

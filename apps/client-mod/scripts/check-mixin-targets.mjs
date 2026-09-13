@@ -129,11 +129,26 @@ function findInAncestors(superclass, method, classpath) {
   return null;
 }
 
+/**
+ * Les dossiers de mixins visibles depuis une version, dans le meme ordre que
+ * les `srcDirs` de build.gradle.
+ *
+ * <p>Ils doivent rester d'accord: ce script decide si un mixin declare a bien
+ * une source, et il tourne avant la compilation. Un dossier oublie ici fait
+ * echouer le build en annoncant introuvable un fichier qui existe.
+ */
 function mixinFiles(version) {
   const dirs = [
     path.join(root, "src/main/java/gg/paranoia/client/mixin"),
     path.join(root, "versions", version, "src/main/java/gg/paranoia/client/mixin"),
   ];
+
+  // Partage par toutes les versions sauf 1.21.8, seule a diverger. Meme
+  // condition que dans build.gradle, et pour la meme raison: une nouvelle
+  // version rejoint le tronc commun sans qu'on ait a l'ajouter ici.
+  if (version !== "1.21.8") {
+    dirs.push(path.join(root, "src/main/java-modern/gg/paranoia/client/mixin"));
+  }
 
   return dirs
     .filter((dir) => fs.existsSync(dir))

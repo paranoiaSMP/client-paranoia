@@ -259,7 +259,7 @@ export function HomeScreen({
 
 								<div className="flex flex-col items-center mt-auto gap-4">
 									{/* Logo Paranoia, juste au-dessus de la sortie. */}
-									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#8b5cf6]/20">
+									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-accent-purple to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-accent-purple/20">
 										P
 									</div>
 									<div className="w-6 h-[1px] bg-[#2c2447]" />
@@ -351,7 +351,7 @@ export function HomeScreen({
 								<button
 									aria-label="Ajouter une instance"
 									title="Nouvelle instance"
-									className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-[#8b5cf6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]`}
+									className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-accent-purple focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-purple`}
 									onClick={onCreateProfile}
 									type="button"
 								>
@@ -368,7 +368,7 @@ export function HomeScreen({
 								<button
 									aria-label={running ? "Arrêter" : "Lancer"}
 									disabled={!mainProfile}
-									className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${running ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
+									className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${running ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-accent-purple"}`}
 									onClick={running ? onStop : onPlay}
 									type="button"
 								>
@@ -406,11 +406,11 @@ export function HomeScreen({
 									title="Installer des mods depuis Modrinth"
 									disabled={!mainProfile}
 									onClick={() => onOpen("mods")}
-									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-accent-purple disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Pickaxe className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
+									<span className="text-[10px] leading-none text-muted">
 										{modCount ?? "Mods"}
 									</span>
 								</button>
@@ -421,11 +421,11 @@ export function HomeScreen({
 									title="Consulter les logs du jeu"
 									disabled={!mainProfile}
 									onClick={() => onOpen("logs")}
-									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-accent-purple disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Terminal className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
+									<span className="text-[10px] leading-none text-muted">
 										Logs
 									</span>
 								</button>

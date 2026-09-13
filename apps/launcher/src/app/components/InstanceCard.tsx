@@ -58,7 +58,7 @@ export function InstanceCard({
 			<div
 				aria-hidden="true"
 				className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
-					isSelected ? "bg-[#8b5cf6]/40" : "bg-white/5 group-hover:bg-white/10"
+					isSelected ? "bg-accent-purple/40" : "bg-white/5 group-hover:bg-white/10"
 				}`}
 			/>
 
@@ -67,14 +67,14 @@ export function InstanceCard({
 					{label}
 				</p>
 				{detail && (
-					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">{detail}</p>
+					<p className="mt-0.5 truncate text-[11px] text-muted">{detail}</p>
 				)}
 				{version && (
 					<span
 						className={`mt-1.5 inline-block max-w-full truncate rounded-[7px] border px-1.5 py-0.5 text-[10px] font-semibold ${
 							isSelected
-								? "border-[#8b5cf6]/60 bg-[#8b5cf6]/15 text-[#cfa8ff]"
-								: "border-white/10 bg-black/30 text-[#9a92b6]"
+								? "border-accent-purple/60 bg-accent-purple/15 text-[#cfa8ff]"
+								: "border-white/10 bg-black/30 text-muted"
 						}`}
 					>
 						{version}

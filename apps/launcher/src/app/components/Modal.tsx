@@ -46,7 +46,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
                 <h2 className="text-xl font-medium text-white">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="rounded-md p-2 hover:bg-[#2c2447] transition-colors focus-visible:outline-2 focus-visible:outline-[#8b5cf6]"
+                  className="rounded-md p-2 hover:bg-[#2c2447] transition-colors focus-visible:outline-2 focus-visible:outline-accent-purple"
                   aria-label="Fermer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,7 +58,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
             {!title && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-20 rounded-md p-2 bg-[#1a1a1a]/80 hover:bg-[#2c2447] transition-colors focus-visible:outline-2 focus-visible:outline-[#8b5cf6]"
+                className="absolute top-4 right-4 z-20 rounded-md p-2 bg-[#1a1a1a]/80 hover:bg-[#2c2447] transition-colors focus-visible:outline-2 focus-visible:outline-accent-purple"
                 aria-label="Fermer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

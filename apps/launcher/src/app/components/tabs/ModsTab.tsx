@@ -49,7 +49,7 @@ function ErrorNotice({
       <p className="text-sm text-[#fca5a5] flex-1 break-words">{message}</p>
       <button
         onClick={onDismiss}
-        className="shrink-0 text-[#7a7194] hover:text-white transition-colors"
+        className="shrink-0 text-muted-dim hover:text-white transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
@@ -195,8 +195,8 @@ export function ModsTab({
   if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <Package className="w-10 h-10 text-[#372d58] mb-3" />
-        <p className="text-[#7a7194]">Crée un profil pour installer des mods.</p>
+        <Package className="w-10 h-10 text-line-hi mb-3" />
+        <p className="text-muted-dim">Crée un profil pour installer des mods.</p>
       </div>
     );
   }
@@ -208,7 +208,7 @@ export function ModsTab({
 
       {/* Search Bar */}
       <div className="flex items-center gap-3 w-full mb-3">
-        <div className="flex items-center bg-[#1a1529] rounded-xl px-4 py-3 flex-1 border border-[#241d3c]">
+        <div className="flex items-center bg-panel rounded-xl px-4 py-3 flex-1 border border-line">
           <Search className="w-5 h-5 text-[#463a70] mr-3 shrink-0" />
           <input
             value={query}
@@ -226,7 +226,7 @@ export function ModsTab({
           value={profile.id}
           onChange={(e) => setSelectedProfileId(e.target.value)}
           title={t("mods.selectProfile")}
-          className="bg-[#1a1529] border border-[#241d3c] hover:border-[#372d58] text-[#9a92b6] rounded-lg px-3 py-2 text-xs md:text-sm font-semibold outline-none transition-colors shrink-0"
+          className="bg-panel border border-line hover:border-line-hi text-muted rounded-lg px-3 py-2 text-xs md:text-sm font-semibold outline-none transition-colors shrink-0"
         >
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
@@ -237,17 +237,17 @@ export function ModsTab({
         <button
           onClick={openFolder}
           title={t("mods.openFolder")}
-          className="bg-[#1a1529] border border-[#241d3c] hover:border-[#372d58] text-[#9a92b6] hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
+          className="bg-panel border border-line hover:border-line-hi text-muted hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
       
         {totalHits > 0 && (
-          <div className="flex items-center gap-2 text-[#9a92b6] text-sm font-bold shrink-0">
+          <div className="flex items-center gap-2 text-muted text-sm font-bold shrink-0">
             <button 
               onClick={() => runSearch(Math.max(1, page - 1))}
               disabled={page === 1 || searching}
-              className="w-8 h-8 flex items-center justify-center bg-[#1a1529] border border-[#241d3c] hover:border-[#372d58] hover:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-panel border border-line hover:border-line-hi hover:text-white rounded-lg transition-colors disabled:opacity-50"
             >
               &lt;
             </button>
@@ -255,7 +255,7 @@ export function ModsTab({
             <button 
               onClick={() => runSearch(Math.min(Math.ceil(totalHits / 20), page + 1))}
               disabled={page >= Math.ceil(totalHits / 20) || searching}
-              className="w-8 h-8 flex items-center justify-center bg-[#1a1529] border border-[#241d3c] hover:border-[#372d58] hover:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-panel border border-line hover:border-line-hi hover:text-white rounded-lg transition-colors disabled:opacity-50"
             >
               &gt;
             </button>
@@ -275,7 +275,7 @@ export function ModsTab({
           <p className="text-sm text-[#d8b4fe] flex-1 break-words">{notice}</p>
           <button
             onClick={() => setNotice(null)}
-            className="shrink-0 text-[#7a7194] hover:text-white transition-colors"
+            className="shrink-0 text-muted-dim hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -290,17 +290,17 @@ export function ModsTab({
             return (
               <div
                 key={hit.projectId}
-                className="bg-[#121214] border border-[#241d3c] rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-[#372d58] transition-colors group"
+                className="bg-[#121214] border border-line rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-line-hi transition-colors group"
               >
                 <div className="flex flex-1 gap-4 md:gap-5 min-w-0">
                   {hit.iconUrl ? (
                     <img
                       src={hit.iconUrl}
                       alt=""
-                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-[#241d3c]"
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-line"
                     />
                   ) : (
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-[#241d3c] shrink-0 flex items-center justify-center">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-line shrink-0 flex items-center justify-center">
                       <Package className="w-8 h-8 text-[#463a70]" />
                     </div>
                   )}
@@ -308,9 +308,9 @@ export function ModsTab({
                   <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <h3 className="font-bold text-lg md:text-xl text-white truncate">{hit.title}</h3>
-                      <span className="text-[#7a7194] text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
+                      <span className="text-muted-dim text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
                     </div>
-                    <p className="text-[#9a92b6] text-xs md:text-sm line-clamp-2 leading-relaxed">
+                    <p className="text-muted text-xs md:text-sm line-clamp-2 leading-relaxed">
                       {hit.description}
                     </p>
                     
@@ -318,11 +318,11 @@ export function ModsTab({
                   </div>
                 </div>
 
-                <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-[#241d3c] pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
+                <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-line pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
                   <button
                     onClick={() => handleInstall(hit)}
                     disabled={isInstalling || isInstalled}
-                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent-purple/10 border border-accent-purple text-accent-purple disabled:opacity-50 disabled:border-[#372d58] disabled:text-[#7a7194] disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
+                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent-purple/10 border border-accent-purple text-accent-purple disabled:opacity-50 disabled:border-line-hi disabled:text-muted-dim disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
                   >
                     {isInstalling ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -334,7 +334,7 @@ export function ModsTab({
                     {isInstalled ? "Installé" : "Add to instance"}
                   </button>
 
-                  <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-[#9a92b6] text-xs md:text-sm font-semibold w-full md:w-auto">
+                  <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-muted text-xs md:text-sm font-semibold w-full md:w-auto">
                     <span className="flex items-center gap-1.5" title="Downloads">
                       <Download className="w-4 h-4" />
                       {formatDownloads(hit.downloads)}
@@ -348,11 +348,11 @@ export function ModsTab({
       )}
 
       {/* Installed Mods list at the bottom */}
-      <div className="mt-4 border-t border-[#241d3c] pt-6">
+      <div className="mt-4 border-t border-line pt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-white">
             Mods de ce profil{" "}
-            <span className="text-[#7a7194] font-normal">
+            <span className="text-muted-dim font-normal">
               ({installed.length})
             </span>
           </h2>
@@ -362,7 +362,7 @@ export function ModsTab({
         </div>
 
         {installed.length === 0 ? (
-          <div className="bg-[#1a1529] border border-[#241d3c] rounded-xl p-6 text-center">
+          <div className="bg-panel border border-line rounded-xl p-6 text-center">
             <p className="text-[#463a70] text-sm">
               Aucun mod installÃ© sur ce profil.
             </p>
@@ -372,7 +372,7 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-[#1a1529] border border-[#241d3c] rounded-lg px-4 py-3 flex items-center gap-4 hover:border-[#372d58] transition-colors"
+                className="bg-panel border border-line rounded-lg px-4 py-3 flex items-center gap-4 hover:border-line-hi transition-colors"
               >
                 <Package className="w-5 h-5 text-[#463a70] shrink-0" />
                 <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
@@ -381,7 +381,7 @@ export function ModsTab({
                 </span>
                 <button
                   onClick={() => handleRemove(mod.fileName)}
-                  className="shrink-0 p-2 bg-[#241d3c] hover:bg-accent-red/20 text-[#7a7194] hover:text-accent-red rounded-lg transition-colors"
+                  className="shrink-0 p-2 bg-line hover:bg-accent-red/20 text-muted-dim hover:text-accent-red rounded-lg transition-colors"
                   title={t("mods.remove")}
                 >
                   <Trash2 className="w-4 h-4" />

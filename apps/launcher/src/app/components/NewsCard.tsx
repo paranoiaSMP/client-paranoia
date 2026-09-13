@@ -55,7 +55,7 @@ export function NewsCard({ news }: NewsCardProps) {
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0, transition: { duration: 0.05 } }}
-							className="flex absolute top-4 right-4 items-center justify-center bg-[#241d3c] hover:bg-[#372d58] transition-colors rounded-full h-8 w-8 z-10"
+							className="flex absolute top-4 right-4 items-center justify-center bg-line hover:bg-line-hi transition-colors rounded-full h-8 w-8 z-10"
 							onClick={() => setActive(null)}
 						>
 							<X className="w-4 h-4 text-white" />
@@ -89,7 +89,7 @@ export function NewsCard({ news }: NewsCardProps) {
 										</motion.h3>
 										<motion.p
 											layoutId={`description-${active.title}-${id}`}
-											className="text-[#9a92b6] text-sm mt-1"
+											className="text-muted text-sm mt-1"
 										>
 											{active.excerpt}
 										</motion.p>
@@ -159,7 +159,7 @@ export function NewsCard({ news }: NewsCardProps) {
 							</motion.h3>
 							<motion.p
 								layoutId={`description-${latest.title}-${id}`}
-								className="mt-1.5 line-clamp-4 text-[11px] leading-relaxed text-[#9a92b6]"
+								className="mt-1.5 line-clamp-4 text-[11px] leading-relaxed text-muted"
 							>
 								{latest.excerpt}
 							</motion.p>
@@ -169,7 +169,7 @@ export function NewsCard({ news }: NewsCardProps) {
 							<p className="mt-1.5 text-sm font-semibold text-white">
 								Rien à annoncer
 							</p>
-							<p className="mt-1 text-[11px] leading-snug text-[#7a7194]">
+							<p className="mt-1 text-[11px] leading-snug text-muted-dim">
 								Les annonces du serveur s'afficheront ici.
 							</p>
 						</>

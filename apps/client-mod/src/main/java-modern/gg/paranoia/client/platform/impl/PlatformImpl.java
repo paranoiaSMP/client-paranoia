@@ -5,6 +5,7 @@ import gg.paranoia.client.menu.ParanoiaMenuScreen;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.HudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -15,11 +16,34 @@ import net.minecraft.util.Identifier;
 
 import java.util.UUID;
 
-/** Branchements propres a Minecraft 1.21.11. */
+/**
+ * Branchements de Minecraft, pour toutes les versions sauf 1.21.8.
+ *
+ * <p>Ce fichier existait en trois exemplaires identiques au caractere pres --
+ * 1.21.10, 1.21.11 et 26.1.2 -- que seul le numero de version distinguait.
+ * Corriger un defaut ici demandait donc trois modifications semblables, avec
+ * le risque d'en oublier une. Seule 1.21.8 diverge reellement, et elle garde
+ * sa propre copie.
+ */
 public final class PlatformImpl implements ClientPlatform {
+    /**
+     * La version de Minecraft, demandee au chargeur plutot qu'ecrite en dur.
+     *
+     * <p>C'etait la seule chose qui differait entre les trois copies, donc le
+     * seul obstacle a leur fusion. La lire est aussi plus juste: une chaine
+     * ecrite a la main peut mentir, celle-ci vient du jeu qui tourne.
+     *
+     * <p>{@code FabricLoader} appartient au chargeur et non a Minecraft: son
+     * API ne bouge pas d'une version du jeu a l'autre, contrairement a tout ce
+     * que ce fichier touche par ailleurs. Le code partage s'en sert deja pour
+     * trouver le dossier de configuration.
+     */
     @Override
     public String minecraftVersion() {
-        return "1.21.11";
+        return FabricLoader.getInstance()
+            .getModContainer("minecraft")
+            .map(container -> container.getMetadata().getVersion().getFriendlyString())
+            .orElse("inconnue");
     }
 
     @Override

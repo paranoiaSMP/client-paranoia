@@ -27,7 +27,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "CurseForge",
 	},
 	"Prism Launcher": {
-		color: "bg-[#25252b] border-[#372d58]",
+		color: "bg-[#25252b] border-line-hi",
 		shortName: "Prism Launcher",
 	},
 	GDLauncher: {
@@ -35,7 +35,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "GDLauncher",
 	},
 	ATLauncher: {
-		color: "bg-[#1a1529] border-[#241d3c]",
+		color: "bg-panel border-line",
 		shortName: "ATLauncher",
 	},
 	MultiMC: { color: "bg-[#202020] border-[#303030]", shortName: "MultiMC" },
@@ -151,7 +151,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 							onClick={() => setSelectedProfileId(p.id)}
 							className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${
 								selectedProfileId === p.id
-									? "bg-[#1a1529] border-white/20"
+									? "bg-panel border-white/20"
 									: "bg-sunken border-[#251e3d] hover:border-[#403565]"
 							}`}
 						>
@@ -227,9 +227,9 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 
 				<button
 					onClick={handleImportPack}
-					className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 hover:-translate-y-1 transition-transform bg-[#1a1529] border-[#8b5cf6]/50 hover:border-[#8b5cf6]"
+					className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 hover:-translate-y-1 transition-transform bg-panel border-accent-purple/50 hover:border-accent-purple"
 				>
-					<FileUp className="w-8 h-8 text-[#8b5cf6] mb-3" />
+					<FileUp className="w-8 h-8 text-accent-purple mb-3" />
 					<span className="text-white font-bold text-center">Pack Lunar<br/><span className="text-xs font-normal opacity-70">(.lcpack)</span></span>
 				</button>
 			</div>

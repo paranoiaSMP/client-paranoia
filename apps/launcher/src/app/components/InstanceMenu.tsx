@@ -81,7 +81,7 @@ export function InstanceMenu({
 
         <button
           onClick={onOpenMods}
-          className="flex items-center justify-center gap-2 rounded-lg border border-[#241d3c] bg-[#1a1529] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex items-center justify-center gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
           type="button"
         >
           <Package className="h-4 w-4" />
@@ -93,7 +93,7 @@ export function InstanceMenu({
       <div>
         <button
           onClick={openFolder}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#241d3c] bg-[#1a1529] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
           type="button"
         >
           <FolderOpen className="h-4 w-4" />
@@ -108,13 +108,13 @@ export function InstanceMenu({
       </div>
 
       {/* Actions secondaires */}
-      <div className="flex items-center gap-3 border-t border-[#241d3c] pt-4">
+      <div className="flex items-center gap-3 border-t border-line pt-4">
         <button
           onClick={onFavorite}
           className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
             profile.favorite
               ? "text-amber-400 hover:bg-amber-400/10"
-              : "text-[#9a92b6] hover:bg-[#241d3c] hover:text-white"
+              : "text-muted hover:bg-line hover:text-white"
           }`}
           type="button"
         >
@@ -137,7 +137,7 @@ export function InstanceMenu({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[#241d3c] bg-[#161225] px-3 py-2">
+    <div className="rounded-lg border border-line bg-[#161225] px-3 py-2">
       <p className="text-[10px] uppercase tracking-wider text-[#463a70]">
         {label}
       </p>

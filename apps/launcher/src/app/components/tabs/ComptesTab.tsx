@@ -56,7 +56,7 @@ export function ComptesTab({
                     <span className="text-white font-medium">
                       {a.minecraftUsername}
                     </span>
-                    <span className="text-[#9a92b6] text-xs font-mono">
+                    <span className="text-muted text-xs font-mono">
                       {a.minecraftUuid.slice(0, 8)}...
                     </span>
                   </div>
