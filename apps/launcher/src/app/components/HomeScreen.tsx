@@ -63,7 +63,7 @@ const MENU_ITEMS: { modal: ActiveModal; icon: LucideIcon; title: string }[] = [
 ];
 
 const MENU_BUTTON =
-	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative";
+	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-hover transition-colors group relative";
 
 type HomeScreenProps = {
 	background: CSSProperties;
@@ -205,7 +205,7 @@ export function HomeScreen({
 							? {}
 							: { animate: { height: menuOpen ? 480 : 64 } })}
 						className={`absolute right-7 top-7 z-40 flex w-16 flex-col overflow-hidden rounded-[18px] lg:right-10 lg:top-10 ${
-							menuOpen ? "border border-[#2c2447] bg-[#1e1832]" : ""
+							menuOpen ? "border border-hover bg-[#1e1832]" : ""
 						}`}
 						initial={false}
 						transition={{ height: { duration: 0.3, ease: "easeInOut" } }}
@@ -222,7 +222,7 @@ export function HomeScreen({
 								onClick={() => setMenuOpen(!menuOpen)}
 								className={`group flex shrink-0 items-center justify-center transition-[filter,background-color] ${
 									menuOpen
-										? "h-10 w-10 rounded-[10px] hover:bg-[#2c2447]"
+										? "h-10 w-10 rounded-[10px] hover:bg-hover"
 										: "bubble-primary h-16 w-16 rounded-[18px] hover:brightness-110"
 								}`}
 							>
@@ -259,10 +259,10 @@ export function HomeScreen({
 
 								<div className="flex flex-col items-center mt-auto gap-4">
 									{/* Logo Paranoia, juste au-dessus de la sortie. */}
-									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-accent-purple to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-accent-purple/20">
+									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-accent-purple to-accent-purple-dark flex items-center justify-center text-white font-black text-sm shadow-lg shadow-accent-purple/20">
 										P
 									</div>
-									<div className="w-6 h-[1px] bg-[#2c2447]" />
+									<div className="w-6 h-[1px] bg-hover" />
 									<button
 										type="button"
 										onClick={() => {

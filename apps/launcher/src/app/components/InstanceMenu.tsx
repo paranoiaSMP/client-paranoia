@@ -99,7 +99,7 @@ export function InstanceMenu({
           <FolderOpen className="h-4 w-4" />
           Ouvrir le dossier de l'instance
         </button>
-        <p className="mt-2 text-[11px] text-[#463a70]">
+        <p className="mt-2 text-[11px] text-placeholder">
           Contient les sauvegardes, les captures, les mods et options.txt.
         </p>
         {folderError && (
@@ -138,7 +138,7 @@ export function InstanceMenu({
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-line bg-[#161225] px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-[#463a70]">
+      <p className="text-[10px] uppercase tracking-wider text-placeholder">
         {label}
       </p>
       <p className="mt-0.5 truncate text-sm font-semibold capitalize text-white">

@@ -149,9 +149,9 @@ export function HomeActionBar({
         onClick={() => onAction("boutique")}
         title="Boutique Paranoia"
         type="button"
-        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-accent-purple/60 bg-gradient-to-br from-accent-purple/25 to-[#6d35e0]/15 px-3 text-white transition-colors hover:from-accent-purple/40 hover:to-[#6d35e0]/25"
+        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-accent-purple/60 bg-gradient-to-br from-accent-purple/25 to-accent-purple-dark/15 px-3 text-white transition-colors hover:from-accent-purple/40 hover:to-accent-purple-dark/25"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-accent-purple to-[#6d35e0] shadow-lg shadow-accent-purple/20">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-accent-purple to-accent-purple-dark shadow-lg shadow-accent-purple/20">
           <ShoppingBag className="h-4 w-4" />
         </span>
         <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">

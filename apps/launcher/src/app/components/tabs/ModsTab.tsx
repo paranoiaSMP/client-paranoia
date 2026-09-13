@@ -209,13 +209,13 @@ export function ModsTab({
       {/* Search Bar */}
       <div className="flex items-center gap-3 w-full mb-3">
         <div className="flex items-center bg-panel rounded-xl px-4 py-3 flex-1 border border-line">
-          <Search className="w-5 h-5 text-[#463a70] mr-3 shrink-0" />
+          <Search className="w-5 h-5 text-placeholder mr-3 shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && runSearch(1)}
             placeholder={t("mods.searchPlaceholder")}
-            className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-white placeholder:text-[#463a70]"
+            className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-white placeholder:text-placeholder"
           />
         </div>
       </div>
@@ -301,7 +301,7 @@ export function ModsTab({
                     />
                   ) : (
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-line shrink-0 flex items-center justify-center">
-                      <Package className="w-8 h-8 text-[#463a70]" />
+                      <Package className="w-8 h-8 text-placeholder" />
                     </div>
                   )}
 
@@ -356,14 +356,14 @@ export function ModsTab({
               ({installed.length})
             </span>
           </h2>
-          <p className="text-[#463a70] text-xs hidden sm:block">
+          <p className="text-placeholder text-xs hidden sm:block">
             InstallÃ©s dans ce profil uniquement, filtrÃ©s pour Fabric {profile.minecraftVersion}.
           </p>
         </div>
 
         {installed.length === 0 ? (
           <div className="bg-panel border border-line rounded-xl p-6 text-center">
-            <p className="text-[#463a70] text-sm">
+            <p className="text-placeholder text-sm">
               Aucun mod installÃ© sur ce profil.
             </p>
           </div>
@@ -374,9 +374,9 @@ export function ModsTab({
                 key={mod.fileName}
                 className="bg-panel border border-line rounded-lg px-4 py-3 flex items-center gap-4 hover:border-line-hi transition-colors"
               >
-                <Package className="w-5 h-5 text-[#463a70] shrink-0" />
+                <Package className="w-5 h-5 text-placeholder shrink-0" />
                 <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
-                <span className="text-[#463a70] text-xs shrink-0 font-mono">
+                <span className="text-placeholder text-xs shrink-0 font-mono">
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>
                 <button

@@ -18,7 +18,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "Lunar",
 	},
 	"Feather Client": {
-		color: "bg-[#1f1f1f] border-[#2c2447]",
+		color: "bg-[#1f1f1f] border-hover",
 		shortName: "Feather",
 	},
 	Modrinth: { color: "bg-[#1bd96a] border-[#22c55e]", shortName: "Modrinth" },
@@ -135,7 +135,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			<div className="p-6">
 				<button
 					onClick={() => setSelectedLauncher(null)}
-					className="text-sm text-[#8d84a8] hover:text-white mb-6 flex items-center gap-2"
+					className="text-sm text-faint hover:text-white mb-6 flex items-center gap-2"
 				>
 					← Retour aux launchers
 				</button>
@@ -152,14 +152,14 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 							className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${
 								selectedProfileId === p.id
 									? "bg-panel border-white/20"
-									: "bg-sunken border-[#251e3d] hover:border-[#403565]"
+									: "bg-sunken border-line-soft hover:border-hover-line"
 							}`}
 						>
 							<div>
 								<p className="text-white font-bold">
 									{p.label.replace(selectedLauncher + " : ", "")}
 								</p>
-								<p className="text-xs text-[#8d84a8] truncate w-64">
+								<p className="text-xs text-faint truncate w-64">
 									{p.options_path}
 								</p>
 							</div>
@@ -201,7 +201,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 				<h3 className="text-2xl text-white font-bold mb-2">
 					Depuis d'autres launchers
 				</h3>
-				<p className="text-[#8d84a8] max-w-sm mx-auto">
+				<p className="text-faint max-w-sm mx-auto">
 					Vous voulez changer ? Migrez vos profils existants en quelques
 					secondes !
 				</p>
@@ -210,7 +210,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-8">
 				{availableLaunchers.map((launcher) => {
 					const ui = LAUNCHERS_UI[launcher] || {
-						color: "bg-[#0f0b1a] border-[#251e3d]",
+						color: "bg-[#0f0b1a] border-line-soft",
 						shortName: launcher,
 					};
 					return (

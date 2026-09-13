@@ -71,7 +71,7 @@ export function TopBar({
                 ></div>
                 <div className="absolute right-0 top-full mt-2 w-64 bg-panel border border-line rounded-xl shadow-2xl z-50 overflow-hidden">
                   <div className="p-3 border-b border-line">
-                    <p className="text-[10px] text-[#463a70] uppercase tracking-wider mb-2">
+                    <p className="text-[10px] text-placeholder uppercase tracking-wider mb-2">
                       Compte actif
                     </p>
                     <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export function TopBar({
                         <p className="text-white text-sm font-bold">
                           {account.minecraftUsername}
                         </p>
-                        <p className="text-[#463a70] text-[10px] font-mono">
+                        <p className="text-placeholder text-[10px] font-mono">
                           {account.minecraftUuid.slice(0, 8)}...
                         </p>
                       </div>
@@ -93,7 +93,7 @@ export function TopBar({
 
                   {accounts.filter((a) => a.id !== account.id).length > 0 && (
                     <div className="p-2 border-b border-line">
-                      <p className="text-[10px] text-[#463a70] uppercase tracking-wider px-1 mb-1">
+                      <p className="text-[10px] text-placeholder uppercase tracking-wider px-1 mb-1">
                         Autres comptes
                       </p>
                       {accounts
@@ -151,7 +151,7 @@ export function TopBar({
             {devModeAvailable && (
               <button
                 onClick={onLocalDevContinue}
-                className="px-3 py-1.5 text-xs text-[#463a70] hover:text-white transition-colors"
+                className="px-3 py-1.5 text-xs text-placeholder hover:text-white transition-colors"
               >
                 {t("topbar.devMode")}
               </button>

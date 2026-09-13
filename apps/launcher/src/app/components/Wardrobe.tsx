@@ -267,8 +267,8 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
             <h2 className="text-xl font-bold tracking-tight text-white">Vestiaire</h2>
 
             <div className="ml-auto flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-[14px] border border-[#2c2447] bg-[#1b1630] px-4 py-2">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-accent-purple to-[#6d35e0] text-[10px] font-black text-white">
+              <div className="flex items-center gap-2 rounded-[14px] border border-hover bg-[#1b1630] px-4 py-2">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-accent-purple to-accent-purple-dark text-[10px] font-black text-white">
                   P
                 </span>
                 {profile?.balance === null ? (
@@ -288,7 +288,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
               <button
                 onClick={onClose}
                 aria-label="Fermer le vestiaire"
-                className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#2c2447] bg-[#1b1630] text-muted transition-colors hover:border-accent-purple hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
+                className="grid h-10 w-10 place-items-center rounded-[12px] border border-hover bg-[#1b1630] text-muted transition-colors hover:border-accent-purple hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -303,7 +303,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
 
           <div className="flex min-h-0 flex-1 gap-5 px-8 pb-8">
             {/* ---- Rail des categories ---- */}
-            <nav className="flex w-[190px] shrink-0 flex-col gap-1.5 rounded-[18px] border border-[#2c2447] bg-[#171327] p-3">
+            <nav className="flex w-[190px] shrink-0 flex-col gap-1.5 rounded-[18px] border border-hover bg-[#171327] p-3">
               {CATEGORIES.map((entry) => {
                 const count =
                   entry.id === "tout"
@@ -328,7 +328,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
             </nav>
 
             {/* ---- Grille ---- */}
-            <section className="min-w-0 flex-1 overflow-y-auto rounded-[18px] border border-[#2c2447] bg-[#171327] p-5">
+            <section className="min-w-0 flex-1 overflow-y-auto rounded-[18px] border border-hover bg-[#171327] p-5">
               {loading ? (
                 <div className="grid h-full place-items-center text-[#726a8c]">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -427,7 +427,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
             </section>
 
             {/* ---- Casier ---- */}
-            <aside className="flex w-[264px] shrink-0 flex-col gap-4 rounded-[18px] border border-[#2c2447] bg-[#171327] p-5">
+            <aside className="flex w-[264px] shrink-0 flex-col gap-4 rounded-[18px] border border-hover bg-[#171327] p-5">
               <div className="flex items-baseline justify-between">
                 <h3 className="text-sm font-bold tracking-tight text-white">Casier</h3>
                 {profile && (
@@ -508,7 +508,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                   <p className="mt-0.5 text-xs" style={{ color: RARITY[detail.rarity].color }}>
                     {RARITY[detail.rarity].label}
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-[#8d84a8]">
+                  <p className="mt-2 text-xs leading-relaxed text-faint">
                     {owned.has(detail.id)
                       ? equipped.has(detail.id)
                         ? "Porte. Clique de nouveau pour le retirer."

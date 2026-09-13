@@ -27,7 +27,7 @@ export function ComptesTab({
           <button
             onClick={onConnectMicrosoft}
             disabled={connectingMicrosoft}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#2a2a2a] hover:bg-[#2c2447] disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#2a2a2a] hover:bg-hover disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             {connectingMicrosoft ? "Connexion..." : "Ajouter un compte"}
@@ -43,7 +43,7 @@ export function ComptesTab({
                 className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${
                   isActive
                     ? "border-accent-purple bg-accent-purple/10"
-                    : "border-[#2c2447] bg-[#1e1832] hover:border-[#3d3358]"
+                    : "border-hover bg-[#1e1832] hover:border-[#3d3358]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ export function ComptesTab({
                 ) : (
                   <button
                     onClick={() => onSwitchAccount(a)}
-                    className="px-4 py-1.5 bg-[#2c2447] hover:bg-[#3d3358] text-white text-xs font-medium rounded-lg transition-colors"
+                    className="px-4 py-1.5 bg-hover hover:bg-[#3d3358] text-white text-xs font-medium rounded-lg transition-colors"
                   >
                     Utiliser
                   </button>

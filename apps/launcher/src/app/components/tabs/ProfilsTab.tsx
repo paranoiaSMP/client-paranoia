@@ -38,11 +38,11 @@ export function ProfilsTab({
         {/* Barre du haut */}
         <div className="flex items-center gap-3 mb-5">
           <div className="flex items-center bg-panel rounded-lg px-3 py-2.5 flex-1 border border-line">
-             <Search className="w-4 h-4 text-[#463a70] mr-2 shrink-0" />
+             <Search className="w-4 h-4 text-placeholder mr-2 shrink-0" />
              <input 
                type="text" 
                placeholder={t("profiles.search") || "Chercher un profil..."}
-               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-[#463a70]"
+               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-placeholder"
              />
           </div>
           <button 

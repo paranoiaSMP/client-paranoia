@@ -123,7 +123,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             </div>
           </div>
         </div>
-        <p className="text-[#463a70] text-xs mt-3">Recommandé : 2 Go min, 4 Go max pour la plupart des configs.</p>
+        <p className="text-placeholder text-xs mt-3">Recommandé : 2 Go min, 4 Go max pour la plupart des configs.</p>
       </section>
 
       {/* Java */}
@@ -149,7 +149,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             onChange={e => setJvmArgs(e.target.value)}
             className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-line-hi focus:outline-none focus:border-accent-purple transition-colors"
           />
-          <p className="text-[#463a70] text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
+          <p className="text-placeholder text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
         </div>
       </section>
 
@@ -180,7 +180,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
 
         {/* Une fenetre aux dimensions de l'ecran est indistinguable d'un plein
             ecran, et F11 y bascule entre deux etats identiques a l'oeil. */}
-        <p className="mt-2 text-xs text-[#463a70]">
+        <p className="mt-2 text-xs text-placeholder">
           Taille de la fenetre de jeu. Choisis une taille plus petite que ton
           ecran, sinon la fenetre le couvre entierement et ressemble a du plein
           ecran.
@@ -245,7 +245,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
         )}
 
         {saveState !== "error" && (
-          <span className="text-[#463a70] text-xs">
+          <span className="text-placeholder text-xs">
             Appliqué au prochain lancement du jeu.
           </span>
         )}
@@ -254,7 +254,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
       {/* Import JSON (gardé de l'ancien) */}
       <section className="bg-panel border border-line rounded-xl p-5">
         <h3 className="text-white font-bold mb-1">{t("settings.import_title")}</h3>
-        <p className="text-[#463a70] text-xs mb-4">{t("settings.import_desc")}</p>
+        <p className="text-placeholder text-xs mb-4">{t("settings.import_desc")}</p>
         <textarea 
           className="w-full h-28 bg-void border border-line rounded-lg p-3 text-sm text-white font-mono placeholder:text-line-hi focus:outline-none focus:border-accent-purple transition-colors mb-3 resize-none"
           value={importJson} 

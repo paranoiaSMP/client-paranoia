@@ -54,11 +54,33 @@
    * rendrait impossible de dire lequel des deux a modifie l'ecran. Les
    * accorder a la gamme violette est un choix visible, a faire separement.
    */
+  /* Les traits, du plus discret au plus marque. */
   --color-line: #241d3c;
+  --color-line-soft: #251e3d;
   --color-line-hi: #372d58;
+  --color-hover-line: #403565;
+  /* Fond d'un element survole, et panneau enfonce. */
+  --color-hover: #2c2447;
   --color-panel: #1a1529;
+
+  /* Les gris de texte, du plus lisible au plus efface. */
   --color-muted: #9a92b6;
+  --color-faint: #8d84a8;
   --color-muted-dim: #7a7194;
+  --color-placeholder: #463a70;
+
+  /*
+   * Ce que le nommage a mis au jour, et qui n'etait pas visible tant que ces
+   * couleurs restaient des chaines eparpillees: deux paires sont a un cheveu
+   * l'une de l'autre. #241d3c et #251e3d ne different que d'un point sur
+   * chaque canal; #9a92b6 et #8d84a8 de moins de dix. Personne ne les
+   * distingue a l'ecran, et chacune existe pourtant a des dizaines
+   * d'exemplaires.
+   *
+   * Elles sont nommees separement plutot que fusionnees: reduire une paire a
+   * une seule couleur se verra quelque part, et c'est une decision a prendre
+   * en regardant, pas un effet de bord d'un renommage.
+   */
 
   --font-inter: "Inter", sans-serif;
   --font-outfit: "Outfit", sans-serif;
