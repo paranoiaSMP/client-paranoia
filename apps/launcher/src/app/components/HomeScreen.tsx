@@ -142,8 +142,15 @@ export function HomeScreen({
 		}
 	}
 
+	// `main` n'impose plus de hauteur minimale. Les 520 pixels qu'elle exigeait
+	// depassaient la fenetre des qu'elle etait plus courte, et la section etant
+	// en overflow-hidden, le bouton de lancement etait rogne en silence -- de
+	// trente-cinq pixels exactement a 485 de haut, la taille d'origine du
+	// launcher. Le plancher est desormais tenu la ou il doit l'etre: sur la
+	// rangee de vignettes, qui a son propre min-h et se resserre avant de
+	// deborder.
 	return (
-		<main className="flex-1 flex items-center justify-center min-h-[520px]">
+		<main className="flex min-h-0 flex-1 items-center justify-center">
 			<div className="w-full h-full relative">
 				{/*
 				  Deux colonnes, et non une colonne avec deux elements poses
@@ -274,17 +281,19 @@ export function HomeScreen({
 
 					{/* La reserve en haut est celle de la barre en surimpression:
 					    hauteur de la barre, des points, et de leur ecart. */}
-					<div className="flex min-h-0 min-w-0 flex-1 flex-col pt-[100px]">
+					<div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 pt-[96px]">
 						{/* ACTUALITÉS */}
 						<NewsCard news={news} />
 
-						{/* Instances et lancement, colles en bas de la colonne. */}
-						<div className="mt-auto flex min-w-0 flex-col gap-5">
-							{/* Piste des instances: le bouton d'ajout reste en dehors de la
-							    piste. Place a l'interieur, il sortait du champ des la
-							    troisieme instance et donnait l'impression qu'on ne pouvait
-							    pas en creer davantage. */}
-							<div className="flex min-w-0 flex-row items-center gap-3 xl:gap-4">
+						{/* La rangee prend toute la place laissee entre les actualites et
+						    le lancement, et la donne a ses vignettes. Les bornes evitent
+						    les deux exces: des vignettes ecrasees sur une fenetre courte,
+						    et des vignettes demesurees sur un grand ecran.
+
+						    Le bouton d'ajout reste en dehors de la piste. Place a
+						    l'interieur, il sortait du champ des la troisieme instance et
+						    donnait l'impression qu'on ne pouvait pas en creer davantage. */}
+						<div className="flex min-h-[112px] max-h-[210px] min-w-0 flex-1 flex-row items-stretch gap-3 xl:gap-4">
 								<div
 									onWheel={(event) => {
 										// Meme conversion que la barre du haut: une molette de
@@ -298,7 +307,10 @@ export function HomeScreen({
 									// elle prenait toute la largeur libre, ce qui repoussait le
 									// bouton d'ajout a l'autre bout de la rangee -- separe des
 									// cases dont il est la suite.
-									className="no-scrollbar flex min-w-0 flex-row flex-nowrap items-center gap-3 overflow-x-auto scroll-smooth py-1 xl:gap-4"
+									// items-stretch et non items-center: les vignettes prennent
+									// desormais la hauteur de la rangee, il faut donc qu'elles
+									// la recoivent.
+									className="no-scrollbar flex h-full min-w-0 flex-row flex-nowrap items-stretch gap-3 overflow-x-auto scroll-smooth xl:gap-4"
 								>
 									{displayProfiles.map((profile) => (
 										<InstanceCard
@@ -412,7 +424,6 @@ export function HomeScreen({
 								</button>
 							</div>
 						</div>
-					</div>
 
 					{/* PERSONNAGE 3D */}
 					{/* Dans un cadre, et non pose sur le fond. Sans bord, le personnage
@@ -422,7 +433,12 @@ export function HomeScreen({
 
 					    Le cadrage recule par rapport au vestiaire: dans un panneau
 					    etroit et haut, le zoom d'origine coupait la tete et les pieds. */}
-					<div className="bubble-frame hidden w-[36%] min-w-[250px] max-w-[400px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
+					{/* 30 % et non 36 %: c'est la largeur du panneau qui plafonnait la
+					    taille des vignettes. A 36 %, la colonne de gauche ne laissait que
+					    116 pixels par case pour en garder quatre visibles -- soit quatre
+					    de plus que les 112 d'alors, autant dire rien. Les six points
+					    rendus ici valent seize pixels par vignette. */}
+					<div className="bubble-frame hidden w-[30%] min-w-[240px] max-w-[380px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
 						<SkinViewer3D
 							className="h-full w-full"
 							zoom={0.62}

@@ -5,8 +5,19 @@
  * il se lisait comme un bouton egare dans la rangee plutot que comme la case
  * suivante. Les deux partagent desormais la meme taille, et la rangee se lit
  * comme une suite de cases dont la derniere est vide.
+ *
+ * <p>La hauteur n'est plus une valeur fixe mais {@code h-full}: c'est la
+ * rangee qui la donne, et elle-meme prend ce que la colonne lui laisse entre
+ * les actualites et le bouton de lancement. Une hauteur figee obligeait a
+ * recalculer un budget de pixels a chaque changement voisin -- une marge en
+ * plus ici, un bandeau plus haut la -- et le total finissait par depasser sur
+ * les fenetres courtes, ou par laisser du vide sur les hautes.
+ *
+ * <p>La largeur, elle, reste fixe: c'est elle qui decide combien de vignettes
+ * tiennent avant que la piste ne defile, et cela ne doit pas dependre de la
+ * hauteur de la fenetre.
  */
-export const CARD_SIZE = "h-[144px] w-[112px] xl:h-[172px] xl:w-[140px]";
+export const CARD_SIZE = "h-full w-[126px] xl:w-[158px]";
 
 type InstanceCardProps = {
 	label: string;
