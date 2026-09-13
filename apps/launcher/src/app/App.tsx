@@ -1,69 +1,27 @@
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import {
-	Play,
-	Settings,
-	Box,
-	Pickaxe,
-	LogOut,
-	Menu,
-	X,
-	AlertTriangle,
-	User,
-	Terminal,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, useReducedMotion } from "motion/react";
+import type { LauncherProfile } from "@paranoia/contracts";
 
-import { SkinViewer3D } from "../components/SkinViewer3D";
-
-import type {
-	RemoteConfiguration,
-	NewsItem,
-	LauncherProfile,
-} from "@paranoia/contracts";
-
-import {
-	createInstallationManifest,
-	fetchRemoteConfiguration,
-} from "../shared/api/catalogClient";
-import { createProfile, importProfile } from "../shared/api/profilesClient";
-import { fetchNews } from "../shared/api/launcherInfoClient";
-import { listInstalledMods } from "../shared/api/modsClient";
-import { apiRequest, waitForApi } from "../shared/api/http";
-import {
-	launchMinecraftGame,
-	getLaunchStatus,
-	LaunchStatusResponse,
-	cancelLaunch,
-} from "../shared/api/launcherClient";
-
-import { TopBar } from "./components/TopBar";
-import { ProfilsTab } from "./components/tabs/ProfilsTab";
-import { ParametresTab } from "./components/tabs/ParametresTab";
-import { ModsTab } from "./components/tabs/ModsTab";
-import { ComptesTab } from "./components/tabs/ComptesTab";
-import { LogsTab } from "./components/tabs/LogsTab";
-import { ProfileCreation } from "./components/ProfileCreation";
-import type {
-	DetectedProfile,
-	ImportOptions,
-	SetupStep,
-} from "./components/ProfileCreation";
-import { MigrationModal } from "./components/MigrationModal";
-import { Modal } from "./components/Modal";
 import { UpdateModal } from "./components/UpdateModal";
-import { HomeActionBar } from "./components/HomeActionBar";
-import { InstanceMenu } from "./components/InstanceMenu";
-import { Wardrobe } from "./components/Wardrobe";
-import { NewsCard } from "./components/NewsCard";
-import { useFileDrop } from "./hooks/useFileDrop";
+import { AppModals } from "./components/AppModals";
+import { HomeScreen } from "./components/HomeScreen";
+import type { ActiveModal } from "./components/HomeScreen";
+import {
+	BootstrapErrorScreen,
+	LoadingScreen,
+	LoginScreen,
+} from "./components/screens/StatusScreens";
 
 import { useAuth } from "./hooks/useAuth";
-import { useUpdater } from "./hooks/useUpdater";
+import { useBootstrap } from "./hooks/useBootstrap";
+import { useFileDrop } from "./hooks/useFileDrop";
+import { useLaunch } from "./hooks/useLaunch";
+import { useLobbyCape } from "./hooks/useLobbyCape";
+import { useModCount } from "./hooks/useModCount";
+import { useProfileCreation } from "./hooks/useProfileCreation";
 import { useProfiles } from "./hooks/useProfiles";
+import { useUpdater } from "./hooks/useUpdater";
 
 /**
  * Fond de l'application.
@@ -85,136 +43,24 @@ const BACKGROUND: CSSProperties = {
 };
 
 /**
- * Les ecrans que l'accueil peut ouvrir par-dessus lui.
+ * Le composant racine: il cable, il ne dessine pas.
  *
- * <p>C'etait une union anonyme ecrite dans l'appel a {@code useState}: rien ne
- * pouvait s'y referer, et le menu deroulant reproduisait donc les memes noms a
- * la main sans qu'aucun controle ne les relie.
+ * <p>Il portait auparavant mille deux cents lignes -- vingt-cinq etats, cinq
+ * effets, l'accueil entier et ses huit fenetres. Chaque retouche de mise en
+ * page obligeait a traverser la mecanique de lancement, et chaque correction
+ * de lancement a traverser la mise en page.
+ *
+ * <p>Ce qui reste ici est ce qui doit y rester: les branches entre les quatre
+ * ecrans possibles, et le raccordement des morceaux entre eux. L'etat vit dans
+ * des hooks nommes d'apres ce qu'ils font, le rendu dans des composants nommes
+ * d'apres ce qu'ils montrent.
  */
-type ActiveModal =
-	| "none"
-	| "profils"
-	| "create_profile"
-	| "migrate_profile"
-	| "mods"
-	| "parametres"
-	| "logs"
-	| "instance"
-	| "cosmetiques"
-	| "boutique"
-	| "comptes";
-
-/**
- * Le menu deroulant du coin.
- *
- * <p>Ses cinq boutons etaient ecrits cinq fois, avec la meme centaine de
- * caracteres de classes recopiee a l'identique. En ajouter un sixieme
- * demandait de recopier une sixieme fois, et corriger un espacement demandait
- * cinq modifications dont on pouvait en oublier une.
- */
-const MENU_ITEMS: { modal: ActiveModal; icon: LucideIcon; title: string }[] = [
-	{ modal: "comptes", icon: User, title: "Comptes" },
-	{ modal: "profils", icon: Box, title: "Gérer les profils" },
-	{ modal: "mods", icon: Pickaxe, title: "Mods" },
-	{ modal: "parametres", icon: Settings, title: "Paramètres" },
-	{ modal: "logs", icon: Terminal, title: "Logs de jeu" },
-];
-
-const MENU_BUTTON =
-	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative";
-
-/**
- * Gabarit commun aux vignettes d'instance et au bouton d'ajout.
- *
- * <p>Le bouton d'ajout faisait 80 pixels de cote a cote de vignettes de 180:
- * il se lisait comme un bouton egare dans la rangee plutot que comme la case
- * suivante. Les deux partagent desormais la meme taille, et la rangee se lit
- * comme une suite de cases dont la derniere est vide.
- */
-const CARD_SIZE = "h-[144px] w-[112px] xl:h-[172px] xl:w-[140px]";
-
-/**
- * Vignette d'instance.
- *
- * <p>Le degrade et la lueur ne sont pas decoratifs seulement: une vignette
- * pleine d'un aplat uni ne se distinguait de sa voisine que par la couleur de
- * sa bordure, difficile a voir de loin. La version selectionnee est violette et
- * eclairee, les autres restent sombres.
- *
- * <p>La version est dans une pastille et non dans la ligne de detail: c'est la
- * seule information qu'on cherche en balayant la rangee -- savoir laquelle est
- * en 1.21.11 -- et une pastille se trouve d'un coup d'oeil la ou une ligne de
- * texte gris demande de lire.
- */
-function InstanceCard({
-	label,
-	version,
-	detail,
-	isSelected,
-	onClick,
-}: {
-	label: string;
-	version?: string;
-	detail?: string;
-	isSelected: boolean;
-	onClick: () => void;
-}) {
-	return (
-		<article
-			onClick={onClick}
-			className={`group relative flex ${CARD_SIZE} shrink-0 cursor-pointer flex-col justify-end overflow-hidden rounded-[22px] p-3 transition-[box-shadow,border-color] ${
-				isSelected ? "bubble-active" : "bubble hover:border-white/15"
-			}`}
-		>
-			{/* Lueur d'angle, derriere le contenu. */}
-			<div
-				aria-hidden="true"
-				className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
-					isSelected ? "bg-[#8b5cf6]/40" : "bg-white/5 group-hover:bg-white/10"
-				}`}
-			/>
-
-			<div className="relative z-10 min-w-0">
-				<p className="truncate text-[13px] font-medium leading-normal text-white">
-					{label}
-				</p>
-				{detail && (
-					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">{detail}</p>
-				)}
-				{version && (
-					<span
-						className={`mt-1.5 inline-block max-w-full truncate rounded-[7px] border px-1.5 py-0.5 text-[10px] font-semibold ${
-							isSelected
-								? "border-[#8b5cf6]/60 bg-[#8b5cf6]/15 text-[#cfa8ff]"
-								: "border-white/10 bg-black/30 text-[#9a92b6]"
-						}`}
-					>
-						{version}
-					</span>
-				)}
-			</div>
-		</article>
-	);
-}
-
 export function App() {
 	const { t } = useTranslation();
 
-
-	// App Global State
-	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [config, setConfig] = useState<RemoteConfiguration | null>(null);
-	const [news, setNews] = useState<NewsItem[]>([]);
-	const [modCount, setModCount] = useState<number | null>(null);
-
-	// Layout State (Modals)
-	const [lobbyCape, setLobbyCape] = useState<string | undefined>();
 	const [activeModal, setActiveModal] = useState<ActiveModal>("none");
-	const [menuOpen, setMenuOpen] = useState(false);
-	const prefersReducedMotion = useReducedMotion();
 
-	// Hooks
 	const {
 		connected,
 		account,
@@ -226,11 +72,13 @@ export function App() {
 		handleSwitchAccount,
 		handleLogout,
 	} = useAuth(setError);
+
 	const {
 		state: updateState,
 		install: installUpdate,
 		dismiss: dismissUpdate,
 	} = useUpdater();
+
 	const {
 		profiles,
 		selectedProfileId,
@@ -240,391 +88,69 @@ export function App() {
 		handleFavoriteProfile,
 	} = useProfiles(setError);
 
-	const { isDragging, isProcessing } = useFileDrop(() => {
-		refreshProfiles();
+	const { loading, failed, config, news, retry } = useBootstrap({
+		refreshProfiles,
+		setError,
+		fallbackError: t("app.error_load"),
 	});
 
-	// Profile Creation State
-	const [step, setStep] = useState<SetupStep>(1);
-	const [isCreatingProfile, setIsCreatingProfile] = useState(false);
-	const [minecraftVersion, setMinecraftVersion] = useState("1.21.1");
-	const [profileType, setProfileType] = useState<string>("pvp");
-	const [graphicsMode, setGraphicsMode] = useState<string>("performance");
-	const [profileName, setProfileName] = useState("Mon profil");
-	const [importSettings, setImportSettings] = useState(false);
-	const [keybindSource, setKeybindSource] = useState("auto");
-	const [detectedProfiles, setDetectedProfiles] = useState<DetectedProfile[]>(
-		[],
-	);
-	const [importOptions, setImportOptions] = useState<ImportOptions>({
-		keybinds: true,
-		sensitivity: true,
-		graphics: false,
-	});
+	const { isDragging, isProcessing } = useFileDrop(refreshProfiles);
 
-	// Import State
-	const [importJson, setImportJson] = useState("");
-
-	// Game Launcher State
-	const [installState, setInstallState] = useState<"idle" | "running" | "done">(
-		"idle",
-	);
-	const [launchStatus, setLaunchStatus] = useState<LaunchStatusResponse>({
-		state: "idle",
-		progress: 0,
-		text: "",
-	});
-
+	// Le profil courant: celui qui est choisi, ou le premier a defaut. Le bouton
+	// Jouer, le compteur de mods et le menu d'instance parlent tous de lui.
 	const mainProfile =
-		profiles.find((p) => p.id === selectedProfileId) ||
-		(profiles.length > 0 ? profiles[0] : null);
+		profiles.find((p) => p.id === selectedProfileId) ?? profiles[0] ?? null;
 
-	// Polling for launch status of the currently selected profile
-	useEffect(() => {
-		let intervalId: ReturnType<typeof setInterval>;
+	const { installState, status, launch, cancel } = useLaunch({
+		profile: mainProfile,
+		account,
+		setError,
+	});
 
-		if (mainProfile) {
-			const checkStatus = async () => {
-				try {
-					const status = await getLaunchStatus(mainProfile.id);
-					setLaunchStatus(status);
+	const modCount = useModCount(mainProfile, activeModal);
+	const lobbyCape = useLobbyCape(activeModal === "cosmetiques");
 
-					setInstallState((prev) => {
-						if (status.state === "error" && prev === "running") {
-							setError(status.text);
-							return "idle";
-						}
-						if (status.state === "idle" && prev === "running") {
-							return "idle";
-						}
-						if (
-							status.state !== "idle" &&
-							status.state !== "error" &&
-							prev === "idle"
-						) {
-							return "running";
-						}
-						return prev;
-					});
-				} catch (e) {
-					console.error(e);
-				}
-			};
+	const creation = useProfileCreation({
+		config,
+		refreshProfiles,
+		setError,
+		onInstalled: () => setActiveModal("none"),
+		fallbackError: t("wizard.install_fail"),
+	});
 
-			// Fetch immediately on profile change
-			checkStatus();
-
-			// Poll every second
-			intervalId = setInterval(checkStatus, 1000);
-		}
-
-		return () => {
-			if (intervalId) clearInterval(intervalId);
-		};
-	}, [mainProfile]);
-
-	// Nombre de mods du profil courant, relu a la fermeture du gestionnaire pour
-	// que le compteur suive une installation ou une suppression.
-	useEffect(() => {
-		let cancelled = false;
-
-		if (!mainProfile) {
-			setModCount(null);
-			return;
-		}
-
-		listInstalledMods(mainProfile.id)
-			.then((mods) => {
-				if (!cancelled) setModCount(mods.length);
-			})
-			.catch(() => {
-				if (!cancelled) setModCount(null);
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [mainProfile?.id, activeModal]);
-
-	useEffect(() => {
-		if (importSettings && detectedProfiles.length === 0) {
-			invoke<DetectedProfile[]>("get_detected_profiles")
-				.then((res) => setDetectedProfiles(res))
-				.catch((err) =>
-					console.error("Erreur de detection des profils :", err),
-				);
-		}
-	}, [importSettings, detectedProfiles.length]);
-
-	const [bootstrapFailed, setBootstrapFailed] = useState(false);
-	const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
-
-	useEffect(() => {
-		async function bootstrap() {
-			setLoading(true);
-			setError(null);
-			setBootstrapFailed(false);
-			try {
-				await waitForApi();
-				const [remoteConfig] = await Promise.all([
-					fetchRemoteConfiguration(),
-					refreshProfiles(),
-				]);
-				const latestNews = await fetchNews();
-				setConfig(remoteConfig);
-				const defaultMinecraftVersion =
-					remoteConfig.supportedMinecraftVersions[0];
-				if (defaultMinecraftVersion)
-					setMinecraftVersion(defaultMinecraftVersion);
-				const defaultProfileType = remoteConfig.profileTypes[0];
-				if (defaultProfileType) setProfileType(defaultProfileType.id);
-				const defaultGraphicsMode = remoteConfig.graphicsModes[0];
-				if (defaultGraphicsMode) setGraphicsMode(defaultGraphicsMode.id);
-				setNews(latestNews);
-			} catch (e) {
-				setError(e instanceof Error ? e.message : t("app.error_load"));
-				setBootstrapFailed(true);
-			} finally {
-				setLoading(false);
-			}
-		}
-		bootstrap();
-	}, [bootstrapAttempt]);
-
-	const selectedType = useMemo(
-		() => config?.profileTypes.find((x) => x.id === profileType),
-		[config, profileType],
-	);
-	const selectedGraphics = useMemo(
-		() => config?.graphicsModes.find((x) => x.id === graphicsMode),
-		[config, graphicsMode],
-	);
-
-	async function handleInstall() {
-		try {
-			setInstallState("running");
-			setError(null);
-			let selectedOptionsTxtPath = undefined;
-			if (keybindSource === "auto" && detectedProfiles.length > 0) {
-				selectedOptionsTxtPath = detectedProfiles[0]?.options_path;
-			} else if (keybindSource !== "auto") {
-				const found = detectedProfiles.find((p) => p.id === keybindSource);
-				if (found) selectedOptionsTxtPath = found.options_path;
-			}
-			await createInstallationManifest({
-				minecraftVersion,
-				profileTypeId: profileType,
-				graphicsModeId: graphicsMode,
-				locale: "fr-FR",
-			});
-			await createProfile({
-				name: profileName,
-				minecraftVersion,
-				profileTypeId: profileType,
-				graphicsModeId: graphicsMode,
-				ramMb: 4096,
-				optionsTxtPath: selectedOptionsTxtPath,
-			});
-			await refreshProfiles();
-			setInstallState("done");
-			setIsCreatingProfile(false);
-			setStep(1);
-			setActiveModal("none");
-		} catch (e) {
-			setError(e instanceof Error ? e.message : t("wizard.install_fail"));
-			setInstallState("idle");
-		}
+	function openCreation() {
+		creation.start(connected);
+		setActiveModal("create_profile");
 	}
 
-	async function handleLaunchGame(profileId: string) {
-		if (!account) return;
-		const profile = profiles.find((p) => p.id === profileId);
-		if (!profile) return;
+	function play(profile: LauncherProfile) {
 		setActiveModal("none");
-		try {
-			setInstallState("running");
-			setLaunchStatus({
-				state: "idle",
-				progress: 0,
-				text: "Initialisation...",
-			});
-			await launchMinecraftGame(
-				profileId,
-				profile.minecraftVersion,
-				profile.ramMb,
-				account,
-			);
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Erreur au lancement du jeu");
-			setInstallState("idle");
-		}
+		void launch(profile);
 	}
 
-	const handleCancelLaunch = async () => {
-		if (!mainProfile) return;
-		try {
-			await cancelLaunch(mainProfile.id);
-			setInstallState("idle");
-			setLaunchStatus({ state: "idle", progress: 0, text: "" });
-		} catch (e) {
-			console.error(e);
-		}
-	};
-
-	async function handleImportProfileAction() {
-		try {
-			const parsed = JSON.parse(importJson) as Partial<LauncherProfile>;
-			if (
-				!parsed.name ||
-				!parsed.minecraftVersion ||
-				!parsed.profileTypeId ||
-				!parsed.graphicsModeId ||
-				!parsed.ramMb ||
-				!parsed.resolution
-			) {
-				throw new Error(t("settings.import_error"));
-			}
-			await importProfile({
-				name: parsed.name,
-				minecraftVersion: parsed.minecraftVersion,
-				profileTypeId: parsed.profileTypeId,
-				graphicsModeId: parsed.graphicsModeId,
-				ramMb: parsed.ramMb,
-				resolution: parsed.resolution,
-			});
-			setImportJson("");
-			await refreshProfiles();
-			setActiveModal("profils");
-		} catch (e) {
-			setError(
-				e instanceof Error ? e.message : t("settings.import_format_error"),
-			);
-		}
-	}
-
-	// La cape portee, pour que le personnage du lobby la montre.
-	//
-	// Relue a l'ouverture puis a chaque fermeture du vestiaire: c'est le seul
-	// moment ou l'equipement peut avoir change, et interroger en boucle pour
-	// une donnee qui bouge deux fois par session serait du gaspillage.
-	const vestiaireOuvert = activeModal === "cosmetiques";
-	useEffect(() => {
-		let annule = false;
-
-		void (async () => {
-			try {
-				const [items, me] = await Promise.all([
-					apiRequest<
-						{
-							id: string;
-							type: string;
-							textureUrl?: string;
-							previewUrl: string;
-						}[]
-					>("/v1/cosmetics/catalog"),
-					apiRequest<{ equipped: string[] }>("/v1/cosmetics/me"),
-				]);
-
-				const cape = items.find(
-					(item) => item.type === "cape" && me.equipped.includes(item.id),
-				);
-				if (!annule) {
-					setLobbyCape(cape?.textureUrl ?? cape?.previewUrl);
-				}
-			} catch {
-				// Service injoignable ou aucun compte connecte: le personnage
-				// s'affiche sans cape, ce qui est exactement ce qu'il faut montrer.
-				if (!annule) {
-					setLobbyCape(undefined);
-				}
-			}
-		})();
-
-		return () => {
-			annule = true;
-		};
-	}, [vestiaireOuvert]);
-
-	if (bootstrapFailed && !config) {
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-sunken p-8">
-				<div className="max-w-md w-full text-center flex flex-col items-center gap-4">
-					<AlertTriangle
-						className="w-12 h-12 text-accent-red"
-						strokeWidth={2}
-					/>
-					<h1 className="text-white text-lg font-bold">
-						{t("app.error_title")}
-					</h1>
-					<p className="text-[#9a92b6] text-sm">{t("app.error_hint")}</p>
-					{error && (
-						<p className="text-[#7a7194] text-xs font-mono bg-[#1a1529] border border-[#241d3c] rounded-lg px-3 py-2 w-full break-words">
-							{error}
-						</p>
-					)}
-					<button
-						onClick={() => setBootstrapAttempt((n) => n + 1)}
-						className="mt-2 bg-accent-purple hover:bg-accent-purple-dark text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-					>
-						{t("app.retry")}
-					</button>
-				</div>
-			</div>
-		);
+	if (failed && !config) {
+		return <BootstrapErrorScreen error={error} onRetry={retry} />;
 	}
 
 	if (loading || !config) {
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-sunken">
-				<div className="animate-pulse flex flex-col items-center gap-4">
-					<Pickaxe
-						className="w-16 h-16 text-accent-purple-dark animate-bounce"
-						strokeWidth={2.5}
-					/>
-					<span className="text-white/60 tracking-widest text-sm uppercase font-outfit">
-						{t("app.loading")}
-					</span>
-				</div>
-			</div>
-		);
+		return <LoadingScreen />;
 	}
 
-	// IF DISCONNECTED -> KEEP TOPBAR LAYOUT FOR LOGIN
 	if (!connected) {
 		return (
-			<div
-				className="h-screen w-full flex flex-col overflow-hidden"
-				style={BACKGROUND}
-			>
-				<TopBar
-					connected={connected}
-					account={account}
-					accounts={accounts}
-					connectingMicrosoft={connectingMicrosoft}
-					devModeAvailable={devModeAvailable}
-					onConnectMicrosoft={handleMicrosoftConnect}
-					onLocalDevContinue={handleLocalDevContinue}
-					onSwitchAccount={handleSwitchAccount}
-					onLogout={handleLogout}
-				/>
-				<div className="flex-1 flex items-center justify-center">
-					<div className="text-center space-y-4">
-						<h2 className="text-2xl font-bold text-white">Connexion requise</h2>
-						<p className="text-gray-400">
-							Veuillez vous connecter pour accéder au launcher.
-						</p>
-					</div>
-				</div>
-			</div>
+			<LoginScreen
+				background={BACKGROUND}
+				account={account}
+				accounts={accounts}
+				connectingMicrosoft={connectingMicrosoft}
+				devModeAvailable={devModeAvailable}
+				onConnectMicrosoft={handleMicrosoftConnect}
+				onLocalDevContinue={handleLocalDevContinue}
+				onSwitchAccount={handleSwitchAccount}
+				onLogout={handleLogout}
+			/>
 		);
 	}
-
-	// GAME UI LAYOUT
-	// Toutes les instances, et non les trois premieres: la piste en montre
-	// trois a la fois et la molette fait defiler les suivantes. Avec l'ancien
-	// decoupage, une quatrieme instance restait invisible depuis l'accueil.
-	const displayProfiles: (LauncherProfile | null)[] =
-		profiles.length > 0 ? profiles : [null];
 
 	return (
 		<div className="h-screen w-full flex overflow-hidden bg-void relative">
@@ -634,518 +160,52 @@ export function App() {
 				onDismiss={dismissUpdate}
 			/>
 
-			<main className="flex-1 flex items-center justify-center min-h-[520px]">
-				<div className="w-full h-full relative">
-					{/*
-					  Deux colonnes, et non plus une colonne avec deux elements poses
-					  par-dessus. Le personnage et le menu etaient en position absolue,
-					  donc hors du flux: la colonne de gauche ignorait leur existence et
-					  se reservait la place a la main, en pourcentages
-					  (lg:w-[55%] xl:w-[50%]) qui devaient rester d'accord avec ceux du
-					  personnage. Ils ne l'etaient pas toujours.
-					*/}
-					{/* Le panneau du personnage monte jusqu'en haut de la fenetre et la
-					    barre de raccourcis passe par-dessus, sur toute la largeur.
-					    C'est la seule facon d'avoir les deux: une barre logee dans la
-					    colonne de gauche la raccourcissait au point de n'y laisser que
-					    deux raccourcis, et un panneau commencant sous la barre perdait
-					    cent pixels de hauteur. En surimpression, aucun des deux ne paie
-					    pour l'autre. */}
-					<section
-						aria-label="Interface principale du jeu"
-						className="absolute inset-0 flex h-full w-full gap-7 overflow-hidden p-7 lg:p-10"
-						style={BACKGROUND}
-					>
-						{/* EN-TÊTE / HEADER BLOCK & SLIDE INDICATORS */}
-						{/* La barre va jusqu'au bord droit et le carre du menu se pose
-						    dessus, plutot que d'etre range a cote. En le rangeant a cote,
-						    l'ecart entre les deux laissait passer un morceau de bordure du
-						    panneau -- un trait violet errant entre la barre et le carre.
-						    La place du carre est reservee a l'interieur de la barre. */}
-						<div className="absolute inset-x-7 top-7 z-30 flex flex-col gap-3 lg:inset-x-10 lg:top-10">
-							<HomeActionBar
-								modCount={modCount}
-								instanceCount={profiles.length}
-								onAction={async (action) => {
-									if (action === "instances") {
-										setActiveModal("profils");
-										return;
-									}
-									if (action === "dossier") {
-										// Le dossier n'existe qu'apres un premier lancement: on le
-										// dit plutot que de laisser le bouton sans effet.
-										if (!mainProfile) return;
-										try {
-											await invoke("open_instance_folder", {
-												profileId: mainProfile.id,
-											});
-										} catch (e) {
-											setError(
-												typeof e === "string"
-													? e
-													: "Dossier introuvable. Lance l'instance une fois.",
-											);
-										}
-										return;
-									}
-									setActiveModal(action);
-								}}
-							/>
-							<img
-								alt=""
-								aria-hidden="true"
-								className="ml-4 h-2 w-[104px]"
-								src="/assets/slide-indicators.svg"
-							/>
-						</div>
-
-						{/* SLIDING MENU */}
-						{/* Replie, c'est le carre violet du coin: la seule pastille de
-						    couleur du haut de l'ecran, donc la premiere chose que l'oeil
-						    trouve quand il cherche le menu. Deplie, le carre redevient
-						    sobre -- une colonne de six icones sur un degrade violet ne se
-						    lirait plus. */}
-						<motion.div
-							{...(prefersReducedMotion
-								? {}
-								: { animate: { height: menuOpen ? 480 : 64 } })}
-							className={`absolute right-7 top-7 z-40 flex w-16 flex-col overflow-hidden rounded-[18px] lg:right-10 lg:top-10 ${
-								menuOpen ? "border border-[#2c2447] bg-[#1e1832]" : ""
-							}`}
-							initial={false}
-							transition={{
-								height: { duration: 0.3, ease: "easeInOut" },
-							}}
-						>
-							{/* TOP HEADER - Toujours visible et parfaitement centré */}
-							{/* Replie, le carre fait exactement la hauteur de la barre sur
-							    laquelle il se pose: 64 pixels, bords alignes en haut comme
-							    en bas. Un carre plus petit aurait flotte au milieu d'elle
-							    au lieu de la terminer. */}
-							<div className="flex h-16 w-full shrink-0 items-center justify-center">
-								<button
-									aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-									aria-expanded={menuOpen}
-									type="button"
-									onClick={() => setMenuOpen(!menuOpen)}
-									className={`group flex shrink-0 items-center justify-center transition-[filter,background-color] ${
-										menuOpen
-											? "h-10 w-10 rounded-[10px] hover:bg-[#2c2447]"
-											: "bubble-primary h-16 w-16 rounded-[18px] hover:brightness-110"
-									}`}
-								>
-									{menuOpen ? (
-										<X className="h-6 w-6 text-gray-400 transition-colors group-hover:text-white" />
-									) : (
-										<Menu className="h-6 w-6" />
-									)}
-								</button>
-							</div>
-
-							{menuOpen && (
-								<motion.div
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-									className="flex flex-col items-center flex-1 w-full mt-4 pb-4"
-								>
-									<div className="flex flex-col items-center gap-4">
-										{MENU_ITEMS.map(({ modal, icon: Icon, title }) => (
-											<button
-												key={modal}
-												type="button"
-												onClick={() => {
-													setActiveModal(modal);
-													setMenuOpen(false);
-												}}
-												className={MENU_BUTTON}
-												title={title}
-											>
-												<Icon className="w-5 h-5 text-gray-400 group-hover:text-white" />
-											</button>
-										))}
-									</div>
-
-									<div className="flex flex-col items-center mt-auto gap-4">
-										{/* Logo Paranoia, juste au-dessus de la sortie. */}
-										<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#8b5cf6]/20">
-											P
-										</div>
-										<div className="w-6 h-[1px] bg-[#2c2447]" />
-										<button
-											onClick={() => {
-												handleLogout();
-												setMenuOpen(false);
-											}}
-											className="w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-red-500/20 transition-colors group relative"
-											title="Déconnexion"
-										>
-											<LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
-										</button>
-									</div>
-								</motion.div>
-							)}
-						</motion.div>
-
-						{/* La reserve en haut est celle de la barre en surimpression:
-						    hauteur de la barre, des points, et de leur ecart. */}
-						<div className="flex min-h-0 min-w-0 flex-1 flex-col pt-[100px]">
-							{/* ACTUALITÉS */}
-							<NewsCard news={news} />
-
-							{/* Instances et lancement, colles en bas de la colonne. */}
-							<div className="mt-auto flex min-w-0 flex-col gap-5">
-								{/* Piste des instances: le bouton d'ajout reste en dehors de
-                    la piste. Place a l'interieur, il sortait du champ des la
-                    troisieme instance et donnait l'impression qu'on ne pouvait
-                    pas en creer davantage. */}
-								<div className="flex min-w-0 flex-row items-center gap-3 xl:gap-4">
-									<div
-										onWheel={(event) => {
-											// Meme conversion que la barre du haut: une molette de
-											// souris ne produit que du deplacement vertical.
-											if (event.deltaY !== 0) {
-												event.currentTarget.scrollLeft += event.deltaY;
-											}
-										}}
-										// Sans flex-1: la piste doit se dimensionner sur ses
-										// vignettes et ne se resserrer que faute de place. En
-										// flex-1 elle prenait toute la largeur libre, ce qui
-										// repoussait le bouton d'ajout a l'autre bout de la
-										// rangee -- separe des cases dont il est la suite.
-										className="no-scrollbar flex min-w-0 flex-row flex-nowrap items-center gap-3 overflow-x-auto scroll-smooth py-1 xl:gap-4"
-									>
-										{displayProfiles.map((profile) => {
-											const isSelected = profile
-												? profile.id === mainProfile?.id
-												: false;
-											const label = profile
-												? profile.name
-												: t("home.new_instance", "Nouvelle instance");
-											return (
-												<InstanceCard
-													key={profile ? profile.id : "vide"}
-													label={label}
-													{...(profile
-														? {
-																version: profile.minecraftVersion,
-																detail: profile.profileTypeId,
-															}
-														: {})}
-													isSelected={isSelected}
-													onClick={() => {
-														if (profile) {
-															// Selection d'abord: le menu qui s'ouvre, le bouton
-															// Jouer et le compteur de mods parlent tous de
-															// l'instance courante.
-															setSelectedProfileId(profile.id);
-															setActiveModal("instance");
-														} else {
-															setStep(connected ? 2 : 1);
-															setIsCreatingProfile(true);
-															setActiveModal("create_profile");
-														}
-													}}
-												/>
-											);
-										})}
-									</div>
-
-									<button
-										aria-label="Ajouter une instance"
-										title="Nouvelle instance"
-										className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-[#8b5cf6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]`}
-										onClick={() => {
-											setStep(connected ? 2 : 1);
-											setIsCreatingProfile(true);
-											setActiveModal("create_profile");
-										}}
-										type="button"
-									>
-										<img
-											alt=""
-											aria-hidden="true"
-											className="size-10 opacity-60 transition-opacity group-hover:opacity-100"
-											src="/assets/plus-square.svg"
-										/>
-									</button>
-								</div>
-
-								<div className="flex w-full max-w-[440px] shrink-0 items-center gap-4">
-									<button
-										aria-label={installState === "running" ? "Arrêter" : "Lancer"}
-										disabled={!mainProfile}
-										className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${installState === "running" ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
-										onClick={() => {
-											if (!mainProfile) return;
-											if (installState === "running") {
-												handleCancelLaunch();
-											} else {
-												handleLaunchGame(mainProfile.id);
-											}
-										}}
-										type="button"
-									>
-										{installState === "running" && launchStatus && (
-											<div
-												className="absolute inset-0 bg-red-800"
-												style={{ width: `${launchStatus.progress * 100}%` }}
-											/>
-										)}
-										<span className="relative z-10 flex items-center justify-center gap-2">
-											{installState === "running" ? (
-												<>
-													<X className="h-5 w-5 fill-current" />
-													{t("home.stop", "Arrêter")}
-												</>
-											) : (
-												<>
-													<Play className="h-4 w-4 fill-current" />
-													{t("home.play", "Jouer")}
-												</>
-											)}
-										</span>
-									</button>
-
-									{/* Gestionnaire de mods Modrinth. Il n'etait plus atteignable
-                      que par le menu replie en haut a droite, ou personne ne le
-                      trouvait.
-
-                      Carres, et de la hauteur du bouton de lancement: la
-                      largeur variable du compteur -- « Mods », puis « 12 mods »
-                      -- faisait glisser le bouton des journaux d'un cote a
-                      l'autre selon le profil ouvert. */}
-									<button
-										aria-label="Gerer les mods"
-										title="Installer des mods depuis Modrinth"
-										disabled={!mainProfile}
-										onClick={() => setActiveModal("mods")}
-										className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
-										type="button"
-									>
-										<Pickaxe className="h-5 w-5" />
-										<span className="text-[10px] leading-none text-[#9a92b6]">
-											{modCount ?? "Mods"}
-										</span>
-									</button>
-
-									{/* Logs du jeu */}
-									<button
-										aria-label="Consulter les logs"
-										title="Consulter les logs du jeu"
-										disabled={!mainProfile}
-										onClick={() => setActiveModal("logs")}
-										className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
-										type="button"
-									>
-										<Terminal className="h-5 w-5" />
-										<span className="text-[10px] leading-none text-[#9a92b6]">
-											Logs
-										</span>
-									</button>
-								</div>
-							</div>
-						</div>
-
-						{/* PERSONNAGE 3D */}
-						{/* Dans un cadre, et non pose sur le fond. Sans bord, le
-						    personnage flottait dans le vide a droite et la fenetre
-						    paraissait vide de ce cote; encadre, c'est un panneau qui
-						    equilibre la colonne de gauche. Masque sous md: la place
-						    n'y suffit plus, et l'amputer profiterait a personne.
-
-						    Le panneau part du haut de la fenetre et non du bas de la
-						    barre: c'est la seule facon de lui donner de la hauteur sans
-						    empieter sur la colonne de gauche. Le bouton du menu se pose
-						    sur son coin.
-
-						    Le cadrage recule par rapport au vestiaire: dans un panneau
-						    etroit et haut, le zoom d'origine coupait la tete et les
-						    pieds. */}
-						<div className="bubble-frame hidden w-[36%] min-w-[250px] max-w-[400px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
-							<SkinViewer3D
-								className="h-full w-full"
-								zoom={0.62}
-								skinUrl={
-									account?.minecraftUsername
-										? `https://minotar.net/skin/${account.minecraftUsername}`
-										: "https://minotar.net/skin/Steve"
-								}
-								{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
-								paused={installState === "running"}
-							/>
-						</div>
-					</section>
-				</div>
-			</main>
-
-			{/* MODALS */}
-			<Modal
-				isOpen={activeModal === "create_profile"}
-				onClose={() => {
-					setActiveModal("none");
-					setIsCreatingProfile(false);
-				}}
-				title={t("home.add_instance", "Nouvelle instance")}
-			>
-				<ProfileCreation
-					step={step}
-					setStep={setStep}
-					connected={connected}
-					error={error}
-					profileName={profileName}
-					setProfileName={setProfileName}
-					minecraftVersion={minecraftVersion}
-					setMinecraftVersion={setMinecraftVersion}
-					config={config}
-					importSettings={importSettings}
-					setImportSettings={setImportSettings}
-					keybindSource={keybindSource}
-					setKeybindSource={setKeybindSource}
-					detectedProfiles={detectedProfiles}
-					importOptions={importOptions}
-					setImportOptions={setImportOptions}
-					profileType={profileType}
-					setProfileType={setProfileType}
-					graphicsMode={graphicsMode}
-					setGraphicsMode={setGraphicsMode}
-					selectedType={selectedType}
-					selectedGraphics={selectedGraphics}
-					handleInstall={handleInstall}
-					installState={installState}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "instance" && !!mainProfile}
-				onClose={() => setActiveModal("none")}
-				title={mainProfile ? mainProfile.name : "Instance"}
-			>
-				{mainProfile && (
-					<InstanceMenu
-						profile={mainProfile}
-						modCount={modCount}
-						running={installState === "running"}
-						onPlay={() => {
-							setActiveModal("none");
-							handleLaunchGame(mainProfile.id);
-						}}
-						onOpenMods={() => setActiveModal("mods")}
-						onFavorite={() => handleFavoriteProfile(mainProfile.id)}
-						onDelete={async () => {
-							await handleDeleteProfile(mainProfile.id);
-							setActiveModal("none");
-						}}
-					/>
-				)}
-			</Modal>
-
-			{/* Plein ecran plutot qu'une modale: un vestiaire montre une grille, un
-          casier et un apercu cote a cote, ce qu'une boite centree ne peut pas
-          porter sans devenir illisible. */}
-			<Wardrobe
-				open={activeModal === "cosmetiques" || activeModal === "boutique"}
-				onClose={() => setActiveModal("none")}
+			<HomeScreen
+				background={BACKGROUND}
+				news={news}
+				profiles={profiles}
+				mainProfile={mainProfile}
+				modCount={modCount}
+				account={account}
+				lobbyCape={lobbyCape}
+				running={installState === "running"}
+				progress={status.progress}
+				onOpen={setActiveModal}
+				onSelectProfile={setSelectedProfileId}
+				onCreateProfile={openCreation}
+				onPlay={() => mainProfile && play(mainProfile)}
+				onStop={() => void cancel()}
+				onLogout={handleLogout}
+				onError={setError}
 			/>
 
-			<Modal
-				isOpen={activeModal === "migrate_profile"}
+			<AppModals
+				active={activeModal}
+				onOpen={setActiveModal}
 				onClose={() => setActiveModal("none")}
-				title=""
-			>
-				<MigrationModal
-					onClose={() => setActiveModal("none")}
-					onRefresh={refreshProfiles}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "profils"}
-				onClose={() => setActiveModal("none")}
-				title="Gérer les profils"
-			>
-				<ProfilsTab
-					profiles={profiles}
-					selectedProfileId={selectedProfileId}
-					setSelectedProfileId={setSelectedProfileId}
-					isCreatingProfile={isCreatingProfile}
-					setIsCreatingProfile={setIsCreatingProfile}
-					onFavorite={handleFavoriteProfile}
-					onDelete={handleDeleteProfile}
-					onPlay={() => {
-						setActiveModal("none");
-						if (mainProfile) handleLaunchGame(mainProfile.id);
-					}}
-					onMigrate={() => {
-						setActiveModal("migrate_profile");
-						setIsCreatingProfile(false);
-					}}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "mods"}
-				onClose={() => setActiveModal("none")}
-				title="Mods"
-			>
-				<ModsTab
-					profiles={profiles}
-					selectedProfileId={selectedProfileId}
-					setSelectedProfileId={setSelectedProfileId}
-					setError={setError}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "comptes"}
-				onClose={() => setActiveModal("none")}
-				title="Comptes"
-			>
-				<ComptesTab
-					account={account}
-					accounts={accounts}
-					connectingMicrosoft={connectingMicrosoft}
-					onConnectMicrosoft={handleMicrosoftConnect}
-					onSwitchAccount={handleSwitchAccount}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "parametres"}
-				onClose={() => setActiveModal("none")}
-				title="Paramètres"
-			>
-				<ParametresTab
-					importJson={importJson}
-					setImportJson={setImportJson}
-					handleImportProfile={handleImportProfileAction}
-					error={error}
-				/>
-			</Modal>
-
-			<Modal
-				isOpen={activeModal === "logs"}
-				onClose={() => setActiveModal("none")}
-				title="Logs de jeu"
-			>
-				<LogsTab />
-			</Modal>
-
-			{isDragging && !isProcessing && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[#8b5cf6]/20 backdrop-blur-md">
-					<div className="rounded-2xl border-2 border-[#8b5cf6] bg-[#1a1529] px-8 py-6 shadow-2xl">
-						<h2 className="text-2xl font-bold text-white">Relâcher pour importer le profil</h2>
-					</div>
-				</div>
-			)}
-			
-			{isProcessing && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
-					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-[#1a1529] px-8 py-6 shadow-2xl">
-						<div className="h-12 w-12 animate-spin rounded-full border-4 border-[#8b5cf6] border-t-transparent"></div>
-						<h2 className="text-xl font-bold text-white">Importation en cours...</h2>
-					</div>
-				</div>
-			)}
+				config={config}
+				error={error}
+				setError={setError}
+				connected={connected}
+				account={account}
+				accounts={accounts}
+				connectingMicrosoft={connectingMicrosoft}
+				onConnectMicrosoft={handleMicrosoftConnect}
+				onSwitchAccount={handleSwitchAccount}
+				profiles={profiles}
+				mainProfile={mainProfile}
+				selectedProfileId={selectedProfileId}
+				setSelectedProfileId={setSelectedProfileId}
+				refreshProfiles={refreshProfiles}
+				onFavorite={handleFavoriteProfile}
+				onDelete={handleDeleteProfile}
+				modCount={modCount}
+				running={installState === "running"}
+				onPlay={play}
+				creation={creation}
+				isDragging={isDragging}
+				isProcessing={isProcessing}
+			/>
 		</div>
 	);
 }
