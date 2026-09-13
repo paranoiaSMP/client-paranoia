@@ -38,6 +38,26 @@ subprojects {
     sourceSets {
         main {
             java.srcDirs += rootProject.file('src/main/java')
+
+            // Second niveau de partage: ce que toutes les versions ont en
+            // commun sauf 1.21.8.
+            //
+            // Quatre fichiers y vivaient en quatre exemplaires -- plateforme,
+            // point d'entree, ecran de menu, mixin de la liste des joueurs --
+            // dont trois identiques au caractere pres. Seule 1.21.8 diverge
+            // reellement; les autres ne differaient que par le numero de
+            // version, que PlatformImpl demande desormais au chargeur. Cinq
+            // cents lignes recopiees, et une correction a appliquer trois fois
+            // en esperant n'en oublier aucune.
+            //
+            // La condition porte sur la version qui fait exception, et non sur
+            // la liste de celles qui partagent: une nouvelle version de
+            // Minecraft rejoint le tronc commun sans qu'on ait a y penser,
+            // ce qui est le cas de loin le plus frequent.
+            if (project.name != '1.21.8') {
+                java.srcDirs += rootProject.file('src/main/java-modern')
+            }
+
             // Traductions et assets communs. fabric.mod.json reste propre a
             // chaque version: il declare la version de Minecraft acceptee.
             resources.srcDirs += rootProject.file('src/main/resources')

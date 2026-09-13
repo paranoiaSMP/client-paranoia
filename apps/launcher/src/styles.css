@@ -19,28 +19,68 @@
   --color-accent-purple-hot: #b47cff;
 
   /*
-   * Fond de fenetre, puis les deux tons d'une bulle: le haut et le bas.
+   * Les cinq couches, du fond de fenetre a l'element souleve.
    *
-   * Le fond descend plus bas que le noir de depart. Les surfaces, elles, ne
-   * bougent pas: c'est l'ecart entre les deux qui fait la profondeur, et le
-   * creuser du cote sombre coute moins de lisibilite que d'eclaircir les
-   * cartes.
+   * Elles etaient descendues jusqu'a #050409, ou le bleu ne depasse le rouge
+   * que de cinq points: a cette obscurite l'oeil ne lit plus une teinte, il
+   * lit du noir. Chercher la profondeur en descendant vers le noir efface
+   * justement la couleur qu'on voulait garder.
+   *
+   * La gamme remonte donc, et surtout s'ecarte du gris: chaque ton a
+   * maintenant vingt points d'ecart entre le bleu et le rouge, ce qui suffit
+   * a le faire lire comme violet a n'importe quelle clarte. La profondeur
+   * vient des ecarts entre les couches -- reguliers, environ huit points de
+   * clarte -- et non de leur noirceur absolue.
+   *
+   * Elles se deplacent ensemble et dans cet ordre. Eclaircir le fond sans
+   * eclaircir les surfaces ferait couler les cartes dans leur decor.
    */
-  --color-void: #050409;
+  --color-void: #120c22;
+  /* Le creux: champs de saisie, cartes d'option, pastilles de compteur. Plus
+     sombre qu'une surface pour se lire comme une entaille. */
+  --color-sunken: #170f2a;
+  --color-surface: #1d1733;
+  --color-surface-hi: #251d40;
+  --color-raised: #2e2450;
+
   /*
-   * Le creux: champs de saisie, cartes d'option, pastilles de compteur. Plus
-   * sombre qu'une surface, plus clair que le fond de fenetre -- c'est ce qui
-   * le fait lire comme une entaille et non comme un trou.
+   * Les roles recurrents, nommes d'apres ce qu'ils font et non d'apres leur
+   * teinte. Ils etaient ecrits en dur: #241d3c quarante-huit fois, #9a92b6
+   * trente-cinq, et l'accent lui-meme trente-sept -- alors qu'il avait deja
+   * un jeton.
    *
-   * Il existait deja, ecrit en dur treize fois sous la forme #100c1c. Le
-   * nommer est ce qui a permis de decouvrir que les dix autres occurrences,
-   * elles, visaient le fond de fenetre et avaient donc cesse de le suivre
-   * quand celui-ci a ete assombri.
+   * Les valeurs sont reprises telles quelles, sans une seule retouche: nommer
+   * une couleur et la changer sont deux gestes distincts, et les melanger
+   * rendrait impossible de dire lequel des deux a modifie l'ecran. Les
+   * accorder a la gamme violette est un choix visible, a faire separement.
    */
-  --color-sunken: #100c1c;
-  --color-surface: #151122;
-  --color-surface-hi: #1c1730;
-  --color-raised: #241d3c;
+  /* Les traits, du plus discret au plus marque. */
+  --color-line: #241d3c;
+  --color-line-soft: #251e3d;
+  --color-line-hi: #372d58;
+  --color-hover-line: #403565;
+  /* Fond d'un element survole, et panneau enfonce. */
+  --color-hover: #2c2447;
+  --color-panel: #1a1529;
+
+  /* Les gris de texte, du plus lisible au plus efface. */
+  --color-muted: #9a92b6;
+  --color-faint: #8d84a8;
+  --color-muted-dim: #7a7194;
+  --color-placeholder: #463a70;
+
+  /*
+   * Ce que le nommage a mis au jour, et qui n'etait pas visible tant que ces
+   * couleurs restaient des chaines eparpillees: deux paires sont a un cheveu
+   * l'une de l'autre. #241d3c et #251e3d ne different que d'un point sur
+   * chaque canal; #9a92b6 et #8d84a8 de moins de dix. Personne ne les
+   * distingue a l'ecran, et chacune existe pourtant a des dizaines
+   * d'exemplaires.
+   *
+   * Elles sont nommees separement plutot que fusionnees: reduire une paire a
+   * une seule couleur se verra quelque part, et c'est une decision a prendre
+   * en regardant, pas un effet de bord d'un renommage.
+   */
 
   --font-inter: "Inter", sans-serif;
   --font-outfit: "Outfit", sans-serif;
@@ -48,7 +88,7 @@
 
 body {
   @apply text-white min-h-screen m-0 font-inter antialiased;
-  background-color: #050409;
+  background-color: #120c22;
   /* Optionnel : un très léger bruit de fond pour texturer sans casser l'aspect sombre */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
 }

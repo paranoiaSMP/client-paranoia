@@ -68,7 +68,19 @@ export interface InstallationManifest {
   artifacts: FileArtifact[];
   clientMod?: ClientModArtifact;
   generatedAt: string;
-  signature: string;
+  /*
+   * Il y avait ici un champ `signature`, declare obligatoire. Le backend le
+   * remplissait de la chaine "TODO_SIGNED_MANIFEST" et personne ne le lisait:
+   * le manifeste annoncait donc etre signe sans l'etre, et le type le
+   * promettait a qui s'y fiait.
+   *
+   * Le retirer ne retire aucune protection -- il n'y en avait pas. Le jour ou
+   * les manifestes seront reellement signes, le champ reviendra avec la
+   * verification qui va avec, et son absence d'ici la est la verite.
+   *
+   * A ne pas confondre avec la signature des mises a jour du launcher, elle
+   * bien reelle: minisign, verifiee par Tauri contre sa cle publique.
+   */
 }
 
 export interface LauncherProfile {

@@ -82,7 +82,7 @@ export function HomeActionBar({
         onClick={() => scrollBy(-1)}
         aria-label="Raccourcis precedents"
         type="button"
-        className="grid h-8 w-6 shrink-0 place-items-center rounded-[8px] text-[#7a7194] transition-colors hover:bg-[#282141] hover:text-white"
+        className="grid h-8 w-6 shrink-0 place-items-center rounded-[8px] text-muted-dim transition-colors hover:bg-[#282141] hover:text-white"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -119,12 +119,12 @@ export function HomeActionBar({
               // recoivent la meme matiere que le reste -- liseré clair en haut,
               // ombre courte dessous -- pour flotter dedans plutot qu'y etre
               // decoupes.
-              className="flex h-11 w-[112px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-white/[0.07] bg-gradient-to-b from-[#2a2247] to-[#211a38] px-2.5 text-xs font-semibold text-[#cfc9de] shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_4px_10px_-4px_rgba(0,0,0,0.8)] transition-colors hover:border-[#8b5cf6] hover:text-white"
+              className="flex h-11 w-[112px] shrink-0 items-center justify-center gap-2 rounded-[12px] border border-white/[0.07] bg-gradient-to-b from-[#2a2247] to-[#211a38] px-2.5 text-xs font-semibold text-[#cfc9de] shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_4px_10px_-4px_rgba(0,0,0,0.8)] transition-colors hover:border-accent-purple hover:text-white"
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{action.label}</span>
               {badge !== null && badge > 0 && (
-                <span className="shrink-0 rounded-full bg-sunken px-1.5 py-0.5 text-[10px] font-bold text-[#9a92b6]">
+                <span className="shrink-0 rounded-full bg-sunken px-1.5 py-0.5 text-[10px] font-bold text-muted">
                   {badge}
                 </span>
               )}
@@ -137,7 +137,7 @@ export function HomeActionBar({
         onClick={() => scrollBy(1)}
         aria-label="Raccourcis suivants"
         type="button"
-        className="grid h-8 w-6 shrink-0 place-items-center rounded-[8px] text-[#7a7194] transition-colors hover:bg-[#282141] hover:text-white"
+        className="grid h-8 w-6 shrink-0 place-items-center rounded-[8px] text-muted-dim transition-colors hover:bg-[#282141] hover:text-white"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -149,9 +149,9 @@ export function HomeActionBar({
         onClick={() => onAction("boutique")}
         title="Boutique Paranoia"
         type="button"
-        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-[#8b5cf6]/60 bg-gradient-to-br from-[#8b5cf6]/25 to-[#6d35e0]/15 px-3 text-white transition-colors hover:from-[#8b5cf6]/40 hover:to-[#6d35e0]/25"
+        className="flex h-11 shrink-0 items-center gap-2.5 rounded-[12px] border border-accent-purple/60 bg-gradient-to-br from-accent-purple/25 to-accent-purple-dark/15 px-3 text-white transition-colors hover:from-accent-purple/40 hover:to-accent-purple-dark/25"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] shadow-lg shadow-[#8b5cf6]/20">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] bg-gradient-to-br from-accent-purple to-accent-purple-dark shadow-lg shadow-accent-purple/20">
           <ShoppingBag className="h-4 w-4" />
         </span>
         <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">

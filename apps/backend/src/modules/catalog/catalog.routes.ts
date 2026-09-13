@@ -127,7 +127,6 @@ export function getManifest(
     ...(clientMod ? { clientMod } : {}),
     artifacts: (match?.artifacts ?? []) as FileArtifact[],
     generatedAt: new Date().toISOString(),
-    signature: "TODO_SIGNED_MANIFEST",
   };
 }
 

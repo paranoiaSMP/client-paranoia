@@ -27,9 +27,9 @@ export function BootstrapErrorScreen({
 			<div className="max-w-md w-full text-center flex flex-col items-center gap-4">
 				<AlertTriangle className="w-12 h-12 text-accent-red" strokeWidth={2} />
 				<h1 className="text-white text-lg font-bold">{t("app.error_title")}</h1>
-				<p className="text-[#9a92b6] text-sm">{t("app.error_hint")}</p>
+				<p className="text-muted text-sm">{t("app.error_hint")}</p>
 				{error && (
-					<p className="text-[#7a7194] text-xs font-mono bg-[#1a1529] border border-[#241d3c] rounded-lg px-3 py-2 w-full break-words">
+					<p className="text-muted-dim text-xs font-mono bg-panel border border-line rounded-lg px-3 py-2 w-full break-words">
 						{error}
 					</p>
 				)}

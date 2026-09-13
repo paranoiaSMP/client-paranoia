@@ -37,12 +37,12 @@ export function ProfilsTab({
         
         {/* Barre du haut */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="flex items-center bg-[#1a1529] rounded-lg px-3 py-2.5 flex-1 border border-[#241d3c]">
-             <Search className="w-4 h-4 text-[#463a70] mr-2 shrink-0" />
+          <div className="flex items-center bg-panel rounded-lg px-3 py-2.5 flex-1 border border-line">
+             <Search className="w-4 h-4 text-placeholder mr-2 shrink-0" />
              <input 
                type="text" 
                placeholder={t("profiles.search") || "Chercher un profil..."}
-               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-[#463a70]"
+               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-placeholder"
              />
           </div>
           <button 
@@ -54,7 +54,7 @@ export function ProfilsTab({
           </button>
           <button 
             onClick={onMigrate}
-            className="px-4 py-2.5 bg-[#241d3c] hover:bg-[#372d58] text-white text-sm font-semibold rounded-lg transition-colors shrink-0"
+            className="px-4 py-2.5 bg-line hover:bg-line-hi text-white text-sm font-semibold rounded-lg transition-colors shrink-0"
           >
             Migrer
           </button>
@@ -63,8 +63,8 @@ export function ProfilsTab({
         {/* Grille de profils */}
         {profiles.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20">
-            <p className="text-[#7a7194] text-lg mb-1">{t("profiles.empty_title")}</p>
-            <p className="text-[#372d58] text-sm mb-6">{t("profiles.empty_subtitle")}</p>
+            <p className="text-muted-dim text-lg mb-1">{t("profiles.empty_title")}</p>
+            <p className="text-line-hi text-sm mb-6">{t("profiles.empty_subtitle")}</p>
             <button 
               onClick={() => setIsCreatingProfile(true)} 
               className="px-5 py-2.5 bg-accent-purple text-white font-semibold rounded-lg hover:bg-accent-purple-dark transition-colors"
@@ -80,10 +80,10 @@ export function ProfilsTab({
                 <div 
                   key={profile.id}
                   onClick={() => setSelectedProfileId(profile.id)}
-                  className={`relative h-[150px] rounded-xl overflow-hidden cursor-pointer group transition-all duration-200 border-2 ${isSelected ? 'border-accent-purple' : 'border-transparent hover:border-[#372d58]'}`}
+                  className={`relative h-[150px] rounded-xl overflow-hidden cursor-pointer group transition-all duration-200 border-2 ${isSelected ? 'border-accent-purple' : 'border-transparent hover:border-line-hi'}`}
                 >
                   {/* Fond avec l'image du serveur */}
-                  <div className="absolute inset-0 bg-[#1a1529]">
+                  <div className="absolute inset-0 bg-panel">
                     <div 
                       className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity duration-300" 
                       style={{ backgroundImage: "url('/hero-bg.png')" }}
@@ -94,7 +94,7 @@ export function ProfilsTab({
                   {/* Nom du profil */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <p className="text-white font-bold text-lg leading-tight">{profile.name}</p>
-                    <p className="text-[#9a92b6] text-xs mt-1">{profile.minecraftVersion} &middot; {profile.profileTypeId}</p>
+                    <p className="text-muted text-xs mt-1">{profile.minecraftVersion} &middot; {profile.profileTypeId}</p>
                   </div>
 
                   {/* Favori */}
@@ -113,36 +113,36 @@ export function ProfilsTab({
       {/* DROITE - Détails */}
       {selectedProfile && (
         <div className="w-full lg:w-[340px] shrink-0">
-          <div className="bg-[#1a1529] border border-[#241d3c] rounded-xl overflow-hidden">
+          <div className="bg-panel border border-line rounded-xl overflow-hidden">
             
             {/* Image en haut */}
             <div className="h-36 relative">
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-bg.png')" }}></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1a1529] to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-panel to-transparent"></div>
             </div>
 
             {/* Contenu */}
             <div className="px-5 pb-5 -mt-4 relative">
               <h3 className="text-lg font-bold text-white">{selectedProfile.name}</h3>
-              <p className="text-[#7a7194] text-xs mt-1 mb-5">
+              <p className="text-muted-dim text-xs mt-1 mb-5">
                 Version {selectedProfile.minecraftVersion} &middot; {selectedProfile.profileTypeId}
               </p>
 
               {/* Infos */}
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#9a92b6]">Version</span>
+                  <span className="text-muted">Version</span>
                   <span className="text-white font-medium">{selectedProfile.minecraftVersion}</span>
                 </div>
-                <div className="h-px bg-[#241d3c]"></div>
+                <div className="h-px bg-line"></div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#9a92b6]">Type</span>
+                  <span className="text-muted">Type</span>
                   <span className="text-white font-medium capitalize">{selectedProfile.profileTypeId}</span>
                 </div>
-                <div className="h-px bg-[#241d3c]"></div>
+                <div className="h-px bg-line"></div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#9a92b6]">Dossier</span>
-                  <span className="text-[#7a7194] text-xs font-mono">.minecraft</span>
+                  <span className="text-muted">Dossier</span>
+                  <span className="text-muted-dim text-xs font-mono">.minecraft</span>
                 </div>
               </div>
 
@@ -150,14 +150,14 @@ export function ProfilsTab({
               <div className="flex gap-2">
                 <button 
                   onClick={() => onFavorite(selectedProfile.id)}
-                  className="w-10 h-10 bg-[#241d3c] hover:bg-[#372d58] rounded-lg flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-line hover:bg-line-hi rounded-lg flex items-center justify-center transition-colors"
                   title="Favori"
                 >
-                  <Star className={`w-4 h-4 ${selectedProfile.favorite ? 'text-yellow-400 fill-yellow-400' : 'text-[#7a7194]'}`} />
+                  <Star className={`w-4 h-4 ${selectedProfile.favorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-dim'}`} />
                 </button>
                 <button 
                   onClick={() => onDelete(selectedProfile.id)}
-                  className="w-10 h-10 bg-[#241d3c] hover:bg-red-900/40 text-[#7a7194] hover:text-red-400 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-line hover:bg-red-900/40 text-muted-dim hover:text-red-400 rounded-lg flex items-center justify-center transition-colors"
                   title="Supprimer"
                 >
                   <Trash2 className="w-4 h-4" />

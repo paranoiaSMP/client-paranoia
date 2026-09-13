@@ -63,7 +63,7 @@ const MENU_ITEMS: { modal: ActiveModal; icon: LucideIcon; title: string }[] = [
 ];
 
 const MENU_BUTTON =
-	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-[#2c2447] transition-colors group relative";
+	"w-10 h-10 flex items-center justify-center rounded-[10px] hover:bg-hover transition-colors group relative";
 
 type HomeScreenProps = {
 	background: CSSProperties;
@@ -142,8 +142,15 @@ export function HomeScreen({
 		}
 	}
 
+	// `main` n'impose plus de hauteur minimale. Les 520 pixels qu'elle exigeait
+	// depassaient la fenetre des qu'elle etait plus courte, et la section etant
+	// en overflow-hidden, le bouton de lancement etait rogne en silence -- de
+	// trente-cinq pixels exactement a 485 de haut, la taille d'origine du
+	// launcher. Le plancher est desormais tenu la ou il doit l'etre: sur la
+	// rangee de vignettes, qui a son propre min-h et se resserre avant de
+	// deborder.
 	return (
-		<main className="flex-1 flex items-center justify-center min-h-[520px]">
+		<main className="flex min-h-0 flex-1 items-center justify-center">
 			<div className="w-full h-full relative">
 				{/*
 				  Deux colonnes, et non une colonne avec deux elements poses
@@ -198,7 +205,7 @@ export function HomeScreen({
 							? {}
 							: { animate: { height: menuOpen ? 480 : 64 } })}
 						className={`absolute right-7 top-7 z-40 flex w-16 flex-col overflow-hidden rounded-[18px] lg:right-10 lg:top-10 ${
-							menuOpen ? "border border-[#2c2447] bg-[#1e1832]" : ""
+							menuOpen ? "border border-hover bg-[#1e1832]" : ""
 						}`}
 						initial={false}
 						transition={{ height: { duration: 0.3, ease: "easeInOut" } }}
@@ -215,7 +222,7 @@ export function HomeScreen({
 								onClick={() => setMenuOpen(!menuOpen)}
 								className={`group flex shrink-0 items-center justify-center transition-[filter,background-color] ${
 									menuOpen
-										? "h-10 w-10 rounded-[10px] hover:bg-[#2c2447]"
+										? "h-10 w-10 rounded-[10px] hover:bg-hover"
 										: "bubble-primary h-16 w-16 rounded-[18px] hover:brightness-110"
 								}`}
 							>
@@ -252,10 +259,10 @@ export function HomeScreen({
 
 								<div className="flex flex-col items-center mt-auto gap-4">
 									{/* Logo Paranoia, juste au-dessus de la sortie. */}
-									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-[#8b5cf6] to-[#6d35e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#8b5cf6]/20">
+									<div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-accent-purple to-accent-purple-dark flex items-center justify-center text-white font-black text-sm shadow-lg shadow-accent-purple/20">
 										P
 									</div>
-									<div className="w-6 h-[1px] bg-[#2c2447]" />
+									<div className="w-6 h-[1px] bg-hover" />
 									<button
 										type="button"
 										onClick={() => {
@@ -274,17 +281,26 @@ export function HomeScreen({
 
 					{/* La reserve en haut est celle de la barre en surimpression:
 					    hauteur de la barre, des points, et de leur ecart. */}
-					<div className="flex min-h-0 min-w-0 flex-1 flex-col pt-[100px]">
+					<div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 pt-[96px]">
 						{/* ACTUALITÉS */}
 						<NewsCard news={news} />
 
-						{/* Instances et lancement, colles en bas de la colonne. */}
-						<div className="mt-auto flex min-w-0 flex-col gap-5">
-							{/* Piste des instances: le bouton d'ajout reste en dehors de la
-							    piste. Place a l'interieur, il sortait du champ des la
-							    troisieme instance et donnait l'impression qu'on ne pouvait
-							    pas en creer davantage. */}
-							<div className="flex min-w-0 flex-row items-center gap-3 xl:gap-4">
+						{/* La rangee prend tout ce qui reste entre les actualites et le
+						    lancement, dans la limite de ses bornes: pas de vignettes
+						    ecrasees sur un ecran court, pas de vignettes demesurees sur un
+						    grand.
+
+						    Il faut les deux reglages, et c'est ce qui manquait. Avec flex-1
+						    seul, une fois le plafond atteint l'espace restant n'allait a
+						    personne et le lancement remontait au milieu de la colonne. Avec
+						    une hauteur calculee seule, la rangee ne prenait pas la place
+						    disponible et les vignettes devenaient carrees. flex-1 les fait
+						    grandir, le mt-auto du lancement absorbe ce qui depasse.
+
+						    Le bouton d'ajout reste en dehors de la piste. Place a
+						    l'interieur, il sortait du champ des la troisieme instance et
+						    donnait l'impression qu'on ne pouvait pas en creer plus. */}
+							<div className="flex min-h-[116px] max-h-[212px] min-w-0 flex-1 flex-row items-stretch gap-3 xl:gap-4">
 								<div
 									onWheel={(event) => {
 										// Meme conversion que la barre du haut: une molette de
@@ -298,7 +314,10 @@ export function HomeScreen({
 									// elle prenait toute la largeur libre, ce qui repoussait le
 									// bouton d'ajout a l'autre bout de la rangee -- separe des
 									// cases dont il est la suite.
-									className="no-scrollbar flex min-w-0 flex-row flex-nowrap items-center gap-3 overflow-x-auto scroll-smooth py-1 xl:gap-4"
+									// items-stretch et non items-center: les vignettes prennent
+									// desormais la hauteur de la rangee, il faut donc qu'elles
+									// la recoivent.
+									className="no-scrollbar flex h-full min-w-0 flex-row flex-nowrap items-stretch gap-3 overflow-x-auto scroll-smooth xl:gap-4"
 								>
 									{displayProfiles.map((profile) => (
 										<InstanceCard
@@ -332,7 +351,7 @@ export function HomeScreen({
 								<button
 									aria-label="Ajouter une instance"
 									title="Nouvelle instance"
-									className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-[#8b5cf6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b5cf6]`}
+									className={`group grid ${CARD_SIZE} shrink-0 place-items-center rounded-[22px] bubble transition-[border-color] hover:border-accent-purple focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-purple`}
 									onClick={onCreateProfile}
 									type="button"
 								>
@@ -345,11 +364,11 @@ export function HomeScreen({
 								</button>
 							</div>
 
-							<div className="flex w-full max-w-[440px] shrink-0 items-center gap-4">
+							<div className="mt-auto flex w-full max-w-[440px] shrink-0 items-center gap-4">
 								<button
 									aria-label={running ? "Arrêter" : "Lancer"}
 									disabled={!mainProfile}
-									className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${running ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-[#8b5cf6]"}`}
+									className={`relative flex h-[54px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full px-6 text-sm font-semibold transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 ${running ? "bg-red-600 text-white focus-visible:outline-red-500" : "bubble-primary focus-visible:outline-accent-purple"}`}
 									onClick={running ? onStop : onPlay}
 									type="button"
 								>
@@ -387,11 +406,11 @@ export function HomeScreen({
 									title="Installer des mods depuis Modrinth"
 									disabled={!mainProfile}
 									onClick={() => onOpen("mods")}
-									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-accent-purple disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Pickaxe className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
+									<span className="text-[10px] leading-none text-muted">
 										{modCount ?? "Mods"}
 									</span>
 								</button>
@@ -402,17 +421,16 @@ export function HomeScreen({
 									title="Consulter les logs du jeu"
 									disabled={!mainProfile}
 									onClick={() => onOpen("logs")}
-									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-50"
+									className="bubble flex size-[54px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[16px] text-white transition-[border-color] hover:border-accent-purple disabled:cursor-not-allowed disabled:opacity-50"
 									type="button"
 								>
 									<Terminal className="h-5 w-5" />
-									<span className="text-[10px] leading-none text-[#9a92b6]">
+									<span className="text-[10px] leading-none text-muted">
 										Logs
 									</span>
 								</button>
 							</div>
 						</div>
-					</div>
 
 					{/* PERSONNAGE 3D */}
 					{/* Dans un cadre, et non pose sur le fond. Sans bord, le personnage
@@ -422,7 +440,12 @@ export function HomeScreen({
 
 					    Le cadrage recule par rapport au vestiaire: dans un panneau
 					    etroit et haut, le zoom d'origine coupait la tete et les pieds. */}
-					<div className="bubble-frame hidden w-[36%] min-w-[250px] max-w-[400px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
+					{/* 30 % et non 36 %: c'est la largeur du panneau qui plafonnait la
+					    taille des vignettes. A 36 %, la colonne de gauche ne laissait que
+					    116 pixels par case pour en garder quatre visibles -- soit quatre
+					    de plus que les 112 d'alors, autant dire rien. Les six points
+					    rendus ici valent seize pixels par vignette. */}
+					<div className="bubble-frame hidden w-[30%] min-w-[240px] max-w-[380px] shrink-0 items-end justify-center overflow-hidden rounded-[26px] md:flex">
 						<SkinViewer3D
 							className="h-full w-full"
 							zoom={0.62}

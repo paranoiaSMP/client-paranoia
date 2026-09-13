@@ -5,8 +5,19 @@
  * il se lisait comme un bouton egare dans la rangee plutot que comme la case
  * suivante. Les deux partagent desormais la meme taille, et la rangee se lit
  * comme une suite de cases dont la derniere est vide.
+ *
+ * <p>La hauteur n'est plus une valeur fixe mais {@code h-full}: c'est la
+ * rangee qui la donne, et elle-meme prend ce que la colonne lui laisse entre
+ * les actualites et le bouton de lancement. Une hauteur figee obligeait a
+ * recalculer un budget de pixels a chaque changement voisin -- une marge en
+ * plus ici, un bandeau plus haut la -- et le total finissait par depasser sur
+ * les fenetres courtes, ou par laisser du vide sur les hautes.
+ *
+ * <p>La largeur, elle, reste fixe: c'est elle qui decide combien de vignettes
+ * tiennent avant que la piste ne defile, et cela ne doit pas dependre de la
+ * hauteur de la fenetre.
  */
-export const CARD_SIZE = "h-[144px] w-[112px] xl:h-[172px] xl:w-[140px]";
+export const CARD_SIZE = "h-full w-[126px] xl:w-[158px]";
 
 type InstanceCardProps = {
 	label: string;
@@ -47,7 +58,7 @@ export function InstanceCard({
 			<div
 				aria-hidden="true"
 				className={`pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-2xl transition-opacity ${
-					isSelected ? "bg-[#8b5cf6]/40" : "bg-white/5 group-hover:bg-white/10"
+					isSelected ? "bg-accent-purple/40" : "bg-white/5 group-hover:bg-white/10"
 				}`}
 			/>
 
@@ -56,14 +67,14 @@ export function InstanceCard({
 					{label}
 				</p>
 				{detail && (
-					<p className="mt-0.5 truncate text-[11px] text-[#9a92b6]">{detail}</p>
+					<p className="mt-0.5 truncate text-[11px] text-muted">{detail}</p>
 				)}
 				{version && (
 					<span
 						className={`mt-1.5 inline-block max-w-full truncate rounded-[7px] border px-1.5 py-0.5 text-[10px] font-semibold ${
 							isSelected
-								? "border-[#8b5cf6]/60 bg-[#8b5cf6]/15 text-[#cfa8ff]"
-								: "border-white/10 bg-black/30 text-[#9a92b6]"
+								? "border-accent-purple/60 bg-accent-purple/15 text-[#cfa8ff]"
+								: "border-white/10 bg-black/30 text-muted"
 						}`}
 					>
 						{version}

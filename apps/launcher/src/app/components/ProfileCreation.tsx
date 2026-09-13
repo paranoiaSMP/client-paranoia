@@ -110,7 +110,7 @@ export function ProfileCreation({
 }: ProfileCreationProps) {
   const { t } = useTranslation();
   return (
-    <div className="bg-[#1c1c1e] border-2 border-[#251e3d] rounded-xl p-8 max-w-2xl mx-auto shadow-2xl">
+    <div className="bg-[#1c1c1e] border-2 border-line-soft rounded-xl p-8 max-w-2xl mx-auto shadow-2xl">
       <h3 className="text-2xl font-black text-white mb-6">
         {t("wizard.title")}
       </h3>
@@ -119,7 +119,7 @@ export function ProfileCreation({
         {[1, 2, 3, 4, 5].map((s) => (
           <div
             key={s}
-            className={`flex-1 h-3 rounded-sm transition-all ${step >= s ? "bg-accent-purple shadow-[0_0_10px_rgba(157,13,242,0.5)]" : "bg-[#251e3d]"}`}
+            className={`flex-1 h-3 rounded-sm transition-all ${step >= s ? "bg-accent-purple shadow-[0_0_10px_rgba(157,13,242,0.5)]" : "bg-line-soft"}`}
           ></div>
         ))}
       </div>
@@ -133,7 +133,7 @@ export function ProfileCreation({
       {step === 1 && (
         <div className="space-y-4">
           <h4 className="text-lg font-bold text-white">{t("wizard.step1")}</h4>
-          <p className="text-[#8d84a8]">{t("wizard.step1_desc")}</p>
+          <p className="text-faint">{t("wizard.step1_desc")}</p>
           {connected ? (
             <div className="p-4 bg-[#1e6b33] border-2 border-[#34a853] rounded text-white font-bold flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6" strokeWidth={3} />
@@ -151,25 +151,25 @@ export function ProfileCreation({
         <div className="space-y-6">
           <h4 className="text-lg font-bold text-white">{t("wizard.step2")}</h4>
           <div>
-            <label className="block text-sm font-bold text-[#8d84a8] mb-2">
+            <label className="block text-sm font-bold text-faint mb-2">
               {t("wizard.name_label")}
             </label>
             <input
               type="text"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
-              className="w-full bg-sunken border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-sunken border-2 border-line-soft rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors"
               placeholder={t("wizard.name_placeholder")}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-[#8d84a8] mb-2">
+            <label className="block text-sm font-bold text-faint mb-2">
               {t("wizard.version_label")}
             </label>
             <select
               value={minecraftVersion}
               onChange={(e) => setMinecraftVersion(e.target.value)}
-              className="w-full bg-sunken border-2 border-[#251e3d] rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors appearance-none"
+              className="w-full bg-sunken border-2 border-line-soft rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors appearance-none"
             >
               {config?.supportedMinecraftVersions.map((v) => (
                 <option key={v} value={v}>
@@ -196,7 +196,7 @@ export function ProfileCreation({
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
-                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
+                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
               >
                 {importSettings && (
                   <CheckCircle2
@@ -215,7 +215,7 @@ export function ProfileCreation({
                 <span className="font-bold text-white block">
                   {t("wizard.import_settings")}
                 </span>
-                <span className="text-xs text-[#8d84a8]">
+                <span className="text-xs text-faint">
                   {t("wizard.import_settings_desc")}
                 </span>
               </div>
@@ -224,13 +224,13 @@ export function ProfileCreation({
             {importSettings && (
               <div className="mt-4 pl-9 space-y-4 animate-in slide-in-from-top-2 duration-200">
                 <div>
-                  <label className="block text-xs font-bold text-[#8d84a8] mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-faint mb-2 uppercase tracking-wider">
                     {t("wizard.which_profile")}
                   </label>
                   <select
                     value={keybindSource}
                     onChange={(e) => setKeybindSource(e.target.value)}
-                    className="w-full bg-[#0f0b1a] border border-[#251e3d] rounded px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-accent-purple transition-colors appearance-none cursor-pointer"
+                    className="w-full bg-[#0f0b1a] border border-line-soft rounded px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-accent-purple transition-colors appearance-none cursor-pointer"
                   >
                     <option value="auto">{t("wizard.auto")}</option>
                     <optgroup label={t("wizard.detected")}>
@@ -249,7 +249,7 @@ export function ProfileCreation({
                 <div className="space-y-3 pt-1">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
                     >
                       {importOptions.keybinds && (
                         <CheckCircle2
@@ -276,7 +276,7 @@ export function ProfileCreation({
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
                     >
                       {importOptions.sensitivity && (
                         <CheckCircle2
@@ -303,7 +303,7 @@ export function ProfileCreation({
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent-purple border-accent-purple" : "bg-sunken border-[#251e3d] group-hover:border-[#403565]"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
                     >
                       {importOptions.graphics && (
                         <CheckCircle2
@@ -342,10 +342,10 @@ export function ProfileCreation({
               <div
                 key={t.id}
                 onClick={() => setProfileType(t.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-[#251e3d] hover:border-[#403565]"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-line-soft hover:border-hover-line"}`}
               >
                 <div className="font-black text-white">{t.label}</div>
-                <div className="text-sm font-medium text-[#8d84a8]">
+                <div className="text-sm font-medium text-faint">
                   {t.description}
                 </div>
               </div>
@@ -362,10 +362,10 @@ export function ProfileCreation({
               <div
                 key={g.id}
                 onClick={() => setGraphicsMode(g.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-[#251e3d] hover:border-[#403565]"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-line-soft hover:border-hover-line"}`}
               >
                 <div className="font-black text-white">{g.label}</div>
-                <div className="text-sm font-medium text-[#8d84a8]">
+                <div className="text-sm font-medium text-faint">
                   {g.description}
                 </div>
               </div>
@@ -377,19 +377,19 @@ export function ProfileCreation({
       {step === 5 && (
         <div className="space-y-6">
           <h4 className="text-lg font-bold text-white">{t("wizard.step5")}</h4>
-          <div className="p-6 bg-sunken rounded border-2 border-[#251e3d] space-y-3 font-medium">
-            <div className="flex justify-between border-b border-[#251e3d] pb-3">
-              <span className="text-[#8d84a8]">{t("wizard.version")}</span>
+          <div className="p-6 bg-sunken rounded border-2 border-line-soft space-y-3 font-medium">
+            <div className="flex justify-between border-b border-line-soft pb-3">
+              <span className="text-faint">{t("wizard.version")}</span>
               <span className="font-black text-white">{minecraftVersion}</span>
             </div>
-            <div className="flex justify-between border-b border-[#251e3d] py-3">
-              <span className="text-[#8d84a8]">{t("wizard.type")}</span>
+            <div className="flex justify-between border-b border-line-soft py-3">
+              <span className="text-faint">{t("wizard.type")}</span>
               <span className="font-black text-accent-purple">
                 {selectedType?.label}
               </span>
             </div>
             <div className="flex justify-between pt-3">
-              <span className="text-[#8d84a8]">
+              <span className="text-faint">
                 {t("wizard.graphics_label")}
               </span>
               <span className="font-black text-white">
@@ -400,11 +400,11 @@ export function ProfileCreation({
         </div>
       )}
 
-      <div className="flex justify-between mt-8 pt-6 border-t border-[#251e3d]">
+      <div className="flex justify-between mt-8 pt-6 border-t border-line-soft">
         <button
           onClick={() => setStep(stepBefore(step))}
           disabled={step === 1 || (step === 2 && connected)}
-          className="px-6 py-2 rounded text-[#8d84a8] font-bold hover:text-white hover:bg-[#251e3d] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          className="px-6 py-2 rounded text-faint font-bold hover:text-white hover:bg-line-soft transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {t("wizard.back")}
         </button>

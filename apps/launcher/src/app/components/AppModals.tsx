@@ -263,8 +263,8 @@ export function AppModals({
 			</Modal>
 
 			{isDragging && !isProcessing && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[#8b5cf6]/20 backdrop-blur-md">
-					<div className="rounded-2xl border-2 border-[#8b5cf6] bg-[#1a1529] px-8 py-6 shadow-2xl">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-accent-purple/20 backdrop-blur-md">
+					<div className="rounded-2xl border-2 border-accent-purple bg-panel px-8 py-6 shadow-2xl">
 						<h2 className="text-2xl font-bold text-white">
 							Relâcher pour importer le profil
 						</h2>
@@ -274,8 +274,8 @@ export function AppModals({
 
 			{isProcessing && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
-					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-[#1a1529] px-8 py-6 shadow-2xl">
-						<div className="h-12 w-12 animate-spin rounded-full border-4 border-[#8b5cf6] border-t-transparent" />
+					<div className="flex flex-col items-center space-y-4 rounded-2xl border border-gray-800 bg-panel px-8 py-6 shadow-2xl">
+						<div className="h-12 w-12 animate-spin rounded-full border-4 border-accent-purple border-t-transparent" />
 						<h2 className="text-xl font-bold text-white">
 							Importation en cours...
 						</h2>
