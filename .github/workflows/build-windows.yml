@@ -159,9 +159,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate placeholder icons
+      # Plus des icones de remplacement: la source est l'embleme Paranoia pose
+      # sur son fond, en 1024x1024. Elle reste regeneree a chaque build plutot
+      # que lue depuis le depot, pour que les quinze tailles ne puissent pas
+      # diverger de leur source.
+      #
+      # Un PNG et non un SVG: l'embleme n'existe qu'en raster, et l'enfermer
+      # dans un SVG aurait fait dependre le rendu du support des images
+      # embarquees par le rasteriseur -- une couche de plus entre la source et
+      # l'icone, pour rien.
+      - name: Generate application icons
         working-directory: apps/launcher
-        run: pnpm exec tauri icon src-tauri/app-icon.svg
+        run: pnpm exec tauri icon src-tauri/app-icon.png
 
       - name: Typecheck and build launcher
         working-directory: apps/launcher
