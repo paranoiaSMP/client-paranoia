@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { Check, Infinity as InfinityIcon, Loader2, Lock, X } from "lucide-react";
 
-import { apiRequest } from "../../shared/api/http";
-import { SkinViewer3D } from "../../components/SkinViewer3D";
+import { apiRequest } from "../../../shared/api/http";
+import { SkinViewer3D } from "../../../components/SkinViewer3D";
+import { ScreenHeader } from "./ScreenHeader";
 
 /**
  * Vestiaire: possession, achat et equipement des cosmetiques.
@@ -76,7 +76,7 @@ const SLOTS: { type: CosmeticType; label: string }[] = [
 function CapePreview({ url, size = 5 }: { url: string; size?: number }) {
   return (
     <div
-      className="rounded-[6px] ring-1 ring-white/10"
+      className="rounded-[6px] ring-1 ring-ink/10"
       style={{
         width: 10 * size,
         height: 16 * size,
@@ -99,11 +99,11 @@ function Price({ value, owned }: { value: number; owned: boolean }) {
     );
   }
   if (value === 0) {
-    return <span className="text-[11px] font-semibold text-muted">Offert</span>;
+    return <span className="text-[11px] font-semibold text-neutral-300">Offert</span>;
   }
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white">
-      <span className="grid h-3 w-3 place-items-center rounded-full bg-accent-purple text-[8px] font-black">
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink">
+      <span className="grid h-3 w-3 place-items-center rounded-full bg-accent text-[8px] font-black">
         P
       </span>
       {value.toLocaleString("fr-FR")}
@@ -126,7 +126,7 @@ function Price({ value, owned }: { value: number; owned: boolean }) {
  */
 let catalogCache: CosmeticItem[] | null = null;
 
-export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CosmeticsScreen() {
   const [catalog, setCatalog] = useState<CosmeticItem[]>(catalogCache ?? []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [category, setCategory] = useState<CosmeticType | "tout">("tout");
@@ -164,15 +164,16 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
   }, []);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
     // Un catalogue deja charge s'affiche immediatement; on le rafraichit quand
     // meme, mais en arriere-plan et sans ecran d'attente. Le sablier n'apparait
     // donc qu'a la toute premiere ouverture.
+    //
+    // Le vestiaire etait une fenetre par-dessus l'accueil, et cet effet
+    // dependait de son ouverture. C'est maintenant un ecran: il se monte quand
+    // on y va, et se demonte quand on le quitte. Le montage suffit.
     setLoading(catalogCache === null);
     void refresh();
-  }, [open, refresh]);
+  }, [refresh]);
 
   const owned = useMemo(() => new Set(profile?.owned ?? []), [profile]);
   const equipped = useMemo(() => new Set(profile?.equipped ?? []), [profile]);
@@ -254,56 +255,41 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
   const detail = selected ? catalog.find((item) => item.id === selected) : null;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex flex-col bg-void/95 backdrop-blur-md"
-        >
-          {/* ---- Barre du haut ---- */}
-          <header className="flex shrink-0 items-center gap-4 px-8 py-5">
-            <h2 className="text-xl font-bold tracking-tight text-white">Vestiaire</h2>
-
-            <div className="ml-auto flex items-center gap-3">
-              <div className="flex items-center gap-2 rounded-[14px] border border-hover bg-[#1b1630] px-4 py-2">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-accent-purple to-accent-purple-dark text-[10px] font-black text-white">
-                  P
-                </span>
-                {profile?.balance === null ? (
-                  <span
-                    className="flex items-center gap-1 text-sm font-bold text-[#ffb020]"
-                    title="Compte administrateur : paracoins illimites"
-                  >
-                    <InfinityIcon className="h-4 w-4" />
-                  </span>
-                ) : (
-                  <span className="text-sm font-bold tabular-nums text-white">
-                    {(profile?.balance ?? 0).toLocaleString("fr-FR")}
-                  </span>
-                )}
-              </div>
-
-              <button
-                onClick={onClose}
-                aria-label="Fermer le vestiaire"
-                className="grid h-10 w-10 place-items-center rounded-[12px] border border-hover bg-[#1b1630] text-muted transition-colors hover:border-accent-purple hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </header>
-
-          {error && (
-            <div className="mx-8 mb-3 shrink-0 rounded-[12px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
-              {error}
-            </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-4 p-6">
+      <ScreenHeader
+        title="Cosmétiques"
+        subtitle="Capes, ailes et effets visibles par les autres joueurs Paranoia."
+      >
+        {/* Le solde se tient a hauteur du titre: c'est la premiere chose qu'on
+            verifie en arrivant, et la derniere avant d'acheter. */}
+        <div className="flex items-center gap-2 rounded-md border border-divider bg-surface px-3 py-2">
+          <span className="grid size-5 place-items-center rounded-full bg-gradient-to-br from-accent-600 to-accent-500 text-[10px] font-black text-accent-100">
+            P
+          </span>
+          {profile?.balance === null ? (
+            <span
+              className="flex items-center gap-1 text-sm font-bold text-[#ffb020]"
+              title="Compte administrateur : paracoins illimites"
+            >
+              <InfinityIcon className="h-4 w-4" />
+            </span>
+          ) : (
+            <span className="text-sm font-bold tabular-nums">
+              {(profile?.balance ?? 0).toLocaleString("fr-FR")}
+            </span>
           )}
+        </div>
+      </ScreenHeader>
 
-          <div className="flex min-h-0 flex-1 gap-5 px-8 pb-8">
+      {error && (
+        <div className="shrink-0 rounded-md border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      <div className="flex min-h-0 flex-1 gap-4">
             {/* ---- Rail des categories ---- */}
-            <nav className="flex w-[190px] shrink-0 flex-col gap-1.5 rounded-[18px] border border-hover bg-[#171327] p-3">
+            <nav className="flex w-[190px] shrink-0 flex-col gap-1.5 rounded-[18px] border border-well bg-surface p-3">
               {CATEGORIES.map((entry) => {
                 const count =
                   entry.id === "tout"
@@ -314,30 +300,30 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                   <button
                     key={entry.id}
                     onClick={() => setCategory(entry.id)}
-                    className={`flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple ${
+                    className={`flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                       category === entry.id
-                        ? "bg-gradient-to-r from-accent-purple/25 to-transparent text-white"
-                        : "text-muted hover:bg-[#1e1e22] hover:text-white"
+                        ? "bg-gradient-to-r from-accent/25 to-transparent text-ink"
+                        : "text-neutral-300 hover:bg-well hover:text-ink"
                     }`}
                   >
                     <span>{entry.label}</span>
-                    <span className="text-xs tabular-nums text-[#726a8c]">{count}</span>
+                    <span className="text-xs tabular-nums text-neutral-500">{count}</span>
                   </button>
                 );
               })}
             </nav>
 
             {/* ---- Grille ---- */}
-            <section className="min-w-0 flex-1 overflow-y-auto rounded-[18px] border border-hover bg-[#171327] p-5">
+            <section className="min-w-0 flex-1 overflow-y-auto rounded-[18px] border border-well bg-surface p-5">
               {loading ? (
-                <div className="grid h-full place-items-center text-[#726a8c]">
+                <div className="grid h-full place-items-center text-neutral-500">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : visible.length === 0 ? (
                 <div className="grid h-full place-items-center px-8 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm font-semibold text-white">Rien dans cette categorie</p>
-                    <p className="max-w-[42ch] text-xs text-[#726a8c]">
+                    <p className="text-sm font-semibold text-ink">Rien dans cette categorie</p>
+                    <p className="max-w-[42ch] text-xs text-neutral-500">
                       Les cosmetiques apparaissent ici des qu'ils sont ajoutes au catalogue.
                     </p>
                   </div>
@@ -360,10 +346,10 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                           void act(item);
                         }}
                         disabled={working || !affordable}
-                        className={`group relative flex flex-col overflow-hidden rounded-[18px] border-2 bg-gradient-to-br from-[#282141] via-[#1d1d21] to-[#161619] p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple ${
+                        className={`group relative flex flex-col overflow-hidden rounded-[18px] border-2 bg-gradient-to-br from-[#282141] via-[#1d1d21] to-[#161619] p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                           isWorn
-                            ? "border-accent-purple"
-                            : "border-[#272040] hover:border-[#4b4166] disabled:hover:border-[#272040]"
+                            ? "border-accent"
+                            : "border-divider hover:border-neutral-700 disabled:hover:border-divider"
                         } ${!affordable ? "cursor-not-allowed opacity-55" : ""}`}
                       >
                         {/* Lueur de rarete, discrete tant que l'objet n'est pas porte */}
@@ -389,18 +375,18 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
 
                           {working && (
                             <span className="absolute inset-0 grid place-items-center rounded-[12px] bg-black/50">
-                              <Loader2 className="h-5 w-5 animate-spin text-white" />
+                              <Loader2 className="h-5 w-5 animate-spin text-ink" />
                             </span>
                           )}
 
                           {!affordable && !working && (
                             <span className="absolute inset-0 grid place-items-center rounded-[12px] bg-black/45">
-                              <Lock className="h-5 w-5 text-muted" />
+                              <Lock className="h-5 w-5 text-neutral-300" />
                             </span>
                           )}
                         </div>
 
-                        <span className="relative truncate text-sm font-semibold text-white">
+                        <span className="relative truncate text-sm font-semibold text-ink">
                           {item.name}
                         </span>
 
@@ -415,7 +401,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                         </span>
 
                         {isWorn && (
-                          <span className="relative mt-2 rounded-[8px] bg-accent-purple py-1 text-center text-[11px] font-bold text-white">
+                          <span className="relative mt-2 rounded-[8px] bg-accent py-1 text-center text-[11px] font-bold text-ink">
                             EQUIPE
                           </span>
                         )}
@@ -427,18 +413,18 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
             </section>
 
             {/* ---- Casier ---- */}
-            <aside className="flex w-[264px] shrink-0 flex-col gap-4 rounded-[18px] border border-hover bg-[#171327] p-5">
+            <aside className="flex w-[264px] shrink-0 flex-col gap-4 rounded-[18px] border border-well bg-surface p-5">
               <div className="flex items-baseline justify-between">
-                <h3 className="text-sm font-bold tracking-tight text-white">Casier</h3>
+                <h3 className="text-sm font-bold tracking-tight text-ink">Casier</h3>
                 {profile && (
-                  <span className="truncate text-xs text-[#726a8c]">{profile.username}</span>
+                  <span className="truncate text-xs text-neutral-500">{profile.username}</span>
                 )}
               </div>
 
               {/* Le personnage porte reellement ce qui est equipe: c'est le
                   seul apercu qui dit la verite sur le rendu en jeu, avec la
                   physique de cape que Minecraft applique. */}
-              <div className="h-[210px] shrink-0 overflow-hidden rounded-[14px] border border-[#272040] bg-gradient-to-b from-[#1c1a24] to-[#171327]">
+              <div className="h-[210px] shrink-0 overflow-hidden rounded-[14px] border border-divider bg-gradient-to-b from-[#1c1a24] to-surface">
                 {/* Les props sont posees conditionnellement plutot que
                     passees a undefined: le projet compile avec
                     exactOptionalPropertyTypes, qui distingue « absent » de
@@ -462,8 +448,8 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                       key={slot.type}
                       className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 p-2 transition-colors ${
                         worn
-                          ? "border-accent-purple bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
-                          : "border-dashed border-[#3a3a41] bg-[#18181c]"
+                          ? "border-accent bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
+                          : "border-dashed border-neutral-700 bg-ground"
                       }`}
                     >
                       {worn ? (
@@ -478,14 +464,14 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                               style={{ imageRendering: "pixelated" }}
                             />
                           )}
-                          <span className="w-full truncate text-center text-[10px] font-medium text-white">
+                          <span className="w-full truncate text-center text-[10px] font-medium text-ink">
                             {worn.name}
                           </span>
                           <button
                             onClick={() => void clearSlot(slot.type)}
                             disabled={working}
                             aria-label={`Retirer ${worn.name}`}
-                            className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-muted transition-colors hover:bg-black/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-purple"
+                            className="absolute top-1.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-neutral-300 transition-colors hover:bg-black/80 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
                           >
                             {working ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
@@ -495,7 +481,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                           </button>
                         </>
                       ) : (
-                        <span className="text-[11px] font-medium text-[#4d4d56]">{slot.label}</span>
+                        <span className="text-[11px] font-medium text-neutral-700">{slot.label}</span>
                       )}
                     </div>
                   );
@@ -503,12 +489,12 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
               </div>
 
               {detail && (
-                <div className="mt-auto rounded-[14px] border border-[#272040] bg-[#18181c] p-3.5">
-                  <p className="text-sm font-semibold text-white">{detail.name}</p>
+                <div className="mt-auto rounded-[14px] border border-divider bg-ground p-3.5">
+                  <p className="text-sm font-semibold text-ink">{detail.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: RARITY[detail.rarity].color }}>
                     {RARITY[detail.rarity].label}
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-faint">
+                  <p className="mt-2 text-xs leading-relaxed text-neutral-400">
                     {owned.has(detail.id)
                       ? equipped.has(detail.id)
                         ? "Porte. Clique de nouveau pour le retirer."
@@ -526,9 +512,7 @@ export function Wardrobe({ open, onClose }: { open: boolean; onClose: () => void
                 </p>
               )}
             </aside>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }

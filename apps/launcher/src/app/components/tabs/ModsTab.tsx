@@ -44,12 +44,12 @@ function ErrorNotice({
   onDismiss: () => void;
 }) {
   return (
-    <div className="bg-accent-red/10 border border-accent-red/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
-      <AlertTriangle className="w-4 h-4 text-accent-red shrink-0 mt-0.5" />
-      <p className="text-sm text-[#fca5a5] flex-1 break-words">{message}</p>
+    <div className="bg-danger/10 border border-danger/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
+      <AlertTriangle className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+      <p className="text-sm text-danger flex-1 break-words">{message}</p>
       <button
         onClick={onDismiss}
-        className="shrink-0 text-muted-dim hover:text-white transition-colors"
+        className="shrink-0 text-neutral-500 hover:text-ink transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
@@ -195,8 +195,8 @@ export function ModsTab({
   if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <Package className="w-10 h-10 text-line-hi mb-3" />
-        <p className="text-muted-dim">Crée un profil pour installer des mods.</p>
+        <Package className="w-10 h-10 text-neutral-700 mb-3" />
+        <p className="text-neutral-500">Crée un profil pour installer des mods.</p>
       </div>
     );
   }
@@ -208,14 +208,14 @@ export function ModsTab({
 
       {/* Search Bar */}
       <div className="flex items-center gap-3 w-full mb-3">
-        <div className="flex items-center bg-panel rounded-xl px-4 py-3 flex-1 border border-line">
-          <Search className="w-5 h-5 text-placeholder mr-3 shrink-0" />
+        <div className="flex items-center bg-surface rounded-xl px-4 py-3 flex-1 border border-divider">
+          <Search className="w-5 h-5 text-neutral-600 mr-3 shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && runSearch(1)}
             placeholder={t("mods.searchPlaceholder")}
-            className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-white placeholder:text-placeholder"
+            className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-ink placeholder:text-neutral-600"
           />
         </div>
       </div>
@@ -226,7 +226,7 @@ export function ModsTab({
           value={profile.id}
           onChange={(e) => setSelectedProfileId(e.target.value)}
           title={t("mods.selectProfile")}
-          className="bg-panel border border-line hover:border-line-hi text-muted rounded-lg px-3 py-2 text-xs md:text-sm font-semibold outline-none transition-colors shrink-0"
+          className="bg-surface border border-divider hover:border-neutral-700 text-neutral-300 rounded-lg px-3 py-2 text-xs md:text-sm font-semibold outline-none transition-colors shrink-0"
         >
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
@@ -237,17 +237,17 @@ export function ModsTab({
         <button
           onClick={openFolder}
           title={t("mods.openFolder")}
-          className="bg-panel border border-line hover:border-line-hi text-muted hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
+          className="bg-surface border border-divider hover:border-neutral-700 text-neutral-300 hover:text-ink px-3 py-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
       
         {totalHits > 0 && (
-          <div className="flex items-center gap-2 text-muted text-sm font-bold shrink-0">
+          <div className="flex items-center gap-2 text-neutral-300 text-sm font-bold shrink-0">
             <button 
               onClick={() => runSearch(Math.max(1, page - 1))}
               disabled={page === 1 || searching}
-              className="w-8 h-8 flex items-center justify-center bg-panel border border-line hover:border-line-hi hover:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-surface border border-divider hover:border-neutral-700 hover:text-ink rounded-lg transition-colors disabled:opacity-50"
             >
               &lt;
             </button>
@@ -255,7 +255,7 @@ export function ModsTab({
             <button 
               onClick={() => runSearch(Math.min(Math.ceil(totalHits / 20), page + 1))}
               disabled={page >= Math.ceil(totalHits / 20) || searching}
-              className="w-8 h-8 flex items-center justify-center bg-panel border border-line hover:border-line-hi hover:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-surface border border-divider hover:border-neutral-700 hover:text-ink rounded-lg transition-colors disabled:opacity-50"
             >
               &gt;
             </button>
@@ -270,12 +270,12 @@ export function ModsTab({
       )}
 
       {notice && (
-        <div className="mb-4 bg-accent-purple/10 border border-accent-purple/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
-          <Package className="w-4 h-4 text-accent-purple shrink-0 mt-0.5" />
-          <p className="text-sm text-[#d8b4fe] flex-1 break-words">{notice}</p>
+        <div className="mb-4 bg-accent/10 border border-accent/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
+          <Package className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+          <p className="text-sm text-accent-300 flex-1 break-words">{notice}</p>
           <button
             onClick={() => setNotice(null)}
-            className="shrink-0 text-muted-dim hover:text-white transition-colors"
+            className="shrink-0 text-neutral-500 hover:text-ink transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -290,27 +290,27 @@ export function ModsTab({
             return (
               <div
                 key={hit.projectId}
-                className="bg-[#121214] border border-line rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-line-hi transition-colors group"
+                className="bg-ground border border-divider rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-neutral-700 transition-colors group"
               >
                 <div className="flex flex-1 gap-4 md:gap-5 min-w-0">
                   {hit.iconUrl ? (
                     <img
                       src={hit.iconUrl}
                       alt=""
-                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-line"
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-divider"
                     />
                   ) : (
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-line shrink-0 flex items-center justify-center">
-                      <Package className="w-8 h-8 text-placeholder" />
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-divider shrink-0 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-neutral-600" />
                     </div>
                   )}
 
                   <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <h3 className="font-bold text-lg md:text-xl text-white truncate">{hit.title}</h3>
-                      <span className="text-muted-dim text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
+                      <h3 className="font-bold text-lg md:text-xl text-ink truncate">{hit.title}</h3>
+                      <span className="text-neutral-500 text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
                     </div>
-                    <p className="text-muted text-xs md:text-sm line-clamp-2 leading-relaxed">
+                    <p className="text-neutral-300 text-xs md:text-sm line-clamp-2 leading-relaxed">
                       {hit.description}
                     </p>
                     
@@ -318,11 +318,11 @@ export function ModsTab({
                   </div>
                 </div>
 
-                <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-line pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
+                <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-divider pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
                   <button
                     onClick={() => handleInstall(hit)}
                     disabled={isInstalling || isInstalled}
-                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent-purple/10 border border-accent-purple text-accent-purple disabled:opacity-50 disabled:border-line-hi disabled:text-muted-dim disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
+                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent/10 border border-accent text-accent disabled:opacity-50 disabled:border-neutral-700 disabled:text-neutral-500 disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
                   >
                     {isInstalling ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -334,7 +334,7 @@ export function ModsTab({
                     {isInstalled ? "Installé" : "Add to instance"}
                   </button>
 
-                  <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-muted text-xs md:text-sm font-semibold w-full md:w-auto">
+                  <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-neutral-300 text-xs md:text-sm font-semibold w-full md:w-auto">
                     <span className="flex items-center gap-1.5" title="Downloads">
                       <Download className="w-4 h-4" />
                       {formatDownloads(hit.downloads)}
@@ -348,22 +348,22 @@ export function ModsTab({
       )}
 
       {/* Installed Mods list at the bottom */}
-      <div className="mt-4 border-t border-line pt-6">
+      <div className="mt-4 border-t border-divider pt-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-white">
+          <h2 className="text-base font-bold text-ink">
             Mods de ce profil{" "}
-            <span className="text-muted-dim font-normal">
+            <span className="text-neutral-500 font-normal">
               ({installed.length})
             </span>
           </h2>
-          <p className="text-placeholder text-xs hidden sm:block">
+          <p className="text-neutral-600 text-xs hidden sm:block">
             InstallÃ©s dans ce profil uniquement, filtrÃ©s pour Fabric {profile.minecraftVersion}.
           </p>
         </div>
 
         {installed.length === 0 ? (
-          <div className="bg-panel border border-line rounded-xl p-6 text-center">
-            <p className="text-placeholder text-sm">
+          <div className="bg-surface border border-divider rounded-xl p-6 text-center">
+            <p className="text-neutral-600 text-sm">
               Aucun mod installÃ© sur ce profil.
             </p>
           </div>
@@ -372,16 +372,16 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-panel border border-line rounded-lg px-4 py-3 flex items-center gap-4 hover:border-line-hi transition-colors"
+                className="bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-4 hover:border-neutral-700 transition-colors"
               >
-                <Package className="w-5 h-5 text-placeholder shrink-0" />
+                <Package className="w-5 h-5 text-neutral-600 shrink-0" />
                 <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
-                <span className="text-placeholder text-xs shrink-0 font-mono">
+                <span className="text-neutral-600 text-xs shrink-0 font-mono">
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>
                 <button
                   onClick={() => handleRemove(mod.fileName)}
-                  className="shrink-0 p-2 bg-line hover:bg-accent-red/20 text-muted-dim hover:text-accent-red rounded-lg transition-colors"
+                  className="shrink-0 p-2 bg-divider hover:bg-danger/20 text-neutral-500 hover:text-danger rounded-lg transition-colors"
                   title={t("mods.remove")}
                 >
                   <Trash2 className="w-4 h-4" />

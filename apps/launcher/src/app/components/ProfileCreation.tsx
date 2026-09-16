@@ -110,8 +110,8 @@ export function ProfileCreation({
 }: ProfileCreationProps) {
   const { t } = useTranslation();
   return (
-    <div className="bg-[#1c1c1e] border-2 border-line-soft rounded-xl p-8 max-w-2xl mx-auto shadow-2xl">
-      <h3 className="text-2xl font-black text-white mb-6">
+    <div className="bg-surface border-2 border-divider rounded-xl p-8 max-w-2xl mx-auto shadow-2xl">
+      <h3 className="text-2xl font-black text-ink mb-6">
         {t("wizard.title")}
       </h3>
 
@@ -119,7 +119,7 @@ export function ProfileCreation({
         {[1, 2, 3, 4, 5].map((s) => (
           <div
             key={s}
-            className={`flex-1 h-3 rounded-sm transition-all ${step >= s ? "bg-accent-purple shadow-[0_0_10px_rgba(157,13,242,0.5)]" : "bg-line-soft"}`}
+            className={`flex-1 h-3 rounded-sm transition-all ${step >= s ? "bg-accent shadow-[0_0_10px_rgba(157,13,242,0.5)]" : "bg-divider"}`}
           ></div>
         ))}
       </div>
@@ -132,15 +132,15 @@ export function ProfileCreation({
 
       {step === 1 && (
         <div className="space-y-4">
-          <h4 className="text-lg font-bold text-white">{t("wizard.step1")}</h4>
-          <p className="text-faint">{t("wizard.step1_desc")}</p>
+          <h4 className="text-lg font-bold text-ink">{t("wizard.step1")}</h4>
+          <p className="text-neutral-400">{t("wizard.step1_desc")}</p>
           {connected ? (
-            <div className="p-4 bg-[#1e6b33] border-2 border-[#34a853] rounded text-white font-bold flex items-center gap-3">
+            <div className="p-4 bg-[#1e6b33] border-2 border-[#34a853] rounded text-ink font-bold flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6" strokeWidth={3} />
               {t("wizard.step1_success")}
             </div>
           ) : (
-            <p className="text-accent-red font-bold">
+            <p className="text-danger font-bold">
               {t("wizard.step1_error")}
             </p>
           )}
@@ -149,27 +149,27 @@ export function ProfileCreation({
 
       {step === 2 && (
         <div className="space-y-6">
-          <h4 className="text-lg font-bold text-white">{t("wizard.step2")}</h4>
+          <h4 className="text-lg font-bold text-ink">{t("wizard.step2")}</h4>
           <div>
-            <label className="block text-sm font-bold text-faint mb-2">
+            <label className="block text-sm font-bold text-neutral-400 mb-2">
               {t("wizard.name_label")}
             </label>
             <input
               type="text"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
-              className="w-full bg-sunken border-2 border-line-soft rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-ground border-2 border-divider rounded px-4 py-3 text-ink font-bold focus:outline-none focus:border-accent transition-colors"
               placeholder={t("wizard.name_placeholder")}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-faint mb-2">
+            <label className="block text-sm font-bold text-neutral-400 mb-2">
               {t("wizard.version_label")}
             </label>
             <select
               value={minecraftVersion}
               onChange={(e) => setMinecraftVersion(e.target.value)}
-              className="w-full bg-sunken border-2 border-line-soft rounded px-4 py-3 text-white font-bold focus:outline-none focus:border-accent-purple transition-colors appearance-none"
+              className="w-full bg-ground border-2 border-divider rounded px-4 py-3 text-ink font-bold focus:outline-none focus:border-accent transition-colors appearance-none"
             >
               {config?.supportedMinecraftVersions.map((v) => (
                 <option key={v} value={v}>
@@ -196,11 +196,11 @@ export function ProfileCreation({
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
-                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
+                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${importSettings ? "bg-accent border-accent" : "bg-ground border-divider group-hover:border-neutral-600"}`}
               >
                 {importSettings && (
                   <CheckCircle2
-                    className="w-4 h-4 text-white"
+                    className="w-4 h-4 text-ink"
                     strokeWidth={3}
                   />
                 )}
@@ -212,10 +212,10 @@ export function ProfileCreation({
                 onChange={(e) => setImportSettings(e.target.checked)}
               />
               <div>
-                <span className="font-bold text-white block">
+                <span className="font-bold text-ink block">
                   {t("wizard.import_settings")}
                 </span>
-                <span className="text-xs text-faint">
+                <span className="text-xs text-neutral-400">
                   {t("wizard.import_settings_desc")}
                 </span>
               </div>
@@ -224,13 +224,13 @@ export function ProfileCreation({
             {importSettings && (
               <div className="mt-4 pl-9 space-y-4 animate-in slide-in-from-top-2 duration-200">
                 <div>
-                  <label className="block text-xs font-bold text-faint mb-2 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-neutral-400 mb-2 uppercase tracking-wider">
                     {t("wizard.which_profile")}
                   </label>
                   <select
                     value={keybindSource}
                     onChange={(e) => setKeybindSource(e.target.value)}
-                    className="w-full bg-[#0f0b1a] border border-line-soft rounded px-4 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-accent-purple transition-colors appearance-none cursor-pointer"
+                    className="w-full bg-ground border border-divider rounded px-4 py-2.5 text-ink font-bold text-sm focus:outline-none focus:border-accent transition-colors appearance-none cursor-pointer"
                   >
                     <option value="auto">{t("wizard.auto")}</option>
                     <optgroup label={t("wizard.detected")}>
@@ -249,11 +249,11 @@ export function ProfileCreation({
                 <div className="space-y-3 pt-1">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.keybinds ? "bg-accent border-accent" : "bg-ground border-divider group-hover:border-neutral-600"}`}
                     >
                       {importOptions.keybinds && (
                         <CheckCircle2
-                          className="w-3 h-3 text-white"
+                          className="w-3 h-3 text-ink"
                           strokeWidth={3}
                         />
                       )}
@@ -269,18 +269,18 @@ export function ProfileCreation({
                         })
                       }
                     />
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-ink">
                       {t("wizard.keybinds")}
                     </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.sensitivity ? "bg-accent border-accent" : "bg-ground border-divider group-hover:border-neutral-600"}`}
                     >
                       {importOptions.sensitivity && (
                         <CheckCircle2
-                          className="w-3 h-3 text-white"
+                          className="w-3 h-3 text-ink"
                           strokeWidth={3}
                         />
                       )}
@@ -296,18 +296,18 @@ export function ProfileCreation({
                         })
                       }
                     />
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-ink">
                       {t("wizard.sensitivity")}
                     </span>
                   </label>
 
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent-purple border-accent-purple" : "bg-sunken border-line-soft group-hover:border-hover-line"}`}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${importOptions.graphics ? "bg-accent border-accent" : "bg-ground border-divider group-hover:border-neutral-600"}`}
                     >
                       {importOptions.graphics && (
                         <CheckCircle2
-                          className="w-3 h-3 text-white"
+                          className="w-3 h-3 text-ink"
                           strokeWidth={3}
                         />
                       )}
@@ -323,7 +323,7 @@ export function ProfileCreation({
                         })
                       }
                     />
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-ink">
                       {t("wizard.graphics")}
                     </span>
                   </label>
@@ -336,16 +336,16 @@ export function ProfileCreation({
 
       {step === 3 && (
         <div className="space-y-6">
-          <h4 className="text-lg font-bold text-white">{t("wizard.step3")}</h4>
+          <h4 className="text-lg font-bold text-ink">{t("wizard.step3")}</h4>
           <div className="grid gap-3">
             {config?.profileTypes.map((t) => (
               <div
                 key={t.id}
                 onClick={() => setProfileType(t.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-line-soft hover:border-hover-line"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${profileType === t.id ? "bg-accent/20 border-accent" : "bg-ground border-divider hover:border-neutral-600"}`}
               >
-                <div className="font-black text-white">{t.label}</div>
-                <div className="text-sm font-medium text-faint">
+                <div className="font-black text-ink">{t.label}</div>
+                <div className="text-sm font-medium text-neutral-400">
                   {t.description}
                 </div>
               </div>
@@ -356,16 +356,16 @@ export function ProfileCreation({
 
       {step === 4 && (
         <div className="space-y-6">
-          <h4 className="text-lg font-bold text-white">{t("wizard.step4")}</h4>
+          <h4 className="text-lg font-bold text-ink">{t("wizard.step4")}</h4>
           <div className="grid gap-3">
             {config?.graphicsModes.map((g) => (
               <div
                 key={g.id}
                 onClick={() => setGraphicsMode(g.id)}
-                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent-purple/20 border-accent-purple" : "bg-sunken border-line-soft hover:border-hover-line"}`}
+                className={`p-4 rounded border-2 cursor-pointer transition-all ${graphicsMode === g.id ? "bg-accent/20 border-accent" : "bg-ground border-divider hover:border-neutral-600"}`}
               >
-                <div className="font-black text-white">{g.label}</div>
-                <div className="text-sm font-medium text-faint">
+                <div className="font-black text-ink">{g.label}</div>
+                <div className="text-sm font-medium text-neutral-400">
                   {g.description}
                 </div>
               </div>
@@ -376,23 +376,23 @@ export function ProfileCreation({
 
       {step === 5 && (
         <div className="space-y-6">
-          <h4 className="text-lg font-bold text-white">{t("wizard.step5")}</h4>
-          <div className="p-6 bg-sunken rounded border-2 border-line-soft space-y-3 font-medium">
-            <div className="flex justify-between border-b border-line-soft pb-3">
-              <span className="text-faint">{t("wizard.version")}</span>
-              <span className="font-black text-white">{minecraftVersion}</span>
+          <h4 className="text-lg font-bold text-ink">{t("wizard.step5")}</h4>
+          <div className="p-6 bg-ground rounded border-2 border-divider space-y-3 font-medium">
+            <div className="flex justify-between border-b border-divider pb-3">
+              <span className="text-neutral-400">{t("wizard.version")}</span>
+              <span className="font-black text-ink">{minecraftVersion}</span>
             </div>
-            <div className="flex justify-between border-b border-line-soft py-3">
-              <span className="text-faint">{t("wizard.type")}</span>
-              <span className="font-black text-accent-purple">
+            <div className="flex justify-between border-b border-divider py-3">
+              <span className="text-neutral-400">{t("wizard.type")}</span>
+              <span className="font-black text-accent">
                 {selectedType?.label}
               </span>
             </div>
             <div className="flex justify-between pt-3">
-              <span className="text-faint">
+              <span className="text-neutral-400">
                 {t("wizard.graphics_label")}
               </span>
-              <span className="font-black text-white">
+              <span className="font-black text-ink">
                 {selectedGraphics?.label}
               </span>
             </div>
@@ -400,11 +400,11 @@ export function ProfileCreation({
         </div>
       )}
 
-      <div className="flex justify-between mt-8 pt-6 border-t border-line-soft">
+      <div className="flex justify-between mt-8 pt-6 border-t border-divider">
         <button
           onClick={() => setStep(stepBefore(step))}
           disabled={step === 1 || (step === 2 && connected)}
-          className="px-6 py-2 rounded text-faint font-bold hover:text-white hover:bg-line-soft transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          className="px-6 py-2 rounded text-neutral-400 font-bold hover:text-ink hover:bg-divider transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {t("wizard.back")}
         </button>
@@ -413,7 +413,7 @@ export function ProfileCreation({
           <button
             onClick={() => setStep(stepAfter(step))}
             disabled={step === 1 && !connected}
-            className="px-8 py-2 bg-white text-black font-black rounded hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[4px_4px_0px_rgba(157,13,242,0.5)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="px-8 py-2 bg-ink text-black font-black rounded hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[4px_4px_0px_rgba(157,13,242,0.5)] active:translate-x-1 active:translate-y-1 active:shadow-none"
           >
             {t("wizard.next")}
           </button>
@@ -421,7 +421,7 @@ export function ProfileCreation({
           <button
             onClick={handleInstall}
             disabled={installState === "running"}
-            className="px-8 py-2 bg-accent-red text-white font-black rounded hover:bg-red-500 transition-all disabled:opacity-50 shadow-[4px_4px_0px_rgba(255,77,77,0.4)] active:translate-x-1 active:translate-y-1 active:shadow-none"
+            className="px-8 py-2 bg-danger text-ink font-black rounded hover:bg-red-500 transition-all disabled:opacity-50 shadow-[4px_4px_0px_rgba(255,77,77,0.4)] active:translate-x-1 active:translate-y-1 active:shadow-none"
           >
             {installState === "running"
               ? t("wizard.preparing")

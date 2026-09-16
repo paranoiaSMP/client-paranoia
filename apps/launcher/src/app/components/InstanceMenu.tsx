@@ -72,7 +72,7 @@ export function InstanceMenu({
         <button
           onClick={onPlay}
           disabled={running}
-          className="flex items-center justify-center gap-2 rounded-lg bg-accent-purple px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-purple-dark disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-ink transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
         >
           <Play className="h-4 w-4 fill-current" />
@@ -81,7 +81,7 @@ export function InstanceMenu({
 
         <button
           onClick={onOpenMods}
-          className="flex items-center justify-center gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex items-center justify-center gap-2 rounded-lg border border-divider bg-surface px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-accent"
           type="button"
         >
           <Package className="h-4 w-4" />
@@ -93,13 +93,13 @@ export function InstanceMenu({
       <div>
         <button
           onClick={openFolder}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-accent-purple"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-divider bg-surface px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-accent"
           type="button"
         >
           <FolderOpen className="h-4 w-4" />
           Ouvrir le dossier de l'instance
         </button>
-        <p className="mt-2 text-[11px] text-placeholder">
+        <p className="mt-2 text-[11px] text-neutral-600">
           Contient les sauvegardes, les captures, les mods et options.txt.
         </p>
         {folderError && (
@@ -108,13 +108,13 @@ export function InstanceMenu({
       </div>
 
       {/* Actions secondaires */}
-      <div className="flex items-center gap-3 border-t border-line pt-4">
+      <div className="flex items-center gap-3 border-t border-divider pt-4">
         <button
           onClick={onFavorite}
           className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
             profile.favorite
               ? "text-amber-400 hover:bg-amber-400/10"
-              : "text-muted hover:bg-line hover:text-white"
+              : "text-neutral-300 hover:bg-divider hover:text-ink"
           }`}
           type="button"
         >
@@ -137,11 +137,11 @@ export function InstanceMenu({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-line bg-[#161225] px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-placeholder">
+    <div className="rounded-lg border border-divider bg-ground px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-neutral-600">
         {label}
       </p>
-      <p className="mt-0.5 truncate text-sm font-semibold capitalize text-white">
+      <p className="mt-0.5 truncate text-sm font-semibold capitalize text-ink">
         {value}
       </p>
     </div>

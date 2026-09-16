@@ -6,10 +6,11 @@ import { listInstalledMods } from "../../shared/api/modsClient";
 /**
  * Combien de mods sont installes dans le profil courant.
  *
- * <p>Relu a la fermeture du gestionnaire, d'ou la dependance sur l'ecran
- * ouvert: c'est le seul moment ou le compte peut avoir change, et interroger
- * en boucle pour une donnee qui bouge deux fois par session serait du
- * gaspillage.
+ * <p>Relu a chaque changement d'ecran, d'ou la dependance sur celui-ci: quitter
+ * le gestionnaire de mods est le seul moment ou le compte peut avoir change, et
+ * interroger en boucle pour une donnee qui bouge deux fois par session serait
+ * du gaspillage. Le compteur de la barre laterale est ainsi a jour des qu'on
+ * revient sur l'accueil.
  *
  * <p>{@code null} veut dire « inconnu » et non « zero »: sans profil, ou si le
  * service ne repond pas, l'affichage doit se taire plutot qu'annoncer un
@@ -17,7 +18,7 @@ import { listInstalledMods } from "../../shared/api/modsClient";
  */
 export function useModCount(
 	profile: LauncherProfile | null,
-	activeModal: string,
+	screen: string,
 ): number | null {
 	const [modCount, setModCount] = useState<number | null>(null);
 	const profileId = profile?.id;
@@ -41,7 +42,7 @@ export function useModCount(
 		return () => {
 			cancelled = true;
 		};
-	}, [profileId, activeModal]);
+	}, [profileId, screen]);
 
 	return modCount;
 }
