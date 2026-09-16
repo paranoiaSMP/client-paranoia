@@ -7,6 +7,7 @@ import {
 	getGameLogs,
 	clearGameLogs,
 } from "./launcher.service.js";
+import { markProfilePlayed } from "../profiles/profiles.store.js";
 
 export const launcherRouter = Router();
 
@@ -24,6 +25,12 @@ const playSchema = z.object({
 launcherRouter.post("/play", async (req, res, next) => {
 	try {
 		const body = playSchema.parse(req.body);
+
+		// Note ici, et non a la fin du lancement: c'est l'instance qu'on a
+		// choisi de jouer qui doit remonter en tete, meme si le telechargement
+		// echoue ensuite. On la retrouve ainsi en premier au prochain
+		// demarrage, ce qui est justement le moment ou on veut reessayer.
+		markProfilePlayed(body.profileId);
 
 		// We don't await the launch here because it takes a long time and stays open
 		// We just start the process and return success

@@ -15,6 +15,18 @@ export interface StoredLauncherProfile {
   optionsTxtPath?: string | undefined;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Dernier lancement du jeu depuis cette instance.
+   *
+   * <p>Absent tant qu'elle n'a jamais servi, et c'est ce qui la distingue
+   * d'une instance jouee il y a longtemps.
+   *
+   * <p>Un champ a part, et non {@code updatedAt}: celui-ci bouge a chaque
+   * modification, y compris une mise en favori ou un changement de nom.
+   * S'en servir pour l'ordre aurait fait remonter en tete une instance qu'on
+   * vient de renommer sans y avoir joue.
+   */
+  lastPlayedAt?: string | undefined;
 }
 
 // Dossier de donnees de l'utilisateur, et non process.cwd(): une fois
@@ -44,8 +56,44 @@ function writeAll(profiles: StoredLauncherProfile[]) {
   writeFileSync(DB_PATH, JSON.stringify(profiles, null, 2), "utf-8");
 }
 
+/**
+ * Les instances, la derniere jouee en tete.
+ *
+ * <p>L'ordre est rendu ici et non dans l'interface: le launcher, l'ecran des
+ * versions et le choix de l'instance par defaut lisent tous cette liste, et
+ * trois tris ecrits separement finissent par diverger.
+ *
+ * <p>Celles qui n'ont jamais servi viennent ensuite, de la plus recente a la
+ * plus ancienne. Une instance qu'on vient de creer est donc juste sous celles
+ * qu'on utilise, et non au fond de la liste.
+ */
 export function listProfiles(): StoredLauncherProfile[] {
-  return readAll();
+  return readAll().sort((a, b) => {
+    if (a.lastPlayedAt && b.lastPlayedAt) {
+      return b.lastPlayedAt.localeCompare(a.lastPlayedAt);
+    }
+    if (a.lastPlayedAt) return -1;
+    if (b.lastPlayedAt) return 1;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+}
+
+/** Note qu'on vient de lancer le jeu depuis cette instance. */
+export function markProfilePlayed(profileId: string): void {
+  const profiles = readAll();
+  const index = profiles.findIndex((p) => p.id === profileId);
+  if (index < 0) {
+    return;
+  }
+
+  // `updatedAt` n'est deliberement pas touche: le lancement n'est pas une
+  // modification de l'instance, et le confondre avec une edition ferait
+  // mentir les deux champs a la fois.
+  profiles[index] = {
+    ...profiles[index],
+    lastPlayedAt: new Date().toISOString(),
+  } as StoredLauncherProfile;
+  writeAll(profiles);
 }
 
 export function createProfile(

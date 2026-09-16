@@ -51,7 +51,7 @@ export const PRIMARY_NAV: NavItem[] = [
 	{ screen: "home", icon: PlayCircle, label: "Jouer" },
 	{ screen: "versions", icon: Layers, label: "Versions" },
 	{ screen: "mods", icon: Puzzle, label: "Mods" },
-	{ screen: "cosmetics", icon: Shirt, label: "Cosmétiques" },
+	{ screen: "cosmetics", icon: Shirt, label: "Cosmétiques", upcoming: true },
 	{ screen: "shop", icon: Store, label: "Boutique", upcoming: true },
 	{ screen: "accounts", icon: UserCircle, label: "Comptes" },
 ];

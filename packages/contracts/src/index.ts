@@ -94,6 +94,14 @@ export interface LauncherProfile {
   resolution: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Dernier lancement depuis cette instance, absent si elle n'a jamais servi.
+   *
+   * <p>C'est la cle du tri rendu par le service: la derniere instance jouee
+   * arrive en tete, les autres suivent, et celles qui n'ont jamais servi
+   * ferment la marche par ordre de creation.
+   */
+  lastPlayedAt?: string;
 }
 
 export interface CreateLauncherProfileRequest {
