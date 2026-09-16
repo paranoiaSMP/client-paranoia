@@ -152,8 +152,12 @@ function NavButton({
 				className={`relative size-[21px] shrink-0 ${active ? "text-accent-300" : ""}`}
 			/>
 			<span className="relative flex-1 truncate">{item.label}</span>
+			{/* Sans interlettrage et sans capitales: « Cosmétiques » plus « À VENIR »
+			    espace ne tenaient pas ensemble dans les 252 pixels de la colonne, et
+			    c'est le nom de la destination qui se faisait couper -- l'etiquette
+			    mangeait ce qu'elle qualifie. */}
 			{item.upcoming && (
-				<span className="relative shrink-0 rounded-sm border border-accent-700 px-1.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.1em] text-accent-200">
+				<span className="relative shrink-0 rounded-sm border border-accent-700 px-1.5 py-px text-[10px] font-medium text-accent-200">
 					à venir
 				</span>
 			)}

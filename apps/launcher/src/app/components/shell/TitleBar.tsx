@@ -64,9 +64,15 @@ export function TitleBar() {
 				data-tauri-drag-region
 				className="flex min-w-0 items-center gap-3"
 			>
-				<span className="grid size-6 shrink-0 place-items-center rounded-sm bg-gradient-to-br from-accent-600 to-accent-500 text-[13px] font-bold text-accent-100">
-					P
-				</span>
+				{/* Le vrai mot-logo, et non l'initiale dans un carre qui le
+				    remplacait: la marque a une forme, s'en passer revenait a la
+				    redessiner moins bien. */}
+				<img
+					alt="Paranoia Client"
+					className="h-[22px] w-auto shrink-0"
+					draggable={false}
+					src="/assets/paranoia-wordmark.png"
+				/>
 				<span className="truncate text-xs uppercase tracking-[0.08em] text-neutral-400">
 					launcher {version}
 				</span>

@@ -158,14 +158,33 @@ export function HomeScreen({
 						</span>
 					</div>
 
-					<div className="relative h-[220px] overflow-hidden rounded-md bg-[radial-gradient(160px_130px_at_50%_30%,var(--color-accent-900)_0%,var(--color-neutral-900)_80%)] shadow-[inset_0_0_0_2px_var(--color-divider)]">
-						<SkinViewer3D
-							className="size-full"
-							zoom={0.62}
-							skinUrl={`https://minotar.net/skin/${account?.minecraftUsername ?? "Steve"}`}
-							{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
-							paused={running}
+					{/*
+					  L'embleme flouté deborde volontairement du cadre: il est pose
+					  avant le conteneur qui rogne, pas dedans. C'est ce debordement
+					  qui fait la lueur a gauche du panneau -- range a l'interieur, il
+					  se reduirait a une tache grise derriere le personnage.
+
+					  `mix-blend-mode: lighten` plutot qu'une opacite seule: sur un fond
+					  sombre, il n'ajoute que ce qui est plus clair que lui, donc il
+					  eclaire sans salir les noirs.
+					*/}
+					<div className="relative h-[220px] rounded-md bg-[radial-gradient(160px_130px_at_50%_30%,var(--color-accent-900)_0%,var(--color-neutral-900)_80%)] shadow-[inset_0_0_0_2px_var(--color-divider)]">
+						<img
+							alt=""
+							aria-hidden
+							draggable={false}
+							src="/assets/paranoia-emblem.png"
+							className="pointer-events-none absolute left-0 top-1/2 w-[300px] max-w-none -translate-x-[62%] -translate-y-[54%] opacity-80 mix-blend-lighten blur-[7px]"
 						/>
+						<div className="absolute inset-0 overflow-hidden rounded-md">
+							<SkinViewer3D
+								className="size-full"
+								zoom={0.62}
+								skinUrl={`https://minotar.net/skin/${account?.minecraftUsername ?? "Steve"}`}
+								{...(lobbyCape ? { capeUrl: lobbyCape } : {})}
+								paused={running}
+							/>
+						</div>
 					</div>
 
 					<button
