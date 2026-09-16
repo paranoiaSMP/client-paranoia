@@ -12,9 +12,18 @@ type ParametresTabProps = {
   setImportJson: (json: string) => void;
   handleImportProfile: () => void;
   error: string | null;
+  /**
+   * Rappele apres un enregistrement reussi.
+   *
+   * <p>Le bandeau du bas affiche la memoire allouee, lue par un autre chemin.
+   * Sans ce rappel, il continuait d'annoncer l'ancienne valeur jusqu'au
+   * prochain demarrage -- deux affichages de la meme chose qui se
+   * contredisaient a l'ecran.
+   */
+  onSaved?: () => void;
 };
 
-export function ParametresTab({ importJson, setImportJson, handleImportProfile, error }: ParametresTabProps) {
+export function ParametresTab({ importJson, setImportJson, handleImportProfile, error, onSaved }: ParametresTabProps) {
   const { t, i18n } = useTranslation();
 
   const [ramMin, setRamMin] = useState(2);
@@ -84,6 +93,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
       // ce qu'il a reellement enregistre.
       setRamMin(Math.round(saved.ramMinMb / 1024));
       setRamMax(Math.round(saved.ramMaxMb / 1024));
+      onSaved?.();
       setSaveState("saved");
       setTimeout(() => setSaveState("idle"), 2500);
     } catch (e) {
@@ -96,125 +106,125 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
     <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-400 pt-2 pb-10">
 
       {/* RAM */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-4">Mémoire (RAM)</h3>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-4">Mémoire (RAM)</h3>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-muted text-xs block mb-2">RAM minimum</label>
+            <label className="text-neutral-300 text-xs block mb-2">RAM minimum</label>
             <div className="flex items-center gap-3">
               <input 
                 type="range" min={1} max={16} value={ramMin}
                 onChange={e => setRamMin(Number(e.target.value))}
-                className="flex-1 accent-accent-purple"
+                className="flex-1 accent-accent"
               />
-              <span className="text-white font-mono text-sm w-14 text-right">{ramMin} Go</span>
+              <span className="text-ink font-mono text-sm w-14 text-right">{ramMin} Go</span>
             </div>
           </div>
           <div>
-            <label className="text-muted text-xs block mb-2">RAM maximum</label>
+            <label className="text-neutral-300 text-xs block mb-2">RAM maximum</label>
             <div className="flex items-center gap-3">
               <input 
                 type="range" min={1} max={16} value={ramMax}
                 onChange={e => setRamMax(Number(e.target.value))}
-                className="flex-1 accent-accent-purple"
+                className="flex-1 accent-accent"
               />
-              <span className="text-white font-mono text-sm w-14 text-right">{ramMax} Go</span>
+              <span className="text-ink font-mono text-sm w-14 text-right">{ramMax} Go</span>
             </div>
           </div>
         </div>
-        <p className="text-placeholder text-xs mt-3">Recommandé : 2 Go min, 4 Go max pour la plupart des configs.</p>
+        <p className="text-neutral-600 text-xs mt-3">Recommandé : 2 Go min, 4 Go max pour la plupart des configs.</p>
       </section>
 
       {/* Java */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-4">Java</h3>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-4">Java</h3>
         
         <div className="mb-4">
-          <label className="text-muted text-xs block mb-2">Chemin Java (laisser vide = auto)</label>
+          <label className="text-neutral-300 text-xs block mb-2">Chemin Java (laisser vide = auto)</label>
           <input 
             type="text" 
             value={javaPath}
             onChange={e => setJavaPath(e.target.value)}
             placeholder="C:\Program Files\Java\jdk-21\bin\javaw.exe"
-            className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-line-hi focus:outline-none focus:border-accent-purple transition-colors"
+            className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors"
           />
         </div>
 
         <div>
-          <label className="text-muted text-xs block mb-2">Arguments JVM</label>
+          <label className="text-neutral-300 text-xs block mb-2">Arguments JVM</label>
           <input 
             type="text" 
             value={jvmArgs}
             onChange={e => setJvmArgs(e.target.value)}
-            className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white font-mono placeholder:text-line-hi focus:outline-none focus:border-accent-purple transition-colors"
+            className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors"
           />
-          <p className="text-placeholder text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
+          <p className="text-neutral-600 text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
         </div>
       </section>
 
       {/* Fenêtre */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-4">Fenêtre de jeu</h3>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-4">Fenêtre de jeu</h3>
         
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-muted text-xs block mb-2">Largeur</label>
+            <label className="text-neutral-300 text-xs block mb-2">Largeur</label>
             <input 
               type="number" 
               value={resolution.width}
               onChange={e => setResolution(r => ({ ...r, width: Number(e.target.value) }))}
-              className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono focus:outline-none focus:border-accent transition-colors"
             />
           </div>
           <div>
-            <label className="text-muted text-xs block mb-2">Hauteur</label>
+            <label className="text-neutral-300 text-xs block mb-2">Hauteur</label>
             <input 
               type="number" 
               value={resolution.height}
               onChange={e => setResolution(r => ({ ...r, height: Number(e.target.value) }))}
-              className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-accent-purple transition-colors"
+              className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono focus:outline-none focus:border-accent transition-colors"
             />
           </div>
         </div>
 
         {/* Une fenetre aux dimensions de l'ecran est indistinguable d'un plein
             ecran, et F11 y bascule entre deux etats identiques a l'oeil. */}
-        <p className="mt-2 text-xs text-placeholder">
+        <p className="mt-2 text-xs text-neutral-600">
           Taille de la fenetre de jeu. Choisis une taille plus petite que ton
           ecran, sinon la fenetre le couvre entierement et ressemble a du plein
           ecran.
         </p>
 
         <label className="flex items-center gap-3 cursor-pointer group">
-          <input type="checkbox" checked={fullscreen} onChange={e => setFullscreen(e.target.checked)} className="accent-accent-purple w-4 h-4" />
-          <span className="text-sm text-muted group-hover:text-white transition-colors">Lancer en plein écran</span>
+          <input type="checkbox" checked={fullscreen} onChange={e => setFullscreen(e.target.checked)} className="accent-accent w-4 h-4" />
+          <span className="text-sm text-neutral-300 group-hover:text-ink transition-colors">Lancer en plein écran</span>
         </label>
       </section>
 
       {/* Launcher */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-4">Launcher</h3>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-4">Launcher</h3>
         
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input type="checkbox" checked={keepOpen} onChange={e => setKeepOpen(e.target.checked)} className="accent-accent-purple w-4 h-4" />
-            <span className="text-sm text-muted group-hover:text-white transition-colors">Garder le launcher ouvert pendant le jeu</span>
+            <input type="checkbox" checked={keepOpen} onChange={e => setKeepOpen(e.target.checked)} className="accent-accent w-4 h-4" />
+            <span className="text-sm text-neutral-300 group-hover:text-ink transition-colors">Garder le launcher ouvert pendant le jeu</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer group">
-            <input type="checkbox" checked={autoConnect} onChange={e => setAutoConnect(e.target.checked)} className="accent-accent-purple w-4 h-4" />
-            <span className="text-sm text-muted group-hover:text-white transition-colors">Se connecter automatiquement au démarrage</span>
+            <input type="checkbox" checked={autoConnect} onChange={e => setAutoConnect(e.target.checked)} className="accent-accent w-4 h-4" />
+            <span className="text-sm text-neutral-300 group-hover:text-ink transition-colors">Se connecter automatiquement au démarrage</span>
           </label>
         </div>
       </section>
 
       {/* Langue */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-4">{t("settings.language")}</h3>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-4">{t("settings.language")}</h3>
         <select 
           value={i18n.language}
           onChange={(e) => i18n.changeLanguage(e.target.value)}
-          className="w-full bg-void border border-line rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors cursor-pointer"
+          className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-accent transition-colors cursor-pointer"
         >
           <option value="fr">Français</option>
           <option value="en">English</option>
@@ -222,11 +232,11 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
       </section>
 
       {/* Sauvegarde */}
-      <section className="bg-panel border border-line rounded-xl p-5 flex items-center gap-4">
+      <section className="bg-surface border border-divider rounded-xl p-5 flex items-center gap-4">
         <button
           onClick={handleSave}
           disabled={!loaded || saveState === "saving"}
-          className="px-5 py-2.5 bg-accent-purple hover:bg-accent-purple-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 bg-accent hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-ink text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
         >
           {saveState === "saving" && <Loader2 className="w-4 h-4 animate-spin" />}
           {saveState === "saved" && <Check className="w-4 h-4" />}
@@ -238,32 +248,32 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
         </button>
 
         {saveState === "error" && saveError && (
-          <span className="text-sm text-[#fca5a5] flex items-center gap-2">
+          <span className="text-sm text-danger flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             {saveError}
           </span>
         )}
 
         {saveState !== "error" && (
-          <span className="text-placeholder text-xs">
+          <span className="text-neutral-600 text-xs">
             Appliqué au prochain lancement du jeu.
           </span>
         )}
       </section>
 
       {/* Import JSON (gardé de l'ancien) */}
-      <section className="bg-panel border border-line rounded-xl p-5">
-        <h3 className="text-white font-bold mb-1">{t("settings.import_title")}</h3>
-        <p className="text-placeholder text-xs mb-4">{t("settings.import_desc")}</p>
+      <section className="bg-surface border border-divider rounded-xl p-5">
+        <h3 className="text-ink font-bold mb-1">{t("settings.import_title")}</h3>
+        <p className="text-neutral-600 text-xs mb-4">{t("settings.import_desc")}</p>
         <textarea 
-          className="w-full h-28 bg-void border border-line rounded-lg p-3 text-sm text-white font-mono placeholder:text-line-hi focus:outline-none focus:border-accent-purple transition-colors mb-3 resize-none"
+          className="w-full h-28 bg-ground border border-divider rounded-lg p-3 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors mb-3 resize-none"
           value={importJson} 
           onChange={(e) => setImportJson(e.target.value)} 
           placeholder='{ "name": "Mon profil", "minecraftVersion": "1.21.11" }' 
         />
         <button 
           onClick={handleImportProfile}
-          className="px-4 py-2 bg-line hover:bg-line-hi text-white text-sm font-semibold rounded-lg transition-colors"
+          className="px-4 py-2 bg-divider hover:bg-neutral-700 text-ink text-sm font-semibold rounded-lg transition-colors"
         >
           {t("settings.import_validate")}
         </button>

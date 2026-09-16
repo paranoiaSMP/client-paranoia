@@ -1,127 +1,136 @@
 @import "tailwindcss";
 
 /*
- * Violet sombre.
+ * Nocturne.
  *
- * La regle qui tient tout: le violet est la source de lumiere, pas la peinture.
- * Les neutres ne sont pas gris, ils penchent vers le violet -- c'est ce qui
- * separe une interface qui a une couleur d'une interface peinte en violet.
+ * La regle qui tient tout: une seule gamme de clarte, partagee par les neutres
+ * et par l'accent. Le meme cran de n'importe quel role a la meme valeur
+ * visuelle que les autres -- c'est ce qui permet de remplacer un fond neutre
+ * par un fond accentue sans que la mise en page bouge.
  *
- * Le violet sature n'apparait qu'a quatre endroits: le bouton de lancement, la
- * boutique, l'element selectionne, et la lueur derriere le personnage. Ajouter
- * un cinquieme endroit veut dire en retirer un autre.
+ * L'accent ne sert qu'a trois choses: dire ou on est (l'element de navigation
+ * actif), dire ce qui va se passer (le bouton de lancement), et dire ce qui est
+ * en cours (la progression). Partout ailleurs, les neutres suffisent.
+ *
+ * Remplace la gamme « Violet Sombre », qui portait le meme escalier de clarte
+ * mais avec un violet sature comme peinture plutot que comme signal.
  */
 @theme {
-  --color-accent-red: #ff4d4d;
-  --color-accent-red-glow: #ff7676;
-  --color-accent-purple: #8b5cf6;
-  --color-accent-purple-dark: #6d35e0;
-  --color-accent-purple-hot: #b47cff;
+  /*
+   * Les trois fonds, du plus profond au plus souleve.
+   *
+   * L'escalier est court exprès: trois marches suffisent a separer la fenetre,
+   * les panneaux et ce qui s'enfonce dedans. Une quatrieme obligerait a decider
+   * a chaque fois laquelle utiliser, et la reponse ne serait plus evidente.
+   */
+  --color-ground: #161826;
+  --color-surface: #232532;
+  /* Le creux: champs de saisie, survols, pastilles. Plus clair que la surface
+     et non plus sombre -- sur un fond sombre, c'est la lumiere qui creuse. */
+  --color-well: #292b31;
+
+  --color-ink: #e9e9ed;
+  --color-accent: #9184d9;
 
   /*
-   * Les cinq couches, du fond de fenetre a l'element souleve.
-   *
-   * Elles etaient descendues jusqu'a #050409, ou le bleu ne depasse le rouge
-   * que de cinq points: a cette obscurite l'oeil ne lit plus une teinte, il
-   * lit du noir. Chercher la profondeur en descendant vers le noir efface
-   * justement la couleur qu'on voulait garder.
-   *
-   * La gamme remonte donc, et surtout s'ecarte du gris: chaque ton a
-   * maintenant vingt points d'ecart entre le bleu et le rouge, ce qui suffit
-   * a le faire lire comme violet a n'importe quelle clarte. La profondeur
-   * vient des ecarts entre les couches -- reguliers, environ huit points de
-   * clarte -- et non de leur noirceur absolue.
-   *
-   * Elles se deplacent ensemble et dans cet ordre. Eclaircir le fond sans
-   * eclaircir les surfaces ferait couler les cartes dans leur decor.
+   * Le trait. Une part du texte melangee a du transparent, et non une couleur
+   * fixe: il garde le meme contraste apparent quel que soit le fond sur lequel
+   * on le pose, ce qu'une valeur figee ne sait pas faire.
    */
-  --color-void: #120c22;
-  /* Le creux: champs de saisie, cartes d'option, pastilles de compteur. Plus
-     sombre qu'une surface pour se lire comme une entaille. */
-  --color-sunken: #170f2a;
-  --color-surface: #1d1733;
-  --color-surface-hi: #251d40;
-  --color-raised: #2e2450;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+
+  /* La rampe neutre, engendree en OKLCH sur la gamme de clarte commune. */
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  /* La rampe accentuee, sur la meme gamme: le cran 900 d'ici a la meme clarte
+     que le cran 900 des neutres, et peut donc le remplacer sans rien deplacer. */
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+
+  /* Le rouge d'arret. Le seul role que l'accent ne peut pas tenir: il dit
+     « ca va s'interrompre », pas « c'est ici ». */
+  --color-danger: #e0616b;
+  --color-danger-dim: #7a2f36;
 
   /*
-   * Les roles recurrents, nommes d'apres ce qu'ils font et non d'apres leur
-   * teinte. Ils etaient ecrits en dur: #241d3c quarante-huit fois, #9a92b6
-   * trente-cinq, et l'accent lui-meme trente-sept -- alors qu'il avait deja
-   * un jeton.
+   * Trois rayons, et c'est une decision, pas un reste.
    *
-   * Les valeurs sont reprises telles quelles, sans une seule retouche: nommer
-   * une couleur et la changer sont deux gestes distincts, et les melanger
-   * rendrait impossible de dire lequel des deux a modifie l'ecran. Les
-   * accorder a la gamme violette est un choix visible, a faire separement.
+   * L'interface en comptait huit -- rounded-lg quarante-trois fois, xl vingt,
+   * full quinze, [12px] huit, et quatre autres -- qu'aucun choix n'avait
+   * arretes. Trois suffisent: le petit pour ce qui est dans quelque chose, le
+   * moyen pour les objets, le grand pour les contenants.
    */
-  /* Les traits, du plus discret au plus marque. */
-  --color-line: #241d3c;
-  --color-line-soft: #251e3d;
-  --color-line-hi: #372d58;
-  --color-hover-line: #403565;
-  /* Fond d'un element survole, et panneau enfonce. */
-  --color-hover: #2c2447;
-  --color-panel: #1a1529;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
 
-  /* Les gris de texte, du plus lisible au plus efface. */
-  --color-muted: #9a92b6;
-  --color-faint: #8d84a8;
-  --color-muted-dim: #7a7194;
-  --color-placeholder: #463a70;
-
-  /*
-   * Ce que le nommage a mis au jour, et qui n'etait pas visible tant que ces
-   * couleurs restaient des chaines eparpillees: deux paires sont a un cheveu
-   * l'une de l'autre. #241d3c et #251e3d ne different que d'un point sur
-   * chaque canal; #9a92b6 et #8d84a8 de moins de dix. Personne ne les
-   * distingue a l'ecran, et chacune existe pourtant a des dizaines
-   * d'exemplaires.
-   *
-   * Elles sont nommees separement plutot que fusionnees: reduire une paire a
-   * une seule couleur se verra quelque part, et c'est une decision a prendre
-   * en regardant, pas un effet de bord d'un renommage.
-   */
-
-  --font-inter: "Inter", sans-serif;
-  --font-outfit: "Outfit", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
 
 body {
-  @apply text-white min-h-screen m-0 font-inter antialiased;
-  background-color: #120c22;
-  /* Optionnel : un très léger bruit de fond pour texturer sans casser l'aspect sombre */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  @apply m-0 min-h-screen bg-ground font-body text-ink antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-outfit tracking-tight;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-display font-medium tracking-tight;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-::-webkit-scrollbar-thumb {
-  background: #18181b; 
-  border: 2px solid #000000;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #27272a; 
+/*
+ * L'elevation, derivee du fond: un liseré d'un pixel qui detache l'objet de son
+ * support, et une ombre ambiante qui dit a quelle hauteur il est.
+ *
+ * Le liseré fait le plus gros du travail sur fond sombre -- une ombre seule n'y
+ * separe rien, puisqu'il n'y a pas de lumiere a occulter.
+ */
+.elev-sm {
+  box-shadow: 0 0 0 1px var(--color-neutral-800);
 }
 
-/* Animations épurées */
-@keyframes shine {
-  0% { left: -100%; opacity: 0; }
-  10% { opacity: 0.5; }
-  100% { left: 200%; opacity: 0; }
+.elev-md {
+  box-shadow:
+    0 0 0 1px var(--color-neutral-700),
+    0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
-.animate-shine {
-  animation: shine 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+.elev-lg {
+  box-shadow:
+    0 0 0 1px var(--color-neutral-500),
+    0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+/*
+ * L'element de navigation actif.
+ *
+ * Trois signaux pour un seul etat, et chacun repond a une facon differente de
+ * regarder: le fond pour qui balaie, le trait de gauche pour qui suit la
+ * colonne, la lueur pour qui cherche du coin de l'oeil. Un seul des trois
+ * suffirait a un ecran calme; il en faut trois a une barre de sept entrees.
+ */
+.nav-active {
+  background: var(--color-accent-900);
+  border-left: 3px solid var(--color-accent);
+  box-shadow: -1px 0 12px -2px var(--color-accent);
 }
 
 /*
@@ -139,87 +148,20 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
-/*
- * L'effet bulle, en trois couches et pas une de plus.
- *
- * 1. Le volume: un degrade vertical tres court, quatre pour cent d'ecart. Assez
- *    pour que la surface ne soit plus plate, trop peu pour qu'on voie un
- *    degrade -- un degrade visible fait bon marche.
- * 2. La lumiere: un liseré clair d'un pixel sur le bord haut. C'est le detail
- *    le moins cher de toute la direction et celui qui fait le plus: il donne un
- *    bord eclaire, donc une epaisseur.
- * 3. Le decollement: une ombre large, basse et tres diffuse. L'objet flotte au
- *    lieu d'etre pose. Une ombre nette donnerait du papier decoupe.
- *
- * A poser sur une carte a la place de son fond et de sa bordure. Le rayon reste
- * au choix de l'appelant: 1rem pour une vignette, 1.6rem pour une vraie bulle.
- */
-.bubble {
-  background-image: linear-gradient(180deg, var(--color-surface-hi), var(--color-surface));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  /*
-   * Deux ombres portees plutot qu'une, et c'est ce qui fait flotter.
-   *
-   * Une ombre unique donne un objet pose: elle dit ou est le sol, pas a quelle
-   * hauteur est l'objet. La premiere, courte et dense, est le contact; la
-   * seconde, longue et diluee, est la distance. Les avoir toutes les deux est
-   * la difference entre une carte posee sur une table et une carte tenue
-   * au-dessus.
-   */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -16px 26px -22px rgba(0, 0, 0, 0.9),
-    0 6px 14px -8px rgba(0, 0, 0, 0.7),
-    0 26px 50px -22px rgba(0, 0, 0, 0.95);
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Meme matiere, posee et non flottante: pour ce qui remplit deja un cadre. */
-.bubble-flat {
-  background-image: linear-gradient(180deg, var(--color-surface-hi), var(--color-surface));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* L'element choisi. La lueur remplace l'ombre: il s'eclaire au lieu de flotter. */
-.bubble-active {
-  background-image: linear-gradient(180deg, var(--color-raised), #1a1430);
-  border: 1px solid rgba(139, 92, 246, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 34px -10px rgba(139, 92, 246, 0.5),
-    0 26px 50px -22px rgba(0, 0, 0, 0.95);
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-800);
+  border-radius: 9999px;
 }
 
-/*
- * Le cadre du personnage.
- *
- * C'est la lueur derriere le personnage -- le quatrieme et dernier endroit ou
- * le violet a le droit d'etre sature -- ramenee sur le bord du panneau au lieu
- * d'etre diffusee dans le fond. Pas un cinquieme usage: le meme, cadre.
- *
- * Le fond descend jusqu'au noir de la fenetre en bas. Le personnage a les
- * pieds dans l'ombre et la tete dans la lumiere, ce qui lui donne un sol.
- */
-.bubble-frame {
-  background-image: linear-gradient(180deg, var(--color-surface-hi), var(--color-void));
-  border: 1px solid rgba(139, 92, 246, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 46px -18px rgba(139, 92, 246, 0.55),
-    0 22px 44px -26px rgba(0, 0, 0, 0.9);
-}
-
-/*
- * L'action principale. Le seul degrade franc de toute l'interface, et le seul
- * endroit ou le texte est sombre sur fond clair: c'est ce qui le detache de
- * tout le reste sans avoir besoin d'etre plus gros.
- */
-.bubble-primary {
-  color: #150c28;
-  background-image: linear-gradient(180deg, #cfa8ff, var(--color-accent-purple));
-  border: 0;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 8px 16px -8px rgba(0, 0, 0, 0.6),
-    0 20px 44px -14px rgba(139, 92, 246, 0.6);
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-700);
 }

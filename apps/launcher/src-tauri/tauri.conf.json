@@ -15,8 +15,10 @@
         "title": "Paranoia Client",
         "width": 1440,
         "height": 900,
+        "minWidth": 940,
+        "minHeight": 620,
         "resizable": true,
-        "decorations": true
+        "decorations": false
       }
     ],
     "security": {

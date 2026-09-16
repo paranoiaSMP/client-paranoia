@@ -18,7 +18,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "Lunar",
 	},
 	"Feather Client": {
-		color: "bg-[#1f1f1f] border-hover",
+		color: "bg-[#1f1f1f] border-well",
 		shortName: "Feather",
 	},
 	Modrinth: { color: "bg-[#1bd96a] border-[#22c55e]", shortName: "Modrinth" },
@@ -27,7 +27,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "CurseForge",
 	},
 	"Prism Launcher": {
-		color: "bg-[#25252b] border-line-hi",
+		color: "bg-[#25252b] border-neutral-700",
 		shortName: "Prism Launcher",
 	},
 	GDLauncher: {
@@ -35,7 +35,7 @@ const LAUNCHERS_UI: Record<string, { color: string; shortName: string }> = {
 		shortName: "GDLauncher",
 	},
 	ATLauncher: {
-		color: "bg-panel border-line",
+		color: "bg-surface border-divider",
 		shortName: "ATLauncher",
 	},
 	MultiMC: { color: "bg-[#202020] border-[#303030]", shortName: "MultiMC" },
@@ -135,11 +135,11 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			<div className="p-6">
 				<button
 					onClick={() => setSelectedLauncher(null)}
-					className="text-sm text-faint hover:text-white mb-6 flex items-center gap-2"
+					className="text-sm text-neutral-400 hover:text-ink mb-6 flex items-center gap-2"
 				>
 					← Retour aux launchers
 				</button>
-				<h3 className="text-xl text-white font-bold mb-6">
+				<h3 className="text-xl text-ink font-bold mb-6">
 					Sélectionnez l'instance{" "}
 					{LAUNCHERS_UI[selectedLauncher]?.shortName || selectedLauncher}
 				</h3>
@@ -151,20 +151,20 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 							onClick={() => setSelectedProfileId(p.id)}
 							className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${
 								selectedProfileId === p.id
-									? "bg-panel border-white/20"
-									: "bg-sunken border-line-soft hover:border-hover-line"
+									? "bg-surface border-ink/20"
+									: "bg-ground border-divider hover:border-neutral-600"
 							}`}
 						>
 							<div>
-								<p className="text-white font-bold">
+								<p className="text-ink font-bold">
 									{p.label.replace(selectedLauncher + " : ", "")}
 								</p>
-								<p className="text-xs text-faint truncate w-64">
+								<p className="text-xs text-neutral-400 truncate w-64">
 									{p.options_path}
 								</p>
 							</div>
 							{selectedProfileId === p.id && (
-								<CheckCircle2 className="text-white w-5 h-5" />
+								<CheckCircle2 className="text-ink w-5 h-5" />
 							)}
 						</div>
 					))}
@@ -179,7 +179,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 				<button
 					onClick={handleMigrate}
 					disabled={!selectedProfileId || loading}
-					className="w-full py-3 bg-white hover:bg-gray-200 text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+					className="w-full py-3 bg-ink hover:bg-gray-200 text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
 				>
 					{loading ? "Migration en cours..." : "Migrer ce profil"}
 					{!loading && <ArrowRight className="w-4 h-4" />}
@@ -189,19 +189,19 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 	}
 
 	return (
-		<div className="p-6 bg-[#0f0b1a] h-full flex flex-col justify-center relative">
+		<div className="p-6 bg-ground h-full flex flex-col justify-center relative">
 			{loading && (
 				<div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
-					<div className="h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent mb-4"></div>
-					<p className="text-white font-bold">Importation en cours...</p>
+					<div className="h-10 w-10 animate-spin rounded-full border-4 border-ink border-t-transparent mb-4"></div>
+					<p className="text-ink font-bold">Importation en cours...</p>
 				</div>
 			)}
 			
 			<div className="text-center mb-8 mt-4">
-				<h3 className="text-2xl text-white font-bold mb-2">
+				<h3 className="text-2xl text-ink font-bold mb-2">
 					Depuis d'autres launchers
 				</h3>
-				<p className="text-faint max-w-sm mx-auto">
+				<p className="text-neutral-400 max-w-sm mx-auto">
 					Vous voulez changer ? Migrez vos profils existants en quelques
 					secondes !
 				</p>
@@ -210,7 +210,7 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-8">
 				{availableLaunchers.map((launcher) => {
 					const ui = LAUNCHERS_UI[launcher] || {
-						color: "bg-[#0f0b1a] border-line-soft",
+						color: "bg-ground border-divider",
 						shortName: launcher,
 					};
 					return (
@@ -219,18 +219,18 @@ export function MigrationModal({ onClose, onRefresh }: MigrationModalProps) {
 							onClick={() => setSelectedLauncher(launcher)}
 							className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 hover:-translate-y-1 transition-transform ${ui.color}`}
 						>
-							<Box className="w-8 h-8 text-white/80 mb-3" />
-							<span className="text-white font-bold">{ui.shortName}</span>
+							<Box className="w-8 h-8 text-ink/80 mb-3" />
+							<span className="text-ink font-bold">{ui.shortName}</span>
 						</button>
 					);
 				})}
 
 				<button
 					onClick={handleImportPack}
-					className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 hover:-translate-y-1 transition-transform bg-panel border-accent-purple/50 hover:border-accent-purple"
+					className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 hover:-translate-y-1 transition-transform bg-surface border-accent/50 hover:border-accent"
 				>
-					<FileUp className="w-8 h-8 text-accent-purple mb-3" />
-					<span className="text-white font-bold text-center">Pack Lunar<br/><span className="text-xs font-normal opacity-70">(.lcpack)</span></span>
+					<FileUp className="w-8 h-8 text-accent mb-3" />
+					<span className="text-ink font-bold text-center">Pack Lunar<br/><span className="text-xs font-normal opacity-70">(.lcpack)</span></span>
 				</button>
 			</div>
 			

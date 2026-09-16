@@ -76,7 +76,7 @@ export function LogsTab() {
 			{/* Controls Header */}
 			<div className="flex items-center justify-between pb-3 border-b border-zinc-800 mb-3 shrink-0">
 				<div className="flex items-center gap-4">
-					<label className="flex items-center gap-2 text-zinc-400 hover:text-white cursor-pointer select-none text-xs">
+					<label className="flex items-center gap-2 text-zinc-400 hover:text-ink cursor-pointer select-none text-xs">
 						<input
 							type="checkbox"
 							checked={autoScroll}
@@ -87,7 +87,7 @@ export function LogsTab() {
 					</label>
 					<button
 						onClick={() => fetchLogs(true)}
-						className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors"
+						className="flex items-center gap-1 text-xs text-zinc-400 hover:text-ink transition-colors"
 						title="Actualiser"
 					>
 						<RefreshCw className={`size-3.5 ${refreshing ? "animate-spin text-purple-400" : ""}`} />
@@ -98,7 +98,7 @@ export function LogsTab() {
 					<button
 						onClick={handleCopy}
 						disabled={logs.length === 0}
-						className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+						className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed transition-all"
 					>
 						{copied ? (
 							<>

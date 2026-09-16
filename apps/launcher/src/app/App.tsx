@@ -1,18 +1,28 @@
-import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { LauncherProfile } from "@paranoia/contracts";
 
 import { UpdateModal } from "./components/UpdateModal";
-import { AppModals } from "./components/AppModals";
-import { HomeScreen } from "./components/HomeScreen";
-import type { ActiveModal } from "./components/HomeScreen";
+import { AppOverlays } from "./components/AppOverlays";
+import { Sidebar } from "./components/shell/Sidebar";
+import { StatusBar } from "./components/shell/StatusBar";
+import { TitleBar } from "./components/shell/TitleBar";
+import { AccountsScreen } from "./components/screens/AccountsScreen";
+import { CosmeticsScreen } from "./components/screens/CosmeticsScreen";
+import { HomeScreen } from "./components/screens/HomeScreen";
+import { LogsScreen } from "./components/screens/LogsScreen";
+import { ModsScreen } from "./components/screens/ModsScreen";
+import { SettingsScreen } from "./components/screens/SettingsScreen";
+import { ShopScreen } from "./components/screens/ShopScreen";
+import { VersionsScreen } from "./components/screens/VersionsScreen";
 import {
 	BootstrapErrorScreen,
 	LoadingScreen,
 	LoginScreen,
 } from "./components/screens/StatusScreens";
+import type { Overlay, Screen } from "./navigation";
 
+import { useAppVersion } from "./hooks/useAppVersion";
 import { useAuth } from "./hooks/useAuth";
 import { useBootstrap } from "./hooks/useBootstrap";
 import { useFileDrop } from "./hooks/useFileDrop";
@@ -21,47 +31,28 @@ import { useLobbyCape } from "./hooks/useLobbyCape";
 import { useModCount } from "./hooks/useModCount";
 import { useProfileCreation } from "./hooks/useProfileCreation";
 import { useProfiles } from "./hooks/useProfiles";
+import { useSettings } from "./hooks/useSettings";
 import { useUpdater } from "./hooks/useUpdater";
-
-/**
- * Fond de l'application.
- *
- * <p>Deux lueurs violettes tres diluees posees sur un degrade sombre: l'une en
- * haut a gauche derriere la barre d'actions, l'autre en bas a droite derriere
- * le personnage. Les valeurs restent basses volontairement -- le fond ne doit
- * pas concurrencer les vignettes, qui portent deja leur propre degrade.
- */
-const BACKGROUND: CSSProperties = {
-	backgroundImage: [
-		// Les deux lueurs restent hautes, mais elles ne portent plus la couleur a
-		// elles seules: le degrade lui-meme est violet d'un bout a l'autre. Il
-		// etait descendu a #050409 en cherchant de la profondeur, et cette
-		// profondeur-la etait du noir -- une lueur violette posee sur du noir
-		// donne un ecran noir avec une tache, pas un ecran violet.
-		"radial-gradient(120% 85% at 12% 0%, rgba(147, 9, 239, 0.22) 0%, rgba(147, 9, 239, 0) 55%)",
-		"radial-gradient(95% 75% at 100% 100%, rgba(97, 6, 158, 0.28) 0%, rgba(97, 6, 158, 0) 60%)",
-		"linear-gradient(160deg, #241a3d 0%, #1b1330 45%, #120c22 100%)",
-	].join(", "),
-};
 
 /**
  * Le composant racine: il cable, il ne dessine pas.
  *
- * <p>Il portait auparavant mille deux cents lignes -- vingt-cinq etats, cinq
- * effets, l'accueil entier et ses huit fenetres. Chaque retouche de mise en
- * page obligeait a traverser la mecanique de lancement, et chaque correction
- * de lancement a traverser la mise en page.
+ * <p>Il choisit entre les quatre etats d'amorcage -- erreur, chargement,
+ * connexion, application -- puis, dans le dernier, entre les huit destinations
+ * de la barre laterale.
  *
- * <p>Ce qui reste ici est ce qui doit y rester: les branches entre les quatre
- * ecrans possibles, et le raccordement des morceaux entre eux. L'etat vit dans
- * des hooks nommes d'apres ce qu'ils font, le rendu dans des composants nommes
- * d'apres ce qu'ils montrent.
+ * <p>Ces destinations etaient des fenetres empilees par-dessus l'accueil, et
+ * l'accueil portait leurs raccourcis replies derriere un carre. Elles sont
+ * maintenant des ecrans que la barre laterale designe: l'accueil n'a plus a
+ * savoir qu'elles existent, et elles n'ont plus a se dessiner par-dessus lui.
  */
 export function App() {
 	const { t } = useTranslation();
 
 	const [error, setError] = useState<string | null>(null);
-	const [activeModal, setActiveModal] = useState<ActiveModal>("none");
+	const [screen, setScreen] = useState<Screen>("home");
+	const [overlay, setOverlay] = useState<Overlay>("none");
+	const version = useAppVersion();
 
 	const {
 		connected,
@@ -97,10 +88,11 @@ export function App() {
 		fallbackError: t("app.error_load"),
 	});
 
+	const { settings, reload: reloadSettings } = useSettings();
 	const { isDragging, isProcessing } = useFileDrop(refreshProfiles);
 
 	// Le profil courant: celui qui est choisi, ou le premier a defaut. Le bouton
-	// Jouer, le compteur de mods et le menu d'instance parlent tous de lui.
+	// Jouer, le compteur de mods et la fiche d'instance parlent tous de lui.
 	const mainProfile =
 		profiles.find((p) => p.id === selectedProfileId) ?? profiles[0] ?? null;
 
@@ -110,24 +102,26 @@ export function App() {
 		setError,
 	});
 
-	const modCount = useModCount(mainProfile, activeModal);
-	const lobbyCape = useLobbyCape(activeModal === "cosmetiques");
+	const running = installState === "running";
+	const modCount = useModCount(mainProfile, screen);
+	const lobbyCape = useLobbyCape(screen === "cosmetics");
 
 	const creation = useProfileCreation({
 		config,
 		refreshProfiles,
 		setError,
-		onInstalled: () => setActiveModal("none"),
+		onInstalled: () => setOverlay("none"),
 		fallbackError: t("wizard.install_fail"),
 	});
 
 	function openCreation() {
 		creation.start(connected);
-		setActiveModal("create_profile");
+		setOverlay("create_profile");
 	}
 
 	function play(profile: LauncherProfile) {
-		setActiveModal("none");
+		setOverlay("none");
+		setScreen("home");
 		void launch(profile);
 	}
 
@@ -148,7 +142,6 @@ export function App() {
 	if (!connected) {
 		return (
 			<LoginScreen
-				background={BACKGROUND}
 				account={account}
 				accounts={accounts}
 				connectingMicrosoft={connectingMicrosoft}
@@ -162,54 +155,114 @@ export function App() {
 	}
 
 	return (
-		<div className="h-screen w-full flex overflow-hidden bg-void relative">
+		<div className="flex h-screen w-full flex-col overflow-hidden bg-ground">
+			<TitleBar />
+
+			<div className="flex min-h-0 flex-1">
+				<Sidebar
+					current={screen}
+					onNavigate={setScreen}
+					modCount={modCount}
+					account={account}
+					serviceReady={!failed}
+				/>
+
+				<main className="flex min-w-0 flex-1 flex-col">
+					{screen === "home" && (
+						<HomeScreen
+							profile={mainProfile}
+							modCount={modCount}
+							account={account}
+							lobbyCape={lobbyCape}
+							running={running}
+							status={status}
+							news={news}
+							onPlay={() => mainProfile && play(mainProfile)}
+							onStop={() => void cancel()}
+							onGoVersions={() => setScreen("versions")}
+							onGoCosmetics={() => setScreen("cosmetics")}
+						/>
+					)}
+
+					{screen === "versions" && (
+						<VersionsScreen
+							profiles={profiles}
+							selectedId={mainProfile?.id ?? null}
+							onSelect={setSelectedProfileId}
+							onOpenInstance={(id) => {
+								setSelectedProfileId(id);
+								setOverlay("instance");
+							}}
+							onCreate={openCreation}
+							onMigrate={() => setOverlay("migrate_profile")}
+						/>
+					)}
+
+					{screen === "mods" && (
+						<ModsScreen
+							profiles={profiles}
+							selectedProfileId={selectedProfileId}
+							setSelectedProfileId={setSelectedProfileId}
+							modCount={modCount}
+							setError={setError}
+						/>
+					)}
+
+					{screen === "cosmetics" && <CosmeticsScreen />}
+					{screen === "shop" && <ShopScreen />}
+
+					{screen === "accounts" && (
+						<AccountsScreen
+							account={account}
+							accounts={accounts}
+							connecting={connectingMicrosoft}
+							onConnect={handleMicrosoftConnect}
+							onSwitch={handleSwitchAccount}
+						/>
+					)}
+
+					{screen === "settings" && (
+						<SettingsScreen
+							error={error}
+							setError={setError}
+							refreshProfiles={refreshProfiles}
+							onSaved={reloadSettings}
+							onLogout={handleLogout}
+						/>
+					)}
+
+					{screen === "logs" && <LogsScreen />}
+				</main>
+			</div>
+
+			<StatusBar
+				ramMaxMb={settings?.ramMaxMb ?? null}
+				instanceCount={profiles.length}
+				version={version}
+			/>
+
 			<UpdateModal
 				state={updateState}
 				onInstall={installUpdate}
 				onDismiss={dismissUpdate}
 			/>
 
-			<HomeScreen
-				background={BACKGROUND}
-				news={news}
-				profiles={profiles}
-				mainProfile={mainProfile}
-				modCount={modCount}
-				account={account}
-				lobbyCape={lobbyCape}
-				running={installState === "running"}
-				progress={status.progress}
-				onOpen={setActiveModal}
-				onSelectProfile={setSelectedProfileId}
-				onCreateProfile={openCreation}
-				onPlay={() => mainProfile && play(mainProfile)}
-				onStop={() => void cancel()}
-				onLogout={handleLogout}
-				onError={setError}
-			/>
-
-			<AppModals
-				active={activeModal}
-				onOpen={setActiveModal}
-				onClose={() => setActiveModal("none")}
+			<AppOverlays
+				active={overlay}
+				onClose={() => setOverlay("none")}
 				config={config}
 				error={error}
-				setError={setError}
 				connected={connected}
-				account={account}
-				accounts={accounts}
-				connectingMicrosoft={connectingMicrosoft}
-				onConnectMicrosoft={handleMicrosoftConnect}
-				onSwitchAccount={handleSwitchAccount}
-				profiles={profiles}
 				mainProfile={mainProfile}
-				selectedProfileId={selectedProfileId}
-				setSelectedProfileId={setSelectedProfileId}
 				refreshProfiles={refreshProfiles}
 				onFavorite={handleFavoriteProfile}
 				onDelete={handleDeleteProfile}
+				onOpenMods={() => {
+					setOverlay("none");
+					setScreen("mods");
+				}}
 				modCount={modCount}
-				running={installState === "running"}
+				running={running}
 				onPlay={play}
 				creation={creation}
 				isDragging={isDragging}
