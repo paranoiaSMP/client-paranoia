@@ -23,7 +23,7 @@ export function StatusBar({
 	version,
 }: StatusBarProps) {
 	return (
-		<div className="flex shrink-0 items-center justify-between gap-4 border-t border-divider bg-surface px-6 py-2 text-[12.5px] text-neutral-400">
+		<div className="flex shrink-0 items-center justify-between gap-4 border-t border-white/10 bg-surface px-6 py-2 text-[12.5px] text-neutral-300">
 			<div className="flex min-w-0 items-center gap-6">
 				<span className="flex shrink-0 items-center gap-1.5">
 					<HardDrive className="size-3.5" />
