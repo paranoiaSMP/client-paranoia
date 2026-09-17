@@ -88,28 +88,10 @@ export function Sidebar({
 							{account?.minecraftUsername ?? "Hors ligne"}
 						</span>
 						<span className="truncate text-xs text-neutral-400">
-							{account ? "Microsoft · premium" : "Aucun compte"}
+							{account ? "Compte Microsoft" : "Aucun compte"}
 						</span>
 					</span>
 				</button>
-
-				{/*
-				  La maquette annonce ici « Services Mojang · OK ». Rien dans le
-				  launcher n'interroge Mojang: l'afficher aurait ete un voyant toujours
-				  vert, c'est-a-dire un voyant qui ne dit rien. Ce qui est affiche est
-				  ce qu'on sait vraiment -- le service local repond ou non -- et c'est
-				  precisement l'etat dont depend le lancement.
-				*/}
-				<div className="flex items-center gap-2 pl-2 text-xs text-neutral-400">
-					<span
-						className={`size-2 shrink-0 rounded-full ${
-							serviceReady
-								? "bg-accent-400 shadow-[0_0_10px_0_var(--color-accent)]"
-								: "bg-danger"
-						}`}
-					/>
-					{serviceReady ? "Service prêt" : "Service injoignable"}
-				</div>
 			</div>
 		</nav>
 	);
@@ -157,12 +139,12 @@ function NavButton({
 			    c'est le nom de la destination qui se faisait couper -- l'etiquette
 			    mangeait ce qu'elle qualifie. */}
 			{item.upcoming && (
-				<span className="relative shrink-0 rounded-sm border border-accent-700 px-1.5 py-px text-[10px] font-medium text-accent-200">
+				<span className="relative shrink-0 rounded-sm border border-neutral-700 bg-neutral-800/30 px-1.5 py-px text-[10px] font-medium text-neutral-400">
 					à venir
 				</span>
 			)}
 			{count !== undefined && (
-				<span className="relative shrink-0 text-[12.5px] text-accent-300">
+				<span className="relative shrink-0 text-[12.5px] text-neutral-300">
 					{count}
 				</span>
 			)}
