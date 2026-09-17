@@ -1,6 +1,6 @@
 import {
+	Home,
 	Layers,
-	PlayCircle,
 	Puzzle,
 	Shirt,
 	SlidersHorizontal,
@@ -48,7 +48,7 @@ export type NavItem = {
  * evite d'avoir a l'apprendre.
  */
 export const PRIMARY_NAV: NavItem[] = [
-	{ screen: "home", icon: PlayCircle, label: "Jouer" },
+	{ screen: "home", icon: Home, label: "Accueil" },
 	{ screen: "versions", icon: Layers, label: "Versions" },
 	{ screen: "mods", icon: Puzzle, label: "Mods" },
 	{ screen: "cosmetics", icon: Shirt, label: "Cosmétiques", upcoming: true },
