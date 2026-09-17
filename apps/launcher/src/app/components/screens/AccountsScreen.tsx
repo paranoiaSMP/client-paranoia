@@ -64,7 +64,7 @@ export function AccountsScreen({
 										{entry.minecraftUsername}
 									</span>
 									<span className="truncate text-[12.5px] text-neutral-400">
-										Microsoft · premium
+										Compte Microsoft
 									</span>
 								</span>
 								<span className="shrink-0 whitespace-nowrap text-[13px]">
