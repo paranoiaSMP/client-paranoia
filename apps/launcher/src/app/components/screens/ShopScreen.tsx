@@ -9,13 +9,18 @@ import { ScreenHeader } from "./ScreenHeader";
  * « a venir ». C'est un choix de la maquette et il se defend: une entree
  * annoncee absente vaut mieux qu'une entree qui apparait un jour sans
  * prevenir, et elle donne une place ou brancher la boutique le moment venu.
+ *
+ * <p>Aucune date n'est annoncee. La maquette promettait une ouverture « avec
+ * la saison 6 »: une date tenue par personne devient une promesse manquee des
+ * qu'elle passe, et l'ecran qui la porte ne peut rien y faire. Dire qu'elle
+ * n'est pas ouverte est exact a tout moment.
  */
 export function ShopScreen() {
 	return (
 		<div className="flex min-h-0 flex-1 flex-col items-start gap-4 overflow-auto p-6">
 			<ScreenHeader
 				title="Boutique"
-				subtitle="Capes, packs et passes de saison Paranoia."
+				subtitle="Capes et objets cosmétiques Paranoia."
 			/>
 
 			<div className="elev-sm flex items-center gap-3 rounded-lg border-2 border-divider bg-surface p-4">
@@ -23,7 +28,7 @@ export function ShopScreen() {
 				<span className="flex flex-col gap-px">
 					<span className="text-[15px] font-semibold">Bientôt disponible</span>
 					<span className="text-[13px] text-neutral-300">
-						La boutique ouvrira avec la saison 6.
+						La boutique n'est pas encore ouverte.
 					</span>
 				</span>
 			</div>
