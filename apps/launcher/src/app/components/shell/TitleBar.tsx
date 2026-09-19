@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X } from "lucide-react";
+import { Copy, Minus, Square, X } from "lucide-react";
 
 import { useAppVersion } from "../../hooks/useAppVersion";
 
@@ -73,7 +73,7 @@ export function TitleBar() {
 					draggable={false}
 					src="/assets/paranoia-wordmark.png"
 				/>
-				<span className="truncate text-xs uppercase tracking-[0.08em] text-neutral-400">
+				<span className="truncate text-xs uppercase tracking-[0.08em] text-neutral-300">
 					launcher {version}
 				</span>
 			</div>
@@ -89,7 +89,11 @@ export function TitleBar() {
 					label={maximized ? "Restaurer" : "Agrandir"}
 					onClick={() => void getCurrentWindow().toggleMaximize()}
 				>
-					<Square className="size-[13px]" />
+					{maximized ? (
+						<Copy className="size-[13px]" />
+					) : (
+						<Square className="size-[13px]" />
+					)}
 				</WindowButton>
 				<WindowButton
 					label="Fermer"
