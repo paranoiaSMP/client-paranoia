@@ -11,6 +11,11 @@ import net.minecraft.util.Identifier;
  * dessin -- seulement un identifiant a poser sur le texte, et le meme a
  * fournir quand on le mesure.
  *
+ * <p>Poser cet identifiant sur un style passe en revanche par la plateforme:
+ * {@code Style.withFont} ne prend pas le meme type selon la version du jeu.
+ * Voir {@link gg.paranoia.client.platform.ClientPlatform#fontStyle}, qui dit
+ * aussi sur quelles versions le choix est aujourd'hui sans effet.
+ *
  * <p>C'est aussi la raison pour laquelle {@code fontHeight} n'apparait nulle
  * part ici: la hauteur de ligne reste 9 quelle que soit la police, c'est la
  * grille de Minecraft. Une police qui deborderait de ces neuf pixels serait

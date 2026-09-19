@@ -1,11 +1,13 @@
 package gg.paranoia.client.hud;
 
 import gg.paranoia.client.config.BackgroundStyle;
+import gg.paranoia.client.config.HudFont;
 import gg.paranoia.client.config.HudLayout;
 import gg.paranoia.client.config.HudStyle;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.HudAppearanceModule;
+import gg.paranoia.client.platform.Platforms;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -34,6 +36,19 @@ public abstract class HudElement extends Module {
 
     /** Derniere image pour laquelle cet element a prepare son contenu. */
     private int preparedFor = -1;
+
+    /**
+     * Police pour laquelle {@link #fontStyle} a ete construit.
+     *
+     * <p>Statiques comme {@link #frame}, et pour la meme raison: il n'y a
+     * qu'une police a la fois pour tout le HUD. Construire son style appartient
+     * a la plateforme -- {@code withFont} ne prend pas le meme type selon la
+     * version de Minecraft -- et sans cette memoire, chaque ligne de chaque
+     * element le redemanderait a chaque image.
+     */
+    private static HudFont styledFont;
+
+    private static Style fontStyle = Style.EMPTY;
 
     private final HudLayout layout = new HudLayout();
 
@@ -206,6 +221,16 @@ public abstract class HudElement extends Module {
         return resolvedShape() == BackgroundStyle.NONE || layout.textShadow();
     }
 
+    private static Style fontStyle() {
+        HudFont chosen = HudAppearanceModule.font();
+        if (chosen != styledFont) {
+            styledFont = chosen;
+            Identifier id = chosen.id();
+            fontStyle = id == null ? Style.EMPTY : Platforms.get().fontStyle(id);
+        }
+        return fontStyle;
+    }
+
     /**
      * Le texte, habille de la police choisie.
      *
@@ -214,12 +239,18 @@ public abstract class HudElement extends Module {
      * dans la chaine de dessin. La police du jeu ne pose aucun style -- un
      * {@code Style.EMPTY} inutile se propagerait a chaque ligne de chaque HUD,
      * a chaque trame.
+     *
+     * <p>C'est aussi la sortie de secours d'une version qui ne sait pas encore
+     * designer une police:
+     * {@link gg.paranoia.client.platform.ClientPlatform#fontStyle} rend alors
+     * {@code Style.EMPTY}, et on repasse par le meme chemin que la police du
+     * jeu au lieu de poser un style vide sur chaque ligne.
      */
     protected Text label(String text) {
-        Identifier font = HudAppearanceModule.font().id();
-        return font == null
+        Style style = fontStyle();
+        return style == Style.EMPTY
             ? Text.literal(text)
-            : Text.literal(text).setStyle(Style.EMPTY.withFont(font));
+            : Text.literal(text).setStyle(style);
     }
 
     /**
