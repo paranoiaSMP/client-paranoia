@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ChevronDown, Layers, Play, X } from "lucide-react";
 import type {
 	LauncherProfile,
@@ -31,7 +32,7 @@ type HomeScreenProps = {
  * l'impression que le clic n'avait rien declenche.
  */
 const FALLBACK_STATUS: Record<LaunchStatusResponse["state"], string> = {
-	idle: "Prêt à lancer",
+	idle: "Prêt",
 	downloading_java: "Installation de Java…",
 	downloading_assets: "Téléchargement des ressources…",
 	launching: "Démarrage du jeu…",
@@ -60,6 +61,7 @@ export function HomeScreen({
 	onGoVersions,
 	onGoCosmetics,
 }: HomeScreenProps) {
+	const [newsExpanded, setNewsExpanded] = useState(true);
 	// La progression arrive de 0 a 100. L'ancien accueil la multipliait encore
 	// par cent avant de la poser en largeur: la barre passait a fond des le
 	// premier pourcent, et le debordement etant masque, elle avait l'air de
@@ -69,10 +71,10 @@ export function HomeScreen({
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col overflow-auto">
-			<section className="relative flex shrink-0 flex-wrap items-start justify-between gap-6 border-b border-divider bg-[radial-gradient(700px_380px_at_85%_20%,var(--color-accent-900)_0%,transparent_70%),linear-gradient(180deg,var(--color-surface),var(--color-ground))] p-6">
+			<section className="relative flex shrink-0 flex-wrap items-start justify-between gap-6 border-b border-divider bg-gradient-to-b from-surface to-ground p-6">
 				<div className="flex min-w-[300px] max-w-[620px] flex-1 flex-col gap-4">
 					<span className="text-xs uppercase tracking-[0.16em] text-accent-300">
-						Instance active
+						Profil
 					</span>
 
 					<div className="flex flex-col gap-1.5">
@@ -92,7 +94,7 @@ export function HomeScreen({
 						</p>
 					</div>
 
-					<div className="flex flex-wrap items-center gap-3">
+					<div className="flex flex-wrap items-center gap-6">
 						<button
 							type="button"
 							disabled={!profile}
@@ -100,7 +102,7 @@ export function HomeScreen({
 							className={`flex items-center gap-2 whitespace-nowrap rounded-md border-2 px-7 py-3.5 text-base font-semibold tracking-[0.04em] transition-[filter,background-color] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
 								running
 									? "border-danger text-danger focus-visible:outline-danger"
-									: "border-accent text-accent shadow-[0_0_34px_-6px_var(--color-accent),inset_0_0_0_1px_var(--color-accent-700)] focus-visible:outline-accent"
+									: "border-accent text-accent shadow-[0_0_14px_-4px_var(--color-accent),inset_0_0_0_1px_var(--color-accent-700)] focus-visible:outline-accent"
 							}`}
 						>
 							{running ? (
@@ -137,16 +139,18 @@ export function HomeScreen({
 					<div className="flex max-w-[440px] flex-col gap-1.5">
 						<div className="flex items-baseline justify-between gap-3 text-[13px] leading-snug text-neutral-300">
 							<span className="min-w-0 truncate">{statusText}</span>
-							<span className="whitespace-nowrap">
-								{running ? `${progress} %` : "—"}
-							</span>
+							{running && status.state !== "running" && (
+								<span className="whitespace-nowrap">{progress} %</span>
+							)}
 						</div>
-						<div className="h-1.5 overflow-hidden rounded-[3px] bg-well shadow-[inset_0_0_0_1px_var(--color-divider)]">
-							<div
-								className="h-full bg-gradient-to-r from-accent-600 to-accent-300 shadow-[0_0_14px_0_var(--color-accent)] transition-[width] duration-200"
-								style={{ width: `${progress}%` }}
-							/>
-						</div>
+						{running && status.state !== "running" && (
+							<div className="h-1.5 overflow-hidden rounded-[3px] bg-well shadow-[inset_0_0_0_1px_var(--color-divider)]">
+								<div
+									className="h-full bg-gradient-to-r from-accent-600 to-accent-300 shadow-[0_0_14px_0_var(--color-accent)] transition-[width] duration-200"
+									style={{ width: `${progress}%` }}
+								/>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -168,13 +172,13 @@ export function HomeScreen({
 					  sombre, il n'ajoute que ce qui est plus clair que lui, donc il
 					  eclaire sans salir les noirs.
 					*/}
-					<div className="relative h-[220px] rounded-md bg-[radial-gradient(160px_130px_at_50%_30%,var(--color-accent-900)_0%,var(--color-neutral-900)_80%)] shadow-[inset_0_0_0_2px_var(--color-divider)]">
+					<div className="relative h-[220px] rounded-md bg-ground shadow-[inset_0_0_0_2px_var(--color-divider)]">
 						<img
 							alt=""
 							aria-hidden
 							draggable={false}
 							src="/assets/paranoia-emblem.png"
-							className="pointer-events-none absolute left-0 top-1/2 w-[300px] max-w-none -translate-x-[62%] -translate-y-[54%] opacity-80 mix-blend-lighten blur-[7px]"
+							className="pointer-events-none absolute left-0 top-1/2 w-[300px] max-w-none -translate-x-[62%] -translate-y-[54%] opacity-25 mix-blend-lighten blur-[7px]"
 						/>
 						<div className="absolute inset-0 overflow-hidden rounded-md">
 							<SkinViewer3D
@@ -197,19 +201,40 @@ export function HomeScreen({
 				</div>
 			</section>
 
-			<section className="flex flex-col gap-4 p-6">
-				<h2 className="m-0 text-[17px] font-medium">Actualités du client</h2>
+			<section
+				className={`flex flex-col transition-all ${
+					newsExpanded ? "gap-4 p-6" : "gap-0 px-6 py-3.5"
+				}`}
+			>
+				<div className="flex items-center justify-between">
+					<h2 className="m-0 text-[17px] font-medium">Actualités du client</h2>
+					<button
+						type="button"
+						onClick={() => setNewsExpanded((prev) => !prev)}
+						aria-expanded={newsExpanded}
+						className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
+					>
+						<span>{newsExpanded ? "Réduire" : "Afficher"}</span>
+						<ChevronDown
+							className={`size-4 transition-transform duration-200 ${
+								newsExpanded ? "" : "-rotate-90"
+							}`}
+						/>
+					</button>
+				</div>
 
-				{news.length === 0 ? (
-					<p className="m-0 text-sm text-neutral-400">
-						Aucune actualité pour le moment.
-					</p>
-				) : (
-					<div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-						{news.slice(0, 3).map((item) => (
-							<NewsCard key={item.id} item={item} />
-						))}
-					</div>
+				{newsExpanded && (
+					news.length === 0 ? (
+						<p className="m-0 text-sm text-neutral-400">
+							Aucune actualité pour le moment.
+						</p>
+					) : (
+						<div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
+							{news.slice(0, 3).map((item) => (
+								<NewsCard key={item.id} item={item} />
+							))}
+						</div>
+					)
 				)}
 			</section>
 		</div>
