@@ -240,11 +240,11 @@ public abstract class HudElement extends Module {
      * {@code Style.EMPTY} inutile se propagerait a chaque ligne de chaque HUD,
      * a chaque trame.
      *
-     * <p>C'est aussi la sortie de secours d'une version qui ne sait pas encore
-     * designer une police:
+     * <p>Le test porte sur le style rendu et non sur l'identifiant, ce qui
+     * couvre du meme coup une version qui ne saurait pas designer de police:
      * {@link gg.paranoia.client.platform.ClientPlatform#fontStyle} rend alors
-     * {@code Style.EMPTY}, et on repasse par le meme chemin que la police du
-     * jeu au lieu de poser un style vide sur chaque ligne.
+     * {@code Style.EMPTY}, et on repasse par le chemin de la police du jeu au
+     * lieu de poser un style vide sur chaque ligne.
      */
     protected Text label(String text) {
         Style style = fontStyle();

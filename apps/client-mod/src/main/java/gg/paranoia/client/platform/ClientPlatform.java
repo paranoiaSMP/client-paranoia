@@ -91,13 +91,14 @@ public interface ClientPlatform {
      *
      * <p>{@code Style.withFont} prenait un {@code Identifier} en 1.21.8; a
      * partir de 1.21.10 il prend un {@code StyleSpriteSource}, type qui
-     * n'existe pas dans l'autre version. La police ne se choisit pourtant pas
-     * autrement: Minecraft la lit sur le style du {@code Text}, jamais sur le
-     * {@code TextRenderer} qui le dessine.
+     * n'existe pas dans l'autre version -- le style ne pointe plus une police
+     * mais une source de sprites, dont une police n'est qu'un cas. La police ne
+     * se choisit pourtant pas autrement: Minecraft la lit sur le style du
+     * {@code Text}, jamais sur le {@code TextRenderer} qui le dessine.
      *
-     * <p>Rendre {@code Style.EMPTY} est une reponse valable: le texte sort
-     * alors dans la police du jeu. C'est ce que fait une version dont on ne
-     * sait pas encore construire la source de sprites.
+     * <p>Rendre {@code Style.EMPTY} reste une reponse valable: le texte sort
+     * alors dans la police du jeu. C'est la sortie de secours d'une version
+     * dont on ne saurait pas designer une police.
      */
     Style fontStyle(Identifier font);
 }

@@ -13,6 +13,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.util.Identifier;
 
 import java.util.UUID;
@@ -95,23 +96,22 @@ public final class PlatformImpl implements ClientPlatform {
     }
 
     /**
-     * La police du jeu, faute de savoir designer l'autre.
+     * Ici la police ne se designe plus par son identifiant nu.
      *
-     * <p>{@code withFont} ne prend plus un identifiant mais un
-     * {@code StyleSpriteSource}, et rien dans ce depot ne dit comment on en
-     * fabrique un: le compilateur est en CI, pas ici. Deviner la fabrique
-     * couterait un aller-retour de build par essai, pour un resultat qu'on
-     * n'aurait de toute facon pas verifie -- une signature non confirmee par la
-     * CI n'est pas une signature verifiee.
+     * <p>{@code withFont} prend un {@code StyleSpriteSource}: le style ne
+     * pointe plus une police, il pointe une <em>source de sprites</em>, dont
+     * une police n'est qu'un cas. C'est {@code StyleSpriteSource.Font} qui
+     * enveloppe l'identifiant -- le meme type que la constante
+     * {@code DEFAULT}, qui est la police du jeu.
      *
-     * <p>La sonde de {@code build-mod.yml} affiche desormais {@code Style} et
-     * {@code StyleSpriteSource} sur chaque version: la vraie signature sera
-     * dans le journal du prochain build, et cette methode pourra la suivre.
-     * D'ici la, le choix de police reste sans effet sur ces versions -- le HUD
-     * s'affiche dans la police du jeu, pas dans une police cassee.
+     * <p>Signature lue dans la sonde de {@code build-mod.yml}, pas devinee:
+     * {@code javap} y affiche {@code Style} et {@code StyleSpriteSource} sur
+     * chaque version ciblee. C'est la seule facon de le savoir ici -- Fabric
+     * est injoignable a travers le proxy, et le seul compilateur du projet est
+     * la CI.
      */
     @Override
     public Style fontStyle(Identifier font) {
-        return Style.EMPTY;
+        return Style.EMPTY.withFont(new StyleSpriteSource.Font(font));
     }
 }

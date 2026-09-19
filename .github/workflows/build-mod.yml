@@ -156,12 +156,14 @@ jobs:
             # Les quatre premieres entrees sont des cibles de mixin en service:
             # gardees en permanence, elles signaleront le jour ou une version de
             # Minecraft les deplacera. Les suivantes sont les questions encore
-            # ouvertes -- ici, escamoter aussi les blocs animes de loin, et
-            # choisir la police d'un texte: `Style.withFont` prenait un
-            # Identifier en 1.21.8 et prend un StyleSpriteSource ensuite, type
-            # dont on ne connait pas encore la fabrique. Les deux dernieres
-            # entrees sont la pour la lire. Le motif `ont` plutot que `withFont`
-            # sur Style: il attrape aussi un accesseur renomme.
+            # ouvertes -- ici, escamoter aussi les blocs animes de loin.
+            #
+            # Les trois dernieres sont en service elles aussi, et elles ont deja
+            # rendu service: `Style.withFont` prend un Identifier en 1.21.8 et un
+            # StyleSpriteSource ensuite, ce que la sonde a dit avant qu'on ait
+            # eu a le deviner. Gardees pour le prochain deplacement. Le motif
+            # `ont` plutot que `withFont` sur Style: il attrape aussi un
+            # accesseur renomme.
             #
             # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
             # d'une liste prolongee par « \ » coupe la commande.
@@ -182,7 +184,8 @@ jobs:
               "net.minecraft.block.entity.BlockEntity:getPos|getWorld|getType" \
               "net.minecraft.block.AbstractBlock\$AbstractBlockState:paque|olid|uffer" \
               "net.minecraft.text.Style:ont" \
-              "net.minecraft.text.StyleSpriteSource:*"
+              "net.minecraft.text.StyleSpriteSource:*" \
+              "net.minecraft.text.StyleSpriteSource\$Font:*"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
