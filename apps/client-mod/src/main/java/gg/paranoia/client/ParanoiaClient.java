@@ -20,6 +20,7 @@ import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BlockEntityCullingModule;
 import gg.paranoia.client.modules.BrightnessModule;
+import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.EntityCullingModule;
@@ -80,6 +81,9 @@ public final class ParanoiaClient {
         REGISTRY.register(new ShieldHud());
         REGISTRY.register(new EffectsHud());
         REGISTRY.register(new DiagnosticsHud());
+        // L'apparence en premier parmi les reglages: c'est le seul module qui
+        // change l'allure de tous les autres.
+        REGISTRY.register(new HudAppearanceModule());
         REGISTRY.register(new BrightnessModule());
         REGISTRY.register(new ColorHitModule());
         REGISTRY.register(new CrosshairModule());

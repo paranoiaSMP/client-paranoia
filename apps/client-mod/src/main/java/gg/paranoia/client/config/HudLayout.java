@@ -17,7 +17,7 @@ public final class HudLayout {
     private double yFraction;
     private float scale = 1.0f;
     private float opacity = 1.0f;
-    private BackgroundStyle background = BackgroundStyle.SOLID;
+    private BackgroundStyle background = BackgroundStyle.AUTO;
     private boolean textShadow = true;
 
     public HudLayout() {
