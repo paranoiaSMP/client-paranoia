@@ -12,32 +12,58 @@ import net.minecraft.client.gui.DrawContext;
  * tombe bien -- c'est exactement l'esthetique du jeu.
  */
 public final class MenuTheme {
+    /*
+     * La gamme Nocturne, celle du launcher, en ARGB.
+     *
+     * Le menu etait gris: l'ecart entre le canal bleu et le canal rouge y
+     * valait 5 points sur le fond et 8 sur les cartes, contre 16 et 22 cote
+     * launcher. En dessous de dix, l'oeil ne lit plus une teinte -- il lit du
+     * gris. Les deux moities du client portaient donc le meme escalier de
+     * clarte et deux couleurs differentes, sans que rien ne le signale.
+     *
+     * Les valeurs viennent telles quelles de styles.css: memes fonds, meme
+     * accent, meme trait. C'est le seul moyen que les deux restent d'accord --
+     * les rapprocher a l'oeil, c'est reconduire la derive sous une autre forme.
+     */
+
     /** Assombrissement du jeu derriere la fenetre, par-dessus le flou. */
-    public static final int BACKDROP = 0x99000000;
+    public static final int BACKDROP = 0x99161826;
 
-    public static final int WINDOW = 0xF20E0E13;
-    public static final int WINDOW_BORDER = 0x33FFFFFF;
-    public static final int HEADER = 0xFF15151C;
-    public static final int SIDEBAR = 0xFF101016;
+    public static final int WINDOW = 0xF2161826;
+    public static final int WINDOW_BORDER = 0x29E9E9ED;
+    public static final int HEADER = 0xFF232532;
+    public static final int SIDEBAR = 0xFF232532;
 
-    public static final int CARD = 0xFF191921;
-    public static final int CARD_HOVER = 0xFF22222E;
-    public static final int CARD_BORDER = 0x22FFFFFF;
+    public static final int CARD = 0xFF232532;
+    public static final int CARD_HOVER = 0xFF292B31;
+    public static final int CARD_BORDER = 0x1FE9E9ED;
 
-    public static final int ACCENT = 0xFFB07CFF;
-    public static final int ACCENT_DIM = 0x55B07CFF;
-    public static final int TEXT = 0xFFE8E8F0;
-    public static final int TEXT_DIM = 0xFF8A8A9A;
+    /*
+     * L'accent descend de #B07CFF a #9184D9, et ce n'est pas un adoucissement
+     * arbitraire: #B07CFF est a un cheveu du cran 300 du launcher, celui qu'il
+     * reserve a l'emphase. Le menu utilisait donc par defaut la couleur que
+     * l'autre moitie garde pour attirer l'oeil, ce qui ne laissait plus rien
+     * pour attirer l'oeil.
+     */
+    public static final int ACCENT = 0xFF9184D9;
+    public static final int ACCENT_DIM = 0x559184D9;
+    public static final int TEXT = 0xFFE9E9ED;
+    public static final int TEXT_DIM = 0xFF9397AB;
 
-    /** Etats du bouton d'une carte, repris de la maquette. */
+    /*
+     * Les etats gardent leurs couleurs: vert et rouge ne disent pas la marque,
+     * ils disent allume et eteint. Les ramener sur la gamme effacerait
+     * justement ce qu'ils signalent. Seul le verrouille rejoint les neutres --
+     * il ne dit rien d'autre que « indisponible ».
+     */
     public static final int STATE_ON = 0xFF3E9E5E;
     public static final int STATE_ON_HOVER = 0xFF49B76D;
     public static final int STATE_OFF = 0xFFC2404C;
     public static final int STATE_OFF_HOVER = 0xFFD44E5A;
-    public static final int STATE_LOCKED = 0xFF4A4A56;
+    public static final int STATE_LOCKED = 0xFF595D6C;
 
-    public static final int ROW_HOVER = 0x22FFFFFF;
-    public static final int GUIDE = 0xFFB07CFF;
+    public static final int ROW_HOVER = 0x1AE9E9ED;
+    public static final int GUIDE = 0xFF9184D9;
 
     private MenuTheme() {
     }

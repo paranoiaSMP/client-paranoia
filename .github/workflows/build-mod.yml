@@ -67,6 +67,17 @@ jobs:
       # est fatale. Le mod a ete publie deux fois avec une injection sur
       # `onDisconnected`, methode heritee donc absente de la classe ciblee, et
       # plantait chez tous les joueurs pendant que la CI restait verte.
+      # Le menu et le launcher ont deja derive une fois, en silence: meme
+      # escalier de clarte, deux couleurs differentes. Rien ne casse, rien ne
+      # le signale, et on ne s'en apercoit qu'en posant les deux ecrans cote a
+      # cote. Ce controle est la seule chose qui empeche que cela recommence.
+      #
+      # Avant le classpath: il ne lit que deux fichiers de texte, autant le
+      # savoir tout de suite plutot qu'apres une resolution Gradle.
+      - name: Verify palette matches the launcher
+        working-directory: apps/client-mod
+        run: node scripts/check-palette.mjs
+
       - name: Verify mixin targets exist
         working-directory: apps/client-mod
         run: |
