@@ -191,10 +191,6 @@ export function HomeScreen({
 						</div>
 					</div>
 
-					<p className="m-0 text-center text-xs text-neutral-400">
-						Glisser un skin .png
-					</p>
-
 					<button
 						type="button"
 						onClick={onGoCosmetics}
