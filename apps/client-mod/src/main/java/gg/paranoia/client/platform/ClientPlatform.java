@@ -5,6 +5,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
+import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
 
 import java.util.UUID;
@@ -84,4 +85,20 @@ public interface ClientPlatform {
 
     /** Libere la texture et sa memoire graphique. Fil de rendu uniquement. */
     void unregisterCosmeticTexture(Identifier id);
+
+    /**
+     * Un style qui impose une police au texte.
+     *
+     * <p>{@code Style.withFont} prenait un {@code Identifier} en 1.21.8; a
+     * partir de 1.21.10 il prend un {@code StyleSpriteSource}, type qui
+     * n'existe pas dans l'autre version -- le style ne pointe plus une police
+     * mais une source de sprites, dont une police n'est qu'un cas. La police ne
+     * se choisit pourtant pas autrement: Minecraft la lit sur le style du
+     * {@code Text}, jamais sur le {@code TextRenderer} qui le dessine.
+     *
+     * <p>Rendre {@code Style.EMPTY} reste une reponse valable: le texte sort
+     * alors dans la police du jeu. C'est la sortie de secours d'une version
+     * dont on ne saurait pas designer une police.
+     */
+    Style fontStyle(Identifier font);
 }

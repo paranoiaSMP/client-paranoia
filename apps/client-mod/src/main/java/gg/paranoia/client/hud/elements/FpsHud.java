@@ -48,7 +48,7 @@ public final class FpsHud extends HudElement {
 
     @Override
     public int width(TextRenderer textRenderer) {
-        return textRenderer.getWidth(text) + PADDING * 2;
+        return measure(textRenderer, text) + PADDING * 2;
     }
 
     @Override

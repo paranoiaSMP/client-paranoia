@@ -136,7 +136,7 @@ public final class EffectsHud extends HudElement {
     private int nameWidth(TextRenderer textRenderer) {
         int widest = 0;
         for (int index = 0; index < count; index++) {
-            widest = Math.max(widest, textRenderer.getWidth(pool.get(index).name));
+            widest = Math.max(widest, measure(textRenderer, pool.get(index).name));
         }
         return widest;
     }
@@ -147,7 +147,7 @@ public final class EffectsHud extends HudElement {
         int names = nameWidth(textRenderer);
         for (int index = 0; index < count; index++) {
             String time = pool.get(index).time;
-            widest = Math.max(widest, names + (time.isEmpty() ? 0 : textRenderer.getWidth(time) + 6));
+            widest = Math.max(widest, names + (time.isEmpty() ? 0 : measure(textRenderer, time) + 6));
         }
         return widest + PADDING * 2;
     }

@@ -488,11 +488,16 @@ public final class ModuleWindow {
             rowY += ROW_HEIGHT;
 
             renderLabel(context, font, "Fond", rowY, LABEL_RESERVE);
-            renderValue(context, font, hud.layout().background().label(), rowY);
+            BackgroundStyle chosen = hud.layout().background();
+            renderValue(context, font, chosen == BackgroundStyle.AUTO
+                ? chosen.label() + " (" + hud.resolvedShape().label() + ")"
+                : chosen.label(), rowY);
             rowY += ROW_HEIGHT;
 
             renderLabel(context, font, "Ombre du texte", rowY, LABEL_RESERVE);
-            renderValue(context, font, hud.layout().textShadow() ? "Oui" : "Non", rowY);
+            renderValue(context, font, hud.textShadow()
+                ? (hud.layout().textShadow() ? "Oui" : "Oui (sans fond)")
+                : "Non", rowY);
         }
     }
 

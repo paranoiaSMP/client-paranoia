@@ -11,6 +11,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
 
 import java.util.UUID;
@@ -67,5 +68,11 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public void unregisterCosmeticTexture(Identifier id) {
         MinecraftClient.getInstance().getTextureManager().destroyTexture(id);
+    }
+
+    @Override
+    public Style fontStyle(Identifier font) {
+        // Ici la police se designe par son identifiant, directement.
+        return Style.EMPTY.withFont(font);
     }
 }

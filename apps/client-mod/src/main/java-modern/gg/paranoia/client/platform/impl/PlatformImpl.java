@@ -12,6 +12,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.util.Identifier;
 
 import java.util.UUID;
@@ -91,5 +93,25 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public void unregisterCosmeticTexture(Identifier id) {
         MinecraftClient.getInstance().getTextureManager().destroyTexture(id);
+    }
+
+    /**
+     * Ici la police ne se designe plus par son identifiant nu.
+     *
+     * <p>{@code withFont} prend un {@code StyleSpriteSource}: le style ne
+     * pointe plus une police, il pointe une <em>source de sprites</em>, dont
+     * une police n'est qu'un cas. C'est {@code StyleSpriteSource.Font} qui
+     * enveloppe l'identifiant -- le meme type que la constante
+     * {@code DEFAULT}, qui est la police du jeu.
+     *
+     * <p>Signature lue dans la sonde de {@code build-mod.yml}, pas devinee:
+     * {@code javap} y affiche {@code Style} et {@code StyleSpriteSource} sur
+     * chaque version ciblee. C'est la seule facon de le savoir ici -- Fabric
+     * est injoignable a travers le proxy, et le seul compilateur du projet est
+     * la CI.
+     */
+    @Override
+    public Style fontStyle(Identifier font) {
+        return Style.EMPTY.withFont(new StyleSpriteSource.Font(font));
     }
 }

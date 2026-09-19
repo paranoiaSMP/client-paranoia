@@ -67,6 +67,17 @@ jobs:
       # est fatale. Le mod a ete publie deux fois avec une injection sur
       # `onDisconnected`, methode heritee donc absente de la classe ciblee, et
       # plantait chez tous les joueurs pendant que la CI restait verte.
+      # Le menu et le launcher ont deja derive une fois, en silence: meme
+      # escalier de clarte, deux couleurs differentes. Rien ne casse, rien ne
+      # le signale, et on ne s'en apercoit qu'en posant les deux ecrans cote a
+      # cote. Ce controle est la seule chose qui empeche que cela recommence.
+      #
+      # Avant le classpath: il ne lit que deux fichiers de texte, autant le
+      # savoir tout de suite plutot qu'apres une resolution Gradle.
+      - name: Verify palette matches the launcher
+        working-directory: apps/client-mod
+        run: node scripts/check-palette.mjs
+
       - name: Verify mixin targets exist
         working-directory: apps/client-mod
         run: |
@@ -147,6 +158,13 @@ jobs:
             # Minecraft les deplacera. Les suivantes sont les questions encore
             # ouvertes -- ici, escamoter aussi les blocs animes de loin.
             #
+            # Les trois dernieres sont en service elles aussi, et elles ont deja
+            # rendu service: `Style.withFont` prend un Identifier en 1.21.8 et un
+            # StyleSpriteSource ensuite, ce que la sonde a dit avant qu'on ait
+            # eu a le deviner. Gardees pour le prochain deplacement. Le motif
+            # `ont` plutot que `withFont` sur Style: il attrape aussi un
+            # accesseur renomme.
+            #
             # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
             # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
@@ -164,7 +182,10 @@ jobs:
               "net.minecraft.client.render.block.entity.BlockEntityRenderer:*" \
               "net.minecraft.client.render.block.entity.BlockEntityRenderManager:get|render|ender" \
               "net.minecraft.block.entity.BlockEntity:getPos|getWorld|getType" \
-              "net.minecraft.block.AbstractBlock\$AbstractBlockState:paque|olid|uffer"
+              "net.minecraft.block.AbstractBlock\$AbstractBlockState:paque|olid|uffer" \
+              "net.minecraft.text.Style:ont" \
+              "net.minecraft.text.StyleSpriteSource:*" \
+              "net.minecraft.text.StyleSpriteSource\$Font:*"
             do
               class="${entry%%:*}"
               members="${entry#*:}"

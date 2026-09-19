@@ -1,9 +1,16 @@
 package gg.paranoia.client.hud;
 
 import gg.paranoia.client.config.BackgroundStyle;
+import gg.paranoia.client.config.HudFont;
 import gg.paranoia.client.config.HudLayout;
+import gg.paranoia.client.config.HudStyle;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
+import gg.paranoia.client.modules.HudAppearanceModule;
+import gg.paranoia.client.platform.Platforms;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -29,6 +36,19 @@ public abstract class HudElement extends Module {
 
     /** Derniere image pour laquelle cet element a prepare son contenu. */
     private int preparedFor = -1;
+
+    /**
+     * Police pour laquelle {@link #fontStyle} a ete construit.
+     *
+     * <p>Statiques comme {@link #frame}, et pour la meme raison: il n'y a
+     * qu'une police a la fois pour tout le HUD. Construire son style appartient
+     * a la plateforme -- {@code withFont} ne prend pas le meme type selon la
+     * version de Minecraft -- et sans cette memoire, chaque ligne de chaque
+     * element le redemanderait a chaque image.
+     */
+    private static HudFont styledFont;
+
+    private static Style fontStyle = Style.EMPTY;
 
     private final HudLayout layout = new HudLayout();
 
@@ -114,34 +134,73 @@ public abstract class HudElement extends Module {
         renderContent(context, textRenderer, x + PADDING, y + PADDING);
     }
 
+    /**
+     * Le fond d'un module: sa forme vient de l'element, ses couleurs du style.
+     *
+     * <p>La couleur etait auparavant {@code alpha << 24} -- du noir pur, sans
+     * teinte possible. C'est ce qui interdisait d'avoir plusieurs allures: on
+     * pouvait changer la forme du fond, jamais sa couleur.
+     */
     protected void drawBackground(DrawContext context, int x, int y, int width, int height) {
-        BackgroundStyle style = layout.background();
-        if (style == BackgroundStyle.NONE) {
+        HudStyle style = HudAppearanceModule.style();
+        BackgroundStyle shape = resolvedShape();
+        if (shape == BackgroundStyle.NONE) {
             return;
         }
 
-        int alpha = (int) (0x80 * layout.opacity());
-        int color = (alpha << 24);
+        float opacity = layout.opacity();
+        int panel = style.panelArgb(opacity);
 
-        switch (style) {
-            case SOLID -> context.fill(x, y, x + width, y + height, color);
+        switch (shape) {
+            case SOLID -> context.fill(x, y, x + width, y + height, panel);
             case ROUNDED -> {
                 // Coins ronges d'un pixel: trois rectangles suffisent, et on
                 // reste sur `fill`, seule primitive stable entre les versions.
-                context.fill(x + 1, y, x + width - 1, y + height, color);
-                context.fill(x, y + 1, x + 1, y + height - 1, color);
-                context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
+                context.fill(x + 1, y, x + width - 1, y + height, panel);
+                context.fill(x, y + 1, x + 1, y + height - 1, panel);
+                context.fill(x + width - 1, y + 1, x + width, y + height - 1, panel);
             }
             case OUTLINE -> {
-                int border = ((int) (0xC0 * layout.opacity()) << 24) | 0x00FFFFFF;
-                context.fill(x, y, x + width, y + 1, border);
-                context.fill(x, y + height - 1, x + width, y + height, border);
-                context.fill(x, y + 1, x + 1, y + height - 1, border);
-                context.fill(x + width - 1, y + 1, x + width, y + height - 1, border);
+                // Le contour seul: pas de remplissage, donc la couleur de
+                // bordure du style -- ou du blanc si le style n'en declare
+                // pas, faute de quoi la forme ne dessinerait rien du tout.
+                int only = style.hasBorder()
+                    ? style.borderArgb(opacity)
+                    : (((int) (0xC0 * opacity)) << 24) | 0x00FFFFFF;
+                drawBorder(context, x, y, width, height, only);
             }
             default -> {
             }
         }
+
+        if (shape != BackgroundStyle.OUTLINE && style.hasBorder()) {
+            drawBorder(context, x, y, width, height, style.borderArgb(opacity));
+        }
+
+        // L'arete lumineuse du bord haut, posee en dernier pour rester
+        // au-dessus de la bordure. Un seul pixel de haut: c'est la lumiere qui
+        // accroche la tranche, pas un second trait.
+        if (style.hasEdge()) {
+            int inset = shape == BackgroundStyle.ROUNDED ? 1 : 0;
+            context.fill(x + inset, y, x + width - inset, y + 1, style.edgeArgb(opacity));
+        }
+    }
+
+    /**
+     * La forme reellement dessinee: celle du module, ou celle du style quand
+     * le module est en {@link BackgroundStyle#AUTO}.
+     */
+    public BackgroundStyle resolvedShape() {
+        BackgroundStyle chosen = layout.background();
+        return chosen == BackgroundStyle.AUTO ? HudAppearanceModule.style().shape() : chosen;
+    }
+
+    private static void drawBorder(
+        DrawContext context, int x, int y, int width, int height, int color) {
+        context.fill(x, y, x + width, y + 1, color);
+        context.fill(x, y + height - 1, x + width, y + height, color);
+        context.fill(x, y + 1, x + 1, y + height - 1, color);
+        context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
     /** Couleur de texte tenant compte de l'opacite reglee pour cet element. */
@@ -150,9 +209,65 @@ public abstract class HudElement extends Module {
         return (alpha << 24) | (rgb & 0x00FFFFFF);
     }
 
+    /**
+     * L'ombre du texte.
+     *
+     * <p>Sans fond, elle est imposee: c'est elle seule qui detache les
+     * chiffres d'un ciel clair ou d'une plaine enneigee, et un joueur qui
+     * l'aurait eteinte sous un fond plein se retrouverait avec un HUD
+     * illisible en passant au style epure -- sans comprendre pourquoi.
+     */
+    public boolean textShadow() {
+        return resolvedShape() == BackgroundStyle.NONE || layout.textShadow();
+    }
+
+    private static Style fontStyle() {
+        HudFont chosen = HudAppearanceModule.font();
+        if (chosen != styledFont) {
+            styledFont = chosen;
+            Identifier id = chosen.id();
+            fontStyle = id == null ? Style.EMPTY : Platforms.get().fontStyle(id);
+        }
+        return fontStyle;
+    }
+
+    /**
+     * Le texte, habille de la police choisie.
+     *
+     * <p>Minecraft selectionne une police par le style du {@code Text}, pas
+     * par un {@code TextRenderer} different: il n'y a donc rien a remplacer
+     * dans la chaine de dessin. La police du jeu ne pose aucun style -- un
+     * {@code Style.EMPTY} inutile se propagerait a chaque ligne de chaque HUD,
+     * a chaque trame.
+     *
+     * <p>Le test porte sur le style rendu et non sur l'identifiant, ce qui
+     * couvre du meme coup une version qui ne saurait pas designer de police:
+     * {@link gg.paranoia.client.platform.ClientPlatform#fontStyle} rend alors
+     * {@code Style.EMPTY}, et on repasse par le chemin de la police du jeu au
+     * lieu de poser un style vide sur chaque ligne.
+     */
+    protected Text label(String text) {
+        Style style = fontStyle();
+        return style == Style.EMPTY
+            ? Text.literal(text)
+            : Text.literal(text).setStyle(style);
+    }
+
+    /**
+     * La largeur du texte dans la police choisie.
+     *
+     * <p>A utiliser partout ou l'on mesurait {@code textRenderer.getWidth} sur
+     * une chaine: cette surcharge-la ignore le style et rend donc la largeur
+     * en police du jeu. Mesurer avec l'une et dessiner avec l'autre donne des
+     * fonds trop courts ou trop longs, et des colonnes qui ne s'alignent plus.
+     */
+    protected int measure(TextRenderer textRenderer, String text) {
+        return textRenderer.getWidth(label(text));
+    }
+
     protected void drawLine(
         DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
-        context.drawText(textRenderer, text, x, y, textColor(rgb), layout.textShadow());
+        context.drawText(textRenderer, label(text), x, y, textColor(rgb), textShadow());
     }
 
     protected static MinecraftClient client() {
