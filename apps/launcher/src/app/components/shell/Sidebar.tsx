@@ -9,8 +9,6 @@ type SidebarProps = {
 	/** Null tant que le compte n'a pas ete demande pour l'instance courante. */
 	modCount: number | null;
 	account: MicrosoftAccount | null;
-	/** Le service local repond: c'est lui qui installe et lance le jeu. */
-	serviceReady: boolean;
 };
 
 /**
@@ -26,7 +24,6 @@ export function Sidebar({
 	onNavigate,
 	modCount,
 	account,
-	serviceReady,
 }: SidebarProps) {
 	return (
 		<nav
@@ -38,9 +35,8 @@ export function Sidebar({
 
 			  Sans cela, `justify-between` poussait simplement le bas hors de la
 			  fenetre des qu'elle etait courte: a 640 pixels de haut, la carte de
-			  compte etait coupee en deux et le voyant du service disparaissait
-			  entierement -- c'est-a-dire le seul endroit qui dit si le jeu peut se
-			  lancer. Ce qui doit rester visible est ce qui ne peut pas defiler.
+			  compte etait coupee en deux. Ce qui doit rester visible est ce qui ne
+			  peut pas defiler.
 			*/}
 			<div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
 				<div className="px-2 pb-1 text-[11px] uppercase tracking-[0.14em] text-neutral-400">
