@@ -113,12 +113,8 @@ async function main() {
   cp.execSync(`npx --yes postject "${exePath}" NODE_SEA_BLOB "${blobPath}" --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2${extraDarwin}`, { stdio: "inherit" });
 
   if (process.platform === "darwin") {
-    try {
-      run("codesign", ["--sign", "-", exePath]);
-      console.log("[sidecar] binaire signe ad-hoc");
-    } catch {
-      console.log("[sidecar] codesign --sign ignore");
-    }
+    run("codesign", ["--sign", "-", exePath]);
+    console.log("[sidecar] binaire signe ad-hoc");
   }
 
   if (!isWindows) {
