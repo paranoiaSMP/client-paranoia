@@ -192,7 +192,7 @@ public final class InfoHud extends HudElement {
     private int labelWidth(TextRenderer textRenderer) {
         int widest = 0;
         for (int index = 0; index < count; index++) {
-            widest = Math.max(widest, textRenderer.getWidth(pool.get(index).label));
+            widest = Math.max(widest, measure(textRenderer, pool.get(index).label));
         }
         return widest;
     }
@@ -202,7 +202,7 @@ public final class InfoHud extends HudElement {
         int widest = 0;
         int labels = labelWidth(textRenderer);
         for (int index = 0; index < count; index++) {
-            widest = Math.max(widest, labels + 6 + textRenderer.getWidth(pool.get(index).value));
+            widest = Math.max(widest, labels + 6 + measure(textRenderer, pool.get(index).value));
         }
         return widest + PADDING * 2;
     }

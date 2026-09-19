@@ -176,7 +176,7 @@ public final class ArmorHud extends HudElement {
         for (int index = 0; index < count; index++) {
             Cell cell = pool.get(index);
             if (cell.damageable) {
-                widest = Math.max(widest, textRenderer.getWidth(cell.durability));
+                widest = Math.max(widest, measure(textRenderer, cell.durability));
             }
         }
         return widest;
@@ -229,7 +229,7 @@ public final class ArmorHud extends HudElement {
 
             int color = durabilityColor(cell.percent);
             if (horizontal) {
-                int textX = slotX + (ICON - textRenderer.getWidth(cell.durability)) / 2;
+                int textX = slotX + (ICON - measure(textRenderer, cell.durability)) / 2;
                 drawLine(context, textRenderer, cell.durability, textX, slotY + ICON + 1, color);
             } else {
                 drawLine(context, textRenderer, cell.durability, slotX + ICON + 4,

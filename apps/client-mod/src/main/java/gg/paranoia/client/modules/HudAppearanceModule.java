@@ -1,5 +1,6 @@
 package gg.paranoia.client.modules;
 
+import gg.paranoia.client.config.HudFont;
 import gg.paranoia.client.config.HudStyle;
 import gg.paranoia.client.module.EnumSetting;
 import gg.paranoia.client.module.Module;
@@ -29,6 +30,9 @@ public final class HudAppearanceModule extends Module {
     private final EnumSetting<HudStyle> style = add(new EnumSetting<>(
         "style", "Style du HUD", HudStyle.NOCTURNE, HudStyle.values(), HudStyle::label));
 
+    private final EnumSetting<HudFont> font = add(new EnumSetting<>(
+        "font", "Police du HUD", HudFont.VANILLA, HudFont.values(), HudFont::label));
+
     public HudAppearanceModule() {
         super("hudAppearance", "Apparence du HUD", ModuleCategory.PARAMETRES, true);
         instance = this;
@@ -42,5 +46,14 @@ public final class HudAppearanceModule extends Module {
     public static HudStyle style() {
         HudAppearanceModule module = instance;
         return module == null ? HudStyle.NOCTURNE : module.style.get();
+    }
+
+    /**
+     * @return la police en vigueur, celle du jeu tant que le module n'existe
+     *     pas -- meme raison que pour le style.
+     */
+    public static HudFont font() {
+        HudAppearanceModule module = instance;
+        return module == null ? HudFont.VANILLA : module.font.get();
     }
 }

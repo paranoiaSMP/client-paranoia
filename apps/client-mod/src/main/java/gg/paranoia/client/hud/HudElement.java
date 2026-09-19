@@ -6,6 +6,9 @@ import gg.paranoia.client.config.HudStyle;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.HudAppearanceModule;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -203,9 +206,37 @@ public abstract class HudElement extends Module {
         return resolvedShape() == BackgroundStyle.NONE || layout.textShadow();
     }
 
+    /**
+     * Le texte, habille de la police choisie.
+     *
+     * <p>Minecraft selectionne une police par le style du {@code Text}, pas
+     * par un {@code TextRenderer} different: il n'y a donc rien a remplacer
+     * dans la chaine de dessin. La police du jeu ne pose aucun style -- un
+     * {@code Style.EMPTY} inutile se propagerait a chaque ligne de chaque HUD,
+     * a chaque trame.
+     */
+    protected Text label(String text) {
+        Identifier font = HudAppearanceModule.font().id();
+        return font == null
+            ? Text.literal(text)
+            : Text.literal(text).setStyle(Style.EMPTY.withFont(font));
+    }
+
+    /**
+     * La largeur du texte dans la police choisie.
+     *
+     * <p>A utiliser partout ou l'on mesurait {@code textRenderer.getWidth} sur
+     * une chaine: cette surcharge-la ignore le style et rend donc la largeur
+     * en police du jeu. Mesurer avec l'une et dessiner avec l'autre donne des
+     * fonds trop courts ou trop longs, et des colonnes qui ne s'alignent plus.
+     */
+    protected int measure(TextRenderer textRenderer, String text) {
+        return textRenderer.getWidth(label(text));
+    }
+
     protected void drawLine(
         DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
-        context.drawText(textRenderer, text, x, y, textColor(rgb), textShadow());
+        context.drawText(textRenderer, label(text), x, y, textColor(rgb), textShadow());
     }
 
     protected static MinecraftClient client() {

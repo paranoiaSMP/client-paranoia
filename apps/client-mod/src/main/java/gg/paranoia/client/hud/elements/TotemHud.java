@@ -101,8 +101,8 @@ public final class TotemHud extends HudElement {
         // courant: sinon la boite change de taille en passant de « Totem x1 » a
         // « Aucun totem », et l'element saute a l'ecran au pire moment.
         int widest = Math.max(
-            textRenderer.getWidth("Aucun totem"),
-            textRenderer.getWidth("Totem x64"));
+            measure(textRenderer, "Aucun totem"),
+            measure(textRenderer, "Totem x64"));
         return widest + PADDING * 2;
     }
 

@@ -82,7 +82,7 @@ public final class CoordinatesHud extends HudElement {
     public int width(TextRenderer textRenderer) {
         int widest = 0;
         for (String line : lines) {
-            widest = Math.max(widest, textRenderer.getWidth(line));
+            widest = Math.max(widest, measure(textRenderer, line));
         }
         return widest + PADDING * 2;
     }
