@@ -135,12 +135,21 @@ jobs:
         run: |
           pnpm --filter @paranoia/backend build:sidecar
           cd apps/launcher/src-tauri/binaries
-          # Assure la présence des deux binaires pour le packaging Universal
-          if [ -f "paranoia-server-aarch64-apple-darwin" ] && [ ! -f "paranoia-server-x86_64-apple-darwin" ]; then
-            cp paranoia-server-aarch64-apple-darwin paranoia-server-x86_64-apple-darwin
-          elif [ -f "paranoia-server-x86_64-apple-darwin" ] && [ ! -f "paranoia-server-aarch64-apple-darwin" ]; then
-            cp paranoia-server-x86_64-apple-darwin paranoia-server-aarch64-apple-darwin
+
+          # Trouve le binaire sidecar généré
+          SRC=$(ls paranoia-server-* 2>/dev/null | head -n 1)
+
+          if [ -n "$SRC" ]; then
+            echo "Binaire source trouvé : $SRC"
+            # Crée le binaire universal attendu par Tauri
+            cp "$SRC" paranoia-server-universal-apple-darwin
+            chmod +x paranoia-server-universal-apple-darwin
+          else
+            echo "Aucun sidecar trouvé dans binaries/"
+            exit 1
           fi
+          
+          ls -la
 
       - name: Smoke test sidecar
         shell: bash
