@@ -55,6 +55,7 @@ public final class DiagnosticsHud extends HudElement {
 
     public DiagnosticsHud() {
         super("diagnostics", "Diagnostic Paranoia", ModuleCategory.OPTIMISATION, false);
+        describe("Ce que les optimisations ont reellement escamote, compte par compte.");
         placeAt(0.99, 0.35);
     }
 

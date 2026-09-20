@@ -24,6 +24,7 @@ public final class BrightnessModule extends Module {
 
     public BrightnessModule() {
         super("brightness", "Luminosite", ModuleCategory.VISUEL, false);
+        describe("Eclaircit la scene sans toucher aux reglages du jeu.");
         instance = this;
     }
 

@@ -58,6 +58,7 @@ public final class AttackChargeHud extends HudElement {
 
     public AttackChargeHud() {
         super("attackCharge", "Charge d'attaque", ModuleCategory.COMBAT, false);
+        describe("Barre de rechargement du coup, pour frapper a pleine puissance.");
         placeAt(0.5, 0.62);
     }
 

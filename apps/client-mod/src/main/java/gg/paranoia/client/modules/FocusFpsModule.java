@@ -34,6 +34,7 @@ public final class FocusFpsModule extends Module {
 
     public FocusFpsModule() {
         super("focusFps", "Ralentir hors focus", ModuleCategory.OPTIMISATION, false);
+        describe("Baisse les images par seconde quand la fenetre perd le focus.");
         instance = this;
     }
 

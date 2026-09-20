@@ -11,6 +11,16 @@ public abstract class Module {
     private final ModuleCategory category;
     private final List<Setting<?>> settings = new ArrayList<>();
 
+    /**
+     * Une phrase qui dit ce que fait le module, affichee sur sa carte.
+     *
+     * <p>Posee par le constructeur plutot que passee a {@code super}: la
+     * signature de {@link Module} est heritee par vingt-deux classes, et une
+     * description est du texte, pas une dependance. Vide par defaut -- la carte
+     * se contente alors du nom, sans reserver de place pour rien.
+     */
+    private String description = "";
+
     private boolean enabled;
 
     /**
@@ -37,6 +47,15 @@ public abstract class Module {
 
     public String name() {
         return name;
+    }
+
+    /** A appeler dans le constructeur du module. */
+    protected void describe(String text) {
+        this.description = text;
+    }
+
+    public String description() {
+        return description;
     }
 
     public ModuleCategory category() {

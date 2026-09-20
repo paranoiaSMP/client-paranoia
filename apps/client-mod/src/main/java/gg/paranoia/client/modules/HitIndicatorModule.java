@@ -26,6 +26,7 @@ public final class HitIndicatorModule extends Module {
 
     public HitIndicatorModule() {
         super("hitindicator", "Indicateur de portee", ModuleCategory.COMBAT, false);
+        describe("Colore le viseur selon la cible et la charge de l'arme.");
         instance = this;
     }
 

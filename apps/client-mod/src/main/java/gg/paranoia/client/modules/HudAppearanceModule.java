@@ -35,6 +35,7 @@ public final class HudAppearanceModule extends Module {
 
     public HudAppearanceModule() {
         super("hudAppearance", "Apparence du HUD", ModuleCategory.PARAMETRES, true);
+        describe("Style et police de tous les elements du HUD, d'un seul reglage.");
         instance = this;
     }
 

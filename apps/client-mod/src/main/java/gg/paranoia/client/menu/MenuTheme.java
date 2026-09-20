@@ -1,5 +1,6 @@
 package gg.paranoia.client.menu;
 
+import gg.paranoia.client.render.Shapes;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 
@@ -51,15 +52,17 @@ public final class MenuTheme {
     public static final int TEXT_DIM = 0xFF9397AB;
 
     /*
-     * Les etats gardent leurs couleurs: vert et rouge ne disent pas la marque,
-     * ils disent allume et eteint. Les ramener sur la gamme effacerait
-     * justement ce qu'ils signalent. Seul le verrouille rejoint les neutres --
-     * il ne dit rien d'autre que « indisponible ».
+     * L'etat d'un module se lisait a la couleur d'un bandeau, vert ou rouge.
+     * Il se lit maintenant a la position d'une pastille, comme dans la maquette:
+     * la couleur ne fait plus que confirmer, et elle peut donc rejoindre la
+     * gamme. Le rouge reste pour ce qui est refuse, le neutre pour ce qui est
+     * indisponible -- deux choses que l'accent ne saurait pas dire.
      */
-    public static final int STATE_ON = 0xFF3E9E5E;
-    public static final int STATE_ON_HOVER = 0xFF49B76D;
+    public static final int TRACK_ON = 0xE6796CBF;
+    public static final int TRACK_OFF = 0xE63F424D;
+    public static final int KNOB_ON = 0xFFF5F4FF;
+    public static final int KNOB_OFF = 0xFF9397AB;
     public static final int STATE_OFF = 0xFFC2404C;
-    public static final int STATE_OFF_HOVER = 0xFFD44E5A;
     public static final int STATE_LOCKED = 0xFF595D6C;
 
     public static final int ROW_HOVER = 0x1AE9E9ED;
@@ -72,24 +75,58 @@ public final class MenuTheme {
         return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }
 
+    /**
+     * Rayon des cartes et des boutons du menu.
+     *
+     * <p>Quatre, la aussi par conversion d'echelle: la maquette dessine ses
+     * cartes a huit pixels de rayon sur une scene large de 1600, et l'interface
+     * du jeu en compte environ 960. Le cadre de la fenetre prend six, par
+     * l'accesseur a rayon explicite.
+     */
+    public static final int RADIUS = 4;
+
     public static void outline(DrawContext context, int x, int y, int w, int h, int color) {
-        context.fill(x, y, x + w, y + 1, color);
-        context.fill(x, y + h - 1, x + w, y + h, color);
-        context.fill(x, y + 1, x + 1, y + h - 1, color);
-        context.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+        outline(context, x, y, w, h, RADIUS, color);
+    }
+
+    public static void outline(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.roundedOutline(context, x, y, w, h, radius, color);
     }
 
     /**
-     * Rectangle aux coins ronges d'un pixel.
+     * Rectangle a coins ronds.
      *
-     * <p>Trois rectangles: le corps pleine largeur, puis les deux bords
-     * lateraux rentres d'un pixel en haut et en bas. C'est tout ce qu'il faut
-     * pour casser l'angle droit, et ca suffit a l'oeil a cette taille.
+     * <p>Rongeait auparavant un seul pixel a chaque coin, en trois rectangles.
+     * Ca ne se voit pas: un carre dont on a gratte un pixel reste un carre a
+     * l'oeil, et le menu paraissait donc carre a cote de sa maquette. Le rayon
+     * est maintenant reellement dessine, une rangee de pixels a la fois.
      */
     public static void panel(DrawContext context, int x, int y, int w, int h, int color) {
-        context.fill(x + 1, y, x + w - 1, y + h, color);
-        context.fill(x, y + 1, x + 1, y + h - 1, color);
-        context.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+        panel(context, x, y, w, h, RADIUS, color);
+    }
+
+    public static void panel(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, radius, color);
+    }
+
+    /**
+     * Zone collee au bord haut d'un cadre arrondi: l'en-tete du menu.
+     *
+     * <p>Ses coins hauts suivent le cadre, son bord bas reste droit -- c'est une
+     * separation, pas un bord de fenetre. Un rectangle carre a cet endroit
+     * laisserait ses angles depasser du cadre.
+     */
+    public static void panelTop(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, radius, 0, color);
+    }
+
+    /** Meme chose, collee au bord bas: la barre laterale. */
+    public static void panelBottom(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, 0, radius, color);
     }
 
     public static void text(
@@ -125,6 +162,78 @@ public final class MenuTheme {
             truncated = truncated.substring(0, truncated.length() - 1);
         }
         return truncated + "...";
+    }
+
+    /**
+     * Coupe un texte en lignes qui tiennent dans une largeur.
+     *
+     * <p>Coupe aux espaces, et tronque la derniere ligne quand le texte deborde
+     * du nombre de lignes disponibles: une description de module a deux lignes
+     * sur sa carte, pas davantage, et la carte ne grandit pas pour l'accueillir.
+     */
+    public static java.util.List<String> wrap(
+        TextRenderer font, String value, int maxWidth, int maxLines) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        for (String word : value.split(" ")) {
+            String candidate = current.isEmpty() ? word : current + " " + word;
+            if (font.getWidth(candidate) <= maxWidth || current.isEmpty()) {
+                current.setLength(0);
+                current.append(candidate);
+                continue;
+            }
+            lines.add(current.toString());
+            current.setLength(0);
+            current.append(word);
+            if (lines.size() == maxLines) {
+                break;
+            }
+        }
+
+        if (lines.size() < maxLines && !current.isEmpty()) {
+            lines.add(current.toString());
+        }
+        // La derniere ligne porte les points de suspension si le texte continue.
+        if (lines.size() == maxLines) {
+            int used = 0;
+            for (String line : lines) {
+                used += line.length() + 1;
+            }
+            if (used <= value.length()) {
+                lines.set(maxLines - 1, fit(font, lines.get(maxLines - 1) + " ...", maxWidth));
+            }
+        }
+        return lines;
+    }
+
+    /**
+     * Interrupteur de la maquette: une piste arrondie et une pastille.
+     *
+     * <p>La position dit l'etat, la couleur ne fait que le confirmer -- d'ou
+     * l'accent plutot que du vert. Un bandeau « ACTIVE » disait la meme chose
+     * en trois fois plus de place, et ne se lisait qu'en le lisant.
+     */
+    public static void toggle(
+        DrawContext context, int x, int y, boolean on, boolean locked) {
+        int trackWidth = 18;
+        int trackHeight = 9;
+        int knob = 7;
+
+        int track = locked ? STATE_LOCKED : (on ? TRACK_ON : TRACK_OFF);
+        Shapes.rounded(context, x, y, trackWidth, trackHeight, trackHeight / 2, track);
+        if (on && !locked) {
+            Shapes.roundedOutline(context, x, y, trackWidth, trackHeight, trackHeight / 2, ACCENT);
+        }
+
+        int knobX = on ? x + trackWidth - knob - 1 : x + 1;
+        Shapes.rounded(context, knobX, y + 1, knob, knob, knob / 2,
+            locked ? TEXT_DIM : (on ? KNOB_ON : KNOB_OFF));
+    }
+
+    /** Largeur occupee par {@link #toggle}. */
+    public static int toggleWidth() {
+        return 18;
     }
 
     /** Pastille de filtre, comme les chips "ALL / HUD / SERVEUR" de la maquette. */

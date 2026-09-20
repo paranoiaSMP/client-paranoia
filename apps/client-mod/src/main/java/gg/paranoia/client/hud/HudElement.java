@@ -8,6 +8,9 @@ import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.platform.Platforms;
+import gg.paranoia.client.render.Shapes;
+
+import java.util.Locale;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -150,16 +153,13 @@ public abstract class HudElement extends Module {
 
         float opacity = layout.opacity();
         int panel = style.panelArgb(opacity);
+        // Un rayon n'a de sens que sur la forme arrondie: « Plein » veut dire
+        // carre, c'est ce qui le distingue.
+        int radius = shape == BackgroundStyle.ROUNDED ? style.radius() : 0;
 
         switch (shape) {
             case SOLID -> context.fill(x, y, x + width, y + height, panel);
-            case ROUNDED -> {
-                // Coins ronges d'un pixel: trois rectangles suffisent, et on
-                // reste sur `fill`, seule primitive stable entre les versions.
-                context.fill(x + 1, y, x + width - 1, y + height, panel);
-                context.fill(x, y + 1, x + 1, y + height - 1, panel);
-                context.fill(x + width - 1, y + 1, x + width, y + height - 1, panel);
-            }
+            case ROUNDED -> Shapes.rounded(context, x, y, width, height, radius, panel);
             case OUTLINE -> {
                 // Le contour seul: pas de remplissage, donc la couleur de
                 // bordure du style -- ou du blanc si le style n'en declare
@@ -167,21 +167,23 @@ public abstract class HudElement extends Module {
                 int only = style.hasBorder()
                     ? style.borderArgb(opacity)
                     : (((int) (0xC0 * opacity)) << 24) | 0x00FFFFFF;
-                drawBorder(context, x, y, width, height, only);
+                Shapes.roundedOutline(context, x, y, width, height, style.radius(), only);
             }
             default -> {
             }
         }
 
         if (shape != BackgroundStyle.OUTLINE && style.hasBorder()) {
-            drawBorder(context, x, y, width, height, style.borderArgb(opacity));
+            Shapes.roundedOutline(
+                context, x, y, width, height, radius, style.borderArgb(opacity));
         }
 
         // L'arete lumineuse du bord haut, posee en dernier pour rester
         // au-dessus de la bordure. Un seul pixel de haut: c'est la lumiere qui
-        // accroche la tranche, pas un second trait.
+        // accroche la tranche, pas un second trait. Elle demarre ou demarre le
+        // premier pixel de la forme, sinon elle deborde du coin.
         if (style.hasEdge()) {
-            int inset = shape == BackgroundStyle.ROUNDED ? 1 : 0;
+            int inset = Shapes.topInset(radius, width, height);
             context.fill(x + inset, y, x + width - inset, y + 1, style.edgeArgb(opacity));
         }
     }
@@ -193,14 +195,6 @@ public abstract class HudElement extends Module {
     public BackgroundStyle resolvedShape() {
         BackgroundStyle chosen = layout.background();
         return chosen == BackgroundStyle.AUTO ? HudAppearanceModule.style().shape() : chosen;
-    }
-
-    private static void drawBorder(
-        DrawContext context, int x, int y, int width, int height, int color) {
-        context.fill(x, y, x + width, y + 1, color);
-        context.fill(x, y + height - 1, x + width, y + height, color);
-        context.fill(x, y + 1, x + 1, y + height - 1, color);
-        context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
     /** Couleur de texte tenant compte de l'opacite reglee pour cet element. */
@@ -268,6 +262,94 @@ public abstract class HudElement extends Module {
     protected void drawLine(
         DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
         context.drawText(textRenderer, label(text), x, y, textColor(rgb), textShadow());
+    }
+
+    // ------------------------------------------------------- typographie
+
+    /**
+     * Le facteur d'agrandissement d'un chiffre principal.
+     *
+     * <p>Entier, et pas 1,7 comme le donnerait la conversion d'echelle de la
+     * maquette: la police du jeu est une image, et l'agrandir d'un facteur
+     * fractionnaire interpole ses pixels -- le chiffre devient flou, ce qui se
+     * remarque bien plus qu'un point de taille en moins. Deux fois neuf font
+     * dix-huit pixels, contre neuf pour le kicker: le rapport de hierarchie de
+     * la maquette est tenu, et chaque pixel reste net.
+     */
+    protected static final float HERO_SCALE = 2.0f;
+
+    /** Ecart ajoute entre les lettres d'un kicker. */
+    private static final int KICKER_SPACING = 1;
+
+    /**
+     * Un chiffre principal, agrandi.
+     *
+     * <p>Passe par la pile de matrices de la plateforme, celle qui sert deja a
+     * mettre un HUD entier a l'echelle: les piles s'emboitent, donc un element
+     * agrandi par le joueur agrandit aussi ses chiffres, ce qui est bien ce
+     * qu'on attend.
+     */
+    protected void drawHero(
+        DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
+        Platforms.get().pushScale(context, HERO_SCALE, x, y);
+        try {
+            context.drawText(textRenderer, label(text), 0, 0, textColor(rgb), textShadow());
+        } finally {
+            Platforms.get().popScale(context);
+        }
+    }
+
+    protected int heroWidth(TextRenderer textRenderer, String text) {
+        return Math.round(measure(textRenderer, text) * HERO_SCALE);
+    }
+
+    protected static int heroHeight(TextRenderer textRenderer) {
+        return Math.round(textRenderer.fontHeight * HERO_SCALE);
+    }
+
+    /**
+     * Un libelle de la maquette: majuscules, lettres espacees, couleur sourde.
+     *
+     * <p>La maquette les pose en dix pixels, sous un chiffre de vingt-six. La
+     * police du jeu ne descend pas sous neuf, donc le contraste ne peut pas
+     * venir de la taille: il vient de la casse, de l'espacement et du ton. Un
+     * kicker ecrit comme le reste ne se distinguerait pas du contenu.
+     */
+    protected void drawKicker(
+        DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
+        String majuscules = text.toUpperCase(Locale.ROOT);
+        int cursor = x;
+        for (int index = 0; index < majuscules.length(); index++) {
+            String lettre = String.valueOf(majuscules.charAt(index));
+            context.drawText(
+                textRenderer, label(lettre), cursor, y, textColor(rgb), textShadow());
+            cursor += measure(textRenderer, lettre) + KICKER_SPACING;
+        }
+    }
+
+    protected int kickerWidth(TextRenderer textRenderer, String text) {
+        String majuscules = text.toUpperCase(Locale.ROOT);
+        int total = 0;
+        for (int index = 0; index < majuscules.length(); index++) {
+            total += measure(textRenderer, String.valueOf(majuscules.charAt(index))) + KICKER_SPACING;
+        }
+        return Math.max(0, total - KICKER_SPACING);
+    }
+
+    /**
+     * Une jauge de la maquette: une piste sourde, un remplissage a l'accent.
+     *
+     * <p>Trois pixels de haut et des bouts arrondis, comme les barres d'usure
+     * de l'armure et les curseurs du panneau. Sous quatre pixels de large le
+     * rayon se borne tout seul et la barre redevient un rectangle.
+     */
+    protected void drawGauge(
+        DrawContext context, int x, int y, int width, float fraction, int rgb) {
+        Shapes.rounded(context, x, y, width, 3, 1, textColor(0x3F424D));
+        int filled = Math.round(width * Math.min(Math.max(fraction, 0f), 1f));
+        if (filled > 0) {
+            Shapes.rounded(context, x, y, filled, 3, 1, textColor(rgb));
+        }
     }
 
     protected static MinecraftClient client() {

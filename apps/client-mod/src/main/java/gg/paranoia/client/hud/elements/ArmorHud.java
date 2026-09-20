@@ -3,6 +3,7 @@ package gg.paranoia.client.hud.elements;
 import gg.paranoia.client.hud.HudElement;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.EnumSetting;
+import gg.paranoia.client.render.Shapes;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -67,6 +68,7 @@ public final class ArmorHud extends HudElement {
 
     public ArmorHud() {
         super("armor", "Armure", true);
+        describe("Durabilite des quatre pieces portees et de l'objet en main.");
         placeAt(0.5, 0.88);
     }
 
@@ -182,8 +184,15 @@ public final class ArmorHud extends HudElement {
         return widest;
     }
 
+    /** Hauteur de la jauge d'usure, plus son ecart a l'icone. */
+    private static final int GAUGE = 3;
+    private static final int GAUGE_GAP = 2;
+
     private int cellHeight(TextRenderer textRenderer) {
-        return showDurability.get() ? ICON + textRenderer.fontHeight + 1 : ICON;
+        if (!showDurability.get()) {
+            return ICON;
+        }
+        return ICON + GAUGE_GAP + GAUGE + 1 + textRenderer.fontHeight;
     }
 
     @Override
@@ -229,28 +238,44 @@ public final class ArmorHud extends HudElement {
 
             int color = durabilityColor(cell.percent);
             if (horizontal) {
+                // La jauge d'usure de la maquette, sous l'icone: elle dit d'un
+                // coup d'oeil ce que le chiffre demande de lire. Les deux se
+                // completent -- la barre pour la proportion, le chiffre pour
+                // savoir combien de coups il reste.
+                drawGauge(context, slotX, slotY + ICON + GAUGE_GAP, ICON,
+                    cell.percent / 100f, color);
                 int textX = slotX + (ICON - measure(textRenderer, cell.durability)) / 2;
-                drawLine(context, textRenderer, cell.durability, textX, slotY + ICON + 1, color);
+                drawLine(context, textRenderer, cell.durability, textX,
+                    slotY + ICON + GAUGE_GAP + GAUGE + 1, color);
             } else {
-                drawLine(context, textRenderer, cell.durability, slotX + ICON + 4,
-                    slotY + (ICON - textRenderer.fontHeight) / 2, color);
+                int textX = slotX + ICON + 4;
+                drawLine(context, textRenderer, cell.durability, textX,
+                    slotY + (ICON - textRenderer.fontHeight) / 2 - 2, color);
+                drawGauge(context, textX, slotY + (ICON - textRenderer.fontHeight) / 2 + 8,
+                    durabilityWidth(textRenderer), cell.percent / 100f, color);
             }
         }
     }
 
+    /** Emplacement vide: le liseré arrondi de la maquette, pas un cadre carre. */
     private void drawSlotOutline(DrawContext context, int x, int y) {
-        int color = textColor(0x40FFFFFF);
-        context.fill(x, y, x + ICON, y + 1, color);
-        context.fill(x, y + ICON - 1, x + ICON, y + ICON, color);
-        context.fill(x, y + 1, x + 1, y + ICON - 1, color);
-        context.fill(x + ICON - 1, y + 1, x + ICON, y + ICON - 1, color);
+        Shapes.roundedOutline(
+            context, x, y, ICON, ICON, 3, textColor(0x3F424D));
     }
 
-    /** Vert, orange puis rouge: lisible d'un coup d'oeil en combat. */
+    /**
+     * La gamme de la maquette, et le rouge garde pour l'urgence.
+     *
+     * <p>C'etait vert, orange, rouge. La maquette n'a pas de vert: une piece
+     * intacte n'est pas un succes, c'est l'etat normal, et le signaler en vert
+     * dit « attention » vingt fois pour rien. Au-dela de la moitie, la piece
+     * prend donc l'accent clair comme le reste du HUD. Le rouge reste sous
+     * vingt pour cent -- la, il y a bien quelque chose a regarder.
+     */
     private static int durabilityColor(int percent) {
         if (percent > 50) {
-            return 0x7CFF9E;
+            return 0xB5ABFC;
         }
-        return percent > 20 ? 0xFFE07C : 0xFF7C7C;
+        return percent > 20 ? 0x9690C9 : 0xFF7C7C;
     }
 }
