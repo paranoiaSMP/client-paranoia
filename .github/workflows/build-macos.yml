@@ -257,6 +257,42 @@ jobs:
           fi
           echo "Signature valide : $sig"
 
+      - name: Generate update manifest
+        shell: bash
+        run: |
+          archive=$(find artifacts -name "*.app.tar.gz" | head -n 1)
+          if [ -z "$archive" ]; then
+            echo "::error::Archive .app.tar.gz absente"
+            exit 1
+          fi
+
+          sig="${archive}.sig"
+          if [ ! -f "$sig" ]; then
+            echo "::error::Signature absente pour $(basename "$archive")"
+            exit 1
+          fi
+
+          archive_name=$(basename "$archive")
+          archive_name="${archive_name// /.}"
+          version="${{ steps.release.outputs.tag }}"
+          version="${version#v}"
+          signature=$(tr -d '\r\n' < "$sig")
+          pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          cat > artifacts/latest.json <<EOF
+          {
+            "version": "$version",
+            "notes": "Voir les notes de version sur GitHub.",
+            "pub_date": "$pub_date",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "$signature",
+                "url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}/$archive_name"
+              }
+            }
+          }
+          EOF
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -268,3 +304,4 @@ jobs:
             artifacts/**/*.dmg
             artifacts/**/*.app.tar.gz
             artifacts/**/*.app.tar.gz.sig
+            artifacts/latest.json
