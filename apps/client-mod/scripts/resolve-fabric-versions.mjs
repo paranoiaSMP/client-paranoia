@@ -140,6 +140,24 @@ async function main() {
     console.log(`::warning::pas encore outille par Fabric, ignore: ${entry}`);
   }
 
+  // Le meme verdict, ecrit dans un fichier que la sonde relira en fin de job.
+  //
+  // Ces avertissements sont imprimes ici, c'est-a-dire au tout debut d'un
+  // journal qui en compte neuf cents lignes. On ne lit pratiquement jamais un
+  // journal de CI autrement que par la fin, et la question « pourquoi cette
+  // version n'est-elle pas construite ? » se pose precisement quand on regarde
+  // la liste des jars produits -- tout en bas. La reponse etait donc hors de
+  // portee au moment ou on la cherchait.
+  await fs.mkdir(path.join(modRoot, "build"), { recursive: true });
+  await fs.writeFile(
+    path.join(modRoot, "build", "fabric-resolution.txt"),
+    (skipped.length === 0
+      ? ["Toutes les versions declarees ont ete resolues."]
+      : skipped.map((entry) => `ignore: ${entry}`)
+    ).join("\n") + "\n",
+    "utf8",
+  );
+
   // Aucune version resolue: la panne n'est plus amont mais chez nous -- reseau
   // coupe, meta.fabricmc.net en vrac, dossier versions/ vide de tout ce qui
   // marchait hier. La, il faut bien echouer.
