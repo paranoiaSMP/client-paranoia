@@ -178,7 +178,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: pnpm exec tauri build --bundles dmg,app
+        run: pnpm exec tauri build --target universal-apple-darwin --bundles dmg,app
 
       - name: Verify sidecar is bundled
         shell: bash
