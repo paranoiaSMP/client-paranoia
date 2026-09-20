@@ -736,6 +736,25 @@ public final class ModuleWindow {
         };
     }
 
+    /**
+     * Ou commence la premiere rangee de reglages, dans la region qui les porte.
+     *
+     * <p>Doit rester d'accord avec {@link #renderOptions}, qui avance du meme
+     * nombre de pixels apres son en-tete: la colonne de droite ecrit un kicker
+     * puis le nom du module, la vue etroite un bouton de retour.
+     */
+    private int optionsTop() {
+        return panelVisible() ? contentY() + PAD + 25 : gridY() + CHIP_HEIGHT + PAD;
+    }
+
+    private int optionsLeft() {
+        return panelVisible() ? panelX() + PAD : gridX();
+    }
+
+    private int optionsWidth() {
+        return panelVisible() ? PANEL_WIDTH - PAD * 2 : gridWidth();
+    }
+
     private int[] backBox(TextRenderer font) {
         return new int[] {gridX(), gridY(), font.getWidth("< RETOUR") + 14};
     }

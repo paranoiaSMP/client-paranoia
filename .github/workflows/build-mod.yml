@@ -78,6 +78,18 @@ jobs:
         working-directory: apps/client-mod
         run: node scripts/check-palette.mjs
 
+      # Un appel a une methode supprimee ne se voit pas en local: sans le jar de
+      # Minecraft, javac renonce a analyser le corps de toute methode dont la
+      # signature reference un type absent -- c'est-a-dire presque toutes les
+      # notres. Une refonte du menu a ainsi retire trois accesseurs encore
+      # appeles, et seul ce job l'a dit, dix minutes plus tard.
+      #
+      # Ce controle ne lit que des fichiers texte: il passe avant le classpath,
+      # pour la meme raison que celui de la gamme.
+      - name: Verify every self-call resolves
+        working-directory: apps/client-mod
+        run: node scripts/check-own-calls.mjs
+
       - name: Verify mixin targets exist
         working-directory: apps/client-mod
         run: |
