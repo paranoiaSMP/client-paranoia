@@ -54,6 +54,7 @@ public final class ShieldHud extends HudElement {
 
     public ShieldHud() {
         super("shield", "Etat du bouclier", ModuleCategory.COMBAT, false);
+        describe("Disponibilite du bouclier apres un coup de hache.");
         placeAt(0.5, 0.72);
     }
 
@@ -129,8 +130,8 @@ public final class ShieldHud extends HudElement {
             // jamais sur le texte courant: sinon la boite retrecirait pendant le
             // decompte et la jauge glisserait sous les yeux du joueur.
             content += GAP + Math.max(
-                textRenderer.getWidth("5.0s"),
-                textRenderer.getWidth("Pret"));
+                measure(textRenderer, "5.0s"),
+                measure(textRenderer, "Pret"));
         }
         return content + PADDING * 2;
     }

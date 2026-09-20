@@ -58,6 +58,7 @@ public final class AttackChargeHud extends HudElement {
 
     public AttackChargeHud() {
         super("attackCharge", "Charge d'attaque", ModuleCategory.COMBAT, false);
+        describe("Barre de rechargement du coup, pour frapper a pleine puissance.");
         placeAt(0.5, 0.62);
     }
 
@@ -109,7 +110,7 @@ public final class AttackChargeHud extends HudElement {
             // Mesure sur « 100% » et non sur la valeur courante: sinon la boite
             // se retrecit en passant de 100 a 99, et la jauge se deplacerait
             // sous les yeux du joueur pendant la recharge.
-            content += GAP + textRenderer.getWidth("100%");
+            content += GAP + measure(textRenderer, "100%");
         }
         return content + PADDING * 2;
     }

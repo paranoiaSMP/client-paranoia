@@ -61,6 +61,7 @@ public final class BlockEntityCullingModule extends Module {
 
     public BlockEntityCullingModule() {
         super("blockEntityCulling", "Alleger les blocs animes", ModuleCategory.OPTIMISATION, false);
+        describe("Cesse de dessiner coffres et bannieres au-dela d'une distance.");
         instance = this;
     }
 

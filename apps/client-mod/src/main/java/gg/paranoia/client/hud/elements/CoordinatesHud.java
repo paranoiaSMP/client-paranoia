@@ -30,6 +30,7 @@ public final class CoordinatesHud extends HudElement {
 
     public CoordinatesHud() {
         super("coordinates", "Coordonnees", true);
+        describe("Position XYZ, masquable en enregistrement.");
         placeAt(0.01, 0.02);
     }
 
@@ -78,24 +79,66 @@ public final class CoordinatesHud extends HudElement {
             : new String[] {"X " + x, "Y " + y, "Z " + z};
     }
 
+    /**
+     * L'ecart entre le libelle d'axe et sa valeur.
+     *
+     * <p>La maquette pose « XYZ » a gauche et la valeur a droite, separes par
+     * le vide plutot que par un signe. Le libelle ne bouge pas quand la valeur
+     * s'allonge -- ce qui arrive des qu'on passe sous zero.
+     */
+    private static final int LABEL_GAP = 10;
+
+    /** Le libelle de la ligne: « XYZ » en compact, l'axe sinon. */
+    private String labelOf(int index) {
+        if (lastCompact) {
+            return index == 0 ? "XYZ" : "NETHER";
+        }
+        return switch (index) {
+            case 0 -> "X";
+            case 1 -> "Y";
+            case 2 -> "Z";
+            default -> "NETHER";
+        };
+    }
+
+    /** La valeur seule, le libelle d'axe retire du texte prepare. */
+    private String valueOf(int index) {
+        String line = lines[index];
+        String prefix = labelOf(index) + " ";
+        return line.regionMatches(true, 0, prefix, 0, prefix.length())
+            ? line.substring(prefix.length())
+            : line;
+    }
+
+    private int labelColumn(TextRenderer textRenderer) {
+        int widest = 0;
+        for (int i = 0; i < lines.length; i++) {
+            widest = Math.max(widest, kickerWidth(textRenderer, labelOf(i)));
+        }
+        return widest;
+    }
+
     @Override
     public int width(TextRenderer textRenderer) {
         int widest = 0;
-        for (String line : lines) {
-            widest = Math.max(widest, textRenderer.getWidth(line));
+        for (int i = 0; i < lines.length; i++) {
+            widest = Math.max(widest, measure(textRenderer, valueOf(i)));
         }
-        return widest + PADDING * 2;
+        return labelColumn(textRenderer) + LABEL_GAP + widest + PADDING * 2;
     }
 
     @Override
     public int height(TextRenderer textRenderer) {
-        return lines.length * textRenderer.fontHeight + PADDING * 2;
+        return lines.length * (textRenderer.fontHeight + 1) - 1 + PADDING * 2;
     }
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
+        int column = labelColumn(textRenderer);
         for (int i = 0; i < lines.length; i++) {
-            drawLine(context, textRenderer, lines[i], x, y + i * textRenderer.fontHeight, color.argb());
+            int lineY = y + i * (textRenderer.fontHeight + 1);
+            drawKicker(context, textRenderer, labelOf(i), x, lineY, 0x9397AB);
+            drawLine(context, textRenderer, valueOf(i), x + column + LABEL_GAP, lineY, color.argb());
         }
     }
 }

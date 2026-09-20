@@ -17,6 +17,7 @@ public final class DirectionHud extends HudElement {
 
     public DirectionHud() {
         super("direction", "Direction", true);
+        describe("Point cardinal et axe regarde, comme la boussole du jeu.");
         placeAt(0.01, 0.09);
     }
 
@@ -71,7 +72,7 @@ public final class DirectionHud extends HudElement {
 
     @Override
     public int width(TextRenderer textRenderer) {
-        return textRenderer.getWidth(text) + PADDING * 2;
+        return measure(textRenderer, text) + PADDING * 2;
     }
 
     @Override

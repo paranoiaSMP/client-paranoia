@@ -45,6 +45,7 @@ public final class TotemHud extends HudElement {
 
     public TotemHud() {
         super("totem", "Totem en main", ModuleCategory.COMBAT, false);
+        describe("Rappelle si un totem est tenu, et dans quelle main.");
         placeAt(0.5, 0.68);
     }
 
@@ -101,8 +102,8 @@ public final class TotemHud extends HudElement {
         // courant: sinon la boite change de taille en passant de « Totem x1 » a
         // « Aucun totem », et l'element saute a l'ecran au pire moment.
         int widest = Math.max(
-            textRenderer.getWidth("Aucun totem"),
-            textRenderer.getWidth("Totem x64"));
+            measure(textRenderer, "Aucun totem"),
+            measure(textRenderer, "Totem x64"));
         return widest + PADDING * 2;
     }
 

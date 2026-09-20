@@ -40,6 +40,7 @@ public final class CrosshairModule extends Module {
 
     public CrosshairModule() {
         super("crosshair", "Crosshair", ModuleCategory.COMBAT, false);
+        describe("Viseur personnalise: forme, taille, couleur et contour.");
         instance = this;
     }
 

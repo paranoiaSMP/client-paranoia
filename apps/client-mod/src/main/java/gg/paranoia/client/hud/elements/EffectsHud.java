@@ -3,6 +3,7 @@ package gg.paranoia.client.hud.elements;
 import gg.paranoia.client.hud.HudElement;
 import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.ColorSetting;
+import gg.paranoia.client.render.Shapes;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -22,6 +23,18 @@ public final class EffectsHud extends HudElement {
     /** Chiffres romains jusqu'au niveau que le jeu produit reellement. */
     private static final String[] LEVELS = {"", "II", "III", "IV", "V", "VI", "VII", "VIII"};
 
+    /**
+     * Cote de la pastille de couleur, a gauche de chaque effet.
+     *
+     * <p>La maquette y pose le sprite du jeu. Celui-ci se recupere par un
+     * gestionnaire dont ni l'accesseur ni la methode de dessin n'ont la meme
+     * signature d'une version a l'autre -- la sonde de la CI les affiche
+     * desormais, et la vraie icone suivra. En attendant, la couleur que l'effet
+     * declare lui-meme remplit l'emplacement: c'est celle des bulles de potion
+     * du jeu, donc un joueur reconnait Force et Vitesse sans lire leur nom.
+     */
+    private static final int CHIP = 9;
+
     private final BooleanSetting showDuration =
         add(new BooleanSetting("duration", "Temps restant", true));
     private final BooleanSetting hideAmbient =
@@ -32,6 +45,7 @@ public final class EffectsHud extends HudElement {
 
     public EffectsHud() {
         super("effects", "Effets", false);
+        describe("Effets de potion actifs et temps restant.");
         placeAt(0.01, 0.5);
     }
 
@@ -48,6 +62,7 @@ public final class EffectsHud extends HudElement {
     private static final class Entry {
         String name = "";
         String time = "";
+        int tint = 0xFF9184D9;
 
         Object effect;
         int amplifier = Integer.MIN_VALUE;
@@ -94,6 +109,11 @@ public final class EffectsHud extends HudElement {
                 entry.name = amplifier > 0 && amplifier < LEVELS.length
                     ? name + " " + LEVELS[amplifier]
                     : name;
+
+                // La couleur que l'effet declare, opacifiee: getColor rend un
+                // RGB sans canal alpha, et le poser tel quel donnerait une
+                // pastille entierement transparente.
+                entry.tint = 0xFF000000 | effect.getColor();
             }
 
             // Une duree negative signale un effet sans fin (balise de conduit,
@@ -136,9 +156,14 @@ public final class EffectsHud extends HudElement {
     private int nameWidth(TextRenderer textRenderer) {
         int widest = 0;
         for (int index = 0; index < count; index++) {
-            widest = Math.max(widest, textRenderer.getWidth(pool.get(index).name));
+            widest = Math.max(widest, measure(textRenderer, pool.get(index).name));
         }
         return widest;
+    }
+
+    /** Hauteur d'une ligne: la pastille est plus haute que le texte. */
+    private static int lineHeight(TextRenderer textRenderer) {
+        return Math.max(CHIP, textRenderer.fontHeight) + 2;
     }
 
     @Override
@@ -147,27 +172,35 @@ public final class EffectsHud extends HudElement {
         int names = nameWidth(textRenderer);
         for (int index = 0; index < count; index++) {
             String time = pool.get(index).time;
-            widest = Math.max(widest, names + (time.isEmpty() ? 0 : textRenderer.getWidth(time) + 6));
+            widest = Math.max(widest, names + (time.isEmpty() ? 0 : measure(textRenderer, time) + 6));
         }
-        return widest + PADDING * 2;
+        return CHIP + 5 + widest + PADDING * 2;
     }
 
     @Override
     public int height(TextRenderer textRenderer) {
-        return Math.max(1, count) * textRenderer.fontHeight + PADDING * 2;
+        return Math.max(1, count) * lineHeight(textRenderer) - 2 + PADDING * 2;
     }
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
         int names = nameWidth(textRenderer);
+        int ligne = lineHeight(textRenderer);
+        int textX = x + CHIP + 5;
 
         for (int index = 0; index < count; index++) {
             Entry entry = pool.get(index);
-            int lineY = y + index * textRenderer.fontHeight;
-            drawLine(context, textRenderer, entry.name, x, lineY, nameColor.argb());
+            int lineY = y + index * ligne;
+
+            Shapes.rounded(context, x, lineY, CHIP, CHIP, 2, textColor(entry.tint));
+            Shapes.roundedOutline(context, x, lineY, CHIP, CHIP, 2, textColor(0x3F424D));
+
+            int baseline = lineY + (CHIP - textRenderer.fontHeight) / 2;
+            drawLine(context, textRenderer, entry.name, textX, baseline, nameColor.argb());
 
             if (!entry.time.isEmpty()) {
-                drawLine(context, textRenderer, entry.time, x + names + 6, lineY, timeColor.argb());
+                drawLine(context, textRenderer, entry.time, textX + names + 6, baseline,
+                    timeColor.argb());
             }
         }
     }

@@ -19,6 +19,7 @@ public final class ColorHitModule extends Module {
 
     public ColorHitModule() {
         super("colorhit", "Color hit", ModuleCategory.COMBAT, false);
+        describe("Teinte l'adversaire touche plutot que de le blanchir.");
         instance = this;
     }
 

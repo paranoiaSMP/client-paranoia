@@ -9,7 +9,12 @@ import gg.paranoia.client.hud.elements.AttackChargeHud;
 import gg.paranoia.client.hud.elements.CoordinatesHud;
 import gg.paranoia.client.hud.elements.CpsHud;
 import gg.paranoia.client.hud.elements.DirectionHud;
+import gg.paranoia.client.combat.CombatTracker;
+import gg.paranoia.client.hud.elements.ComboHud;
 import gg.paranoia.client.hud.elements.DiagnosticsHud;
+import gg.paranoia.client.hud.elements.KeystrokesHud;
+import gg.paranoia.client.hud.elements.PingHud;
+import gg.paranoia.client.hud.elements.ReachHud;
 import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
 import gg.paranoia.client.hud.elements.InfoHud;
@@ -20,6 +25,7 @@ import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BlockEntityCullingModule;
 import gg.paranoia.client.modules.BrightnessModule;
+import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
 import gg.paranoia.client.modules.EntityCullingModule;
@@ -75,11 +81,18 @@ public final class ParanoiaClient {
         REGISTRY.register(new InfoHud());
         REGISTRY.register(new FpsHud());
         REGISTRY.register(new CpsHud());
+        REGISTRY.register(new PingHud());
         REGISTRY.register(new AttackChargeHud());
         REGISTRY.register(new TotemHud());
         REGISTRY.register(new ShieldHud());
         REGISTRY.register(new EffectsHud());
         REGISTRY.register(new DiagnosticsHud());
+        REGISTRY.register(new ReachHud());
+        REGISTRY.register(new ComboHud());
+        REGISTRY.register(new KeystrokesHud());
+        // L'apparence en premier parmi les reglages: c'est le seul module qui
+        // change l'allure de tous les autres.
+        REGISTRY.register(new HudAppearanceModule());
         REGISTRY.register(new BrightnessModule());
         REGISTRY.register(new ColorHitModule());
         REGISTRY.register(new CrosshairModule());
@@ -100,6 +113,10 @@ public final class ParanoiaClient {
         // En debut de tick: le budget doit etre reconduit avant les naissances
         // de particules, pas apres.
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            // Avant les modules: la portee et le combo se lisent sur le
+            // compteur de recharge, qui doit etre releve avant que quoi que ce
+            // soit d'autre ne le consulte.
+            CombatTracker.tick();
             ParticleBudgetModule.beginTick();
             EntityCullingModule.beginTick();
             BlockEntityCullingModule.beginTick();

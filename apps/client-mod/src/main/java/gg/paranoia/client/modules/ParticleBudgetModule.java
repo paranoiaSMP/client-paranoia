@@ -52,6 +52,7 @@ public final class ParticleBudgetModule extends Module {
 
     public ParticleBudgetModule() {
         super("particles", "Budget de particules", ModuleCategory.OPTIMISATION, false);
+        describe("Plafonne le nombre de particules affichees par tick.");
         instance = this;
     }
 
