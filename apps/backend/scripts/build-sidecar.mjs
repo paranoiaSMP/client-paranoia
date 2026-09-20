@@ -98,20 +98,24 @@ async function main() {
     }
   }
 
-  console.log("[sidecar] injection postject...");
-  const postjectArgs = [
-    "postject",
-    exePath,
-    "NODE_SEA_BLOB",
-    blobPath,
-    "--sentinel-fuse",
-    "NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
-  ];
   if (process.platform === "darwin") {
-    postjectArgs.push("--macho-segment-name", "NODE_SEA");
+    try {
+      run("codesign", ["--remove-signature", exePath]);
+      console.log("[sidecar] signature d'origine retiree");
+    } catch {
+      console.log("[sidecar] codesign --remove-signature ignore");
+    }
   }
+
+  console.log("[sidecar] injection postject...");
+  const extraDarwin = process.platform === "darwin" ? " --macho-segment-name NODE_SEA" : "";
   const cp = await import("node:child_process");
-  cp.execSync(`npx --yes postject "${exePath}" NODE_SEA_BLOB "${blobPath}" --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2`, { stdio: "inherit" });
+  cp.execSync(`npx --yes postject "${exePath}" NODE_SEA_BLOB "${blobPath}" --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2${extraDarwin}`, { stdio: "inherit" });
+
+  if (process.platform === "darwin") {
+    run("codesign", ["--sign", "-", exePath]);
+    console.log("[sidecar] binaire signe ad-hoc");
+  }
 
   if (!isWindows) {
     run("chmod", ["+x", exePath]);
