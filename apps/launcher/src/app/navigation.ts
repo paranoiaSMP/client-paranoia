@@ -40,13 +40,6 @@ export type NavItem = {
 	upcoming?: boolean;
 };
 
-/**
- * Le groupe du haut: ce pour quoi on ouvre le launcher.
- *
- * <p>« Jouer » est en tete et non « Accueil »: l'ecran porte le lancement, et
- * le nommer d'apres ce qu'on y fait plutot que d'apres sa place dans l'arbre
- * evite d'avoir a l'apprendre.
- */
 export const PRIMARY_NAV: NavItem[] = [
 	{ screen: "home", icon: Home, label: "Accueil" },
 	{ screen: "versions", icon: Layers, label: "Versions" },

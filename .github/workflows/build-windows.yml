@@ -160,8 +160,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate placeholder icons
-        working-directory: apps/launcher/src-tauri
-        run: pnpm exec tauri icon app-icon.svg
+        working-directory: apps/launcher
+        run: pnpm exec tauri icon src-tauri/app-icon.png
 
       - name: Typecheck and build launcher
         working-directory: apps/launcher
