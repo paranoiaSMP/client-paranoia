@@ -8,11 +8,27 @@ pluginManagement {
 
 rootProject.name = 'paranoia-client-mod'
 
-// Une version de Minecraft = un sous-projet. Les sources partagees
-// (src/main/java a la racine) sont recompilees dans chacun d'eux, contre le jar
-// Minecraft de sa version: c'est ce qui permet au menu et aux HUD d'utiliser
-// DrawContext et Screen sans etre ecrits deux fois.
-def targets = ['1.21.8', '1.21.10', '1.21.11', '26.1.2']
+// Une version de Minecraft = un sous-projet, et un dossier dans versions/. Les
+// sources partagees (src/main/java a la racine) sont recompilees dans chacun
+// d'eux, contre le jar Minecraft de sa version: c'est ce qui permet au menu et
+// aux HUD d'utiliser DrawContext et Screen sans etre ecrits deux fois.
+//
+// La liste est lue sur le disque et non ecrite ici. Elle l'etait, en double du
+// dossier, et scripts/resolve-fabric-versions.mjs enumerait deja les dossiers
+// de son cote: ajouter une version demandait donc deux gestes, et en oublier un
+// donnait un build silencieusement incomplet -- le resolveur ecrivait bien le
+// versions.properties, mais Gradle n'incluait jamais le sous-projet et personne
+// ne voyait passer d'erreur.
+// Le build.gradle est exige, et pas seulement le dossier: un repertoire de
+// travail laisse par Gradle ou un dossier a moitie cree deviendrait sinon une
+// cible, et le build echouerait sur une version qui n'existe pas.
+def versionsDir = file('versions')
+def targets = versionsDir.isDirectory()
+    ? versionsDir.listFiles()
+        .findAll { it.isDirectory() && new File(it, 'build.gradle').exists() }
+        .collect { it.name }
+        .sort()
+    : []
 
 targets.each { version ->
     // versions.properties est ecrit par scripts/resolve-fabric-versions.mjs, et
