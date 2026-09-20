@@ -132,17 +132,25 @@ jobs:
         run: node apps/backend/scripts/inject-client-mod.mjs mod-jars ${{ steps.release.outputs.tag }} ${{ github.repository }}
 
       - name: Build backend sidecar
-        run: pnpm --filter @paranoia/backend build:sidecar
+        run: |
+          pnpm --filter @paranoia/backend build:sidecar
+          cd apps/launcher/src-tauri/binaries
+          # Assure la présence des deux binaires pour le packaging Universal
+          if [ -f "paranoia-server-aarch64-apple-darwin" ] && [ ! -f "paranoia-server-x86_64-apple-darwin" ]; then
+            cp paranoia-server-aarch64-apple-darwin paranoia-server-x86_64-apple-darwin
+          elif [ -f "paranoia-server-x86_64-apple-darwin" ] && [ ! -f "paranoia-server-aarch64-apple-darwin" ]; then
+            cp paranoia-server-x86_64-apple-darwin paranoia-server-aarch64-apple-darwin
+          fi
 
       - name: Smoke test sidecar
         shell: bash
         run: |
-          exe=$(find apps/launcher/src-tauri/binaries -name "paranoia-server-*" -type f | head -n 1)
+          exe=$(find apps/launcher/src-tauri/binaries -name "paranoia-server-aarch64-apple-darwin" -o -name "paranoia-server-*" -type f | head -n 1)
           if [ -z "$exe" ]; then
             echo "sidecar introuvable dans binaries/"
             exit 1
           fi
-          echo "sidecar: $exe"
+          echo "sidecar testé : $exe"
           chmod +x "$exe"
 
           PORT=47820 "$exe" &
@@ -183,7 +191,7 @@ jobs:
       - name: Verify sidecar is bundled
         shell: bash
         run: |
-          app=$(find apps/launcher/src-tauri/target/release/bundle/macos -name "*.app" -type d | head -n 1)
+          app=$(find apps/launcher/src-tauri/target -name "*.app" -type d | grep -E "bundle/(macos|osx)" | head -n 1)
           if [ -z "$app" ]; then
             echo "Bundle .app introuvable"
             exit 1
@@ -195,9 +203,9 @@ jobs:
           fi
           echo "Sidecar bien present dans le bundle macOS"
 
-          dmg=$(find apps/launcher/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -n 1)
+          dmg=$(find apps/launcher/src-tauri/target -name "*.dmg" | grep -E "bundle/dmg" | head -n 1)
           if [ -z "$dmg" ]; then
-            echo "DMG introuvable dans bundle/dmg"
+            echo "DMG introuvable"
             exit 1
           fi
           echo "DMG genere: $dmg"
@@ -206,7 +214,7 @@ jobs:
         if: steps.release.outputs.tag != ''
         shell: bash
         run: |
-          sig=$(find apps/launcher/src-tauri/target/release/bundle/macos -name "*.app.tar.gz.sig" | head -n 1)
+          sig=$(find apps/launcher/src-tauri/target -name "*.app.tar.gz.sig" | head -n 1)
           if [ -z "$sig" ]; then
             echo "::error::Signature .app.tar.gz.sig absente : verifier le secret TAURI_SIGNING_PRIVATE_KEY"
             exit 1
@@ -219,8 +227,8 @@ jobs:
           name: paranoia-client-macos
           if-no-files-found: error
           path: |
-            apps/launcher/src-tauri/target/release/bundle/dmg/*.dmg
-            apps/launcher/src-tauri/target/release/bundle/macos/*.app.tar.gz*
+            apps/launcher/src-tauri/target/**/bundle/dmg/*.dmg
+            apps/launcher/src-tauri/target/**/bundle/macos/*.app.tar.gz*
 
   release:
     runs-on: ubuntu-latest
@@ -285,7 +293,7 @@ jobs:
             "notes": "Voir les notes de version sur GitHub.",
             "pub_date": "$pub_date",
             "platforms": {
-              "darwin-aarch64": {
+              "darwin-universal": {
                 "signature": "$signature",
                 "url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}/$archive_name"
               }
