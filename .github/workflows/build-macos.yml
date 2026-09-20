@@ -141,8 +141,8 @@ jobs:
 
           if [ -n "$SRC" ]; then
             echo "Binaire source trouvé : $SRC"
-            cp "$SRC" paranoia-server-aarch64-apple-darwin
-            cp "$SRC" paranoia-server-x86_64-apple-darwin
+            [ -f paranoia-server-aarch64-apple-darwin ] || cp "$SRC" paranoia-server-aarch64-apple-darwin
+            [ -f paranoia-server-x86_64-apple-darwin ] || cp "$SRC" paranoia-server-x86_64-apple-darwin
             chmod +x paranoia-server-*
           else
             echo "Aucun sidecar trouvé dans binaries/"
