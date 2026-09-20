@@ -103,26 +103,31 @@ public final class CpsHud extends HudElement {
         lastShowRight = showRightNow;
 
         if (showLeftNow && showRightNow) {
-            text = left + " | " + right + " CPS";
+            text = left + " / " + right;
         } else if (showRightNow) {
-            text = right + " CPS";
+            text = String.valueOf(right);
         } else {
-            text = left + " CPS";
+            text = String.valueOf(left);
         }
     }
 
+    // Le chiffre en grand, l'unite en kicker au-dessus: la carte « cps » de la
+    // maquette. « 7 | 2 CPS » sur une ligne disait la meme chose en se lisant
+    // comme une phrase, alors qu'on y jette un oeil au milieu d'un combat.
+
     @Override
     public int width(TextRenderer textRenderer) {
-        return measure(textRenderer, text) + PADDING * 2;
+        return Math.max(heroWidth(textRenderer, text), kickerWidth(textRenderer, "CPS")) + PADDING * 2;
     }
 
     @Override
     public int height(TextRenderer textRenderer) {
-        return textRenderer.fontHeight + PADDING * 2;
+        return textRenderer.fontHeight + 2 + heroHeight(textRenderer) + PADDING * 2;
     }
 
     @Override
     public void renderContent(DrawContext context, TextRenderer textRenderer, int x, int y) {
-        drawLine(context, textRenderer, text, x, y, color.argb());
+        drawKicker(context, textRenderer, "CPS", x, y, 0x75798C);
+        drawHero(context, textRenderer, text, x, y + textRenderer.fontHeight + 2, color.argb());
     }
 }

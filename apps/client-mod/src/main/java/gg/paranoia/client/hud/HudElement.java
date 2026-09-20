@@ -9,6 +9,8 @@ import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.platform.Platforms;
 import gg.paranoia.client.render.Shapes;
+
+import java.util.Locale;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -260,6 +262,94 @@ public abstract class HudElement extends Module {
     protected void drawLine(
         DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
         context.drawText(textRenderer, label(text), x, y, textColor(rgb), textShadow());
+    }
+
+    // ------------------------------------------------------- typographie
+
+    /**
+     * Le facteur d'agrandissement d'un chiffre principal.
+     *
+     * <p>Entier, et pas 1,7 comme le donnerait la conversion d'echelle de la
+     * maquette: la police du jeu est une image, et l'agrandir d'un facteur
+     * fractionnaire interpole ses pixels -- le chiffre devient flou, ce qui se
+     * remarque bien plus qu'un point de taille en moins. Deux fois neuf font
+     * dix-huit pixels, contre neuf pour le kicker: le rapport de hierarchie de
+     * la maquette est tenu, et chaque pixel reste net.
+     */
+    protected static final float HERO_SCALE = 2.0f;
+
+    /** Ecart ajoute entre les lettres d'un kicker. */
+    private static final int KICKER_SPACING = 1;
+
+    /**
+     * Un chiffre principal, agrandi.
+     *
+     * <p>Passe par la pile de matrices de la plateforme, celle qui sert deja a
+     * mettre un HUD entier a l'echelle: les piles s'emboitent, donc un element
+     * agrandi par le joueur agrandit aussi ses chiffres, ce qui est bien ce
+     * qu'on attend.
+     */
+    protected void drawHero(
+        DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
+        Platforms.get().pushScale(context, HERO_SCALE, x, y);
+        try {
+            context.drawText(textRenderer, label(text), 0, 0, textColor(rgb), textShadow());
+        } finally {
+            Platforms.get().popScale(context);
+        }
+    }
+
+    protected int heroWidth(TextRenderer textRenderer, String text) {
+        return Math.round(measure(textRenderer, text) * HERO_SCALE);
+    }
+
+    protected static int heroHeight(TextRenderer textRenderer) {
+        return Math.round(textRenderer.fontHeight * HERO_SCALE);
+    }
+
+    /**
+     * Un libelle de la maquette: majuscules, lettres espacees, couleur sourde.
+     *
+     * <p>La maquette les pose en dix pixels, sous un chiffre de vingt-six. La
+     * police du jeu ne descend pas sous neuf, donc le contraste ne peut pas
+     * venir de la taille: il vient de la casse, de l'espacement et du ton. Un
+     * kicker ecrit comme le reste ne se distinguerait pas du contenu.
+     */
+    protected void drawKicker(
+        DrawContext context, TextRenderer textRenderer, String text, int x, int y, int rgb) {
+        String majuscules = text.toUpperCase(Locale.ROOT);
+        int cursor = x;
+        for (int index = 0; index < majuscules.length(); index++) {
+            String lettre = String.valueOf(majuscules.charAt(index));
+            context.drawText(
+                textRenderer, label(lettre), cursor, y, textColor(rgb), textShadow());
+            cursor += measure(textRenderer, lettre) + KICKER_SPACING;
+        }
+    }
+
+    protected int kickerWidth(TextRenderer textRenderer, String text) {
+        String majuscules = text.toUpperCase(Locale.ROOT);
+        int total = 0;
+        for (int index = 0; index < majuscules.length(); index++) {
+            total += measure(textRenderer, String.valueOf(majuscules.charAt(index))) + KICKER_SPACING;
+        }
+        return Math.max(0, total - KICKER_SPACING);
+    }
+
+    /**
+     * Une jauge de la maquette: une piste sourde, un remplissage a l'accent.
+     *
+     * <p>Trois pixels de haut et des bouts arrondis, comme les barres d'usure
+     * de l'armure et les curseurs du panneau. Sous quatre pixels de large le
+     * rayon se borne tout seul et la barre redevient un rectangle.
+     */
+    protected void drawGauge(
+        DrawContext context, int x, int y, int width, float fraction, int rgb) {
+        Shapes.rounded(context, x, y, width, 3, 1, textColor(0x3F424D));
+        int filled = Math.round(width * Math.min(Math.max(fraction, 0f), 1f));
+        if (filled > 0) {
+            Shapes.rounded(context, x, y, filled, 3, 1, textColor(rgb));
+        }
     }
 
     protected static MinecraftClient client() {
