@@ -31,6 +31,23 @@ public final class ParanoiaConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String FILE_NAME = "paranoia-client.json";
 
+    /**
+     * Version du schema, pour distinguer un choix du joueur d'un ancien defaut.
+     *
+     * <p>Un fichier sans ce champ a ete ecrit avant le style de HUD, et il pose
+     * un probleme que rien ne signalait: {@link #writeLayout} a toujours ecrit
+     * {@code background}, a chaque sauvegarde, qu'il ait ete choisi ou non.
+     * Chaque joueur avait donc {@code "background": "SOLID"} -- l'ancien defaut
+     * -- inscrit pour ses onze HUD. Relus tels quels, ces onze valeurs sont
+     * autant de derogations, et le style choisi pour le client n'atteint plus
+     * aucun module: la fonctionnalite est inerte pour quiconque a deja lance le
+     * mod une fois.
+     *
+     * <p>D'ou la version. Voir {@link #readLayout}: sur un fichier non versionne,
+     * seule la valeur qui ne peut pas etre l'ancien defaut est gardee.
+     */
+    private static final int SCHEMA_VERSION = 2;
+
     private ParanoiaConfig() {
     }
 
@@ -55,16 +72,22 @@ public final class ParanoiaConfig {
             return;
         }
 
+        int version = readInt(root, "version", 1);
+        if (version < SCHEMA_VERSION) {
+            LOGGER.info(
+                "Configuration en version {}, migration vers {}", version, SCHEMA_VERSION);
+        }
+
         for (Module module : modules) {
             JsonElement entry = root.get(module.id());
             if (entry == null || !entry.isJsonObject()) {
                 continue;
             }
-            readModule(module, entry.getAsJsonObject());
+            readModule(module, entry.getAsJsonObject(), version);
         }
     }
 
-    private static void readModule(Module module, JsonObject json) {
+    private static void readModule(Module module, JsonObject json, int version) {
         JsonElement enabled = json.get("enabled");
         if (enabled != null && enabled.isJsonPrimitive() && enabled.getAsJsonPrimitive().isBoolean()) {
             module.setEnabled(enabled.getAsBoolean());
@@ -83,12 +106,12 @@ public final class ParanoiaConfig {
         if (module instanceof HudElement hud) {
             JsonElement layout = json.get("layout");
             if (layout != null && layout.isJsonObject()) {
-                readLayout(hud.layout(), layout.getAsJsonObject());
+                readLayout(hud.layout(), layout.getAsJsonObject(), version);
             }
         }
     }
 
-    private static void readLayout(HudLayout layout, JsonObject json) {
+    private static void readLayout(HudLayout layout, JsonObject json, int version) {
         double x = readDouble(json, "x", Double.NaN);
         double y = readDouble(json, "y", Double.NaN);
         if (!Double.isNaN(x) && !Double.isNaN(y)) {
@@ -108,10 +131,23 @@ public final class ParanoiaConfig {
         JsonElement background = json.get("background");
         if (background != null && background.isJsonPrimitive()) {
             for (BackgroundStyle style : BackgroundStyle.values()) {
-                if (style.name().equals(background.getAsString())) {
-                    layout.setBackground(style);
-                    break;
+                if (!style.name().equals(background.getAsString())) {
+                    continue;
                 }
+                // Sur un fichier ecrit avant le style de HUD, SOLID est l'ancien
+                // defaut: impossible de savoir s'il a ete choisi, donc on le
+                // traite comme non choisi et le module suit le style.
+                //
+                // Rien n'est perdu au passage, meme pour qui l'avait choisi
+                // volontairement: la forme resolue de Nocturne est arrondie et
+                // celle de Feather aussi, donc le module change d'allure -- ce
+                // qui est precisement ce qu'on lui demandait. Les trois autres
+                // valeurs, elles, ne peuvent venir que d'un choix: on les garde.
+                boolean ancienDefaut = version < SCHEMA_VERSION && style == BackgroundStyle.SOLID;
+                if (!ancienDefaut) {
+                    layout.setBackground(style);
+                }
+                break;
             }
         }
 
@@ -119,6 +155,14 @@ public final class ParanoiaConfig {
         if (shadow != null && shadow.isJsonPrimitive() && shadow.getAsJsonPrimitive().isBoolean()) {
             layout.setTextShadow(shadow.getAsBoolean());
         }
+    }
+
+    private static int readInt(JsonObject json, String key, int fallback) {
+        JsonElement element = json.get(key);
+        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+            return fallback;
+        }
+        return element.getAsInt();
     }
 
     private static double readDouble(JsonObject json, String key, double fallback) {
@@ -131,6 +175,9 @@ public final class ParanoiaConfig {
 
     public static void save(List<Module> modules) {
         JsonObject root = new JsonObject();
+        // Ecrite en premier pour se lire d'un coup d'oeil dans le fichier. Aucun
+        // module ne s'appelle « version », la cle ne peut donc pas en masquer un.
+        root.addProperty("version", SCHEMA_VERSION);
 
         for (Module module : modules) {
             JsonObject entry = new JsonObject();

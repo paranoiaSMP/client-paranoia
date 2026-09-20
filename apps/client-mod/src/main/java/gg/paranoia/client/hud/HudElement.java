@@ -8,6 +8,7 @@ import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.platform.Platforms;
+import gg.paranoia.client.render.Shapes;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -150,16 +151,13 @@ public abstract class HudElement extends Module {
 
         float opacity = layout.opacity();
         int panel = style.panelArgb(opacity);
+        // Un rayon n'a de sens que sur la forme arrondie: « Plein » veut dire
+        // carre, c'est ce qui le distingue.
+        int radius = shape == BackgroundStyle.ROUNDED ? style.radius() : 0;
 
         switch (shape) {
             case SOLID -> context.fill(x, y, x + width, y + height, panel);
-            case ROUNDED -> {
-                // Coins ronges d'un pixel: trois rectangles suffisent, et on
-                // reste sur `fill`, seule primitive stable entre les versions.
-                context.fill(x + 1, y, x + width - 1, y + height, panel);
-                context.fill(x, y + 1, x + 1, y + height - 1, panel);
-                context.fill(x + width - 1, y + 1, x + width, y + height - 1, panel);
-            }
+            case ROUNDED -> Shapes.rounded(context, x, y, width, height, radius, panel);
             case OUTLINE -> {
                 // Le contour seul: pas de remplissage, donc la couleur de
                 // bordure du style -- ou du blanc si le style n'en declare
@@ -167,21 +165,23 @@ public abstract class HudElement extends Module {
                 int only = style.hasBorder()
                     ? style.borderArgb(opacity)
                     : (((int) (0xC0 * opacity)) << 24) | 0x00FFFFFF;
-                drawBorder(context, x, y, width, height, only);
+                Shapes.roundedOutline(context, x, y, width, height, style.radius(), only);
             }
             default -> {
             }
         }
 
         if (shape != BackgroundStyle.OUTLINE && style.hasBorder()) {
-            drawBorder(context, x, y, width, height, style.borderArgb(opacity));
+            Shapes.roundedOutline(
+                context, x, y, width, height, radius, style.borderArgb(opacity));
         }
 
         // L'arete lumineuse du bord haut, posee en dernier pour rester
         // au-dessus de la bordure. Un seul pixel de haut: c'est la lumiere qui
-        // accroche la tranche, pas un second trait.
+        // accroche la tranche, pas un second trait. Elle demarre ou demarre le
+        // premier pixel de la forme, sinon elle deborde du coin.
         if (style.hasEdge()) {
-            int inset = shape == BackgroundStyle.ROUNDED ? 1 : 0;
+            int inset = Shapes.topInset(radius, width, height);
             context.fill(x + inset, y, x + width - inset, y + 1, style.edgeArgb(opacity));
         }
     }
@@ -193,14 +193,6 @@ public abstract class HudElement extends Module {
     public BackgroundStyle resolvedShape() {
         BackgroundStyle chosen = layout.background();
         return chosen == BackgroundStyle.AUTO ? HudAppearanceModule.style().shape() : chosen;
-    }
-
-    private static void drawBorder(
-        DrawContext context, int x, int y, int width, int height, int color) {
-        context.fill(x, y, x + width, y + 1, color);
-        context.fill(x, y + height - 1, x + width, y + height, color);
-        context.fill(x, y + 1, x + 1, y + height - 1, color);
-        context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
     /** Couleur de texte tenant compte de l'opacite reglee pour cet element. */

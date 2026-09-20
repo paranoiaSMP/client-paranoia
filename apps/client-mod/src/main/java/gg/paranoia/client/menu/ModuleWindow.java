@@ -32,6 +32,9 @@ import java.util.List;
  * de les desynchroniser.
  */
 public final class ModuleWindow {
+    /** Rayon du cadre, plus large que celui des cartes qu'il contient. */
+    private static final int WINDOW_RADIUS = 6;
+
     private static final int HEADER_HEIGHT = 20;
     private static final int SIDEBAR_WIDTH = 78;
     private static final int PAD = 6;
@@ -127,8 +130,11 @@ public final class ModuleWindow {
         layout(screenWidth, screenHeight);
 
         context.fill(0, 0, screenWidth, screenHeight, MenuTheme.BACKDROP);
-        MenuTheme.panel(context, x, y, width, height, MenuTheme.WINDOW);
-        MenuTheme.outline(context, x, y, width, height, MenuTheme.WINDOW_BORDER);
+        // Le cadre prend un rayon plus large que les cartes qu'il contient:
+        // c'est la hierarchie de la maquette, 14 pixels pour le cadre contre 8
+        // pour les cartes.
+        MenuTheme.panel(context, x, y, width, height, WINDOW_RADIUS, MenuTheme.WINDOW);
+        MenuTheme.outline(context, x, y, width, height, WINDOW_RADIUS, MenuTheme.WINDOW_BORDER);
 
         renderHeader(context, font, mouseX, mouseY);
         renderSidebar(context, font, mouseX, mouseY);
@@ -144,7 +150,8 @@ public final class ModuleWindow {
     }
 
     private void renderHeader(DrawContext context, TextRenderer font, int mouseX, int mouseY) {
-        context.fill(x + 1, y + 1, x + width - 1, y + HEADER_HEIGHT, MenuTheme.HEADER);
+        MenuTheme.panelTop(context, x + 1, y + 1, width - 2, HEADER_HEIGHT - 1,
+            WINDOW_RADIUS - 1, MenuTheme.HEADER);
         context.fill(x + 1, y + HEADER_HEIGHT, x + width - 1, y + HEADER_HEIGHT + 1, MenuTheme.ACCENT_DIM);
 
         int textY = y + (HEADER_HEIGHT - font.fontHeight) / 2;
@@ -185,7 +192,8 @@ public final class ModuleWindow {
     }
 
     private void renderSidebar(DrawContext context, TextRenderer font, int mouseX, int mouseY) {
-        context.fill(x + 1, contentY() + 1, x + SIDEBAR_WIDTH, y + height - 1, MenuTheme.SIDEBAR);
+        MenuTheme.panelBottom(context, x + 1, contentY() + 1, SIDEBAR_WIDTH - 1,
+            y + height - 1 - (contentY() + 1), WINDOW_RADIUS - 1, MenuTheme.SIDEBAR);
         context.fill(
             x + SIDEBAR_WIDTH, contentY() + 1, x + SIDEBAR_WIDTH + 1, y + height - 1, 0x22FFFFFF);
 

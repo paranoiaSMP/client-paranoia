@@ -32,7 +32,7 @@ public enum HudStyle {
      * clair ou d'une plaine enneigee. L'eteindre ici rendrait le HUD illisible
      * une fois sur deux.
      */
-    EPURE("Épuré", BackgroundStyle.NONE, 0x000000, 0f, 0x000000, 0f, 0x000000, 0f, 1.00f, true),
+    EPURE("Épuré", BackgroundStyle.NONE, 0, 0x000000, 0f, 0x000000, 0f, 0x000000, 0f, 1.00f, true),
 
     /**
      * Discret et arrondi, sans bordure.
@@ -41,7 +41,7 @@ public enum HudStyle {
      * texte du decor sans rien affirmer. Aucune couleur de marque -- c'est
      * justement ce qui la rend neutre.
      */
-    FEATHER("Feather", BackgroundStyle.ROUNDED, 0x000000, 0.40f, 0x000000, 0f, 0x000000, 0f, 1.00f, false),
+    FEATHER("Feather", BackgroundStyle.ROUNDED, 5, 0x000000, 0.40f, 0x000000, 0f, 0x000000, 0f, 1.00f, false),
 
     /**
      * La gamme du launcher, portee en jeu.
@@ -51,7 +51,7 @@ public enum HudStyle {
      * moities du client, et le seul ou le fond a une teinte plutot qu'une
      * simple obscurite.
      */
-    NOCTURNE("Nocturne", BackgroundStyle.SOLID, 0x232532, 0.85f, 0x3F424D, 1.00f, 0x000000, 0f, 1.00f, false),
+    NOCTURNE("Nocturne", BackgroundStyle.ROUNDED, 5, 0x232532, 0.85f, 0x3F424D, 1.00f, 0x000000, 0f, 1.00f, false),
 
     /**
      * Verre.
@@ -64,10 +64,11 @@ public enum HudStyle {
      * accroche la tranche. C'est ce dernier trait qui porte l'effet; sans lui
      * il ne reste qu'un fond pale.
      */
-    VERRE("Verre", BackgroundStyle.ROUNDED, 0x161826, 0.45f, 0xFFFFFF, 0.14f, 0xFFFFFF, 0.22f, 1.00f, false);
+    VERRE("Verre", BackgroundStyle.ROUNDED, 5, 0x161826, 0.45f, 0xFFFFFF, 0.14f, 0xFFFFFF, 0.22f, 1.00f, false);
 
     private final String label;
     private final BackgroundStyle shape;
+    private final int radius;
     private final int panelRgb;
     private final float panelAlpha;
     private final int borderRgb;
@@ -80,6 +81,7 @@ public enum HudStyle {
     HudStyle(
         String label,
         BackgroundStyle shape,
+        int radius,
         int panelRgb,
         float panelAlpha,
         int borderRgb,
@@ -90,6 +92,7 @@ public enum HudStyle {
         boolean textShadow) {
         this.label = label;
         this.shape = shape;
+        this.radius = radius;
         this.panelRgb = panelRgb;
         this.panelAlpha = panelAlpha;
         this.borderRgb = borderRgb;
@@ -106,6 +109,17 @@ public enum HudStyle {
 
     public BackgroundStyle shape() {
         return shape;
+    }
+
+    /**
+     * Le rayon des coins, en pixels de l'espace de coordonnees du jeu.
+     *
+     * <p>Cinq, et non huit comme le dit la maquette: celle-ci est dessinee sur
+     * une scene large de 1600 pixels, alors que l'interface du jeu en compte
+     * environ 960 a l'echelle 2. Huit sur 1600 font cinq ici.
+     */
+    public int radius() {
+        return radius;
     }
 
     public boolean hasBorder() {

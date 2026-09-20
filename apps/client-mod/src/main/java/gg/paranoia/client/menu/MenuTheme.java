@@ -1,5 +1,6 @@
 package gg.paranoia.client.menu;
 
+import gg.paranoia.client.render.Shapes;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 
@@ -72,24 +73,58 @@ public final class MenuTheme {
         return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }
 
+    /**
+     * Rayon des cartes et des boutons du menu.
+     *
+     * <p>Quatre, la aussi par conversion d'echelle: la maquette dessine ses
+     * cartes a huit pixels de rayon sur une scene large de 1600, et l'interface
+     * du jeu en compte environ 960. Le cadre de la fenetre prend six, par
+     * l'accesseur a rayon explicite.
+     */
+    public static final int RADIUS = 4;
+
     public static void outline(DrawContext context, int x, int y, int w, int h, int color) {
-        context.fill(x, y, x + w, y + 1, color);
-        context.fill(x, y + h - 1, x + w, y + h, color);
-        context.fill(x, y + 1, x + 1, y + h - 1, color);
-        context.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+        outline(context, x, y, w, h, RADIUS, color);
+    }
+
+    public static void outline(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.roundedOutline(context, x, y, w, h, radius, color);
     }
 
     /**
-     * Rectangle aux coins ronges d'un pixel.
+     * Rectangle a coins ronds.
      *
-     * <p>Trois rectangles: le corps pleine largeur, puis les deux bords
-     * lateraux rentres d'un pixel en haut et en bas. C'est tout ce qu'il faut
-     * pour casser l'angle droit, et ca suffit a l'oeil a cette taille.
+     * <p>Rongeait auparavant un seul pixel a chaque coin, en trois rectangles.
+     * Ca ne se voit pas: un carre dont on a gratte un pixel reste un carre a
+     * l'oeil, et le menu paraissait donc carre a cote de sa maquette. Le rayon
+     * est maintenant reellement dessine, une rangee de pixels a la fois.
      */
     public static void panel(DrawContext context, int x, int y, int w, int h, int color) {
-        context.fill(x + 1, y, x + w - 1, y + h, color);
-        context.fill(x, y + 1, x + 1, y + h - 1, color);
-        context.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+        panel(context, x, y, w, h, RADIUS, color);
+    }
+
+    public static void panel(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, radius, color);
+    }
+
+    /**
+     * Zone collee au bord haut d'un cadre arrondi: l'en-tete du menu.
+     *
+     * <p>Ses coins hauts suivent le cadre, son bord bas reste droit -- c'est une
+     * separation, pas un bord de fenetre. Un rectangle carre a cet endroit
+     * laisserait ses angles depasser du cadre.
+     */
+    public static void panelTop(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, radius, 0, color);
+    }
+
+    /** Meme chose, collee au bord bas: la barre laterale. */
+    public static void panelBottom(
+        DrawContext context, int x, int y, int w, int h, int radius, int color) {
+        Shapes.rounded(context, x, y, w, h, 0, radius, color);
     }
 
     public static void text(
