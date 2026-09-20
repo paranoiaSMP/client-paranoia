@@ -13,6 +13,7 @@ import gg.paranoia.client.combat.CombatTracker;
 import gg.paranoia.client.hud.elements.ComboHud;
 import gg.paranoia.client.hud.elements.DiagnosticsHud;
 import gg.paranoia.client.hud.elements.KeystrokesHud;
+import gg.paranoia.client.hud.elements.PingHud;
 import gg.paranoia.client.hud.elements.ReachHud;
 import gg.paranoia.client.hud.elements.EffectsHud;
 import gg.paranoia.client.hud.elements.FpsHud;
@@ -80,6 +81,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new InfoHud());
         REGISTRY.register(new FpsHud());
         REGISTRY.register(new CpsHud());
+        REGISTRY.register(new PingHud());
         REGISTRY.register(new AttackChargeHud());
         REGISTRY.register(new TotemHud());
         REGISTRY.register(new ShieldHud());

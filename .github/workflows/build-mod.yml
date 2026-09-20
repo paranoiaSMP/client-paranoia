@@ -170,12 +170,19 @@ jobs:
             # Minecraft les deplacera. Les suivantes sont les questions encore
             # ouvertes -- ici, escamoter aussi les blocs animes de loin.
             #
-            # Les trois dernieres sont en service elles aussi, et elles ont deja
+            # Les trois dernieres du premier groupe sont en service elles aussi,
+            # et elles ont deja
             # rendu service: `Style.withFont` prend un Identifier en 1.21.8 et un
             # StyleSpriteSource ensuite, ce que la sonde a dit avant qu'on ait
             # eu a le deviner. Gardees pour le prochain deplacement. Le motif
             # `ont` plutot que `withFont` sur Style: il attrape aussi un
             # accesseur renomme.
+            #
+            # Les trois dernieres sont la question ouverte du moment: poser le
+            # vrai sprite d'un effet de potion a cote de son nom. Ni l'accesseur
+            # du gestionnaire de sprites ni la methode de dessin n'ont la meme
+            # signature d'une version a l'autre, et les deviner couterait un
+            # build par essai.
             #
             # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
             # d'une liste prolongee par « \ » coupe la commande.
@@ -183,7 +190,7 @@ jobs:
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
               "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress|getItemCooldownManager" \
               "net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket$Action:*" \
-              "net.minecraft.client.MinecraftClient:handleInputEvents|doItemUse" \
+              "net.minecraft.client.MinecraftClient:handleInputEvents|doItemUse|tatusEffectSprite" \
               "net.minecraft.entity.player.ItemCooldownManager:*" \
               "net.minecraft.client.network.ClientPlayerInteractionManager:clickSlot|syncSelectedSlot|getCurrentSyncId" \
               "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
@@ -197,7 +204,10 @@ jobs:
               "net.minecraft.block.AbstractBlock\$AbstractBlockState:paque|olid|uffer" \
               "net.minecraft.text.Style:ont" \
               "net.minecraft.text.StyleSpriteSource:*" \
-              "net.minecraft.text.StyleSpriteSource\$Font:*"
+              "net.minecraft.text.StyleSpriteSource\$Font:*" \
+              "net.minecraft.client.texture.StatusEffectSpriteManager:*" \
+              "net.minecraft.entity.effect.StatusEffect:etColor|etName" \
+              "net.minecraft.client.gui.DrawContext:rawSprite|rawGuiTexture"
             do
               class="${entry%%:*}"
               members="${entry#*:}"
