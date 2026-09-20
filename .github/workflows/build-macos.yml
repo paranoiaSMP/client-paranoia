@@ -230,6 +230,11 @@ jobs:
       contents: write
 
     steps:
+      # Ce job ne compilait rien et n'avait donc pas besoin des sources. Il lui
+      # faut maintenant scripts/update-manifest.mjs.
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Determine release tag
         id: release
         shell: bash
@@ -257,8 +262,33 @@ jobs:
           fi
           echo "Signature valide : $sig"
 
-      - name: Generate update manifest
+      # latest.json n'est volontairement pas dans cette liste: l'action ecrase
+      # l'actif sans le lire, et build-windows.yml publie sur la meme release.
+      # Voir l'etape suivante.
+      #
+      # Les notes de version sont laissees a build-windows.yml: les deux
+      # workflows les generaient, et l'action les ajoute a celles deja presentes
+      # -- la release 0.7.18 porte ainsi deux fois la meme liste de changements.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Paranoia Client ${{ steps.release.outputs.tag }}
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.app.tar.gz
+            artifacts/**/*.app.tar.gz.sig
+
+      # En dernier, et par un script qui lit avant d'ecrire: build-windows.yml
+      # publie sur la meme release, et les deux manifestes d'une seule plateforme
+      # s'ecrasaient l'un l'autre -- en 0.7.18, cette entree darwin-aarch64 a
+      # disparu deux minutes apres avoir ete publiee, sans que rien ne passe au
+      # rouge.
+      - name: Publish update manifest
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           archive=$(find artifacts -name "*.app.tar.gz" | head -n 1)
           if [ -z "$archive" ]; then
@@ -266,42 +296,12 @@ jobs:
             exit 1
           fi
 
-          sig="${archive}.sig"
-          if [ ! -f "$sig" ]; then
-            echo "::error::Signature absente pour $(basename "$archive")"
-            exit 1
-          fi
+          name=$(basename "$archive")
+          name="${name// /.}"
+          base="https://github.com/${{ github.repository }}/releases/download"
 
-          archive_name=$(basename "$archive")
-          archive_name="${archive_name// /.}"
-          version="${{ steps.release.outputs.tag }}"
-          version="${version#v}"
-          signature=$(tr -d '\r\n' < "$sig")
-          pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          cat > artifacts/latest.json <<EOF
-          {
-            "version": "$version",
-            "notes": "Voir les notes de version sur GitHub.",
-            "pub_date": "$pub_date",
-            "platforms": {
-              "darwin-aarch64": {
-                "signature": "$signature",
-                "url": "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}/$archive_name"
-              }
-            }
-          }
-          EOF
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.release.outputs.tag }}
-          name: Paranoia Client ${{ steps.release.outputs.tag }}
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.app.tar.gz
-            artifacts/**/*.app.tar.gz.sig
-            artifacts/latest.json
+          node scripts/update-manifest.mjs \
+            --tag "${{ steps.release.outputs.tag }}" \
+            --platform darwin-aarch64 \
+            --signature "${archive}.sig" \
+            --url "$base/${{ steps.release.outputs.tag }}/$name"
