@@ -67,6 +67,7 @@ public final class ArmorHud extends HudElement {
 
     public ArmorHud() {
         super("armor", "Armure", true);
+        describe("Durabilite des quatre pieces portees et de l'objet en main.");
         placeAt(0.5, 0.88);
     }
 

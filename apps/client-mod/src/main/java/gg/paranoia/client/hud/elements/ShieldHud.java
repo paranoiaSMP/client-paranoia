@@ -54,6 +54,7 @@ public final class ShieldHud extends HudElement {
 
     public ShieldHud() {
         super("shield", "Etat du bouclier", ModuleCategory.COMBAT, false);
+        describe("Disponibilite du bouclier apres un coup de hache.");
         placeAt(0.5, 0.72);
     }
 

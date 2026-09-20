@@ -124,6 +124,7 @@ public final class EntityCullingModule extends Module {
 
     public EntityCullingModule() {
         super("entityCulling", "Alleger le decor lointain", ModuleCategory.OPTIMISATION, false);
+        describe("Ignore les entites hors du champ de vision.");
         instance = this;
     }
 

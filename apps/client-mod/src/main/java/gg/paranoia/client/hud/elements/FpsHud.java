@@ -21,6 +21,7 @@ public final class FpsHud extends HudElement {
 
     public FpsHud() {
         super("fps", "FPS", false);
+        describe("Images par seconde, lissees pour rester lisibles.");
         placeAt(0.01, 0.16);
     }
 

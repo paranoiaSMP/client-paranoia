@@ -26,6 +26,7 @@ public final class HitIndicatorModule extends Module {
 
     public HitIndicatorModule() {
         super("hitindicator", "Indicateur de portee", ModuleCategory.COMBAT, false);
+        describe("Distance du dernier coup porte, en blocs.");
         instance = this;
     }
 

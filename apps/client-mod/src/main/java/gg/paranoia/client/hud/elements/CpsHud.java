@@ -33,6 +33,7 @@ public final class CpsHud extends HudElement {
 
     public CpsHud() {
         super("cps", "CPS", false);
+        describe("Clics gauche et droit par seconde, sur une seconde glissante.");
         placeAt(0.01, 0.22);
     }
 

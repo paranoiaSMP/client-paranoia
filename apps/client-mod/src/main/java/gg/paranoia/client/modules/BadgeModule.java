@@ -77,6 +77,7 @@ public final class BadgeModule extends Module {
 
     public BadgeModule() {
         super("badge", "Badge Paranoia", ModuleCategory.VISUEL, true);
+        describe("Badge des joueurs Paranoia dans la liste et au-dessus des tetes.");
         instance = this;
     }
 

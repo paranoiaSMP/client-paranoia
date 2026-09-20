@@ -45,6 +45,7 @@ public final class TotemHud extends HudElement {
 
     public TotemHud() {
         super("totem", "Totem en main", ModuleCategory.COMBAT, false);
+        describe("Rappelle si un totem est tenu, et dans quelle main.");
         placeAt(0.5, 0.68);
     }
 

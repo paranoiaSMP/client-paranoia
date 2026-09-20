@@ -32,6 +32,7 @@ public final class EffectsHud extends HudElement {
 
     public EffectsHud() {
         super("effects", "Effets", false);
+        describe("Effets de potion actifs et temps restant.");
         placeAt(0.01, 0.5);
     }
 

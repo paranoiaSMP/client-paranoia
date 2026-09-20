@@ -27,6 +27,7 @@ public final class MenuKeyModule extends Module {
 
     public MenuKeyModule() {
         super("menuKey", "Ouverture au clavier", ModuleCategory.PARAMETRES, true);
+        describe("Touche qui ouvre ce menu.");
         instance = this;
     }
 

@@ -30,6 +30,7 @@ public final class CoordinatesHud extends HudElement {
 
     public CoordinatesHud() {
         super("coordinates", "Coordonnees", true);
+        describe("Position XYZ, masquable en enregistrement.");
         placeAt(0.01, 0.02);
     }
 

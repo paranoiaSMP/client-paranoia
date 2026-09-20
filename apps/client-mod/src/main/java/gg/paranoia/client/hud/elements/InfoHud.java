@@ -44,6 +44,7 @@ public final class InfoHud extends HudElement {
 
     public InfoHud() {
         super("info", "Informations", false);
+        describe("Serveur, monde et joueurs connectes, en une colonne.");
         placeAt(0.99, 0.02);
     }
 
