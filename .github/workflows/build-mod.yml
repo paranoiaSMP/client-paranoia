@@ -156,7 +156,7 @@ jobs:
         if: always()
         working-directory: apps/client-mod
         run: |
-          for version in 1.21.8 1.21.11 26.1.2; do
+          for version in 1.21.8 1.21.11 26.1.2 26.2; do
             # Une version que Fabric n'outille pas encore n'a ni classpath ni
             # jar: la sonde n'a rien a lire et ce n'est pas une erreur.
             if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then
@@ -222,6 +222,15 @@ jobs:
               fi
             done
           done
+
+          # En toute fin, et non en tete: la sonde elle-meme fait deux cents
+          # lignes, et un verdict pose avant elle reste hors de portee d'une
+          # lecture par la fin du journal -- ce qui est la seule facon dont on
+          # lit un journal de CI. Place ici, c'est la derniere chose imprimee.
+          if [ -f build/fabric-resolution.txt ]; then
+            echo "=============== resolution Fabric"
+            cat build/fabric-resolution.txt
+          fi
 
       - name: Upload mod jars
         uses: actions/upload-artifact@v4
