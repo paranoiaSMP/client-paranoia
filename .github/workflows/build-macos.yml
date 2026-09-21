@@ -102,7 +102,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin, x86_64-apple-darwin
+          targets: aarch64-apple-darwin
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -135,29 +135,23 @@ jobs:
         run: |
           pnpm --filter @paranoia/backend build:sidecar
           cd apps/launcher/src-tauri/binaries
-
-          # Trouve le binaire sidecar généré
           SRC=$(ls paranoia-server-* 2>/dev/null | head -n 1)
-
           if [ -n "$SRC" ]; then
             echo "Binaire source trouvé : $SRC"
             [ -f paranoia-server-aarch64-apple-darwin ] || cp "$SRC" paranoia-server-aarch64-apple-darwin
-            [ -f paranoia-server-x86_64-apple-darwin ] || cp "$SRC" paranoia-server-x86_64-apple-darwin
-            [ -f paranoia-server-universal-apple-darwin ] || cp "$SRC" paranoia-server-universal-apple-darwin
             chmod +x paranoia-server-*
           else
             echo "Aucun sidecar trouvé dans binaries/"
             exit 1
           fi
-          
           ls -la
 
       - name: Smoke test sidecar
         shell: bash
         run: |
-          exe=$(find apps/launcher/src-tauri/binaries -name "paranoia-server-aarch64-apple-darwin" -o -name "paranoia-server-*" -type f | head -n 1)
-          if [ -z "$exe" ]; then
-            echo "sidecar introuvable dans binaries/"
+          exe="apps/launcher/src-tauri/binaries/paranoia-server-aarch64-apple-darwin"
+          if [ ! -f "$exe" ]; then
+            echo "sidecar introuvable: $exe"
             exit 1
           fi
           echo "sidecar testé : $exe"
@@ -196,7 +190,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: pnpm exec tauri build --target universal-apple-darwin --bundles dmg,app
+        run: pnpm exec tauri build --target aarch64-apple-darwin --bundles dmg,app
 
       - name: Verify sidecar is bundled
         shell: bash
@@ -319,7 +313,6 @@ jobs:
               url: 'https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}/$archive_name'
             };
             manifest.platforms['darwin-aarch64'] = macPlatform;
-            manifest.platforms['darwin-x86_64'] = macPlatform;
             manifest.pub_date = '$pub_date';
             manifest.version = '$version';
             fs.writeFileSync('artifacts/latest.json', JSON.stringify(manifest, null, 2) + '\n');

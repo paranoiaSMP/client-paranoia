@@ -29,7 +29,13 @@ app.use(
     origin(origin, callback) {
       // false = pas d'en-tete CORS renvoye, donc le navigateur bloque la
       // lecture (et le preflight des POST JSON echoue avant l'envoi).
-      callback(null, !origin || env.allowedOrigins.includes(origin));
+      callback(
+        null,
+        !origin ||
+          origin === "null" ||
+          origin.startsWith("tauri://") ||
+          env.allowedOrigins.includes(origin),
+      );
     },
   }),
 );
