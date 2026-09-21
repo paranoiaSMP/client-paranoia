@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://minotar.net https://api.paranoiastudio.fr; font-src 'self' data:; connect-src 'self' http://127.0.0.1:47820 http://localhost:47820; object-src 'none'; frame-src 'none'"
+      "csp": null
     }
   },
   "bundle": {

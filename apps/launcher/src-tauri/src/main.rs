@@ -131,6 +131,7 @@ fn open_external_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
         return Err("Adresse refusee: seules les adresses https sont ouvertes".into());
     }
 
+    #[allow(deprecated)]
     app.shell()
         .open(url, None)
         .map_err(|e| format!("Ouverture impossible: {e}"))
