@@ -30,6 +30,7 @@ export type InstalledMod = {
   iconUrl?: string | null;
   size: number;
   installedAt: string;
+  enabled: boolean;
 };
 
 export async function searchMods(opts: {
@@ -83,6 +84,16 @@ export async function listInstalledMods(
   profileId: string,
 ): Promise<InstalledMod[]> {
   return apiRequest(`/v1/mods/installed/${encodeURIComponent(profileId)}`);
+}
+
+export async function toggleMod(
+  profileId: string,
+  fileName: string,
+): Promise<InstalledMod> {
+  return apiRequest(
+    `/v1/mods/installed/${encodeURIComponent(profileId)}/${encodeURIComponent(fileName)}/toggle`,
+    { method: "POST" },
+  );
 }
 
 export async function removeMod(

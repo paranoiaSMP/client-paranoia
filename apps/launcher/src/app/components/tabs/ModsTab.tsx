@@ -20,6 +20,7 @@ import {
   listProjectVersions,
   removeMod,
   searchMods,
+  toggleMod,
   type InstalledMod,
   type ModSearchHit,
 } from "../../../shared/api/modsClient";
@@ -189,6 +190,16 @@ export function ModsTab({
       await refreshInstalled();
     } catch (e) {
       report(e instanceof Error ? e.message : "Suppression impossible");
+    }
+  }
+
+  async function handleToggle(fileName: string) {
+    if (!profile) return;
+    try {
+      await toggleMod(profile.id, fileName);
+      await refreshInstalled();
+    } catch (e) {
+      report(e instanceof Error ? e.message : "Impossible de modifier l'état du mod");
     }
   }
 
@@ -372,8 +383,24 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-3 hover:border-neutral-700 transition-colors"
+                className={`bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-3 hover:border-neutral-700 transition-colors ${
+                  !mod.enabled ? "opacity-60" : ""
+                }`}
               >
+                <button
+                  type="button"
+                  onClick={() => handleToggle(mod.fileName)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    mod.enabled ? "bg-accent" : "bg-neutral-700"
+                  }`}
+                  title={mod.enabled ? "Désactiver" : "Activer"}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      mod.enabled ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
                 {mod.iconUrl ? (
                   <img
                     src={mod.iconUrl}
@@ -387,7 +414,7 @@ export function ModsTab({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate text-ink">
+                  <div className={`text-sm font-medium truncate ${mod.enabled ? "text-ink" : "text-neutral-400 line-through"}`}>
                     {mod.name ?? mod.fileName}
                   </div>
                   {mod.name && mod.name !== mod.fileName && (

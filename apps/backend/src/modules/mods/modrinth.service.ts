@@ -51,6 +51,7 @@ export interface InstalledMod {
   iconUrl?: string | null;
   size: number;
   installedAt: string;
+  enabled: boolean;
 }
 
 export interface InstallResult {
@@ -227,8 +228,11 @@ async function downloadVersion(
   const stats = await fs.promises.stat(target);
   return {
     fileName: path.basename(target),
+    name: null,
+    iconUrl: null,
     size: stats.size,
     installedAt: new Date().toISOString(),
+    enabled: true,
   };
 }
 
@@ -437,7 +441,10 @@ export async function listInstalledMods(
   const mods: InstalledMod[] = [];
 
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".jar")) {
+    if (
+      !entry.isFile() ||
+      (!entry.name.endsWith(".jar") && !entry.name.endsWith(".jar.disabled"))
+    ) {
       continue;
     }
     const fullPath = path.join(dir, entry.name);
@@ -450,10 +457,51 @@ export async function listInstalledMods(
       iconUrl: meta?.iconUrl ?? null,
       size: stats.size,
       installedAt: stats.mtime.toISOString(),
+      enabled: !entry.name.endsWith(".disabled"),
     });
   }
 
   return mods.sort((a, b) => (a.name || a.fileName).localeCompare(b.name || b.fileName));
+}
+
+export async function toggleMod(
+  profileId: string,
+  fileName: string,
+): Promise<InstalledMod | null> {
+  const dir = modsDir(profileId);
+  const cleanName = path.basename(fileName);
+  const source = resolveInsideRoot(dir, cleanName);
+
+  if (!fs.existsSync(source)) {
+    return null;
+  }
+
+  const isCurrentlyDisabled = cleanName.endsWith(".disabled");
+  const newName = isCurrentlyDisabled
+    ? cleanName.replace(/\.disabled$/, "")
+    : `${cleanName}.disabled`;
+  const target = resolveInsideRoot(dir, newName);
+
+  await fs.promises.rename(source, target);
+
+  const metadata = await loadModsMetadata(profileId);
+  if (metadata[cleanName]) {
+    metadata[newName] = metadata[cleanName];
+    delete metadata[cleanName];
+    await saveModsMetadata(profileId, metadata);
+  }
+
+  const stats = await fs.promises.stat(target);
+  const meta = metadata[newName] ?? getJarMetadata(target, stats.mtimeMs);
+
+  return {
+    fileName: newName,
+    name: meta?.name ?? null,
+    iconUrl: meta?.iconUrl ?? null,
+    size: stats.size,
+    installedAt: stats.mtime.toISOString(),
+    enabled: !newName.endsWith(".disabled"),
+  };
 }
 
 export async function removeMod(

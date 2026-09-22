@@ -7,6 +7,7 @@ import {
   listProjectVersions,
   removeMod,
   searchMods,
+  toggleMod,
 } from "./modrinth.service.js";
 
 export const modsRouter = Router();
@@ -74,6 +75,18 @@ modsRouter.get("/installed/:profileId", async (req, res, next) => {
       return res.status(404).json({ message: "profile not found" });
     }
     return res.json(await listInstalledMods(req.params.profileId));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+modsRouter.post("/installed/:profileId/:fileName/toggle", async (req, res, next) => {
+  try {
+    const updated = await toggleMod(req.params.profileId, req.params.fileName);
+    if (!updated) {
+      return res.status(404).json({ message: "mod not found" });
+    }
+    return res.json(updated);
   } catch (err) {
     return next(err);
   }
