@@ -101,4 +101,23 @@ public interface ClientPlatform {
      * dont on ne saurait pas designer une police.
      */
     Style fontStyle(Identifier font);
+
+    /**
+     * Cette version sait-elle conclure une consommation cote client ?
+     *
+     * <p>Le mixin qui le fait s'accroche a {@code tickItemStackUsage}, et vit
+     * dans {@code src/main/java-modern}: il n'est donc compile, et declare, que
+     * sur les versions qui partagent ce tronc. Sans cette methode, le module
+     * apparaitrait dans le menu de toutes les versions et ne ferait rien sur
+     * l'une d'elles -- un reglage qui mentirait au joueur.
+     *
+     * <p>Faux par defaut, et c'est le bon sens de la valeur: une version qu'on
+     * n'a pas outillee ne doit pas promettre ce qu'elle ne tient pas. C'est
+     * l'inverse du choix habituel, ou le defaut est la capacite; ici la
+     * prudence vaut mieux, parce qu'un module inerte se remarque moins qu'une
+     * erreur de compilation.
+     */
+    default boolean supportsLocalUseCompletion() {
+        return false;
+    }
 }

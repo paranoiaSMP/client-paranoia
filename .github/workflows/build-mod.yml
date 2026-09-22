@@ -105,7 +105,16 @@ jobs:
       # message d'erreur sous deux cents lignes de pile interne.
       - name: Build every Minecraft target
         working-directory: apps/client-mod
-        run: gradle build
+        run: |
+          # tee pour garder la sortie: elle sert a l'etape de fin, qui remet les
+          # erreurs de compilation a portee d'une lecture par la queue du
+          # journal. pipefail est indispensable -- sans lui, le code de sortie
+          # serait celui de tee, et un build casse passerait pour vert.
+          set -o pipefail
+          # mkdir avant le tee: il ouvre le fichier avant que Gradle ne cree le
+          # dossier, et echouerait sur un chemin inexistant.
+          mkdir -p build
+          gradle build 2>&1 | tee build/gradle-output.txt
 
       # Lit les vrais noms de champs de la configuration de Sodium.
       #
@@ -398,6 +407,33 @@ jobs:
             echo "=============== resolution Fabric"
             cat build/fabric-resolution.txt
           fi
+
+      # En toute derniere position, et seulement quand le build a echoue.
+      #
+      # Raison d'etre: les erreurs de compilation etaient imprimees par Gradle au
+      # milieu du journal, puis repoussees hors de portee par les sondes qui
+      # suivent -- lesquelles font plusieurs centaines de lignes et tournent en
+      # `always()`. Un journal de CI ne se lit que par la fin, et l'erreur qui
+      # importe le plus etait justement celle qu'on ne pouvait pas atteindre.
+      # J'y ai perdu un aller-retour: faute de lire l'erreur reelle, j'ai devine
+      # sa cause, et devine faux.
+      #
+      # `if: failure()` et non `always()`: en cas de succes, la derniere chose
+      # imprimee doit rester le verdict du resolveur.
+      - name: Compile errors, within reach of the log tail
+        if: failure()
+        working-directory: apps/client-mod
+        run: |
+          echo "=============== erreurs de compilation"
+          if [ ! -f build/gradle-output.txt ]; then
+            echo "(aucune sortie Gradle: l'echec est anterieur au build)"
+            exit 0
+          fi
+          # Les lignes de javac et celles de Mixin, qui refuse une cible absente
+          # avec un message de forme differente.
+          grep -E "error:|\.java:[0-9]+|Cannot find method|Cannot resolve|@Inject|What went wrong|^\* " \
+            build/gradle-output.txt | head -60 \
+            || echo "(aucune ligne d'erreur reconnue)"
 
       - name: Upload mod jars
         uses: actions/upload-artifact@v4
