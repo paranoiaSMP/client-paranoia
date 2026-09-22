@@ -10,6 +10,7 @@
     "start": "node dist/apps/backend/src/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:preset": "tsx scripts/test-graphics-preset.ts",
+    "test:jvm": "tsx scripts/test-jvm-flags.ts",
     "lint": "echo \"no lint configured\"",
     "format": "echo \"no format configured\"",
     "prisma:generate": "prisma generate",

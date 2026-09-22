@@ -73,6 +73,37 @@ jobs:
       - name: Test the graphics preset
         run: pnpm --filter @paranoia/backend test:preset
 
+      # Les deux majeurs que le launcher peut choisir, parce que c'est la version
+      # de Minecraft qui les impose: 21 pour les 1.21.x, 25 pour les 26.x.
+      - name: Setup JDK 21 and 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            21
+            25
+
+      # Un drapeau JVM refuse n'est pas un reglage qui se degrade: c'est un jeu
+      # qui ne demarre plus. Et la relecture ne suffit pas a le savoir -- trois
+      # drapeaux presents dans tous les guides de reglage Minecraft sont
+      # experimentaux et font echouer le demarrage. Ce banc les donne donc a une
+      # vraie JVM, un par un, sur chaque majeur.
+      #
+      # Echoue plutot que de sauter un majeur absent: un saut silencieux
+      # recreerait exactement l'aveuglement que ce banc existe pour supprimer.
+      - name: Test the JVM flags on every Java the launcher can pick
+        run: |
+          for major in 21 25; do
+            home_var="JAVA_HOME_${major}_X64"
+            home="${!home_var}"
+            if [ -z "$home" ] || [ ! -x "$home/bin/java" ]; then
+              echo "::error::JDK $major absent du runner ($home_var non defini)"
+              exit 1
+            fi
+            echo "=============== Java $major"
+            JAVA_BIN="$home/bin/java" pnpm --filter @paranoia/backend test:jvm
+          done
+
   # Les jars du mod sont construits sur ubuntu (facture 1x) et transmis au job
   # windows par un artefact, plutot que d'installer Gradle et un JDK sur un
   # runner facture le double.

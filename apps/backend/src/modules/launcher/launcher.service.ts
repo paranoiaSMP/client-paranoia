@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ensureJava } from "./javaDownloader.js";
 import { requiredJavaMajor } from "./javaRequirement.js";
+import { tuningFlags } from "./jvmFlags.js";
 import { readSettings } from "../settings/settings.store.js";
 import {
 	setIdlePresence,
@@ -513,11 +514,21 @@ export async function launchMinecraft(
 			? { ...resolution, fullscreen: true }
 			: { ...resolution, fullscreen: false };
 
-		// Arguments JVM saisis dans les parametres, ajoutes a ceux du launcher.
-		const extraJvmArgs = settings.jvmArgs
-			.split(/\s+/)
-			.map((arg) => arg.trim())
-			.filter((arg) => arg.length > 0);
+		// Le reglage du ramasse-miettes, choisi selon la version de Java que cette
+		// version de Minecraft impose. Voir jvmFlags.ts: il vivait dans la valeur
+		// par defaut du champ des parametres, donc dans un reglage global, alors
+		// qu'il depend du profil -- Java 21 pour les 1.21.x, 25 pour les 26.x.
+		//
+		// Les arguments du joueur viennent apres, et c'est volontaire: sur un
+		// `-XX:Flag=valeur` repete, c'est le dernier qui gagne. Il peut donc
+		// corriger n'importe lequel des notres sans qu'on ait a prevoir le cas.
+		const extraJvmArgs = [
+			...tuningFlags(javaMajor),
+			...settings.jvmArgs
+				.split(/\s+/)
+				.map((arg) => arg.trim())
+				.filter((arg) => arg.length > 0),
+		];
 
 		if (clientModPath) {
 			// Ajoute comme element distinct du tableau, surtout pas via le decoupage
