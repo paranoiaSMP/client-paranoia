@@ -154,7 +154,14 @@ jobs:
 
           # Le paquet a change de nom entre 0.5 (me.jellysquid) et 0.6
           # (net.caffeinemc): on cherche par nom de classe, pas par chemin.
-          classes=$(find sodium-extrait -name '*SodiumGameOptions*.class' | sort)
+          #
+          # Les deux enumerations citees par PerformanceSettings sont ajoutees a
+          # la main: leurs noms ne contiennent pas « SodiumGameOptions », et sans
+          # leurs constantes on ne peut pas ecrire une valeur pour ces champs.
+          classes=$(find sodium-extrait \
+            \( -name '*SodiumGameOptions*.class' \
+               -o -name 'DeferMode.class' \
+               -o -name 'QuadSplittingMode.class' \) | sort)
           if [ -z "$classes" ]; then
             echo "aucune classe d options trouvee; classes candidates:"
             find sodium-extrait -name '*Options*.class' | head -20
@@ -165,9 +172,32 @@ jobs:
             fqn=$(echo "$class" \
               | sed 's|^sodium-extrait/||; s|\.class$||; s|/|.|g')
             echo "=============== $fqn"
-            # Les champs sont les cles du JSON; les methodes ne nous servent pas.
-            javap -p -cp sodium-extrait "$fqn" 2>/dev/null \
-              | grep -vE '\(' || echo "    (illisible)"
+            # Sans filtre sur les methodes, contrairement a une premiere version:
+            # les champs donnent les cles du JSON, mais c'est le constructeur qui
+            # dit si un fichier partiel est sur. GSON n'execute les initialiseurs
+            # que s'il trouve un constructeur sans argument; sinon il alloue
+            # l'objet sans l'initialiser, et une section absente du JSON arriverait
+            # a null -- le jeu planterait au demarrage. La question ne se devine
+            # pas, elle se lit ici.
+            javap -p -cp sodium-extrait "$fqn" 2>/dev/null || echo "    (illisible)"
+          done
+
+          # Les valeurs par defaut ne sont pas dans la signature: elles sont
+          # posees par l'initialiseur. Sans elles on ne sait pas si ce qu'on
+          # ecrit change quelque chose -- et c'est toute la question pour
+          # cpuRenderAheadLimit, qui est de la latence d'entree deguisee.
+          echo "=============== valeurs par defaut (initialiseurs)"
+          for nom in AdvancedSettings PerformanceSettings QualitySettings; do
+            class=$(find sodium-extrait -name "*SodiumGameOptions\$$nom.class" | head -1)
+            [ -z "$class" ] && continue
+            fqn=$(echo "$class" | sed 's|^sodium-extrait/||; s|\.class$||; s|/|.|g')
+            echo "--- $nom"
+            # Le corps du constructeur: une suite de « push <valeur>; putfield
+            # <champ> ». On garde les deux, l'ordre suffit a les apparier.
+            javap -p -c -cp sodium-extrait "$fqn" 2>/dev/null \
+              | sed -n '/[^a-zA-Z]'"$nom"'();/,/^$/p' \
+              | grep -E 'push|ldc|iconst|putfield|getstatic' \
+              | sed 's/^ *//' || echo "    (illisible)"
           done
 
       # Quand une classe de Minecraft change de paquet entre deux versions,

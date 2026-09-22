@@ -17,6 +17,7 @@ import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
 import { ensureFabricApi, findInstalledFabricApi } from "./fabricApi.js";
 import { applyGraphicsPreset } from "./graphicsPreset.js";
+import { applySodiumPreset } from "./sodiumPreset.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 import { env } from "../../config/env.js";
 
@@ -452,6 +453,15 @@ export async function launchMinecraft(
 		// la vie du profil -- son propre temoin s'en charge -- pour que ce que le
 		// joueur reglera ensuite dans le jeu lui reste acquis.
 		await applyGraphicsPreset(gameDir, profile.graphicsModeId);
+
+		// Sodium a ses propres options, dans son propre fichier, et le launcher
+		// l'installait sans jamais les toucher. Voir sodiumPreset.ts.
+		//
+		// A chaque lancement et non a la creation du profil, contrairement au
+		// prereglage video: ce fichier n'existe qu'apres un premier demarrage du
+		// jeu, c'est donc Sodium qui decide quand le reglage peut s'appliquer. Le
+		// module a son propre temoin et ne pose rien deux fois.
+		await applySodiumPreset(gameDir);
 
 		// Le mode d'affichage est ecrit apres la copie: sinon la valeur du fichier
 		// source ecraserait le choix du joueur.

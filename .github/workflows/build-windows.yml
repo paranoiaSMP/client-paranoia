@@ -73,6 +73,13 @@ jobs:
       - name: Test the graphics preset
         run: pnpm --filter @paranoia/backend test:preset
 
+      # Ce module ecrit dans un fichier qui contient aussi ce que le joueur a
+      # regle lui-meme dans Sodium. Une ecriture maladroite ne se verrait pas
+      # ici et se verrait tres bien en jeu: le banc verifie surtout que le reste
+      # du fichier survit.
+      - name: Test the Sodium preset
+        run: pnpm --filter @paranoia/backend test:sodium
+
       # Les deux majeurs que le launcher peut choisir, parce que c'est la version
       # de Minecraft qui les impose: 21 pour les 1.21.x, 25 pour les 26.x.
       - name: Setup JDK 21 and 25
