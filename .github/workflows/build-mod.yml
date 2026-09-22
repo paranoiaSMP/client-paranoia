@@ -107,6 +107,69 @@ jobs:
         working-directory: apps/client-mod
         run: gradle build
 
+      # Lit les vrais noms de champs de la configuration de Sodium.
+      #
+      # Le launcher installe Sodium mais n'ecrit jamais son sodium-options.json:
+      # il le laisse donc aux valeurs d'usine, qui sont prudentes expres. Pour le
+      # regler il faut connaitre la forme exacte du fichier -- et Sodium l'a
+      # changee entre 0.5 et 0.6.
+      #
+      # On ne la devine pas. Sodium serialise sa classe d'options avec GSON, donc
+      # les noms de champs de la classe *sont* les cles du JSON: `javap -p` les
+      # donne sans avoir a lire le depot amont. Meme raison d'etre que la sonde
+      # des signatures Minecraft plus bas, et meme regle -- une forme non
+      # confirmee par la CI n'est pas une forme verifiee.
+      #
+      # Cette etape vit ici, avec les autres sondes et le JDK deja installe, meme
+      # si elle sert le launcher: les avoir au meme endroit vaut mieux que la
+      # symetrie des dossiers.
+      #
+      # Avant la sonde Minecraft et non apres, pour ne pas repousser hors de
+      # portee le verdict du resolveur, qui doit rester la derniere chose
+      # imprimee du job -- c'est la seule facon dont on lit un journal de CI.
+      #
+      # Ne peut pas faire echouer le build: c'est une lecture.
+      - name: Probe Sodium config schema
+        if: always()
+        continue-on-error: true
+        run: |
+          api="https://api.modrinth.com/v2/project/sodium/version"
+          # Une seule version de Minecraft suffit: on cherche la forme du
+          # fichier, pas la liste des versions de Sodium.
+          query="?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.8%22%5D"
+
+          jar_url=$(curl -sSL --max-time 60 "$api$query" \
+            | jq -r '[.[] | select(.files | length > 0)][0].files
+                     | (map(select(.primary)) + .)[0].url' 2>/dev/null || true)
+
+          if [ -z "$jar_url" ] || [ "$jar_url" = "null" ]; then
+            echo "Modrinth injoignable ou aucune version rendue: rien a lire"
+            exit 0
+          fi
+
+          echo "jar: $jar_url"
+          curl -sSL --max-time 120 "$jar_url" -o sodium.jar || exit 0
+          mkdir -p sodium-extrait
+          unzip -q -o sodium.jar -d sodium-extrait || exit 0
+
+          # Le paquet a change de nom entre 0.5 (me.jellysquid) et 0.6
+          # (net.caffeinemc): on cherche par nom de classe, pas par chemin.
+          classes=$(find sodium-extrait -name '*SodiumGameOptions*.class' | sort)
+          if [ -z "$classes" ]; then
+            echo "aucune classe d options trouvee; classes candidates:"
+            find sodium-extrait -name '*Options*.class' | head -20
+            exit 0
+          fi
+
+          for class in $classes; do
+            fqn=$(echo "$class" \
+              | sed 's|^sodium-extrait/||; s|\.class$||; s|/|.|g')
+            echo "=============== $fqn"
+            # Les champs sont les cles du JSON; les methodes ne nous servent pas.
+            javap -p -cp sodium-extrait "$fqn" 2>/dev/null \
+              | grep -vE '\(' || echo "    (illisible)"
+          done
+
       # Quand une classe de Minecraft change de paquet entre deux versions,
       # javac dit seulement "cannot find symbol". Plutot que de deviner le
       # nouveau chemin et de relancer la CI a chaque essai, on va le lire dans
