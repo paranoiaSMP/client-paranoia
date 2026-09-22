@@ -372,10 +372,30 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-4 hover:border-neutral-700 transition-colors"
+                className="bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-3 hover:border-neutral-700 transition-colors"
               >
-                <Package className="w-5 h-5 text-neutral-600 shrink-0" />
-                <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
+                {mod.iconUrl ? (
+                  <img
+                    src={mod.iconUrl}
+                    alt={mod.name ?? mod.fileName}
+                    className="w-8 h-8 rounded-lg object-cover shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-divider flex items-center justify-center shrink-0">
+                    <Package className="w-4 h-4 text-neutral-600" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate text-ink">
+                    {mod.name ?? mod.fileName}
+                  </div>
+                  {mod.name && mod.name !== mod.fileName && (
+                    <div className="text-xs text-neutral-600 truncate font-mono">
+                      {mod.fileName}
+                    </div>
+                  )}
+                </div>
                 <span className="text-neutral-600 text-xs shrink-0 font-mono">
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>

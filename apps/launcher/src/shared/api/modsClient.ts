@@ -26,6 +26,8 @@ export type ModVersion = {
 
 export type InstalledMod = {
   fileName: string;
+  name?: string | null;
+  iconUrl?: string | null;
   size: number;
   installedAt: string;
 };

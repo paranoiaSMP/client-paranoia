@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import AdmZip from "adm-zip";
 import { instanceDir } from "../launcher/paths.js";
 import {
   downloadVerified,
@@ -46,6 +47,8 @@ export interface ModVersion {
 
 export interface InstalledMod {
   fileName: string;
+  name?: string | null;
+  iconUrl?: string | null;
   size: number;
   installedAt: string;
 }
@@ -261,6 +264,84 @@ async function resolveDependencyVersion(
  * alone left the game refusing to load it. Required dependencies are resolved
  * recursively, filtered on the profile's loader and Minecraft version.
  */
+type ModMetadata = {
+  name?: string | undefined;
+  iconUrl?: string | undefined;
+};
+
+function metaFilePath(profileId: string): string {
+  return path.join(instanceDir(profileId), "mods-metadata.json");
+}
+
+async function loadModsMetadata(
+  profileId: string,
+): Promise<Record<string, ModMetadata>> {
+  try {
+    const file = metaFilePath(profileId);
+    if (!fs.existsSync(file)) return {};
+    return JSON.parse(await fs.promises.readFile(file, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+async function saveModsMetadata(
+  profileId: string,
+  data: Record<string, ModMetadata>,
+) {
+  try {
+    const file = metaFilePath(profileId);
+    await fs.promises.writeFile(file, JSON.stringify(data, null, 2), "utf8");
+  } catch {}
+}
+
+const jarMetaCache = new Map<string, { mtime: number } & ModMetadata>();
+
+function extractJarMetadata(filePath: string): ModMetadata {
+  try {
+    const zip = new AdmZip(filePath);
+    const manifestEntry =
+      zip.getEntry("fabric.mod.json") ?? zip.getEntry("quilt.mod.json");
+    if (!manifestEntry) return {};
+    const meta = JSON.parse(manifestEntry.getData().toString("utf8"));
+    const name = typeof meta.name === "string" ? meta.name : undefined;
+    let iconPath: string | undefined;
+    if (typeof meta.icon === "string") {
+      iconPath = meta.icon;
+    } else if (meta.icon && typeof meta.icon === "object") {
+      iconPath =
+        meta.icon["128"] ??
+        meta.icon["64"] ??
+        meta.icon["32"] ??
+        Object.values(meta.icon)[0];
+    }
+    let iconUrl: string | undefined;
+    if (iconPath) {
+      const cleanPath = iconPath.startsWith("/") ? iconPath.slice(1) : iconPath;
+      const iconEntry = zip.getEntry(cleanPath);
+      if (iconEntry) {
+        iconUrl = `data:image/png;base64,${iconEntry.getData().toString("base64")}`;
+      }
+    }
+    const result: ModMetadata = {};
+    if (name) result.name = name;
+    if (iconUrl) result.iconUrl = iconUrl;
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+function getJarMetadata(filePath: string, mtime: number): ModMetadata {
+  const cached = jarMetaCache.get(filePath);
+  if (cached && cached.mtime === mtime) {
+    return cached;
+  }
+  const meta = extractJarMetadata(filePath);
+  jarMetaCache.set(filePath, { mtime, ...meta });
+  return meta;
+}
+
 export async function installMod(opts: {
   profileId: string;
   projectId: string;
@@ -277,9 +358,22 @@ export async function installMod(opts: {
   const context = { gameVersion: opts.gameVersion, loader: opts.loader };
   const mod = await downloadVersion(opts.profileId, version);
 
+  const metadata = await loadModsMetadata(opts.profileId);
+  const project = await modrinthGet<any>(
+    `/project/${encodeURIComponent(opts.projectId)}`,
+    {},
+  ).catch(() => null);
+
+  if (project) {
+    const entry: ModMetadata = {};
+    if (project.title) entry.name = project.title;
+    if (project.icon_url) entry.iconUrl = project.icon_url;
+    metadata[mod.fileName] = entry;
+    mod.name = project.title ?? null;
+    mod.iconUrl = project.icon_url ?? null;
+  }
+
   const installed: InstalledMod[] = [];
-  // Un mod peut dependre d'un mod qui depend lui-meme d'un autre; on suit le
-  // graphe en gardant trace des projets vus pour ne pas boucler.
   const seen = new Set<string>([opts.projectId]);
   const queue: ModDependency[] = version.dependencies.filter((d) => d.required);
 
@@ -299,17 +393,33 @@ export async function installMod(opts: {
         continue;
       }
 
-      installed.push(await downloadVersion(opts.profileId, resolved));
+      const installedDep = await downloadVersion(opts.profileId, resolved);
+      if (dependency.projectId) {
+        const depProj = await modrinthGet<any>(
+          `/project/${encodeURIComponent(dependency.projectId)}`,
+          {},
+        ).catch(() => null);
+        if (depProj) {
+          const entry: ModMetadata = {};
+          if (depProj.title) entry.name = depProj.title;
+          if (depProj.icon_url) entry.iconUrl = depProj.icon_url;
+          metadata[installedDep.fileName] = entry;
+          installedDep.name = depProj.title ?? null;
+          installedDep.iconUrl = depProj.icon_url ?? null;
+        }
+      }
+
+      installed.push(installedDep);
       queue.push(...resolved.dependencies.filter((d) => d.required));
     } catch (err) {
-      // Une dependance qui echoue ne doit pas annuler l'installation du mod
-      // principal: le joueur verra le mod pose et pourra reessayer.
       console.warn(
         `[mods] dependance ${dependency.projectId} non installee:`,
         err instanceof Error ? err.message : err,
       );
     }
   }
+
+  await saveModsMetadata(opts.profileId, metadata);
 
   return { mod, dependencies: installed };
 }
@@ -322,6 +432,7 @@ export async function listInstalledMods(
     return [];
   }
 
+  const metadata = await loadModsMetadata(profileId);
   const entries = await fs.promises.readdir(dir, { withFileTypes: true });
   const mods: InstalledMod[] = [];
 
@@ -329,15 +440,20 @@ export async function listInstalledMods(
     if (!entry.isFile() || !entry.name.endsWith(".jar")) {
       continue;
     }
-    const stats = await fs.promises.stat(path.join(dir, entry.name));
+    const fullPath = path.join(dir, entry.name);
+    const stats = await fs.promises.stat(fullPath);
+    const meta = metadata[entry.name] ?? getJarMetadata(fullPath, stats.mtimeMs);
+
     mods.push({
       fileName: entry.name,
+      name: meta?.name ?? null,
+      iconUrl: meta?.iconUrl ?? null,
       size: stats.size,
       installedAt: stats.mtime.toISOString(),
     });
   }
 
-  return mods.sort((a, b) => a.fileName.localeCompare(b.fileName));
+  return mods.sort((a, b) => (a.name || a.fileName).localeCompare(b.name || b.fileName));
 }
 
 export async function removeMod(
@@ -352,5 +468,10 @@ export async function removeMod(
   }
 
   await safeUnlink(target);
+  const metadata = await loadModsMetadata(profileId);
+  if (metadata[path.basename(fileName)]) {
+    delete metadata[path.basename(fileName)];
+    await saveModsMetadata(profileId, metadata);
+  }
   return true;
 }
