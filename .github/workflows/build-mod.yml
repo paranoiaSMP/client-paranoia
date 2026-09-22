@@ -305,6 +305,7 @@ jobs:
               "net.minecraft.entity.player.ItemCooldownManager:*" \
               "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
               "net.minecraft.entity.decoration.EndCrystalEntity:*" \
+              "net.minecraft.entity.LivingEntity:ickActiveItemStack|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand" \
               "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
               "net.minecraft.entity.Entity:iscard|etRemoved|emove" \
               "net.minecraft.entity.Entity\$RemovalReason:*" \
@@ -337,24 +338,38 @@ jobs:
               fi
             done
 
-            # Une signature ne dit pas tout. Pour rattraper un clic droit que le
-            # client jette, il faut savoir *ou* le verrou de quatre ticks est
-            # teste: dans doItemUse, qui rendrait la main sans rien faire, ou
-            # dans handleInputEvents, qui n'appellerait meme pas doItemUse. Le
-            # point d'accroche du mixin en depend entierement, et aucune
-            # signature ne repond a la question.
+            # Une signature ne dit pas tout, et deux questions ouvertes le
+            # montrent bien.
             #
-            # On lit donc le bytecode, filtre sur ce qui touche au champ: chaque
-            # acces a itemUseCooldown, et la comparaison qui le suit.
-            echo "--- ou itemUseCooldown est lu et ecrit"
-            javap -p -c -cp "$cp" net.minecraft.client.MinecraftClient 2>/dev/null \
-              | awk '
-                  /^  [a-z].*\(.*\);$/ { methode = $0 }
-                  /itemUseCooldown/ {
-                    if (methode != vu) { print "  dans" methode; vu = methode }
-                    print "     " $0
-                  }' \
-              | sed 's/^ *//;s/^/    /' || echo "    (illisible)"
+            # Rattraper un clic droit que le client jette demande de savoir *ou*
+            # le verrou de quatre ticks est teste: dans doItemUse, qui rendrait
+            # la main sans rien faire, ou dans handleInputEvents, qui
+            # n'appellerait meme pas doItemUse. Le point d'accroche en depend.
+            #
+            # Finir de manger a l'instant prevu demande de savoir ou le jeu
+            # reserve la consommation au serveur. L'animation reste bloquee
+            # jusqu'a sa reponse, et ce blocage empeche d'agir -- c'est lui qu'on
+            # veut lever, pas la duree de la bouchee.
+            #
+            # Dans les deux cas la reponse est dans le corps de la methode, pas
+            # dans sa signature. On lit donc le bytecode, filtre sur ce qui nous
+            # interesse, avec la methode qui le contient.
+            for lecture in \
+              "net.minecraft.client.MinecraftClient:itemUseCooldown" \
+              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem"
+            do
+              corps_classe="${lecture%%:*}"
+              corps_motif="${lecture#*:}"
+              echo "--- bytecode de ${corps_classe##*.}, sur ($corps_motif)"
+              javap -p -c -cp "$cp" "$corps_classe" 2>/dev/null \
+                | awk -v motif="$corps_motif" '
+                    /^  [a-z].*\(.*\);$/ { methode = $0 }
+                    $0 ~ motif {
+                      if (methode != vu) { print "  dans" methode; vu = methode }
+                      print "     " $0
+                    }' \
+                | sed 's/^ *//;s/^/    /' || echo "    (illisible)"
+            done
           done
 
           # En toute fin, et non en tete: la sonde elle-meme fait deux cents
