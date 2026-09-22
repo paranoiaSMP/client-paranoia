@@ -277,15 +277,29 @@ jobs:
             # signature d'une version a l'autre, et les deviner couterait un
             # build par essai.
             #
+            # EndCrystalEntity, ClientWorld, Entity et RemovalReason repondent a
+            # une autre question ouverte: en crystal PvP, le client garde
+            # l'entite du crystal jusqu'au retour du paquet de suppression, donc
+            # sa boite de collision occupe encore la place et empeche d'en poser
+            # un nouveau. Le joueur attend un aller-retour de ping complet par
+            # crystal, alors que le serveur a deja tout traite. Retirer l'entite
+            # des la frappe demande de savoir quelle methode le fait cote client,
+            # avec quelle raison de suppression, et dans quel paquet vit
+            # EndCrystalEntity -- quatre choses qu'on ne devine pas.
+            #
             # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
             # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
               "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress|getItemCooldownManager" \
               "net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket$Action:*" \
-              "net.minecraft.client.MinecraftClient:handleInputEvents|doItemUse|tatusEffectSprite" \
+              "net.minecraft.client.MinecraftClient:doAttack|handleInputEvents|doItemUse|tatusEffectSprite" \
               "net.minecraft.entity.player.ItemCooldownManager:*" \
-              "net.minecraft.client.network.ClientPlayerInteractionManager:clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.entity.decoration.EndCrystalEntity:*" \
+              "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
+              "net.minecraft.entity.Entity:iscard|etRemoved|emove" \
+              "net.minecraft.entity.Entity\$RemovalReason:*" \
               "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \
               "net.minecraft.client.option.InactivityFpsLimiter:update" \
