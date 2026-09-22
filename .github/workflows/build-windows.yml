@@ -64,6 +64,15 @@ jobs:
       - name: Test the update manifest composer
         run: node scripts/test-update-manifest.mjs
 
+      # Les reglages video poses a la creation d'un profil. Ce banc tient surtout
+      # une regle qui n'est pas technique: l'essentiel des joueurs font du PvP, et
+      # trois reglages qui gagnent des images leur retirent de l'information --
+      # les particules de coup critique, l'affichage des entites lointaines, la
+      # distance de simulation. Les remettre « pour gagner des images » fait
+      # maintenant echouer la CI.
+      - name: Test the graphics preset
+        run: pnpm --filter @paranoia/backend test:preset
+
   # Les jars du mod sont construits sur ubuntu (facture 1x) et transmis au job
   # windows par un artefact, plutot que d'installer Gradle et un JDK sur un
   # runner facture le double.
