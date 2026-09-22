@@ -305,7 +305,7 @@ jobs:
               "net.minecraft.entity.player.ItemCooldownManager:*" \
               "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
               "net.minecraft.entity.decoration.EndCrystalEntity:*" \
-              "net.minecraft.entity.LivingEntity:ickActiveItemStack|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand|onsumptionEffects|atSound|laySound" \
+              "net.minecraft.entity.LivingEntity:ickActiveItemStack|ickItemStackUsage|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand|onsumptionEffects|atSound|laySound" \
               "net.minecraft.item.ItemStack:reItemsEqual|reEqual|sedOnRelease|etMaxUseTime" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:onScreenHandlerSlotUpdate|onInventory|onUpdateSelectedSlot|onEntityStatus" \
               "net.minecraft.client.option.GameOptions:useKey|attackKey" \
