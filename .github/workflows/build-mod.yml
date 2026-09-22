@@ -305,7 +305,9 @@ jobs:
               "net.minecraft.entity.player.ItemCooldownManager:*" \
               "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
               "net.minecraft.entity.decoration.EndCrystalEntity:*" \
-              "net.minecraft.entity.LivingEntity:ickActiveItemStack|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand" \
+              "net.minecraft.entity.LivingEntity:ickActiveItemStack|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand|onsumptionEffects|atSound|laySound" \
+              "net.minecraft.item.ItemStack:reItemsEqual|reEqual|sedOnRelease|etMaxUseTime" \
+              "net.minecraft.client.network.ClientPlayNetworkHandler:onScreenHandlerSlotUpdate|onInventory|onUpdateSelectedSlot|onEntityStatus" \
               "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
               "net.minecraft.entity.Entity:iscard|etRemoved|emove" \
               "net.minecraft.entity.Entity\$RemovalReason:*" \
@@ -354,9 +356,15 @@ jobs:
             # Dans les deux cas la reponse est dans le corps de la methode, pas
             # dans sa signature. On lit donc le bytecode, filtre sur ce qui nous
             # interesse, avec la methode qui le contient.
+            # Le quatuor de LivingEntity repond a trois symptomes d'un coup, et
+            # c'est pour cela qu'on les lit ensemble: le delai de consommation
+            # (ou isClient reserve la consommation au serveur), le redemarrage
+            # aleatoire (ou clearActiveItem est appele apres une comparaison de
+            # pile qui echoue), et le retard du son (ou le son de fin est joue).
+            # Trois choses qui sortent du meme corps de methode.
             for lecture in \
               "net.minecraft.client.MinecraftClient:itemUseCooldown" \
-              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem"
+              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects"
             do
               corps_classe="${lecture%%:*}"
               corps_motif="${lecture#*:}"
