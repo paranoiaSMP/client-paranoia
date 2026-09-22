@@ -336,6 +336,25 @@ jobs:
                   | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
               fi
             done
+
+            # Une signature ne dit pas tout. Pour rattraper un clic droit que le
+            # client jette, il faut savoir *ou* le verrou de quatre ticks est
+            # teste: dans doItemUse, qui rendrait la main sans rien faire, ou
+            # dans handleInputEvents, qui n'appellerait meme pas doItemUse. Le
+            # point d'accroche du mixin en depend entierement, et aucune
+            # signature ne repond a la question.
+            #
+            # On lit donc le bytecode, filtre sur ce qui touche au champ: chaque
+            # acces a itemUseCooldown, et la comparaison qui le suit.
+            echo "--- ou itemUseCooldown est lu et ecrit"
+            javap -p -c -cp "$cp" net.minecraft.client.MinecraftClient 2>/dev/null \
+              | awk '
+                  /^  [a-z].*\(.*\);$/ { methode = $0 }
+                  /itemUseCooldown/ {
+                    if (methode != vu) { print "  dans" methode; vu = methode }
+                    print "     " $0
+                  }' \
+              | sed 's/^ *//;s/^/    /' || echo "    (illisible)"
           done
 
           # En toute fin, et non en tete: la sonde elle-meme fait deux cents
