@@ -128,6 +128,7 @@ export function AppOverlays({
 							await onDelete(mainProfile.id);
 							onClose();
 						}}
+						onRefresh={refreshProfiles}
 					/>
 				)}
 			</Modal>

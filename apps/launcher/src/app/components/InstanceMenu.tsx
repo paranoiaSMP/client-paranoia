@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   FolderOpen,
   Package,
   Play,
+  Settings,
   Star,
   Trash2,
 } from "lucide-react";
 import type { LauncherProfile } from "@paranoia/contracts";
+import { updateProfile } from "../../shared/api/profilesClient";
 
 type InstanceMenuProps = {
   profile: LauncherProfile;
@@ -17,16 +19,9 @@ type InstanceMenuProps = {
   onOpenMods: () => void;
   onFavorite: () => void;
   onDelete: () => void;
+  onRefresh?: () => Promise<unknown> | void;
 };
 
-/**
- * Menu d'une instance, ouvert en cliquant sur sa vignette.
- *
- * <p>Rassemble ce qui concerne une instance et une seule: ses caracteristiques,
- * ses mods, son dossier. Les deux actions que le joueur cherche le plus --
- * installer un mod et ouvrir le dossier -- existaient deja, mais enfouies dans
- * l'onglet des mods, donc introuvables depuis l'accueil.
- */
 export function InstanceMenu({
   profile,
   modCount,
@@ -35,17 +30,47 @@ export function InstanceMenu({
   onOpenMods,
   onFavorite,
   onDelete,
+  onRefresh,
 }: InstanceMenuProps) {
   const [folderError, setFolderError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(profile.name);
+  const [ramMb, setRamMb] = useState(profile.ramMb || 4096);
+  const [resolution, setResolution] = useState(profile.resolution || "1920x1080");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setName(profile.name);
+    setRamMb(profile.ramMb || 4096);
+    setResolution(profile.resolution || "1920x1080");
+  }, [profile]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateProfile(profile.id, {
+        name: name.trim() || profile.name,
+        ramMb,
+        resolution: resolution.trim() || profile.resolution,
+      });
+      await onRefresh?.();
+      setEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erreur de sauvegarde");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function openFolder() {
     setFolderError(null);
     try {
       await invoke("open_instance_folder", { profileId: profile.id });
     } catch (e) {
-      // Le dossier n'existe qu'apres un premier lancement: le dire vaut mieux
-      // qu'un bouton qui ne fait rien.
       setFolderError(
         typeof e === "string" ? e : "Dossier introuvable. Lance l'instance une fois.",
       );
@@ -54,18 +79,111 @@ export function InstanceMenu({
 
   return (
     <div className="space-y-5">
-      {/* Caracteristiques */}
-      <div className="grid grid-cols-2 gap-3">
-        <Detail label="Minecraft" value={profile.minecraftVersion} />
-        <Detail label="Type" value={profile.profileTypeId} />
-        <Detail label="Graphismes" value={profile.graphicsModeId} />
-        <Detail label="Memoire" value={`${Math.round(profile.ramMb / 1024)} Go`} />
-        <Detail label="Resolution" value={profile.resolution} />
-        <Detail
-          label="Mods installes"
-          value={modCount === null ? "--" : String(modCount)}
-        />
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          Caractéristiques
+        </h3>
+        <button
+          type="button"
+          onClick={() => setEditing(!editing)}
+          className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-400 transition-colors"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          {editing ? "Fermer" : "Modifier"}
+        </button>
       </div>
+
+      {editing ? (
+        <form onSubmit={handleSave} className="space-y-4 rounded-xl border border-divider bg-ground p-4">
+          <div>
+            <label className="text-xs font-semibold text-neutral-400 block mb-1">
+              Nom de l'instance
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+              required
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-semibold text-neutral-400">
+                Mémoire allouée (RAM)
+              </label>
+              <span className="text-xs font-mono font-semibold text-accent">
+                {Math.round(ramMb / 1024)} Go ({ramMb} Mo)
+              </span>
+            </div>
+            <input
+              type="range"
+              min={1024}
+              max={16384}
+              step={1024}
+              value={ramMb}
+              onChange={(e) => setRamMb(Number(e.target.value))}
+              className="w-full accent-accent cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-neutral-600 font-mono mt-0.5">
+              <span>1 Go</span>
+              <span>4 Go</span>
+              <span>8 Go</span>
+              <span>16 Go</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-neutral-400 block mb-1">
+              Résolution
+            </label>
+            <input
+              type="text"
+              value={resolution}
+              onChange={(e) => setResolution(e.target.value)}
+              placeholder="1920x1080"
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+            />
+          </div>
+
+          {saveError && <p className="text-xs text-red-400">{saveError}</p>}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-ink hover:bg-accent-600 disabled:opacity-50"
+            >
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setName(profile.name);
+                setRamMb(profile.ramMb);
+                setResolution(profile.resolution);
+                setEditing(false);
+              }}
+              className="rounded-lg border border-divider bg-surface px-4 py-2.5 text-sm font-semibold text-neutral-400 hover:text-ink"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <Detail label="Minecraft" value={profile.minecraftVersion} />
+          <Detail label="Type" value={profile.profileTypeId} />
+          <Detail label="Graphismes" value={profile.graphicsModeId} />
+          <Detail label="Mémoire" value={`${Math.round(profile.ramMb / 1024)} Go`} />
+          <Detail label="Résolution" value={profile.resolution} />
+          <Detail
+            label="Mods installés"
+            value={modCount === null ? "--" : String(modCount)}
+          />
+        </div>
+      )}
 
       {/* Actions principales */}
       <div className="grid grid-cols-2 gap-3">
