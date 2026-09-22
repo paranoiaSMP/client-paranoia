@@ -129,6 +129,7 @@ export function AppOverlays({
 							onClose();
 						}}
 						onRefresh={refreshProfiles}
+						config={config}
 					/>
 				)}
 			</Modal>

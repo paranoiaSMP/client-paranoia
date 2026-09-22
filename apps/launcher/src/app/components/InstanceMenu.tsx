@@ -8,7 +8,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import type { LauncherProfile } from "@paranoia/contracts";
+import type { LauncherProfile, RemoteConfiguration } from "@paranoia/contracts";
 import { updateProfile } from "../../shared/api/profilesClient";
 
 type InstanceMenuProps = {
@@ -20,6 +20,7 @@ type InstanceMenuProps = {
   onFavorite: () => void;
   onDelete: () => void;
   onRefresh?: () => Promise<unknown> | void;
+  config?: RemoteConfiguration | null;
 };
 
 export function InstanceMenu({
@@ -31,18 +32,28 @@ export function InstanceMenu({
   onFavorite,
   onDelete,
   onRefresh,
+  config,
 }: InstanceMenuProps) {
   const [folderError, setFolderError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile.name);
+  const [minecraftVersion, setMinecraftVersion] = useState(profile.minecraftVersion);
   const [ramMb, setRamMb] = useState(profile.ramMb || 4096);
   const [resolution, setResolution] = useState(profile.resolution || "1920x1080");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const availableVersions = Array.from(
+    new Set([
+      profile.minecraftVersion,
+      ...(config?.supportedMinecraftVersions ?? []),
+    ]),
+  );
+
   useEffect(() => {
     setName(profile.name);
+    setMinecraftVersion(profile.minecraftVersion);
     setRamMb(profile.ramMb || 4096);
     setResolution(profile.resolution || "1920x1080");
   }, [profile]);
@@ -54,6 +65,7 @@ export function InstanceMenu({
     try {
       await updateProfile(profile.id, {
         name: name.trim() || profile.name,
+        minecraftVersion,
         ramMb,
         resolution: resolution.trim() || profile.resolution,
       });
@@ -109,6 +121,23 @@ export function InstanceMenu({
           </div>
 
           <div>
+            <label className="text-xs font-semibold text-neutral-400 block mb-1">
+              Version de Minecraft
+            </label>
+            <select
+              value={minecraftVersion}
+              onChange={(e) => setMinecraftVersion(e.target.value)}
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent cursor-pointer"
+            >
+              {availableVersions.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-semibold text-neutral-400">
                 Mémoire allouée (RAM)
@@ -161,6 +190,7 @@ export function InstanceMenu({
               type="button"
               onClick={() => {
                 setName(profile.name);
+                setMinecraftVersion(profile.minecraftVersion);
                 setRamMb(profile.ramMb);
                 setResolution(profile.resolution);
                 setEditing(false);

@@ -142,6 +142,10 @@ profilesRouter.patch("/:id", (req, res) => {
 		return res.status(404).json({ message: "profile not found" });
 	}
 
+	if (patch.minecraftVersion) {
+		void prepareInstance(profile);
+	}
+
 	return res.json(profile);
 });
 
