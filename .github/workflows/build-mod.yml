@@ -308,6 +308,8 @@ jobs:
               "net.minecraft.entity.LivingEntity:ickActiveItemStack|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand|onsumptionEffects|atSound|laySound" \
               "net.minecraft.item.ItemStack:reItemsEqual|reEqual|sedOnRelease|etMaxUseTime" \
               "net.minecraft.client.network.ClientPlayNetworkHandler:onScreenHandlerSlotUpdate|onInventory|onUpdateSelectedSlot|onEntityStatus" \
+              "net.minecraft.client.option.GameOptions:useKey|attackKey" \
+              "net.minecraft.client.option.KeyBinding:sPressed|asPressed|etPressed" \
               "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
               "net.minecraft.entity.Entity:iscard|etRemoved|emove" \
               "net.minecraft.entity.Entity\$RemovalReason:*" \
@@ -362,8 +364,16 @@ jobs:
             # aleatoire (ou clearActiveItem est appele apres une comparaison de
             # pile qui echoue), et le retard du son (ou le son de fin est joue).
             # Trois choses qui sortent du meme corps de methode.
+            # La lecture precedente a deja tranche une question et corrige une
+            # hypothese: doItemUse n'ecrit le verrou que pour le remettre a
+            # quatre, elle ne le lit jamais. Le test est dans handleInputEvents,
+            # donc un clic pendant le verrou n'atteint jamais doItemUse -- s'y
+            # accrocher n'aurait rien vu, et la CI serait restee verte sur un
+            # module qui ne corrige rien. On garde l'entree: le jour ou la
+            # structure bouge, elle le dira.
             for lecture in \
               "net.minecraft.client.MinecraftClient:itemUseCooldown" \
+              "net.minecraft.client.MinecraftClient:useKey|KeyBinding" \
               "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects"
             do
               corps_classe="${lecture%%:*}"
