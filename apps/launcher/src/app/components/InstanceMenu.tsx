@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
+  Copy,
   FolderOpen,
   Package,
   Play,
@@ -9,7 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { LauncherProfile, RemoteConfiguration } from "@paranoia/contracts";
-import { updateProfile } from "../../shared/api/profilesClient";
+import { duplicateProfile, updateProfile } from "../../shared/api/profilesClient";
 
 type InstanceMenuProps = {
   profile: LauncherProfile;
@@ -21,6 +22,7 @@ type InstanceMenuProps = {
   onDelete: () => void;
   onRefresh?: () => Promise<unknown> | void;
   config?: RemoteConfiguration | null;
+  onClose?: () => void;
 };
 
 export function InstanceMenu({
@@ -33,16 +35,33 @@ export function InstanceMenu({
   onDelete,
   onRefresh,
   config,
+  onClose,
 }: InstanceMenuProps) {
   const [folderError, setFolderError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [name, setName] = useState(profile.name);
   const [minecraftVersion, setMinecraftVersion] = useState(profile.minecraftVersion);
   const [ramMb, setRamMb] = useState(profile.ramMb || 4096);
   const [resolution, setResolution] = useState(profile.resolution || "1920x1080");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  async function handleDuplicate() {
+    setDuplicating(true);
+    try {
+      await duplicateProfile(profile.id);
+      await onRefresh?.();
+      onClose?.();
+    } catch (err) {
+      setFolderError(
+        err instanceof Error ? err.message : "Erreur de duplication",
+      );
+    } finally {
+      setDuplicating(false);
+    }
+  }
 
   const availableVersions = Array.from(
     new Set([
@@ -268,6 +287,16 @@ export function InstanceMenu({
         >
           <Star className={`h-4 w-4 ${profile.favorite ? "fill-current" : ""}`} />
           {profile.favorite ? "Favori" : "Mettre en favori"}
+        </button>
+
+        <button
+          onClick={handleDuplicate}
+          disabled={duplicating}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-divider hover:text-ink transition-colors disabled:opacity-50"
+          type="button"
+        >
+          <Copy className="h-4 w-4" />
+          {duplicating ? "Duplication..." : "Dupliquer"}
         </button>
 
         <button

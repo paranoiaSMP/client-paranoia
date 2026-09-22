@@ -130,6 +130,7 @@ export function AppOverlays({
 						}}
 						onRefresh={refreshProfiles}
 						config={config}
+						onClose={onClose}
 					/>
 				)}
 			</Modal>
