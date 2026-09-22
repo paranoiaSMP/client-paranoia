@@ -320,7 +320,7 @@ jobs:
               "net.minecraft.client.option.GameOptions:useKey|attackKey" \
               "net.minecraft.client.option.KeyBinding:sPressed|asPressed|etPressed" \
               "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
-              "net.minecraft.entity.Entity:iscard|etRemoved|emove" \
+              "net.minecraft.entity.Entity:iscard|etRemoved|emove|etWorld" \
               "net.minecraft.entity.Entity\$RemovalReason:*" \
               "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \

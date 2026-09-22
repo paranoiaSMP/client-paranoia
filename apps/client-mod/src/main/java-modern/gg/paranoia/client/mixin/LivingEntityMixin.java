@@ -41,18 +41,26 @@ public abstract class LivingEntityMixin {
 
         LivingEntity self = (LivingEntity) (Object) this;
 
-        // Uniquement le joueur local. Les autres entites sont pilotees par le
-        // serveur de bout en bout: anticiper pour elles ne gagnerait rien et
-        // ferait diverger ce qu'on affiche d'elles.
+        // Uniquement le joueur local, et ce seul test suffit.
+        //
+        // Il porte deux garanties a la fois. D'abord celle qu'on cherchait: les
+        // autres entites sont pilotees par le serveur de bout en bout, anticiper
+        // pour elles ne gagnerait rien et ferait diverger ce qu'on affiche
+        // d'elles. Ensuite, implicitement, le cote: `client.player` est
+        // l'entite du client, donc l'egalite ne peut etre vraie que la.
+        //
+        // Un second test sur `getWorld().isClient()` a ete essaye puis retire.
+        // Il ne compilait pas -- l'un des deux symboles a bouge sur les versions
+        // recentes, et la question n'a plus d'interet -- mais surtout il ne
+        // faisait pas ce que son commentaire annoncait: il pretendait ecarter le
+        // solo, alors qu'en solo le monde du client *est* un monde client et que
+        // `isClient()` y vaut vrai. Il etait donc redondant et faux a la fois.
+        //
+        // Le solo n'a d'ailleurs pas besoin d'etre ecarte: sans latence, le
+        // serveur integre conclut dans le meme tick, l'usage est deja termine
+        // quand on arrive ici, et le test du compteur ci-dessous ne fait rien.
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player != self) {
-            return;
-        }
-
-        // Et uniquement sur un monde client: en solo integre, le serveur tourne
-        // dans le meme processus, conclut lui-meme, et il n'y a aucun delai a
-        // supprimer.
-        if (!self.getWorld().isClient()) {
             return;
         }
 
