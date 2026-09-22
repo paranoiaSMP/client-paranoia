@@ -277,6 +277,14 @@ jobs:
             # signature d'une version a l'autre, et les deviner couterait un
             # build par essai.
             #
+            # itemUseCooldown repond a la question des entrees perdues. Le clic
+            # droit est verrouille quatre ticks par le client lui-meme, et un
+            # clic qui tombe pendant ce verrou n'est pas retarde: il est jete. En
+            # combat on clique plus vite que ca, et l'entree disparait sans que
+            # le reseau y soit pour rien. On veut la garder et la rejouer au
+            # premier tick autorise -- et non renvoyer l'action, ce qui en
+            # produirait deux quand le serveur a deja traite la premiere.
+            #
             # EndCrystalEntity, ClientWorld, Entity et RemovalReason repondent a
             # une autre question ouverte: en crystal PvP, le client garde
             # l'entite du crystal jusqu'au retour du paquet de suppression, donc
@@ -293,7 +301,7 @@ jobs:
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
               "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress|getItemCooldownManager" \
               "net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket$Action:*" \
-              "net.minecraft.client.MinecraftClient:doAttack|handleInputEvents|doItemUse|tatusEffectSprite" \
+              "net.minecraft.client.MinecraftClient:doAttack|handleInputEvents|doItemUse|temUseCooldown|tatusEffectSprite" \
               "net.minecraft.entity.player.ItemCooldownManager:*" \
               "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
               "net.minecraft.entity.decoration.EndCrystalEntity:*" \
