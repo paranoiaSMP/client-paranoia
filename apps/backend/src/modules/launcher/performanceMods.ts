@@ -12,10 +12,16 @@ import { logger } from "../../logger.js";
  * jeu -- et le reecrire serait plusieurs annees de travail pour arriver, au
  * mieux, la ou Sodium est deja.
  *
- * <p>On installe donc Sodium plutot que de le refaire, et trois autres qui
- * couvrent ce que Sodium ne couvre pas. Aucun des quatre ne se voit a l'ecran,
+ * <p>On installe donc Sodium plutot que de le refaire, et cinq autres qui
+ * couvrent ce que Sodium ne couvre pas. Aucun des six ne se voit a l'ecran,
  * aucun ne touche au gameplay, et aucun ne recouvre le travail du client: Sodium
  * s'occupe du terrain, le client s'occupe des entites.
+ *
+ * <p>Cette derniere phrase est la regle d'admission, et elle vaut surtout parce
+ * que l'essentiel des joueurs font du PvP: un mod qui gagnerait des images en
+ * retirant de l'information -- en cessant d'afficher les entites lointaines, en
+ * coupant les particules de coup critique -- n'a rien a faire ici, quel que soit
+ * son gain. Il ferait perdre le combat qu'il accelere.
  *
  * <p><strong>A la creation du profil, et uniquement la.</strong> Un joueur qui
  * retire Sodium a une raison de le faire -- un pilote graphique capricieux, un
@@ -69,6 +75,33 @@ const PERFORMANCE_MODS: readonly PerformanceMod[] = [
     label: "ModernFix",
     role: "demarrage et memoire",
     fileName: /^modernfix[-_]/i,
+  },
+  {
+    // Regroupe les appels de dessin en mode immediat: HUD, texte, interfaces.
+    //
+    // Il compte plus ici qu'ailleurs, et de plus en plus: le client dessine six
+    // elements de HUD avec du texte agrandi, un graphe et une grille de touches,
+    // a chaque image, et tout cela passe par le mode immediat. Le regroupement
+    // des rangees de Shapes a deja ramene une image de HUD de mille quarante
+    // appels a deux cent dix-huit; ImmediatelyFast travaille sur ce qui reste,
+    // et sur tout ce que le jeu lui-meme dessine de la meme facon.
+    projectId: "immediatelyfast",
+    label: "ImmediatelyFast",
+    role: "dessin du HUD et des interfaces",
+    fileName: /^immediatelyfast[-_]/i,
+  },
+  {
+    // La pile reseau. Le seul de la liste qui touche a la latence au sens
+    // litteral: il allege le traitement des paquets, la ou les autres
+    // s'occupent de ce qui se dessine.
+    //
+    // Le gain est modeste et il faut le dire: il ne raccourcit pas le trajet
+    // jusqu'au serveur, ce qu'aucun mod ne peut faire. Il enleve du travail
+    // entre la reception d'un paquet et sa prise en compte.
+    projectId: "krypton",
+    label: "Krypton",
+    role: "pile reseau",
+    fileName: /^krypton[-_]/i,
   },
 ];
 
