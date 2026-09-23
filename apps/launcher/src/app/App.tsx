@@ -65,6 +65,7 @@ export function App() {
 		handleLocalDevContinue,
 		handleSwitchAccount,
 		handleLogout,
+		handleDeleteAccount,
 	} = useAuth(setError);
 
 	const {
@@ -217,6 +218,7 @@ export function App() {
 							connecting={connectingMicrosoft}
 							onConnect={handleMicrosoftConnect}
 							onSwitch={handleSwitchAccount}
+							onDeleteAccount={handleDeleteAccount}
 						/>
 					)}
 

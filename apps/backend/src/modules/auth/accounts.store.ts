@@ -43,15 +43,35 @@ function ensureStore() {
   }
 }
 
+function normalizeUuid(uuid: string): string {
+  return (uuid || "").replace(/-/g, "").toLowerCase();
+}
+
+function deduplicate(accounts: StoredAccount[]): StoredAccount[] {
+  const seen = new Set<string>();
+  const clean: StoredAccount[] = [];
+  for (const acc of accounts) {
+    const key =
+      normalizeUuid(acc.minecraftUuid) ||
+      (acc.minecraftUsername || "").toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    clean.push(acc);
+  }
+  return clean;
+}
+
 function readAll(): StoredAccount[] {
   ensureStore();
   try {
     const parsed = JSON.parse(readFileSync(DB_PATH, "utf-8"));
-    return Array.isArray(parsed) ? (parsed as StoredAccount[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    const deduped = deduplicate(parsed as StoredAccount[]);
+    if (deduped.length !== parsed.length) {
+      writeAll(deduped);
+    }
+    return deduped;
   } catch {
-    // Un fichier corrompu ne doit pas empecher le launcher de demarrer:
-    // au pire le joueur se reconnecte.
-    console.warn("[AUTH] accounts.json illisible, remise a zero");
     return [];
   }
 }
@@ -72,14 +92,16 @@ export function getAccount(id: string): StoredAccount | null {
   return readAll().find((account) => account.id === id) ?? null;
 }
 
-/**
- * Insert or update an account. Accounts are keyed by Minecraft UUID so signing
- * in twice with the same player refreshes the entry instead of duplicating it.
- */
 export function saveAccount(tokens: MinecraftAccountTokens): StoredAccount {
   const accounts = readAll();
+  const targetUuid = normalizeUuid(tokens.minecraftUuid);
+  const targetUser = (tokens.minecraftUsername || "").toLowerCase();
+
   const existing = accounts.find(
-    (account) => account.minecraftUuid === tokens.minecraftUuid,
+    (account) =>
+      (targetUuid && normalizeUuid(account.minecraftUuid) === targetUuid) ||
+      (targetUser &&
+        (account.minecraftUsername || "").toLowerCase() === targetUser),
   );
 
   const account: StoredAccount = {
@@ -92,9 +114,14 @@ export function saveAccount(tokens: MinecraftAccountTokens): StoredAccount {
     expiresAt: tokens.expiresAt,
   };
 
-  const next = existing
-    ? accounts.map((entry) => (entry.id === account.id ? account : entry))
-    : [...accounts, account];
+  const next = accounts.filter(
+    (entry) =>
+      entry.id !== account.id &&
+      (!targetUuid || normalizeUuid(entry.minecraftUuid) !== targetUuid) &&
+      (!targetUser ||
+        (entry.minecraftUsername || "").toLowerCase() !== targetUser),
+  );
+  next.push(account);
 
   writeAll(next);
   return account;

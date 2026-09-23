@@ -91,8 +91,15 @@ export function useAuth(setError: (err: string | null) => void) {
           });
           setAccount(authAccount);
           setAccounts((prev) => {
-            if (prev.find((a) => a.id === authAccount.id)) return prev;
-            return [...prev, authAccount];
+            const normUuid = authAccount.minecraftUuid.replace(/-/g, "").toLowerCase();
+            const normUser = authAccount.minecraftUsername.toLowerCase();
+            const filtered = prev.filter(
+              (a) =>
+                a.id !== authAccount.id &&
+                a.minecraftUuid.replace(/-/g, "").toLowerCase() !== normUuid &&
+                a.minecraftUsername.toLowerCase() !== normUser,
+            );
+            return [...filtered, authAccount];
           });
           setConnected(true);
         } catch (e) {
@@ -170,19 +177,30 @@ export function useAuth(setError: (err: string | null) => void) {
     }
   }
 
+  async function handleDeleteAccount(id: string) {
+    if (id !== "local-dev") {
+      await forgetAccount(id).catch(() => {});
+    }
+    const remaining = accounts.filter((a) => a.id !== id);
+    setAccounts(remaining);
+    if (account?.id === id) {
+      const next = remaining[0] ?? null;
+      setAccount(next);
+      setConnected(next !== null);
+    }
+  }
+
   return {
     connected,
     account,
     accounts,
     connectingMicrosoft,
     restoringSession,
-    // Le compte factice ne passe pas la verification de session de Mojang:
-    // l'exposer dans une version distribuee ne menait qu'a un lancement en
-    // echec pour le joueur.
     devModeAvailable: import.meta.env.DEV,
     handleMicrosoftConnect,
     handleLocalDevContinue,
     handleSwitchAccount,
     handleLogout,
+    handleDeleteAccount,
   };
 }

@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
 import { ScreenHeader } from "./ScreenHeader";
@@ -9,21 +9,16 @@ type AccountsScreenProps = {
 	connecting: boolean;
 	onConnect: () => void;
 	onSwitch: (account: MicrosoftAccount) => void;
+	onDeleteAccount?: (id: string) => void;
 };
 
-/**
- * Les comptes Microsoft enregistres.
- *
- * <p>Le compte actif porte un liseré accentue et une lueur, les autres une
- * simple invitation a les activer. C'est la meme grammaire que la barre
- * laterale: ce qui est choisi s'eclaire, ce qui ne l'est pas reste sobre.
- */
 export function AccountsScreen({
 	account,
 	accounts,
 	connecting,
 	onConnect,
 	onSwitch,
+	onDeleteAccount,
 }: AccountsScreenProps) {
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
@@ -41,42 +36,59 @@ export function AccountsScreen({
 					{accounts.map((entry) => {
 						const active = entry.id === account?.id;
 						return (
-							<button
+							<div
 								key={entry.id}
-								type="button"
-								disabled={active}
-								onClick={() => onSwitch(entry)}
-								className={`flex items-center gap-3 rounded-md bg-surface p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+								className={`flex items-center gap-2 rounded-md bg-surface p-3 transition-colors ${
 									active
 										? "border-2 border-accent-700 shadow-[0_0_22px_-10px_var(--color-accent)]"
 										: "border-2 border-transparent hover:bg-well"
 								}`}
 							>
-								<span className="size-12 shrink-0 overflow-hidden rounded-sm bg-gradient-to-br from-accent-700 to-accent-500">
-									<img
-										alt=""
-										className="size-full"
-										src={`https://minotar.net/helm/${entry.minecraftUsername}/96`}
-									/>
-								</span>
-								<span className="flex min-w-0 flex-1 flex-col gap-px">
-									<span className="truncate text-[15px] font-medium">
-										{entry.minecraftUsername}
+								<button
+									type="button"
+									disabled={active}
+									onClick={() => onSwitch(entry)}
+									className="flex flex-1 items-center gap-3 text-left focus-visible:outline-none disabled:cursor-default"
+								>
+									<span className="size-12 shrink-0 overflow-hidden rounded-sm bg-gradient-to-br from-accent-700 to-accent-500">
+										<img
+											alt=""
+											className="size-full"
+											src={`https://minotar.net/helm/${entry.minecraftUsername}/96`}
+										/>
 									</span>
-									<span className="truncate text-[12.5px] text-neutral-400">
-										Compte Microsoft
-									</span>
-								</span>
-								<span className="shrink-0 whitespace-nowrap text-[13px]">
-									{active ? (
-										<span className="rounded-[6px] bg-accent-800 px-2.5 py-0.5 text-[12px] text-accent-100">
-											Actif
+									<span className="flex min-w-0 flex-1 flex-col gap-px">
+										<span className="truncate text-[15px] font-medium">
+											{entry.minecraftUsername}
 										</span>
-									) : (
-										<span className="text-accent-300">Activer</span>
-									)}
-								</span>
-							</button>
+										<span className="truncate text-[12.5px] text-neutral-400">
+											Compte Microsoft
+										</span>
+									</span>
+									<span className="shrink-0 whitespace-nowrap text-[13px]">
+										{active ? (
+											<span className="rounded-[6px] bg-accent-800 px-2.5 py-0.5 text-[12px] text-accent-100">
+												Actif
+											</span>
+										) : (
+											<span className="text-accent-300">Activer</span>
+										)}
+									</span>
+								</button>
+								{onDeleteAccount && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											onDeleteAccount(entry.id);
+										}}
+										className="shrink-0 p-1.5 text-neutral-500 hover:text-danger hover:bg-danger/10 rounded transition-colors"
+										title="Supprimer ce compte"
+									>
+										<Trash2 className="size-4" />
+									</button>
+								)}
+							</div>
 						);
 					})}
 				</div>
