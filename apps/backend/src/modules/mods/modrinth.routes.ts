@@ -8,6 +8,7 @@ import {
   removeMod,
   searchMods,
   toggleMod,
+  type ModContentType,
 } from "./modrinth.service.js";
 
 export const modsRouter = Router();
@@ -16,6 +17,7 @@ const searchSchema = z.object({
   query: z.string().max(120).default(""),
   gameVersion: z.string().max(32).optional(),
   loader: z.string().max(32).optional(),
+  projectType: z.enum(["mod", "shader", "resourcepack"]).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).max(1000).default(0),
 });
@@ -24,9 +26,9 @@ const installSchema = z.object({
   profileId: z.string().min(1),
   projectId: z.string().min(1),
   versionId: z.string().min(1),
-  // Servent a choisir la bonne version des dependances requises.
   gameVersion: z.string().max(32).optional(),
   loader: z.string().max(32).optional(),
+  projectType: z.enum(["mod", "shader", "resourcepack"]).optional(),
 });
 
 modsRouter.get("/search", async (req, res, next) => {
@@ -57,8 +59,6 @@ modsRouter.post("/install", async (req, res, next) => {
   try {
     const body = installSchema.parse(req.body);
 
-    // Le mod atterrit dans le dossier du profil: il doit exister, sinon on
-    // creerait une instance orpheline au premier telechargement.
     if (!exportProfile(body.profileId)) {
       return res.status(404).json({ message: "profile not found" });
     }
@@ -74,7 +74,8 @@ modsRouter.get("/installed/:profileId", async (req, res, next) => {
     if (!exportProfile(req.params.profileId)) {
       return res.status(404).json({ message: "profile not found" });
     }
-    return res.json(await listInstalledMods(req.params.profileId));
+    const type = (req.query.type as ModContentType) || "mod";
+    return res.json(await listInstalledMods(req.params.profileId, type));
   } catch (err) {
     return next(err);
   }
@@ -82,7 +83,8 @@ modsRouter.get("/installed/:profileId", async (req, res, next) => {
 
 modsRouter.post("/installed/:profileId/:fileName/toggle", async (req, res, next) => {
   try {
-    const updated = await toggleMod(req.params.profileId, req.params.fileName);
+    const type = ((req.body?.type ?? req.query?.type) as ModContentType) || "mod";
+    const updated = await toggleMod(req.params.profileId, req.params.fileName, type);
     if (!updated) {
       return res.status(404).json({ message: "mod not found" });
     }
@@ -94,7 +96,8 @@ modsRouter.post("/installed/:profileId/:fileName/toggle", async (req, res, next)
 
 modsRouter.delete("/installed/:profileId/:fileName", async (req, res, next) => {
   try {
-    const removed = await removeMod(req.params.profileId, req.params.fileName);
+    const type = (req.query.type as ModContentType) || "mod";
+    const removed = await removeMod(req.params.profileId, req.params.fileName, type);
     if (!removed) {
       return res.status(404).json({ message: "mod not found" });
     }
