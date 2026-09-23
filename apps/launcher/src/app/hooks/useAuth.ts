@@ -34,28 +34,29 @@ export function useAuth(setError: (err: string | null) => void) {
 
         setAccounts(saved);
 
-        const first = saved[0];
-        if (!first) {
+        const savedActiveId = localStorage.getItem("paranoia_active_account_id");
+        const activeTarget = saved.find((a) => a.id === savedActiveId) ?? saved[0];
+        if (!activeTarget) {
           return;
         }
 
-        const usable = await refreshAccount(first.id);
+        const usable = await refreshAccount(activeTarget.id);
         if (cancelled) {
           return;
         }
 
         if (usable) {
           setAccount(usable);
+          localStorage.setItem("paranoia_active_account_id", usable.id);
           setAccounts((prev) =>
             prev.map((a) => (a.id === usable.id ? usable : a)),
           );
           setConnected(true);
         } else {
-          // Refresh token perime: le backend a deja oublie le compte.
-          setAccounts((prev) => prev.filter((a) => a.id !== first.id));
+          setAccounts((prev) => prev.filter((a) => a.id !== activeTarget.id));
+          localStorage.removeItem("paranoia_active_account_id");
         }
       } catch {
-        // Pas de session restauree: l'utilisateur se connectera normalement.
       } finally {
         if (!cancelled) {
           setRestoringSession(false);
@@ -90,6 +91,7 @@ export function useAuth(setError: (err: string | null) => void) {
             redirectUri: REDIRECT_URI,
           });
           setAccount(authAccount);
+          localStorage.setItem("paranoia_active_account_id", authAccount.id);
           setAccounts((prev) => {
             const normUuid = authAccount.minecraftUuid.replace(/-/g, "").toLowerCase();
             const normUser = authAccount.minecraftUsername.toLowerCase();
@@ -145,17 +147,18 @@ export function useAuth(setError: (err: string | null) => void) {
 
   async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
+    localStorage.setItem("paranoia_active_account_id", target.id);
 
-    // La session du compte choisi peut avoir expire pendant qu'un autre etait
-    // actif: on la renouvelle avant que le joueur ne lance le jeu.
     const usable = await refreshAccount(target.id);
     if (usable) {
       setAccount(usable);
+      localStorage.setItem("paranoia_active_account_id", usable.id);
       setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
       return;
     }
 
     setAccounts((prev) => prev.filter((a) => a.id !== target.id));
+    localStorage.removeItem("paranoia_active_account_id");
     setAccount(null);
     setConnected(false);
     setError(t("topbar.auth_error"));
@@ -169,9 +172,12 @@ export function useAuth(setError: (err: string | null) => void) {
     const next = remaining[0] ?? null;
     setAccount(next);
     setConnected(next !== null);
+    if (next) {
+      localStorage.setItem("paranoia_active_account_id", next.id);
+    } else {
+      localStorage.removeItem("paranoia_active_account_id");
+    }
 
-    // Retire aussi les jetons du disque, sinon le compte reviendrait au
-    // prochain demarrage.
     if (current && current.id !== "local-dev") {
       await forgetAccount(current.id).catch(() => {});
     }
@@ -187,6 +193,11 @@ export function useAuth(setError: (err: string | null) => void) {
       const next = remaining[0] ?? null;
       setAccount(next);
       setConnected(next !== null);
+      if (next) {
+        localStorage.setItem("paranoia_active_account_id", next.id);
+      } else {
+        localStorage.removeItem("paranoia_active_account_id");
+      }
     }
   }
 

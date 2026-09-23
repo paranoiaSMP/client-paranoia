@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronsUpDown, Plus, Users } from "lucide-react";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
 import { PRIMARY_NAV, SECONDARY_NAV } from "../../navigation";
@@ -6,38 +8,41 @@ import type { NavItem, Screen } from "../../navigation";
 type SidebarProps = {
 	current: Screen;
 	onNavigate: (screen: Screen) => void;
-	/** Null tant que le compte n'a pas ete demande pour l'instance courante. */
 	modCount: number | null;
 	account: MicrosoftAccount | null;
+	accounts?: MicrosoftAccount[];
+	onSwitchAccount?: (account: MicrosoftAccount) => void;
+	onAddAccount?: () => void;
 };
 
-/**
- * La barre laterale: la navigation, et qui joue.
- *
- * <p>Elle remplace le menu deroulant du coin, qui repliait cinq destinations
- * derriere un carre. Elles etaient toutes atteignables, mais aucune n'etait
- * visible: rien sur l'ecran ne disait qu'il existait des mods, des comptes ou
- * des parametres tant qu'on n'avait pas ouvert le carre.
- */
 export function Sidebar({
 	current,
 	onNavigate,
 	modCount,
 	account,
+	accounts = [],
+	onSwitchAccount,
+	onAddAccount,
 }: SidebarProps) {
+	const [menuOpen, setMenuOpen] = useState(false);
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!menuOpen) return;
+		function handleClickOutside(e: MouseEvent) {
+			if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+				setMenuOpen(false);
+			}
+		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, [menuOpen]);
+
 	return (
 		<nav
 			aria-label="Navigation principale"
 			className="flex w-[252px] shrink-0 flex-col justify-between gap-4 border-r border-divider bg-surface px-3 py-4"
 		>
-			{/*
-			  Le groupe du haut defile, le groupe du bas ne bouge pas.
-
-			  Sans cela, `justify-between` poussait simplement le bas hors de la
-			  fenetre des qu'elle etait courte: a 640 pixels de haut, la carte de
-			  compte etait coupee en deux. Ce qui doit rester visible est ce qui ne
-			  peut pas defiler.
-			*/}
 			<div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
 				<div className="px-2 pb-1 text-[11px] uppercase tracking-[0.14em] text-neutral-400">
 					Client
@@ -65,29 +70,106 @@ export function Sidebar({
 					/>
 				))}
 
-				<button
-					type="button"
-					onClick={() => onNavigate("accounts")}
-					className="elev-sm flex items-center gap-2 rounded-md bg-well p-2 text-left transition-colors hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-				>
-					<span className="size-[34px] shrink-0 overflow-hidden rounded-sm bg-gradient-to-br from-accent-700 to-accent-500">
-						{account?.minecraftUsername && (
-							<img
-								alt=""
-								className="size-full"
-								src={`https://minotar.net/helm/${account.minecraftUsername}/68`}
-							/>
-						)}
-					</span>
-					<span className="flex min-w-0 flex-col">
-						<span className="truncate text-sm font-medium">
-							{account?.minecraftUsername ?? "Hors ligne"}
+				<div ref={menuRef} className="relative">
+					{menuOpen && (
+						<div className="elev-md absolute bottom-full left-0 right-0 mb-2 flex flex-col gap-1 rounded-md border border-divider bg-surface p-1.5 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+							<div className="flex items-center justify-between px-2 py-1 text-xs text-neutral-400 font-semibold">
+								<span>Comptes</span>
+								{accounts.length > 1 && (
+									<span className="text-[11px] text-neutral-500 font-normal">
+										{accounts.length}
+									</span>
+								)}
+							</div>
+							<div className="flex flex-col gap-1 max-h-48 overflow-y-auto no-scrollbar">
+								{accounts.map((acc) => {
+									const isCurrent = acc.id === account?.id;
+									return (
+										<button
+											key={acc.id}
+											type="button"
+											onClick={() => {
+												if (!isCurrent && onSwitchAccount) {
+													onSwitchAccount(acc);
+												}
+												setMenuOpen(false);
+											}}
+											className={`flex items-center gap-2 rounded-md p-1.5 text-left transition-colors ${
+												isCurrent
+													? "bg-accent/15 text-accent-200 border border-accent/30"
+													: "hover:bg-neutral-800 text-neutral-200 border border-transparent"
+											}`}
+										>
+											<span className="size-6 shrink-0 overflow-hidden rounded-sm bg-neutral-700">
+												<img
+													alt=""
+													className="size-full"
+													src={`https://minotar.net/helm/${acc.minecraftUsername}/48`}
+												/>
+											</span>
+											<span className="flex-1 min-w-0 truncate text-xs font-medium">
+												{acc.minecraftUsername}
+											</span>
+											{isCurrent && (
+												<Check className="size-3.5 shrink-0 text-accent" />
+											)}
+										</button>
+									);
+								})}
+							</div>
+							<div className="my-1 border-t border-divider" />
+							{onAddAccount && (
+								<button
+									type="button"
+									onClick={() => {
+										setMenuOpen(false);
+										onAddAccount();
+									}}
+									className="flex items-center gap-2 rounded-md p-1.5 text-left text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-ink transition-colors"
+								>
+									<Plus className="size-3.5 text-accent-300" />
+									<span>Ajouter un compte</span>
+								</button>
+							)}
+							<button
+								type="button"
+								onClick={() => {
+									setMenuOpen(false);
+									onNavigate("accounts");
+								}}
+								className="flex items-center gap-2 rounded-md p-1.5 text-left text-xs font-medium text-neutral-400 hover:bg-neutral-800 hover:text-ink transition-colors"
+							>
+								<Users className="size-3.5" />
+								<span>Gérer les comptes</span>
+							</button>
+						</div>
+					)}
+
+					<button
+						type="button"
+						onClick={() => setMenuOpen((prev) => !prev)}
+						className="elev-sm flex w-full items-center gap-2 rounded-md bg-well p-2 text-left transition-colors hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+					>
+						<span className="size-[34px] shrink-0 overflow-hidden rounded-sm bg-gradient-to-br from-accent-700 to-accent-500">
+							{account?.minecraftUsername && (
+								<img
+									alt=""
+									className="size-full"
+									src={`https://minotar.net/helm/${account.minecraftUsername}/68`}
+								/>
+							)}
 						</span>
-						<span className="truncate text-xs text-neutral-400">
-							{account ? "Compte Microsoft" : "Aucun compte"}
+						<span className="flex min-w-0 flex-1 flex-col">
+							<span className="truncate text-sm font-medium">
+								{account?.minecraftUsername ?? "Hors ligne"}
+							</span>
+							<span className="truncate text-xs text-neutral-400">
+								{account ? "Compte Microsoft" : "Aucun compte"}
+							</span>
 						</span>
-					</span>
-				</button>
+						<ChevronsUpDown className="size-4 shrink-0 text-neutral-400" />
+					</button>
+				</div>
 			</div>
 		</nav>
 	);

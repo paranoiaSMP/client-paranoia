@@ -19,6 +19,7 @@ export function getMicrosoftAuthorizeUrl(redirectUri: string, state: string) {
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("scope", "XboxLive.signin offline_access openid profile email");
   url.searchParams.set("state", state);
+  url.searchParams.set("prompt", "select_account");
   return { authorizeUrl: url.toString() };
 }
 

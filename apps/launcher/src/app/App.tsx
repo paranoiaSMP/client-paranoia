@@ -165,6 +165,9 @@ export function App() {
 					onNavigate={setScreen}
 					modCount={modCount}
 					account={account}
+					accounts={accounts}
+					onSwitchAccount={handleSwitchAccount}
+					onAddAccount={handleMicrosoftConnect}
 				/>
 
 				<main className="flex min-w-0 flex-1 flex-col">
