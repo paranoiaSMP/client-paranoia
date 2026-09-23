@@ -242,6 +242,11 @@ jobs:
       contents: write
 
     steps:
+      # Ce job ne compilait rien et n'avait donc pas besoin des sources. Il lui
+      # faut maintenant scripts/update-manifest.mjs.
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Determine release tag
         id: release
         shell: bash
@@ -269,12 +274,48 @@ jobs:
           fi
           echo "Signature valide : $sig"
 
-      - name: Generate update manifest
+      # latest.json n'est volontairement pas dans cette liste: l'action ecrase
+      # l'actif sans le lire, et build-windows.yml publie sur la meme release.
+      # Voir l'etape suivante.
+      #
+      # Les notes de version sont laissees a build-windows.yml: les deux
+      # workflows les generaient, et l'action les ajoute a celles deja presentes
+      # -- la release 0.7.18 porte ainsi deux fois la meme liste de changements.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Paranoia Client ${{ steps.release.outputs.tag }}
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.app.tar.gz
+            artifacts/**/*.app.tar.gz.sig
+
+      # En dernier, et par un script qui lit avant d'ecrire: build-windows.yml
+      # publie sur la meme release, et les deux manifestes d'une seule plateforme
+      # s'ecrasaient l'un l'autre -- en 0.7.18, cette entree darwin-aarch64 a
+      # disparu deux minutes apres avoir ete publiee, sans que rien ne passe au
+      # rouge.
+      #
+      # Note pour qui a corrige le meme bug sur main, en parallele, avec un
+      # `gh release download` suivi d'une fusion en node: le diagnostic etait le
+      # bon, et cette version le garde. Ce qui change, c'est ce qui vient apres
+      # la fusion. Cette etape-la laissait action-gh-release televerser le
+      # resultat, donc la course restait ouverte entre la lecture et l'ecriture:
+      # si l'autre plateforme publie dans cet intervalle, son entree est perdue
+      # exactement comme avant, et rien ne le dit. Le script ci-dessous possede
+      # l'actif, le relit apres l'avoir ecrit, et refait tout le cycle si son
+      # entree n'y a pas survecu. Il est eprouve par scripts/test-update-manifest.mjs,
+      # neuf scenarios dont les deux courses.
+      #
+      # C'est pour cela que latest.json a disparu de la liste `files` de l'etape
+      # precedente: l'action ecrase sans rien lire, et deux ecrivains sur le meme
+      # actif etaient toute la cause du bug.
+      - name: Publish update manifest
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           archive=$(find artifacts -name "*.app.tar.gz" | head -n 1)
           if [ -z "$archive" ]; then
@@ -282,51 +323,12 @@ jobs:
             exit 1
           fi
 
-          sig="${archive}.sig"
-          if [ ! -f "$sig" ]; then
-            echo "::error::Signature absente pour $(basename "$archive")"
-            exit 1
-          fi
+          name=$(basename "$archive")
+          name="${name// /.}"
+          base="https://github.com/${{ github.repository }}/releases/download"
 
-          archive_name=$(basename "$archive")
-          archive_name="${archive_name// /.}"
-          signature=$(tr -d '\r\n' < "$sig")
-          version="${RELEASE_TAG#v}"
-          pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          gh release download "$RELEASE_TAG" -p "latest.json" -D artifacts || true
-
-          node -e "
-            const fs = require('fs');
-            let manifest = {
-              version: '$version',
-              notes: 'Voir les notes de version sur GitHub.',
-              pub_date: '$pub_date',
-              platforms: {}
-            };
-            if (fs.existsSync('artifacts/latest.json')) {
-              try {
-                manifest = JSON.parse(fs.readFileSync('artifacts/latest.json', 'utf8'));
-              } catch (e) {}
-            }
-            manifest.version = '$version';
-            manifest.pub_date = '$pub_date';
-            manifest.platforms['darwin-aarch64'] = {
-              signature: '$signature',
-              url: \`https://github.com/\${process.env.REPO}/releases/download/\${process.env.RELEASE_TAG}/$archive_name\`
-            };
-            fs.writeFileSync('artifacts/latest.json', JSON.stringify(manifest, null, 2) + '\n');
-          "
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.release.outputs.tag }}
-          name: Paranoia Client ${{ steps.release.outputs.tag }}
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.app.tar.gz
-            artifacts/**/*.app.tar.gz.sig
-            artifacts/latest.json
+          node scripts/update-manifest.mjs \
+            --tag "${{ steps.release.outputs.tag }}" \
+            --platform darwin-aarch64 \
+            --signature "${archive}.sig" \
+            --url "$base/${{ steps.release.outputs.tag }}/$name"

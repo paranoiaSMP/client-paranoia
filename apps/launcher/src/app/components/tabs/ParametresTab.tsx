@@ -29,7 +29,9 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
   const [ramMin, setRamMin] = useState(2);
   const [ramMax, setRamMax] = useState(4);
   const [javaPath, setJavaPath] = useState("");
-  const [jvmArgs, setJvmArgs] = useState("-XX:+UseG1GC");
+  // Vide, et non l'ancien defaut: les drapeaux viennent du launcher, qui les
+  // choisit selon la version de Java. Ce champ est ce que le joueur ajoute.
+  const [jvmArgs, setJvmArgs] = useState("");
   const [resolution, setResolution] = useState({ width: 1280, height: 720 });
   const [fullscreen, setFullscreen] = useState(false);
   const [autoConnect, setAutoConnect] = useState(true);
@@ -157,9 +159,14 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             type="text" 
             value={jvmArgs}
             onChange={e => setJvmArgs(e.target.value)}
+            placeholder="vide : le launcher s'en occupe"
             className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors"
           />
-          <p className="text-neutral-600 text-xs mt-2">Touche pas à ça si tu sais pas ce que c'est.</p>
+          <p className="text-neutral-600 text-xs mt-2">
+            Le launcher pose déjà ses drapeaux, choisis selon la version de Java du
+            profil. Ce que tu écris ici s'ajoute par-dessus, et l'emporte en cas de
+            doublon. Touche pas à ça si tu sais pas ce que c'est.
+          </p>
         </div>
       </section>
 
