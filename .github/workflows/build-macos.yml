@@ -132,17 +132,29 @@ jobs:
         run: node apps/backend/scripts/inject-client-mod.mjs mod-jars ${{ steps.release.outputs.tag }} ${{ github.repository }}
 
       - name: Build backend sidecar
-        run: pnpm --filter @paranoia/backend build:sidecar
+        run: |
+          pnpm --filter @paranoia/backend build:sidecar
+          cd apps/launcher/src-tauri/binaries
+          SRC=$(ls paranoia-server-* 2>/dev/null | head -n 1)
+          if [ -n "$SRC" ]; then
+            echo "Binaire source trouvé : $SRC"
+            [ -f paranoia-server-aarch64-apple-darwin ] || cp "$SRC" paranoia-server-aarch64-apple-darwin
+            chmod +x paranoia-server-*
+          else
+            echo "Aucun sidecar trouvé dans binaries/"
+            exit 1
+          fi
+          ls -la
 
       - name: Smoke test sidecar
         shell: bash
         run: |
-          exe=$(find apps/launcher/src-tauri/binaries -name "paranoia-server-*" -type f | head -n 1)
-          if [ -z "$exe" ]; then
-            echo "sidecar introuvable dans binaries/"
+          exe="apps/launcher/src-tauri/binaries/paranoia-server-aarch64-apple-darwin"
+          if [ ! -f "$exe" ]; then
+            echo "sidecar introuvable: $exe"
             exit 1
           fi
-          echo "sidecar: $exe"
+          echo "sidecar testé : $exe"
           chmod +x "$exe"
 
           PORT=47820 "$exe" &
@@ -178,12 +190,12 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: pnpm exec tauri build --bundles dmg,app
+        run: pnpm exec tauri build --target aarch64-apple-darwin --bundles dmg,app
 
       - name: Verify sidecar is bundled
         shell: bash
         run: |
-          app=$(find apps/launcher/src-tauri/target/release/bundle/macos -name "*.app" -type d | head -n 1)
+          app=$(find apps/launcher/src-tauri/target -name "*.app" -type d | grep -E "bundle/(macos|osx)" | head -n 1)
           if [ -z "$app" ]; then
             echo "Bundle .app introuvable"
             exit 1
@@ -195,9 +207,9 @@ jobs:
           fi
           echo "Sidecar bien present dans le bundle macOS"
 
-          dmg=$(find apps/launcher/src-tauri/target/release/bundle/dmg -name "*.dmg" | head -n 1)
+          dmg=$(find apps/launcher/src-tauri/target -name "*.dmg" | grep -E "bundle/dmg" | head -n 1)
           if [ -z "$dmg" ]; then
-            echo "DMG introuvable dans bundle/dmg"
+            echo "DMG introuvable"
             exit 1
           fi
           echo "DMG genere: $dmg"
@@ -206,7 +218,7 @@ jobs:
         if: steps.release.outputs.tag != ''
         shell: bash
         run: |
-          sig=$(find apps/launcher/src-tauri/target/release/bundle/macos -name "*.app.tar.gz.sig" | head -n 1)
+          sig=$(find apps/launcher/src-tauri/target -name "*.app.tar.gz.sig" | head -n 1)
           if [ -z "$sig" ]; then
             echo "::error::Signature .app.tar.gz.sig absente : verifier le secret TAURI_SIGNING_PRIVATE_KEY"
             exit 1
@@ -219,8 +231,8 @@ jobs:
           name: paranoia-client-macos
           if-no-files-found: error
           path: |
-            apps/launcher/src-tauri/target/release/bundle/dmg/*.dmg
-            apps/launcher/src-tauri/target/release/bundle/macos/*.app.tar.gz*
+            apps/launcher/src-tauri/target/**/bundle/dmg/*.dmg
+            apps/launcher/src-tauri/target/**/bundle/macos/*.app.tar.gz*
 
   release:
     runs-on: ubuntu-latest
@@ -285,6 +297,21 @@ jobs:
       # s'ecrasaient l'un l'autre -- en 0.7.18, cette entree darwin-aarch64 a
       # disparu deux minutes apres avoir ete publiee, sans que rien ne passe au
       # rouge.
+      #
+      # Note pour qui a corrige le meme bug sur main, en parallele, avec un
+      # `gh release download` suivi d'une fusion en node: le diagnostic etait le
+      # bon, et cette version le garde. Ce qui change, c'est ce qui vient apres
+      # la fusion. Cette etape-la laissait action-gh-release televerser le
+      # resultat, donc la course restait ouverte entre la lecture et l'ecriture:
+      # si l'autre plateforme publie dans cet intervalle, son entree est perdue
+      # exactement comme avant, et rien ne le dit. Le script ci-dessous possede
+      # l'actif, le relit apres l'avoir ecrit, et refait tout le cycle si son
+      # entree n'y a pas survecu. Il est eprouve par scripts/test-update-manifest.mjs,
+      # neuf scenarios dont les deux courses.
+      #
+      # C'est pour cela que latest.json a disparu de la liste `files` de l'etape
+      # precedente: l'action ecrase sans rien lire, et deux ecrivains sur le meme
+      # actif etaient toute la cause du bug.
       - name: Publish update manifest
         shell: bash
         env:

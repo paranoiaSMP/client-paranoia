@@ -12,6 +12,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "tauri://localhost",
   "http://tauri.localhost",
   "https://tauri.localhost",
+  "null",
 ];
 
 const envSchema = z.object({
