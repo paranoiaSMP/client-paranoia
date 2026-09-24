@@ -286,6 +286,20 @@ jobs:
             # signature d'une version a l'autre, et les deviner couterait un
             # build par essai.
             #
+            # AVERTISSEMENT, paye en production. Le module qui terminait la
+            # bouchee cote client a ete publie en 0.7.19 et retire en 0.7.20: il
+            # cassait la consommation pour tout le monde, par a-coups. La cause
+            # etait connue et ecrite avant la publication, et publiee quand meme.
+            #
+            # Le client finit au tick prevu, le serveur n'a pas fini, il renvoie
+            # ses donnees suivies, onTrackedDataSet reecrit itemUseTimeLeft et
+            # l'animation repart. Boucle: on termine, le serveur relance, on
+            # termine. Les deux moities vont ensemble ou pas du tout.
+            #
+            # Ne pas remettre la premiere sans la seconde. Une pomme d'or dure
+            # trente-deux ticks: c'est le cas le plus visible, et c'est par la
+            # que les joueurs l'ont su avant nous.
+            #
             # itemUseCooldown repond a la question des entrees perdues. Le clic
             # droit est verrouille quatre ticks par le client lui-meme, et un
             # clic qui tombe pendant ce verrou n'est pas retarde: il est jete. En
