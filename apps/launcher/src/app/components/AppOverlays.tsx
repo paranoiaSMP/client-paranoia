@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { LauncherProfile, RemoteConfiguration } from "@paranoia/contracts";
+import type { LauncherProfile, MicrosoftAccount, RemoteConfiguration } from "@paranoia/contracts";
 
 import type { useProfileCreation } from "../hooks/useProfileCreation";
 import type { Overlay } from "../navigation";
@@ -8,6 +8,7 @@ import { Modal } from "./Modal";
 import { MigrationModal } from "./MigrationModal";
 import { InstanceMenu } from "./InstanceMenu";
 import { ProfileCreation } from "./ProfileCreation";
+import { BugReportModal } from "./BugReportModal";
 
 type AppOverlaysProps = {
 	active: Overlay;
@@ -31,6 +32,11 @@ type AppOverlaysProps = {
 
 	isDragging: boolean;
 	isProcessing: boolean;
+
+	account?: MicrosoftAccount | null | undefined;
+	ramMaxMb?: number | null | undefined;
+	launcherVersion?: string | undefined;
+	bugReportData?: { category?: string | undefined; description?: string | undefined } | undefined;
 };
 
 /**
@@ -63,6 +69,10 @@ export function AppOverlays({
 	creation,
 	isDragging,
 	isProcessing,
+	account,
+	ramMaxMb,
+	launcherVersion,
+	bugReportData,
 }: AppOverlaysProps) {
 	const { t } = useTranslation();
 
@@ -153,6 +163,17 @@ export function AppOverlays({
 					</div>
 				</div>
 			)}
+
+			<BugReportModal
+				isOpen={active === "report_bug"}
+				onClose={onClose}
+				account={account ?? null}
+				profile={mainProfile}
+				ramMaxMb={ramMaxMb}
+				launcherVersion={launcherVersion}
+				initialCategory={bugReportData?.category}
+				initialDescription={bugReportData?.description}
+			/>
 		</>
 	);
 }

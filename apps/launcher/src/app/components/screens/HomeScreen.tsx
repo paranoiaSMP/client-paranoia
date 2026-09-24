@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Layers, Play, X } from "lucide-react";
+import { AlertTriangle, Bug, ChevronDown, Layers, Play, X } from "lucide-react";
 import type {
 	LauncherProfile,
 	MicrosoftAccount,
@@ -21,6 +21,7 @@ type HomeScreenProps = {
 	onStop: () => void;
 	onGoVersions: () => void;
 	onGoCosmetics: () => void;
+	onReportBug?: ((initialData?: { category?: string | undefined; description?: string | undefined } | undefined) => void) | undefined;
 };
 
 /**
@@ -60,6 +61,7 @@ export function HomeScreen({
 	onStop,
 	onGoVersions,
 	onGoCosmetics,
+	onReportBug,
 }: HomeScreenProps) {
 	const [newsExpanded, setNewsExpanded] = useState(true);
 	// La progression arrive de 0 a 100. L'ancien accueil la multipliait encore
@@ -138,11 +140,28 @@ export function HomeScreen({
 
 					<div className="flex max-w-[440px] flex-col gap-1.5">
 						<div className="flex items-baseline justify-between gap-3 text-[13px] leading-snug text-neutral-300">
-							<span className="min-w-0 truncate">{statusText}</span>
+							<span className={`min-w-0 truncate ${status.state === "error" ? "text-danger font-medium" : ""}`}>
+								{statusText}
+							</span>
 							{running && status.state !== "running" && (
 								<span className="whitespace-nowrap">{progress} %</span>
 							)}
 						</div>
+						{status.state === "error" && (
+							<button
+								type="button"
+								onClick={() =>
+									onReportBug?.({
+										category: "Crash au lancement / en jeu",
+										description: `Le lancement de l'instance "${profile?.name ?? "Inconnue"}" (Minecraft ${profile?.minecraftVersion ?? ""}) a échoué avec l'erreur :\n${status.text || "Erreur de démarrage inattendue"}`,
+									})
+								}
+								className="flex items-center gap-1.5 text-xs font-semibold text-danger hover:text-danger/80 transition-colors self-start mt-0.5"
+							>
+								<AlertTriangle className="size-3.5" />
+								<span>Signaler ce crash</span>
+							</button>
+						)}
 						{running && status.state !== "running" && (
 							<div className="h-1.5 overflow-hidden rounded-[3px] bg-well shadow-[inset_0_0_0_1px_var(--color-divider)]">
 								<div
@@ -207,7 +226,18 @@ export function HomeScreen({
 				}`}
 			>
 				<div className="flex items-center justify-between">
-					<h2 className="m-0 text-[17px] font-medium">Actualités du client</h2>
+					<div className="flex items-center gap-3">
+						<h2 className="m-0 text-[17px] font-medium">Actualités du client</h2>
+						<button
+							type="button"
+							onClick={() => onReportBug?.()}
+							className="flex items-center gap-1.5 rounded-md border border-divider px-2.5 py-1 text-xs font-medium text-neutral-400 hover:text-ink hover:border-neutral-600 transition-colors"
+							title="Signaler un bug ou un problème"
+						>
+							<Bug className="size-3.5 text-accent-400" />
+							<span>Signaler un bug</span>
+						</button>
+					</div>
 					<button
 						type="button"
 						onClick={() => setNewsExpanded((prev) => !prev)}
