@@ -114,16 +114,4 @@ public final class PlatformImpl implements ClientPlatform {
     public Style fontStyle(Identifier font) {
         return Style.EMPTY.withFont(new StyleSpriteSource.Font(font));
     }
-
-    /**
-     * Vrai: le mixin de consommation vit dans le meme tronc que ce fichier.
-     *
-     * <p>Les deux vont donc ensemble par construction -- si ce tronc cesse
-     * d'etre compile pour une version, l'un et l'autre disparaissent en meme
-     * temps, et le module ne s'enregistre plus.
-     */
-    @Override
-    public boolean supportsLocalUseCompletion() {
-        return true;
-    }
 }
