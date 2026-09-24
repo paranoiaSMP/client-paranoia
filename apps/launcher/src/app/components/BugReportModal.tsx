@@ -22,6 +22,21 @@ const CATEGORIES = [
   "Autre problème",
 ];
 
+function getGpuInfo(): string {
+  try {
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl") ||
+      (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
+    if (!gl) return "Inconnu";
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    if (!debugInfo) return "Inconnu";
+    return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || "Inconnu";
+  } catch {
+    return "Inconnu";
+  }
+}
+
 export function BugReportModal({
   isOpen,
   onClose,
@@ -41,12 +56,14 @@ export function BugReportModal({
   const [description, setDescription] = useState(initialDescription || "");
   const [attachLogs, setAttachLogs] = useState(true);
   const [detectedLogs, setDetectedLogs] = useState<string[]>([]);
+  const [gpuInfo, setGpuInfo] = useState<string>("Inconnu");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      setGpuInfo(getGpuInfo());
       if (initialCategory) setCategory(initialCategory);
       if (initialDescription) setDescription(initialDescription);
       if (initialCategory === "Crash" && !title) {
@@ -90,6 +107,13 @@ export function BugReportModal({
           launcherVersion,
           minecraftVersion: profile?.minecraftVersion,
           profileName: profile?.name,
+          profileType: profile?.profileTypeId,
+          graphicsMode: profile?.graphicsModeId,
+          gpu: gpuInfo !== "Inconnu" ? gpuInfo : undefined,
+          screenResolution:
+            typeof window !== "undefined"
+              ? `${window.screen.width}x${window.screen.height}`
+              : undefined,
         },
         logs: logsToSend,
       });
@@ -213,6 +237,7 @@ export function BugReportModal({
                 <span>Joueur : {account?.minecraftUsername ?? "Anonyme"}</span>
                 <span>Instance : {profile?.name ?? "Défaut"} ({profile?.minecraftVersion ?? "—"})</span>
                 <span>RAM allouée : {ramMaxMb ? `${Math.round(ramMaxMb / 1024)} Go` : "Défaut"}</span>
+                {gpuInfo !== "Inconnu" && <span>GPU : {gpuInfo}</span>}
               </div>
             </div>
 

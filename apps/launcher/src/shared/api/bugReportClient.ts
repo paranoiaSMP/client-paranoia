@@ -10,6 +10,10 @@ export type BugReportPayload = {
     launcherVersion?: string | undefined;
     minecraftVersion?: string | undefined;
     profileName?: string | undefined;
+    profileType?: string | undefined;
+    graphicsMode?: string | undefined;
+    gpu?: string | undefined;
+    screenResolution?: string | undefined;
   } | undefined;
   logs?: string | undefined;
 };

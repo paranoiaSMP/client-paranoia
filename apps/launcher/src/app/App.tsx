@@ -52,6 +52,9 @@ export function App() {
 	const [error, setError] = useState<string | null>(null);
 	const [screen, setScreen] = useState<Screen>("home");
 	const [overlay, setOverlay] = useState<Overlay>("none");
+	const [bugReportData, setBugReportData] = useState<
+		{ category?: string | undefined; description?: string | undefined } | undefined
+	>(undefined);
 	const version = useAppVersion();
 
 	const {
@@ -184,6 +187,10 @@ export function App() {
 							onStop={() => void cancel()}
 							onGoVersions={() => setScreen("versions")}
 							onGoCosmetics={() => setScreen("cosmetics")}
+							onReportBug={(initialData) => {
+								setBugReportData(initialData);
+								setOverlay("report_bug");
+							}}
 						/>
 					)}
 
@@ -253,7 +260,10 @@ export function App() {
 
 			<AppOverlays
 				active={overlay}
-				onClose={() => setOverlay("none")}
+				onClose={() => {
+					setOverlay("none");
+					setBugReportData(undefined);
+				}}
 				config={config}
 				error={error}
 				connected={connected}
@@ -271,6 +281,10 @@ export function App() {
 				creation={creation}
 				isDragging={isDragging}
 				isProcessing={isProcessing}
+				account={account}
+				ramMaxMb={settings?.ramMaxMb}
+				launcherVersion={version}
+				bugReportData={bugReportData}
 			/>
 		</div>
 	);
