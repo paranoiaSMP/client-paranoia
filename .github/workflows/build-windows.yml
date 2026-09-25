@@ -352,4 +352,3 @@ jobs:
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
             apps/launcher/src-tauri/target/release/bundle/nsis/latest.json
-            mod-jars/**/*.jar
