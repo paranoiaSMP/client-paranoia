@@ -1,0 +1,273 @@
+name: build-linux
+
+on:
+  push:
+    branches:
+      - main
+      - ci/linux-build
+      - "release/**"
+      - "claude/**"
+      - "leoo955/**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+      - ci/linux-build
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck workspace
+        run: pnpm -r typecheck
+
+  mod:
+    uses: ./.github/workflows/build-mod.yml
+
+  build:
+    runs-on: ubuntu-22.04
+    needs: [checks, mod]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine release tag
+        id: release
+        shell: bash
+        run: |
+          case "${GITHUB_REF}" in
+            refs/tags/v*)          tag="${GITHUB_REF_NAME}" ;;
+            refs/heads/release/*)  tag="${GITHUB_REF_NAME#release/}" ;;
+            *)                     tag="" ;;
+          esac
+
+          if [ -n "$tag" ]; then
+            echo "publication de $tag"
+          else
+            echo "build simple, aucune publication"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag matches app version
+        if: steps.release.outputs.tag != ''
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          tag="${RELEASE_TAG#v}"
+          app=$(node -p "require('./apps/launcher/src-tauri/tauri.conf.json').version")
+          if [ "$tag" != "$app" ]; then
+            echo "::error::publication de $RELEASE_TAG mais tauri.conf.json declare $app -- lancer scripts/bump-version.mjs $tag"
+            exit 1
+          fi
+          echo "version coherente: $app"
+
+      - name: Install system dependencies for Tauri
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/launcher/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate placeholder icons
+        working-directory: apps/launcher
+        run: pnpm exec tauri icon src-tauri/app-icon.png
+
+      - name: Typecheck and build launcher
+        working-directory: apps/launcher
+        run: pnpm build
+
+      - name: Download mod jars
+        uses: actions/download-artifact@v4
+        with:
+          name: paranoia-client-mod
+          path: mod-jars
+
+      - name: Inject client mod into catalog
+        if: steps.release.outputs.tag != ''
+        run: node apps/backend/scripts/inject-client-mod.mjs mod-jars ${{ steps.release.outputs.tag }} ${{ github.repository }}
+
+      - name: Build backend sidecar
+        run: |
+          pnpm --filter @paranoia/backend build:sidecar
+          ls -la apps/launcher/src-tauri/binaries/
+
+      - name: Smoke test sidecar
+        shell: bash
+        run: |
+          exe=$(find apps/launcher/src-tauri/binaries -name "paranoia-server-x86_64-unknown-linux-gnu*" -type f | head -n 1)
+          if [ -z "$exe" ]; then
+            echo "sidecar introuvable dans binaries/"
+            exit 1
+          fi
+          echo "sidecar testé : $exe"
+          chmod +x "$exe"
+
+          PORT=47820 "$exe" &
+          PID=$!
+
+          ready=0
+          for i in $(seq 1 30); do
+            sleep 1
+            if curl -s -f http://127.0.0.1:47820/health > /dev/null; then
+              ready=1
+              break
+            fi
+          done
+
+          if [ $ready -ne 1 ]; then
+            kill -9 $PID 2>/dev/null || true
+            echo "le sidecar n'a pas repondu sur /health en 30s"
+            exit 1
+          fi
+          echo "health: OK"
+
+          curl -s -f http://127.0.0.1:47820/v1/catalog/remote-config > /dev/null || {
+            kill -9 $PID 2>/dev/null || true
+            echo "catalogue vide ou absent"
+            exit 1
+          }
+          echo "catalogue: OK"
+
+          if [ "${{ steps.release.outputs.tag }}" != "" ]; then
+            curl -s -f -X POST http://127.0.0.1:47820/v1/catalog/manifest \
+              -H "Content-Type: application/json" \
+              -d '{"minecraftVersion":"1.21.8","profileTypeId":"pvp","graphicsModeId":"balanced"}' | grep clientMod > /dev/null || {
+                kill -9 $PID 2>/dev/null || true
+                echo "manifeste sans clientMod"
+                exit 1
+              }
+            echo "mod client : OK"
+          fi
+
+          kill -9 $PID 2>/dev/null || true
+
+      - name: Build Linux bundle
+        working-directory: apps/launcher
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm exec tauri build --bundles appimage,deb
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: paranoia-client-linux
+          if-no-files-found: error
+          path: |
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz*
+            apps/launcher/src-tauri/target/release/bundle/deb/*.deb
+
+      - name: Generate update manifest
+        if: steps.release.outputs.tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage.tar.gz" | head -n 1)
+          if [ -z "$archive" ]; then
+            echo "::error::Archive .AppImage.tar.gz absente"
+            exit 1
+          fi
+
+          sig="${archive}.sig"
+          if [ ! -f "$sig" ]; then
+            echo "::error::Signature absente pour $(basename "$archive")"
+            exit 1
+          fi
+
+          archive_name=$(basename "$archive")
+          archive_name="${archive_name// /.}"
+          signature=$(tr -d '\r\n' < "$sig")
+          version="${RELEASE_TAG#v}"
+          pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          gh release download "$RELEASE_TAG" -p "latest.json" -D apps/launcher/src-tauri/target/release/bundle/appimage || true
+
+          node -e "
+            const fs = require('fs');
+            let manifest = {
+              version: '$version',
+              notes: 'Voir les notes de version sur GitHub.',
+              pub_date: '$pub_date',
+              platforms: {}
+            };
+            if (fs.existsSync('apps/launcher/src-tauri/target/release/bundle/appimage/latest.json')) {
+              try {
+                manifest = JSON.parse(fs.readFileSync('apps/launcher/src-tauri/target/release/bundle/appimage/latest.json', 'utf8'));
+              } catch (e) {}
+            }
+            manifest.version = '$version';
+            manifest.pub_date = '$pub_date';
+            manifest.platforms['linux-x86_64'] = {
+              signature: '$signature',
+              url: \`https://github.com/\${process.env.REPO}/releases/download/\${process.env.RELEASE_TAG}/$archive_name\`
+            };
+            fs.writeFileSync('apps/launcher/src-tauri/target/release/bundle/appimage/latest.json', JSON.stringify(manifest, null, 2) + '\n');
+          "
+
+      - name: Create GitHub Release
+        if: steps.release.outputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Paranoia Client ${{ steps.release.outputs.tag }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
+            apps/launcher/src-tauri/target/release/bundle/deb/*.deb
+            apps/launcher/src-tauri/target/release/bundle/appimage/latest.json
