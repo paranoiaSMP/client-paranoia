@@ -1,0 +1,208 @@
+name: promote
+
+# Deuxieme temps d'une publication: celui qui previent les joueurs.
+#
+# Pousser `release/vX.Y.Z` construit et publie, mais en PREVERSION et sans
+# latest.json. Personne ne recoit rien: l'URL que lit le launcher --
+# `releases/latest/download/latest.json` -- ignore les preversions, donc chaque
+# joueur continue de voir la derniere version promue et son launcher dit « a
+# jour ». Les admins, eux, installent depuis la page de la preversion.
+#
+# Pousser `promote/vX.Y.Z` fait le reste: la preversion devient une vraie
+# release et latest.json est ecrit. C'est la, et seulement la, que les joueurs
+# sont prevenus.
+#
+# Pourquoi ce decoupage: la 0.7.19 a casse la consommation des pommes d'or chez
+# tout le monde en meme temps, et on l'a appris par des plaintes en jeu. Avec ce
+# temps intermediaire, la meme erreur ne touche que ceux qui ont choisi de
+# tester. Ce n'est pas une precaution abstraite, c'est le prix d'hier.
+#
+# Rien n'est recompile ici. L'installeur et sa signature sont deja attaches a la
+# preversion; on les lit. Reconstruire donnerait un autre binaire, donc une autre
+# signature, et le manifeste ne correspondrait plus a ce que les admins ont
+# teste -- ce qui viderait la promotion de son sens.
+
+on:
+  push:
+    branches:
+      - "promote/**"
+  # Pour promouvoir une version dont la branche a deja ete poussee, ou nettoyee.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag a promouvoir, par exemple v0.7.21"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Determine tag
+        id: promote
+        shell: bash
+        run: |
+          case "${GITHUB_REF}" in
+            refs/heads/promote/*) tag="${GITHUB_REF_NAME#promote/}" ;;
+            *)                    tag="${{ inputs.tag }}" ;;
+          esac
+
+          if [ -z "$tag" ]; then
+            echo "::error::aucun tag a promouvoir"
+            exit 1
+          fi
+          echo "promotion de $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # Une promotion doit porter sur une preversion. Promouvoir ce qui est deja
+      # public ne ferait rien de mal, mais cacherait une erreur: quelqu'un croit
+      # avoir franchi une etape qui n'a pas eu lieu.
+      - name: Verify it is a prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.promote.outputs.tag }}
+        run: |
+          # map(tostring) et non join seul: les deux champs sont des booleens, et
+          # join refuse tout ce qui n'est pas une chaine.
+          etat=$(gh release view "$TAG" \
+            --json isPrerelease,isDraft -q '[.isPrerelease, .isDraft] | map(tostring) | join(",")')
+          echo "prerelease,draft = $etat"
+          case "$etat" in
+            true,false) echo "preversion confirmee" ;;
+            false,*) echo "::error::$TAG est deja publiee, rien a promouvoir"; exit 1 ;;
+            *) echo "::error::etat inattendu ($etat)"; exit 1 ;;
+          esac
+
+      # Les signatures et les noms d'actifs reels, lus sur la release plutot que
+      # reconstruits: c'est ce que les admins ont installe qui doit etre annonce.
+      - name: Download signatures
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.promote.outputs.tag }}
+        run: |
+          mkdir -p sigs
+          gh release download "$TAG" -p '*.sig' -D sigs
+          ls -la sigs
+
+      - name: Publish update manifest for every platform present
+        id: manifeste
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.promote.outputs.tag }}
+          DEPOT: ${{ github.repository }}
+        run: |
+          base="https://github.com/$DEPOT/releases/download/$TAG"
+          noms=$(gh release view "$TAG" --json assets -q '.assets[].name')
+          echo "actifs de la release:"
+          printf '  %s\n' $noms
+
+          # Windows: l'installeur NSIS. macOS: l'archive de mise a jour, et non
+          # le DMG -- c'est l'archive que le launcher telecharge et verifie.
+          #
+          # Une table et non une boucle sur stdin: un `while read` alimente par
+          # un heredoc partage son entree standard avec tout ce qui tourne dans
+          # la boucle, et le jour ou l'un de ces programmes lira une ligne, la
+          # boucle sautera une plateforme sans rien dire.
+          plateformes=(
+            "windows-x86_64 -setup\.exe$"
+            "darwin-aarch64 \.app\.tar\.gz$"
+          )
+          posees=""
+
+          for entree in "${plateformes[@]}"; do
+            plateforme="${entree%% *}"
+            motif="${entree#* }"
+
+            actif=$(printf '%s\n' "$noms" | grep -E "$motif" | head -1 || true)
+            if [ -z "$actif" ]; then
+              echo "$plateforme: aucun actif correspondant, ignoree"
+              continue
+            fi
+            sig="sigs/$actif.sig"
+            if [ ! -f "$sig" ]; then
+              echo "::error::$plateforme: $actif present mais sa signature manque"
+              exit 1
+            fi
+
+            echo "=============== $plateforme <- $actif"
+            node scripts/update-manifest.mjs \
+              --tag "$TAG" \
+              --platform "$plateforme" \
+              --signature "$sig" \
+              --url "$base/$actif"
+            posees="${posees:+$posees,}$plateforme"
+          done
+
+          if [ -z "$posees" ]; then
+            echo "::error::aucune plateforme posee, la promotion n'annoncerait rien"
+            exit 1
+          fi
+          echo "plateformes annoncees: $posees"
+          echo "plateformes=$posees" >> "$GITHUB_OUTPUT"
+
+      # En dernier: tant que la release est une preversion, les joueurs ne la
+      # voient pas. On ne leve ce garde qu'une fois le manifeste ecrit, pour
+      # qu'aucun client ne tombe sur une release visible sans manifeste.
+      - name: Make the release public
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.promote.outputs.tag }}
+        run: |
+          gh release edit "$TAG" --prerelease=false
+          echo "$TAG est desormais publique"
+
+      # Lire ce qu'on vient de faire, et non se fier au code de sortie: c'est la
+      # regle tenue partout ailleurs dans ce depot. Et on lit l'URL du joueur,
+      # pas l'API: c'est cette URL-la, cache compris, qui decide si une mise a
+      # jour arrive.
+      - name: Verify what a player will now read
+        shell: bash
+        env:
+          DEPOT: ${{ github.repository }}
+          TAG: ${{ steps.promote.outputs.tag }}
+          PLATEFORMES: ${{ steps.manifeste.outputs.plateformes }}
+        run: |
+          url="https://github.com/$DEPOT/releases/latest/download/latest.json"
+          attendu="${TAG#v}"
+          # Les plateformes comptent autant que la version: un manifeste qui
+          # annonce la bonne version sans l'entree d'une plateforme laisse ses
+          # joueurs sans mise a jour, et c'est precisement le bug de la 0.7.18.
+          attendues=$(printf '%s' "$PLATEFORMES" | tr ',' '\n' | sort | paste -sd, -)
+
+          for essai in 1 2 3 4 5; do
+            vu=$(curl -sSL --max-time 30 "$url" | node -e '
+              let t = "";
+              process.stdin.on("data", (d) => (t += d)).on("end", () => {
+                try {
+                  const m = JSON.parse(t);
+                  const p = Object.keys(m.platforms ?? {}).sort().join(",");
+                  console.log(`${m.version} ${p}`);
+                } catch {
+                  console.log("illisible");
+                }
+              });' || true)
+            echo "essai $essai: $vu (attendu: $attendu $attendues)"
+            if [ "$vu" = "$attendu $attendues" ]; then
+              echo "le manifeste public annonce $attendu pour $attendues"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::le manifeste public n'annonce pas $attendu pour $attendues"
+          exit 1

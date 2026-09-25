@@ -379,9 +379,21 @@ jobs:
       # compte connecte. `tag_name` est explicite: sur une branche `release/**`
       # le tag n'existe pas encore, et l'action le cree sur le commit construit.
       #
-      # latest.json n'est volontairement pas dans cette liste: l'action ecrase
-      # l'actif sans le lire, et build-macos.yml publie sur la meme release. Voir
-      # l'etape suivante.
+      # `prerelease: true`, et pas de latest.json: une version sort d'abord pour
+      # les admins seuls. Le launcher lit
+      # `releases/latest/download/latest.json`, et cette URL comme l'API
+      # `releases/latest` ignorent les preversions -- un joueur ne voit donc rien
+      # et son launcher continue d'annoncer la derniere version promue. Les
+      # admins, eux, installent depuis la page de la preversion.
+      #
+      # C'est `.github/workflows/promote.yml`, declenche en poussant
+      # `promote/vX.Y.Z`, qui ecrit le manifeste puis leve la preversion. La
+      # raison de ce decoupage est ecrite en tete de ce fichier-la: la 0.7.19 a
+      # casse la consommation des pommes d'or chez tout le monde a la fois.
+      #
+      # latest.json n'est de toute facon jamais dans cette liste: l'action
+      # ecrase l'actif sans le lire, et deux ecrivains sur le meme actif etaient
+      # toute la cause du manifeste perdu de la 0.7.18.
       - name: Create GitHub Release
         if: steps.release.outputs.tag != ''
         uses: softprops/action-gh-release@v2
@@ -389,34 +401,9 @@ jobs:
           tag_name: ${{ steps.release.outputs.tag }}
           name: Paranoia Client ${{ steps.release.outputs.tag }}
           generate_release_notes: true
+          prerelease: true
           fail_on_unmatched_files: true
           files: |
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
             mod-jars/**/*.jar
-
-      # Manifeste lu par les clients deja installes pour detecter une nouvelle
-      # version. Il porte la signature produite plus haut: un client refuse toute
-      # archive dont la signature ne correspond pas a sa cle publique.
-      #
-      # En dernier, et par un script qui lit avant d'ecrire: build-macos.yml
-      # publie sur la meme release, et les deux manifestes d'une seule plateforme
-      # s'ecrasaient l'un l'autre -- en 0.7.18, macOS a disparu du manifeste sans
-      # que rien ne passe au rouge.
-      - name: Publish update manifest
-        if: steps.release.outputs.tag != ''
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $nsis = "apps/launcher/src-tauri/target/release/bundle/nsis"
-          $installer = Get-ChildItem "$nsis/*-setup.exe" | Select-Object -First 1
-          $name = $installer.Name.Replace(' ', '.')
-          $base = "https://github.com/${{ github.repository }}/releases/download"
-
-          node scripts/update-manifest.mjs `
-            --tag "${{ steps.release.outputs.tag }}" `
-            --platform windows-x86_64 `
-            --signature "$($installer.FullName).sig" `
-            --url "$base/${{ steps.release.outputs.tag }}/$name"
-          if ($LASTEXITCODE -ne 0) { throw "publication du manifeste echouee" }
