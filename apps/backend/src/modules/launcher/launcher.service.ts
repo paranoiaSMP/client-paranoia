@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ensureJava } from "./javaDownloader.js";
 import { requiredJavaMajor } from "./javaRequirement.js";
+import { tuningFlags } from "./jvmFlags.js";
 import { readSettings } from "../settings/settings.store.js";
 import {
 	setIdlePresence,
@@ -16,6 +17,7 @@ import { downloadArtifacts } from "./artifactDownloader.js";
 import { ensureClientMod } from "./clientMod.js";
 import { ensureFabricApi, findInstalledFabricApi } from "./fabricApi.js";
 import { applyGraphicsPreset } from "./graphicsPreset.js";
+import { applySodiumPreset } from "./sodiumPreset.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 import { env } from "../../config/env.js";
 
@@ -452,6 +454,15 @@ export async function launchMinecraft(
 		// joueur reglera ensuite dans le jeu lui reste acquis.
 		await applyGraphicsPreset(gameDir, profile.graphicsModeId);
 
+		// Sodium a ses propres options, dans son propre fichier, et le launcher
+		// l'installait sans jamais les toucher. Voir sodiumPreset.ts.
+		//
+		// A chaque lancement et non a la creation du profil, contrairement au
+		// prereglage video: ce fichier n'existe qu'apres un premier demarrage du
+		// jeu, c'est donc Sodium qui decide quand le reglage peut s'appliquer. Le
+		// module a son propre temoin et ne pose rien deux fois.
+		await applySodiumPreset(gameDir);
+
 		// Le mode d'affichage est ecrit apres la copie: sinon la valeur du fichier
 		// source ecraserait le choix du joueur.
 		applyWindowMode(targetOptionsPath, settings.fullscreen);
@@ -513,11 +524,21 @@ export async function launchMinecraft(
 			? { ...resolution, fullscreen: true }
 			: { ...resolution, fullscreen: false };
 
-		// Arguments JVM saisis dans les parametres, ajoutes a ceux du launcher.
-		const extraJvmArgs = settings.jvmArgs
-			.split(/\s+/)
-			.map((arg) => arg.trim())
-			.filter((arg) => arg.length > 0);
+		// Le reglage du ramasse-miettes, choisi selon la version de Java que cette
+		// version de Minecraft impose. Voir jvmFlags.ts: il vivait dans la valeur
+		// par defaut du champ des parametres, donc dans un reglage global, alors
+		// qu'il depend du profil -- Java 21 pour les 1.21.x, 25 pour les 26.x.
+		//
+		// Les arguments du joueur viennent apres, et c'est volontaire: sur un
+		// `-XX:Flag=valeur` repete, c'est le dernier qui gagne. Il peut donc
+		// corriger n'importe lequel des notres sans qu'on ait a prevoir le cas.
+		const extraJvmArgs = [
+			...tuningFlags(javaMajor),
+			...settings.jvmArgs
+				.split(/\s+/)
+				.map((arg) => arg.trim())
+				.filter((arg) => arg.length > 0),
+		];
 
 		if (clientModPath) {
 			// Ajoute comme element distinct du tableau, surtout pas via le decoupage

@@ -8,57 +8,61 @@ import { paranoiaDataDir } from "../launcher/paths.js";
  * value and switching tab lost it, and none of them ever reached the game.
  */
 /**
- * Ce que valait le reglage avant qu'on le regle vraiment.
+ * Les valeurs que ce champ a portees comme defaut, au fil des versions.
  *
- * <p>Garde pour reconnaitre le joueur qui n'y a jamais touche: lui seul voit
- * ses arguments remplaces. Celui qui a saisi les siens les conserve.
+ * <p>Le reglage des drapeaux JVM a demenage dans
+ * {@code launcher/jvmFlags.ts}: c'est le launcher qui les pose desormais, et il
+ * les choisit selon la version de Java que la version de Minecraft impose -- 21
+ * pour les 1.21.x, 25 pour les 26.x. Un champ unique et global ne pouvait pas
+ * porter un reglage qui depend du profil.
+ *
+ * <p>Ce champ redevient donc ce qu'il aurait toujours du etre: <strong>ce que le
+ * joueur ajoute</strong>, et rien d'autre. Vide par defaut.
+ *
+ * <p>D'ou cette liste. Un joueur dont le fichier contient exactement l'un de ces
+ * defauts ne l'a jamais saisi: c'est nous qui l'y avions mis. On le vide, sinon
+ * il enverrait les memes drapeaux deux fois -- une fois par le launcher, une fois
+ * par « son » reglage -- et il resterait sourd a toute evolution. Celui qui a
+ * ecrit les siens les garde, ce qui est tout l'interet de comparer a la valeur
+ * exacte plutot que d'ecraser.
  */
-const LEGACY_JVM_ARGS = "-XX:+UseG1GC";
+const DEFAUTS_HISTORIQUES = [
+  // Ne servait a rien: G1 est deja le ramasse-miettes par defaut des JVM
+  // modernes, donc ce drapeau seul ne changeait strictement rien.
+  "-XX:+UseG1GC",
+
+  // Le jeu de six drapeaux qui a suivi. Ils ne disparaissent pas: ils sont
+  // desormais poses par jvmFlags.ts, avec quatre de plus.
+  [
+    "-XX:+UseG1GC",
+    "-XX:+ParallelRefProcEnabled",
+    "-XX:+DisableExplicitGC",
+    "-XX:+PerfDisableSharedMem",
+    "-XX:MaxGCPauseMillis=50",
+    "-XX:G1HeapRegionSize=8M",
+  ].join(" "),
+];
 
 /**
- * Arguments JVM par defaut.
+ * Reconnait un defaut historique, aux espaces pres.
  *
- * L'ancienne valeur ne servait a rien: G1 est deja le ramasse-miettes par
- * defaut sur les JVM modernes, donc le seul drapeau present ne changeait
- * strictement rien. Ce qui compte, ce sont les reglages qui suivent.
- *
- * - `DisableExplicitGC` est le plus utile de tous. Certaines bibliotheques
- *   appellent `System.gc()`, ce qui declenche un ramassage complet qui arrete
- *   le jeu net -- le blocage d'une demi-seconde en pleine partie, sans cause
- *   visible. Ce drapeau rend ces appels sans effet.
- * - `PerfDisableSharedMem` empeche la JVM d'ecrire son fichier de statistiques
- *   sur le disque. Quand le disque hoquette, cette ecriture bloque la machine
- *   virtuelle entiere; c'est une cause connue de micro-freezes inexplicables.
- * - `MaxGCPauseMillis=50` remplace la cible de 200 ms par defaut. A soixante
- *   images par seconde, une image dure seize millisecondes: une pause de
- *   200 ms en fait tomber douze d'affilee. On echange un peu de debit contre
- *   des pauses plus courtes, ce qui est exactement le compromis d'un jeu.
- * - `G1HeapRegionSize=8M`: avec quatre gigaoctets, G1 choisit des regions de
- *   deux megaoctets, et tout objet depassant un megaoctet devient « enorme »
- *   et n'est ramasse qu'aux collectes completes. Les tableaux de sections de
- *   terrain franchissent ce seuil. Des regions de huit megaoctets le repoussent.
- * - `ParallelRefProcEnabled` traite en parallele les references faibles, dont
- *   le jeu fait un usage massif pour ses textures et ses morceaux de terrain.
- *
- * Aucun de ces drapeaux n'est experimental: tous existent en production dans
- * HotSpot et ne demandent pas de deverrouillage. C'est deliberé -- un drapeau
- * inconnu fait refuser le demarrage a la JVM, et le jeu ne se lancerait plus.
+ * <p>Comparer les chaines telles quelles ne suffit pas: le champ passe par une
+ * interface ou une saisie, et un espace en trop suffirait a faire passer pour un
+ * choix du joueur une valeur qu'il n'a jamais tapee.
  */
-const DEFAULT_JVM_ARGS = [
-  "-XX:+UseG1GC",
-  "-XX:+ParallelRefProcEnabled",
-  "-XX:+DisableExplicitGC",
-  "-XX:+PerfDisableSharedMem",
-  "-XX:MaxGCPauseMillis=50",
-  "-XX:G1HeapRegionSize=8M",
-].join(" ");
+export function estUnAncienDefaut(valeur: string): boolean {
+  const normalise = (texte: string) => texte.trim().split(/\s+/).join(" ");
+  const cible = normalise(valeur);
+  return DEFAUTS_HISTORIQUES.some((ancien) => normalise(ancien) === cible);
+}
 
 export const settingsSchema = z.object({
   ramMinMb: z.number().int().min(512).max(65536).default(2048),
   ramMaxMb: z.number().int().min(512).max(65536).default(4096),
   /** Chemin Java impose par le joueur; vide = runtime telecharge automatiquement. */
   javaPath: z.string().max(512).default(""),
-  jvmArgs: z.string().max(1024).default(DEFAULT_JVM_ARGS),
+  /** Ce que le joueur ajoute. Le reglage du launcher vit dans jvmFlags.ts. */
+  jvmArgs: z.string().max(1024).default(""),
   width: z.number().int().min(320).max(7680).default(1280),
   height: z.number().int().min(240).max(4320).default(720),
   fullscreen: z.boolean().default(false),
@@ -78,14 +82,13 @@ export function readSettings(): LauncherSettings {
     // rend la lecture tolerante a un fichier ecrit par une version anterieure.
     const settings = settingsSchema.parse(raw);
 
-    // Le joueur qui n'a jamais touche a ce champ herite des nouveaux
-    // arguments. Changer la valeur par defaut ne suffit pas: son fichier
-    // contient deja l'ancienne, et il garderait indefiniment un reglage qui ne
-    // sert a rien. En revanche celui qui a saisi les siens les conserve --
-    // c'est tout l'interet de comparer a l'ancienne valeur exacte plutot que
-    // d'ecraser.
-    if (settings.jvmArgs.trim() === LEGACY_JVM_ARGS) {
-      settings.jvmArgs = DEFAULT_JVM_ARGS;
+    // Le joueur qui n'a jamais touche a ce champ le retrouve vide: les drapeaux
+    // viennent maintenant du launcher, qui les choisit selon la version de Java.
+    // Changer la valeur par defaut ne suffit pas -- son fichier contient deja
+    // l'ancienne -- et les laisser enverrait les memes drapeaux deux fois.
+    // Celui qui a saisi les siens les conserve.
+    if (estUnAncienDefaut(settings.jvmArgs)) {
+      settings.jvmArgs = "";
     }
 
     return settings;

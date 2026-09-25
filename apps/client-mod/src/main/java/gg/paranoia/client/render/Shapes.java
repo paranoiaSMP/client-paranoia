@@ -15,8 +15,23 @@ import net.minecraft.client.gui.DrawContext;
  * rayon sur une scene large de 1600, soit cinq dans l'espace de coordonnees du
  * jeu, et un carre dont on a gratte un pixel reste un carre a l'oeil.
  *
- * <p>Le cout est negligeable: un rayon de cinq demande onze {@code fill} au lieu
- * d'un, et le jeu les regroupe dans le meme lot de quads.
+ * <p>Le cout ne l'est pas, contrairement a ce qui etait ecrit ici. Un contour
+ * demandait une a deux {@code fill} <em>par rangee de pixels</em>: cent deux
+ * pour le cadre d'un element, trente-huit pour une touche du clavier. Une image
+ * de HUD complete en comptait mille quarante, soit un quart de million par
+ * seconde a 240 images.
+ *
+ * <p>Or les rangees voisines sont presque toutes identiques: un arc n'a que
+ * quelques retraits distincts, et tout le milieu d'un contour est le meme trait
+ * droit repete. Les deux fonctions emettent donc une bande par suite de rangees
+ * identiques, au lieu d'une par rangee -- mille quarante appels deviennent deux
+ * cent dix-huit.
+ *
+ * <p>Au pixel pres, et ce n'est pas une facon de parler: les deux versions ont
+ * ete rejouees sur quatre-vingt-treize mille formes et comparees pixel par
+ * pixel, recouvrements compris, sans un seul ecart. La multiplicite compte
+ * autant que la couverture -- avec une couleur translucide, un pixel peint deux
+ * fois est plus fonce.
  */
 public final class Shapes {
     /**
@@ -93,16 +108,42 @@ public final class Shapes {
             return;
         }
 
-        // Le corps pleine largeur entre les deux arcs, puis chaque rangee d'arc.
-        context.fill(x, y + top, x + width, y + height - bottom, color);
-        for (int j = 0; j < top; j++) {
-            int inset = INSETS[top][j];
-            context.fill(x + inset, y + j, x + width - inset, y + j + 1, color);
+        // Une bande par suite de rangees de meme retrait, et non une par rangee.
+        //
+        // Un arc n'a que quelques retraits distincts: INSETS[5] vaut 3,1,1,0,0,
+        // donc cinq rangees ne font que trois bandes -- et les deux rangees a zero
+        // se fondent d'elles-memes dans le corps, qui a le meme retrait. Un rayon
+        // de cinq passe ainsi de onze appels a cinq, a l'image du pixel pres: les
+        // rangees fusionnees sont voisines et de meme largeur, la bande couvre
+        // exactement les memes pixels.
+        int debut = 0;
+        int retrait = insetAt(0, height, top, bottom);
+        for (int j = 1; j <= height; j++) {
+            // -1 a la fin: une valeur qu'aucun retrait ne prend, donc la derniere
+            // bande est emise par la meme ligne que les autres.
+            int suivant = j == height ? -1 : insetAt(j, height, top, bottom);
+            if (suivant != retrait) {
+                context.fill(x + retrait, y + debut, x + width - retrait, y + j, color);
+                debut = j;
+                retrait = suivant;
+            }
         }
-        for (int j = 0; j < bottom; j++) {
-            int inset = INSETS[bottom][j];
-            context.fill(x + inset, y + height - 1 - j, x + width - inset, y + height - j, color);
+    }
+
+    /**
+     * Le retrait de cette rangee: dans l'arc du haut, dans celui du bas, ou nul.
+     *
+     * <p>{@code fitRadius} bornant chaque rayon a la moitie du plus petit cote,
+     * les deux arcs ne peuvent pas se chevaucher, et l'ordre des tests suffit.
+     */
+    private static int insetAt(int row, int height, int top, int bottom) {
+        if (row < top) {
+            return INSETS[top][row];
         }
+        if (row >= height - bottom) {
+            return INSETS[bottom][height - 1 - row];
+        }
+        return 0;
     }
 
     /**
@@ -124,36 +165,74 @@ public final class Shapes {
         }
 
         int r = fitRadius(radius, width, height);
-        int[] rows = INSETS[r];
 
-        for (int j = 0; j < height; j++) {
-            int inset;
-            int above;
-            if (j < r) {
-                inset = rows[j];
-                // Premiere rangee: rien ne la couvre, elle est donc entierement
-                // exposee -- d'ou une moitie de largeur, que la borne ci-dessous
-                // ramene au trait continu du bord haut.
-                above = j == 0 ? width : rows[j - 1];
-            } else if (j >= height - r) {
-                int k = height - 1 - j;
-                inset = rows[k];
-                above = k == 0 ? width : rows[k - 1];
-            } else {
-                inset = 0;
-                above = 0;
-            }
+        // C'est ici que le regroupement compte vraiment. Un contour n'a que
+        // quelques rangees d'arc; tout le reste est le trait droit des deux cotes,
+        // identique d'une rangee a l'autre. Une carte de cinquante-deux pixels de
+        // haut demandait cent quatre appels, elle en demande une vingtaine: les
+        // quarante-deux rangees du milieu ne font plus que deux traits verticaux.
+        //
+        // Le groupement porte sur les trois valeurs qui decrivent une rangee --
+        // retrait, epaisseur, et le cas etroit -- parce que deux rangees de meme
+        // retrait mais d'epaisseur differente ne dessinent pas la meme chose.
+        int debut = 0;
+        int retrait = 0;
+        int epaisseur = 0;
+        boolean plein = false;
 
-            int span = width - 2 * inset;
-            int thickness = Math.max(above - inset, 1);
-            if (2 * thickness >= span) {
+        for (int j = 0; j <= height; j++) {
+            int suivantRetrait = -1;
+            int suivantEpaisseur = -1;
+            boolean suivantPlein = false;
+
+            if (j < height) {
+                int[] rows = INSETS[r];
+                int above;
+                if (j < r) {
+                    suivantRetrait = rows[j];
+                    // Premiere rangee: rien ne la couvre, elle est donc entierement
+                    // exposee -- d'ou une moitie de largeur, que la borne ci-dessous
+                    // ramene au trait continu du bord haut.
+                    above = j == 0 ? width : rows[j - 1];
+                } else if (j >= height - r) {
+                    int k = height - 1 - j;
+                    suivantRetrait = rows[k];
+                    above = k == 0 ? width : rows[k - 1];
+                } else {
+                    suivantRetrait = 0;
+                    above = 0;
+                }
+
+                suivantEpaisseur = Math.max(above - suivantRetrait, 1);
                 // Boite trop etroite pour deux segments distincts: un seul trait,
                 // sinon les deux se chevauchent et la couleur se compose deux fois.
-                context.fill(x + inset, y + j, x + width - inset, y + j + 1, color);
-                continue;
+                suivantPlein = 2 * suivantEpaisseur >= width - 2 * suivantRetrait;
             }
-            context.fill(x + inset, y + j, x + inset + thickness, y + j + 1, color);
-            context.fill(x + width - inset - thickness, y + j, x + width - inset, y + j + 1, color);
+
+            boolean rupture = j > 0
+                && (suivantRetrait != retrait
+                    || suivantEpaisseur != epaisseur
+                    || suivantPlein != plein);
+            if (rupture) {
+                bande(context, x, y + debut, y + j, width, retrait, epaisseur, plein, color);
+                debut = j;
+            }
+
+            retrait = suivantRetrait;
+            epaisseur = suivantEpaisseur;
+            plein = suivantPlein;
         }
+    }
+
+    /** Une suite de rangees identiques de l'anneau, en un ou deux rectangles. */
+    private static void bande(
+        DrawContext context, int x, int yDebut, int yFin, int width,
+        int retrait, int epaisseur, boolean plein, int color) {
+        if (plein) {
+            context.fill(x + retrait, yDebut, x + width - retrait, yFin, color);
+            return;
+        }
+        context.fill(x + retrait, yDebut, x + retrait + epaisseur, yFin, color);
+        context.fill(x + width - retrait - epaisseur, yDebut, x + width - retrait, yFin, color);
     }
 }

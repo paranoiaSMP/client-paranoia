@@ -28,6 +28,7 @@ import gg.paranoia.client.modules.BrightnessModule;
 import gg.paranoia.client.modules.HudAppearanceModule;
 import gg.paranoia.client.modules.ColorHitModule;
 import gg.paranoia.client.modules.CrosshairModule;
+import gg.paranoia.client.modules.CrystalCleanupModule;
 import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.FocusFpsModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
@@ -97,6 +98,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new ColorHitModule());
         REGISTRY.register(new CrosshairModule());
         REGISTRY.register(new HitIndicatorModule());
+        REGISTRY.register(new CrystalCleanupModule());
         REGISTRY.register(new BadgeModule());
         REGISTRY.register(new ParticleBudgetModule());
         REGISTRY.register(new FocusFpsModule());

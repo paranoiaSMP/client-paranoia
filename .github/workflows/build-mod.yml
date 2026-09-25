@@ -105,7 +105,109 @@ jobs:
       # message d'erreur sous deux cents lignes de pile interne.
       - name: Build every Minecraft target
         working-directory: apps/client-mod
-        run: gradle build
+        run: |
+          # tee pour garder la sortie: elle sert a l'etape de fin, qui remet les
+          # erreurs de compilation a portee d'une lecture par la queue du
+          # journal. pipefail est indispensable -- sans lui, le code de sortie
+          # serait celui de tee, et un build casse passerait pour vert.
+          set -o pipefail
+          # mkdir avant le tee: il ouvre le fichier avant que Gradle ne cree le
+          # dossier, et echouerait sur un chemin inexistant.
+          mkdir -p build
+          gradle build 2>&1 | tee build/gradle-output.txt
+
+      # Lit les vrais noms de champs de la configuration de Sodium.
+      #
+      # Le launcher installe Sodium mais n'ecrit jamais son sodium-options.json:
+      # il le laisse donc aux valeurs d'usine, qui sont prudentes expres. Pour le
+      # regler il faut connaitre la forme exacte du fichier -- et Sodium l'a
+      # changee entre 0.5 et 0.6.
+      #
+      # On ne la devine pas. Sodium serialise sa classe d'options avec GSON, donc
+      # les noms de champs de la classe *sont* les cles du JSON: `javap -p` les
+      # donne sans avoir a lire le depot amont. Meme raison d'etre que la sonde
+      # des signatures Minecraft plus bas, et meme regle -- une forme non
+      # confirmee par la CI n'est pas une forme verifiee.
+      #
+      # Cette etape vit ici, avec les autres sondes et le JDK deja installe, meme
+      # si elle sert le launcher: les avoir au meme endroit vaut mieux que la
+      # symetrie des dossiers.
+      #
+      # Avant la sonde Minecraft et non apres, pour ne pas repousser hors de
+      # portee le verdict du resolveur, qui doit rester la derniere chose
+      # imprimee du job -- c'est la seule facon dont on lit un journal de CI.
+      #
+      # Ne peut pas faire echouer le build: c'est une lecture.
+      - name: Probe Sodium config schema
+        if: always()
+        continue-on-error: true
+        run: |
+          api="https://api.modrinth.com/v2/project/sodium/version"
+          # Une seule version de Minecraft suffit: on cherche la forme du
+          # fichier, pas la liste des versions de Sodium.
+          query="?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.8%22%5D"
+
+          jar_url=$(curl -sSL --max-time 60 "$api$query" \
+            | jq -r '[.[] | select(.files | length > 0)][0].files
+                     | (map(select(.primary)) + .)[0].url' 2>/dev/null || true)
+
+          if [ -z "$jar_url" ] || [ "$jar_url" = "null" ]; then
+            echo "Modrinth injoignable ou aucune version rendue: rien a lire"
+            exit 0
+          fi
+
+          echo "jar: $jar_url"
+          curl -sSL --max-time 120 "$jar_url" -o sodium.jar || exit 0
+          mkdir -p sodium-extrait
+          unzip -q -o sodium.jar -d sodium-extrait || exit 0
+
+          # Le paquet a change de nom entre 0.5 (me.jellysquid) et 0.6
+          # (net.caffeinemc): on cherche par nom de classe, pas par chemin.
+          #
+          # Les deux enumerations citees par PerformanceSettings sont ajoutees a
+          # la main: leurs noms ne contiennent pas « SodiumGameOptions », et sans
+          # leurs constantes on ne peut pas ecrire une valeur pour ces champs.
+          classes=$(find sodium-extrait \
+            \( -name '*SodiumGameOptions*.class' \
+               -o -name 'DeferMode.class' \
+               -o -name 'QuadSplittingMode.class' \) | sort)
+          if [ -z "$classes" ]; then
+            echo "aucune classe d options trouvee; classes candidates:"
+            find sodium-extrait -name '*Options*.class' | head -20
+            exit 0
+          fi
+
+          for class in $classes; do
+            fqn=$(echo "$class" \
+              | sed 's|^sodium-extrait/||; s|\.class$||; s|/|.|g')
+            echo "=============== $fqn"
+            # Sans filtre sur les methodes, contrairement a une premiere version:
+            # les champs donnent les cles du JSON, mais c'est le constructeur qui
+            # dit si un fichier partiel est sur. GSON n'execute les initialiseurs
+            # que s'il trouve un constructeur sans argument; sinon il alloue
+            # l'objet sans l'initialiser, et une section absente du JSON arriverait
+            # a null -- le jeu planterait au demarrage. La question ne se devine
+            # pas, elle se lit ici.
+            javap -p -cp sodium-extrait "$fqn" 2>/dev/null || echo "    (illisible)"
+          done
+
+          # Les valeurs par defaut ne sont pas dans la signature: elles sont
+          # posees par l'initialiseur. Sans elles on ne sait pas si ce qu'on
+          # ecrit change quelque chose -- et c'est toute la question pour
+          # cpuRenderAheadLimit, qui est de la latence d'entree deguisee.
+          echo "=============== valeurs par defaut (initialiseurs)"
+          for nom in AdvancedSettings PerformanceSettings QualitySettings; do
+            class=$(find sodium-extrait -name "*SodiumGameOptions\$$nom.class" | head -1)
+            [ -z "$class" ] && continue
+            fqn=$(echo "$class" | sed 's|^sodium-extrait/||; s|\.class$||; s|/|.|g')
+            echo "--- $nom"
+            # Le corps du constructeur: une suite de « push <valeur>; putfield
+            # <champ> ». On garde les deux, l'ordre suffit a les apparier.
+            javap -p -c -cp sodium-extrait "$fqn" 2>/dev/null \
+              | sed -n '/[^a-zA-Z]'"$nom"'();/,/^$/p' \
+              | grep -E 'push|ldc|iconst|putfield|getstatic' \
+              | sed 's/^ *//' || echo "    (illisible)"
+          done
 
       # Quand une classe de Minecraft change de paquet entre deux versions,
       # javac dit seulement "cannot find symbol". Plutot que de deviner le
@@ -184,15 +286,56 @@ jobs:
             # signature d'une version a l'autre, et les deviner couterait un
             # build par essai.
             #
+            # AVERTISSEMENT, paye en production. Le module qui terminait la
+            # bouchee cote client a ete publie en 0.7.19 et retire en 0.7.20: il
+            # cassait la consommation pour tout le monde, par a-coups. La cause
+            # etait connue et ecrite avant la publication, et publiee quand meme.
+            #
+            # Le client finit au tick prevu, le serveur n'a pas fini, il renvoie
+            # ses donnees suivies, onTrackedDataSet reecrit itemUseTimeLeft et
+            # l'animation repart. Boucle: on termine, le serveur relance, on
+            # termine. Les deux moities vont ensemble ou pas du tout.
+            #
+            # Ne pas remettre la premiere sans la seconde. Une pomme d'or dure
+            # trente-deux ticks: c'est le cas le plus visible, et c'est par la
+            # que les joueurs l'ont su avant nous.
+            #
+            # itemUseCooldown repond a la question des entrees perdues. Le clic
+            # droit est verrouille quatre ticks par le client lui-meme, et un
+            # clic qui tombe pendant ce verrou n'est pas retarde: il est jete. En
+            # combat on clique plus vite que ca, et l'entree disparait sans que
+            # le reseau y soit pour rien. On veut la garder et la rejouer au
+            # premier tick autorise -- et non renvoyer l'action, ce qui en
+            # produirait deux quand le serveur a deja traite la premiere.
+            #
+            # EndCrystalEntity, ClientWorld, Entity et RemovalReason repondent a
+            # une autre question ouverte: en crystal PvP, le client garde
+            # l'entite du crystal jusqu'au retour du paquet de suppression, donc
+            # sa boite de collision occupe encore la place et empeche d'en poser
+            # un nouveau. Le joueur attend un aller-retour de ping complet par
+            # crystal, alors que le serveur a deja tout traite. Retirer l'entite
+            # des la frappe demande de savoir quelle methode le fait cote client,
+            # avec quelle raison de suppression, et dans quel paquet vit
+            # EndCrystalEntity -- quatre choses qu'on ne devine pas.
+            #
             # Pas de commentaire entre les entrees ci-dessous: un « # » au milieu
             # d'une liste prolongee par « \ » coupe la commande.
             for entry in \
               "net.minecraft.client.render.entity.EntityRenderer:shouldRender" \
               "net.minecraft.entity.player.PlayerEntity:getAttackCooldownProgress|getItemCooldownManager" \
               "net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket$Action:*" \
-              "net.minecraft.client.MinecraftClient:handleInputEvents|doItemUse|tatusEffectSprite" \
+              "net.minecraft.client.MinecraftClient:doAttack|handleInputEvents|doItemUse|temUseCooldown|tatusEffectSprite" \
               "net.minecraft.entity.player.ItemCooldownManager:*" \
-              "net.minecraft.client.network.ClientPlayerInteractionManager:clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.client.network.ClientPlayerInteractionManager:attackEntity|clickSlot|syncSelectedSlot|getCurrentSyncId" \
+              "net.minecraft.entity.decoration.EndCrystalEntity:*" \
+              "net.minecraft.entity.LivingEntity:ickActiveItemStack|ickItemStackUsage|onsumeItem|learActiveItem|temUseTimeLeft|ctiveItemStack|sUsingItem|etCurrentHand|onsumptionEffects|atSound|laySound" \
+              "net.minecraft.item.ItemStack:reItemsEqual|reEqual|sedOnRelease|etMaxUseTime" \
+              "net.minecraft.client.network.ClientPlayNetworkHandler:onScreenHandlerSlotUpdate|onInventory|onUpdateSelectedSlot|onEntityStatus" \
+              "net.minecraft.client.option.GameOptions:useKey|attackKey" \
+              "net.minecraft.client.option.KeyBinding:sPressed|asPressed|etPressed" \
+              "net.minecraft.client.world.ClientWorld:removeEntity|addEntity" \
+              "net.minecraft.entity.Entity:iscard|etRemoved|emove|etWorld" \
+              "net.minecraft.entity.Entity\$RemovalReason:*" \
               "net.minecraft.entity.player.PlayerInventory:getStack|offHand|selectedSlot|getSelectedStack" \
               "net.minecraft.client.particle.ParticleManager:addParticle" \
               "net.minecraft.client.option.InactivityFpsLimiter:update" \
@@ -221,6 +364,53 @@ jobs:
                   | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
               fi
             done
+
+            # Une signature ne dit pas tout, et deux questions ouvertes le
+            # montrent bien.
+            #
+            # Rattraper un clic droit que le client jette demande de savoir *ou*
+            # le verrou de quatre ticks est teste: dans doItemUse, qui rendrait
+            # la main sans rien faire, ou dans handleInputEvents, qui
+            # n'appellerait meme pas doItemUse. Le point d'accroche en depend.
+            #
+            # Finir de manger a l'instant prevu demande de savoir ou le jeu
+            # reserve la consommation au serveur. L'animation reste bloquee
+            # jusqu'a sa reponse, et ce blocage empeche d'agir -- c'est lui qu'on
+            # veut lever, pas la duree de la bouchee.
+            #
+            # Dans les deux cas la reponse est dans le corps de la methode, pas
+            # dans sa signature. On lit donc le bytecode, filtre sur ce qui nous
+            # interesse, avec la methode qui le contient.
+            # Le quatuor de LivingEntity repond a trois symptomes d'un coup, et
+            # c'est pour cela qu'on les lit ensemble: le delai de consommation
+            # (ou isClient reserve la consommation au serveur), le redemarrage
+            # aleatoire (ou clearActiveItem est appele apres une comparaison de
+            # pile qui echoue), et le retard du son (ou le son de fin est joue).
+            # Trois choses qui sortent du meme corps de methode.
+            # La lecture precedente a deja tranche une question et corrige une
+            # hypothese: doItemUse n'ecrit le verrou que pour le remettre a
+            # quatre, elle ne le lit jamais. Le test est dans handleInputEvents,
+            # donc un clic pendant le verrou n'atteint jamais doItemUse -- s'y
+            # accrocher n'aurait rien vu, et la CI serait restee verte sur un
+            # module qui ne corrige rien. On garde l'entree: le jour ou la
+            # structure bouge, elle le dira.
+            for lecture in \
+              "net.minecraft.client.MinecraftClient:itemUseCooldown" \
+              "net.minecraft.client.MinecraftClient:useKey|KeyBinding" \
+              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects"
+            do
+              corps_classe="${lecture%%:*}"
+              corps_motif="${lecture#*:}"
+              echo "--- bytecode de ${corps_classe##*.}, sur ($corps_motif)"
+              javap -p -c -cp "$cp" "$corps_classe" 2>/dev/null \
+                | awk -v motif="$corps_motif" '
+                    /^  [a-z].*\(.*\);$/ { methode = $0 }
+                    $0 ~ motif {
+                      if (methode != vu) { print "  dans" methode; vu = methode }
+                      print "     " $0
+                    }' \
+                | sed 's/^ *//;s/^/    /' || echo "    (illisible)"
+            done
           done
 
           # En toute fin, et non en tete: la sonde elle-meme fait deux cents
@@ -231,6 +421,33 @@ jobs:
             echo "=============== resolution Fabric"
             cat build/fabric-resolution.txt
           fi
+
+      # En toute derniere position, et seulement quand le build a echoue.
+      #
+      # Raison d'etre: les erreurs de compilation etaient imprimees par Gradle au
+      # milieu du journal, puis repoussees hors de portee par les sondes qui
+      # suivent -- lesquelles font plusieurs centaines de lignes et tournent en
+      # `always()`. Un journal de CI ne se lit que par la fin, et l'erreur qui
+      # importe le plus etait justement celle qu'on ne pouvait pas atteindre.
+      # J'y ai perdu un aller-retour: faute de lire l'erreur reelle, j'ai devine
+      # sa cause, et devine faux.
+      #
+      # `if: failure()` et non `always()`: en cas de succes, la derniere chose
+      # imprimee doit rester le verdict du resolveur.
+      - name: Compile errors, within reach of the log tail
+        if: failure()
+        working-directory: apps/client-mod
+        run: |
+          echo "=============== erreurs de compilation"
+          if [ ! -f build/gradle-output.txt ]; then
+            echo "(aucune sortie Gradle: l'echec est anterieur au build)"
+            exit 0
+          fi
+          # Les lignes de javac et celles de Mixin, qui refuse une cible absente
+          # avec un message de forme differente.
+          grep -E "error:|\.java:[0-9]+|Cannot find method|Cannot resolve|@Inject|What went wrong|^\* " \
+            build/gradle-output.txt | head -60 \
+            || echo "(aucune ligne d'erreur reconnue)"
 
       - name: Upload mod jars
         uses: actions/upload-artifact@v4

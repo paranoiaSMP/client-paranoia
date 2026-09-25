@@ -21,7 +21,59 @@ import { logger } from "../../logger.js";
  * de plein ecran, mais celle-la se pilote depuis le launcher et lui appartient.
  */
 
-/** Valeurs a poser pour un mode donne. Un mode absent d'ici ne touche a rien. */
+/**
+ * Ce qui reduit la latence sans rien retirer au joueur.
+ *
+ * <p>Pose sur <strong>tous</strong> les modes, y compris « beauty ». Ce n'est
+ * pas un oubli de symetrie avec PRESETS: les valeurs ci-dessous ne sont pas des
+ * arbitrages de qualite. Elles ne rabotent rien, elles ne cachent rien, et
+ * quelqu'un qui a choisi la qualite les veut autant que les autres.
+ *
+ * <p>La distinction vient d'une contrainte simple: l'essentiel des joueurs font
+ * du PvP, et en PvP une optimisation qui retire de l'information fait perdre le
+ * combat qu'elle accelere. Trois reglages ont ete ecartes pour cette raison et
+ * ne doivent pas etre remis ici sans y repenser:
+ *
+ * <ul>
+ *   <li>{@code particles} en « minimal »: les particules de coup critique sont
+ *       un retour d'information, elles disent que le crit est passe.
+ *   <li>{@code entityDistanceScaling} bas: arrete d'afficher les entites
+ *       lointaines, donc cache le joueur qui arrive.
+ *   <li>{@code simulationDistance} bas: un adversaire loin se met a jour moins
+ *       bien.
+ * </ul>
+ */
+const LATENCE: Record<string, string> = {
+  /**
+   * La visee devient 1:1 avec la main: plus d'acceleration ajoutee par l'OS.
+   *
+   * <p>Ne gagne aucune image et n'est pas la pour ca. C'est le seul reglage du
+   * jeu qui agit directement sur la justesse d'un mouvement de souris, et une
+   * courbe d'acceleration rend deux gestes identiques differents a l'ecran.
+   */
+  rawMouseInput: "true",
+
+  /**
+   * 240 plutot que la valeur d'origine de 120, et plutot que l'illimite.
+   *
+   * <p>Le jeu ne lit les entrees qu'une fois par image: le plafond d'images est
+   * donc aussi un plancher de latence. A 120 images, un clic attend jusqu'a
+   * 8,3 ms avant d'etre vu; a 240, 4,2 ms.
+   *
+   * <p>Pas l'illimite -- que le jeu ecrit « 260 » -- pour deux raisons. Une
+   * machine qui rend 500 images sans plafond chauffe, et l'etranglement
+   * thermique qui suit degrade la regularite, c'est-a-dire precisement ce qu'on
+   * cherche a proteger. Et un debit qui oscille entre 300 et 500 fait varier
+   * l'intervalle d'echantillonnage des entrees. Un plafond haut mais tenu vaut
+   * mieux qu'un sommet plus haut et instable.
+   */
+  maxFps: "240",
+};
+
+/**
+ * Valeurs a poser pour un mode donne, celles qui echangent du visuel contre
+ * des images. Un mode absent d'ici ne recoit que LATENCE.
+ */
 const PRESETS: Record<string, Record<string, string>> = {
   /**
    * Le mode qui doit vraiment gagner des images.
@@ -106,10 +158,10 @@ export async function applyGraphicsPreset(
   gameDir: string,
   graphicsModeId: string,
 ): Promise<void> {
-  const preset = PRESETS[graphicsModeId];
-  if (!preset) {
-    return;
-  }
+  // LATENCE s'applique meme a un mode absent de PRESETS: la fonction sortait
+  // ici pour « beauty », qui ne recevait donc ni la visee brute ni le plafond
+  // d'images -- deux reglages qui ne coutent pourtant aucune qualite.
+  const preset = { ...LATENCE, ...PRESETS[graphicsModeId] };
 
   // Deja pose: le joueur a pu tout changer depuis, on ne revient pas dessus.
   if (fs.existsSync(markerPath(gameDir))) {
