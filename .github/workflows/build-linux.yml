@@ -264,6 +264,7 @@ jobs:
           tag_name: ${{ steps.release.outputs.tag }}
           name: Paranoia Client ${{ steps.release.outputs.tag }}
           generate_release_notes: true
+          prerelease: true
           fail_on_unmatched_files: true
           files: |
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
