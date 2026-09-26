@@ -121,6 +121,7 @@ jobs:
           plateformes=(
             "windows-x86_64 -setup\.exe$"
             "darwin-aarch64 \.app\.tar\.gz$"
+            "linux-x86_64 \.AppImage$"
           )
           posees=""
 
