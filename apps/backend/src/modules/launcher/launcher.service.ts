@@ -620,21 +620,19 @@ export async function launchMinecraft(
 		if (proc) {
 			activeProcesses.set(profileId, proc);
 
-			// DEV/OPTI: Forcer la priorite "Haute" sur le processus pour un maximum de FPS
 			try {
 				const os = await import("node:os");
 				if (proc.pid) {
-					os.setPriority(proc.pid, os.constants.priority.PRIORITY_HIGH);
-					const priorityMsg = `[Launcher] Opti: Process ${proc.pid} boosted to HIGH priority for maximum FPS.`;
+					os.setPriority(proc.pid, os.constants.priority.PRIORITY_ABOVE_NORMAL);
+					const priorityMsg = `[Launcher] Opti: Process ${proc.pid} boosted to ABOVE_NORMAL priority for FPS (without breaking Discord).`;
 					console.log(priorityMsg);
 					addLog(priorityMsg);
 				}
 			} catch (priErr) {
 				console.warn(
-					"[Launcher] Impossible d'appliquer la priorite haute:",
+					"[Launcher] Impossible d'appliquer la priorite:",
 					priErr,
 				);
-				addLog(`[Launcher] Impossible d'appliquer la priorité haute: ${String(priErr)}`);
 			}
 
 			updateStatus({
