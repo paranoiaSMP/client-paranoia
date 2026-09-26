@@ -26,6 +26,20 @@ Base de projet professionnelle pour construire **Paranoia Client**:
 - Verification SHA-256 et reprise de telechargements
 - Mises a jour automatiques et observabilite
 
+## Documentation
+
+- [Dossier d optimisation](docs/dossier-optimisation.md) — tout ce qui fait de
+  Paranoia un client optimise : ce qui est pose, ou, pourquoi, avec quels
+  chiffres, et ce qui a ete refuse. La regle qui commande le reste est simple :
+  l essentiel des joueurs font du PvP, et une optimisation qui retire de l
+  information fait perdre le combat qu elle accelere.
+- [Protocole de politique des modules](docs/protocole-politique-modules.md) —
+  comment un serveur interdit un module, et comment eteindre une fonctionnalite
+  defectueuse chez tous les joueurs connectes sans publier de version.
+- [Protocole du badge utilisateurs](docs/protocole-badge-utilisateurs.md)
+- [Architecture](docs/architecture/overview.md) et [modele de
+  securite](docs/security/security-model.md)
+
 ## Demarrage rapide
 
 1. Installer Node 22+, pnpm et Rust. (Java 21 est telecharge automatiquement par
