@@ -37,7 +37,7 @@ const envSchema = z.object({
 
   SITE_API_URL: z.string().url().default("https://paranoiastudio.fr/api"),
 
-  BAN_API_URL: z.string().url().optional(),
+  BAN_API_URL: z.string().url().default("https://paranoiastudio.fr/api/bans/check"),
 
   NEWS_API_URL: z.string().url().optional(),
 
