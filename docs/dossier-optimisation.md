@@ -28,6 +28,20 @@ Un glossaire se trouve en annexe F. Les termes techniques y sont définis en une
 ou deux phrases : *1 % low*, *tick*, *frustum*, *occlusion*, *IHOP*, *mixin*,
 *région G1*, *mode immédiat*.
 
+**Pour le lire ailleurs que sur GitHub.** Deux scripts régénèrent ce dossier
+dans un format qui se colle ou s'ouvre dans un traitement de texte, titres,
+tableaux et blocs de code compris :
+
+```bash
+python3 scripts/dossier/en-html.py docs/dossier-optimisation.md dossier.html
+python3 scripts/dossier/en-docx.py docs/dossier-optimisation.md dossier.docx
+```
+
+Le `.html` s'ouvre dans un navigateur et se copie-colle tel quel dans Google
+Docs ou Word. Le `.docx` s'ouvre directement dans l'un comme dans l'autre, avec
+un plan navigable — les titres y sont de vrais styles de titre, ce qui compte
+sur cinquante pages.
+
 ---
 
 ## Sommaire
@@ -324,6 +338,7 @@ profil sans Sodium reste un profil qui se lance.
 ## 1.3 Les réglages vidéo, et les trois qui sont interdits
 
 **Fichier :** `apps/backend/src/modules/launcher/graphicsPreset.ts`
+
 **Banc d'essai :** `apps/backend/scripts/test-graphics-preset.ts`
 
 ### Le défaut corrigé
@@ -416,6 +431,7 @@ vie du profil. **Ces réglages appartiennent au joueur dès qu'il y a touché.**
 ## 1.4 Sodium, installé puis configuré
 
 **Fichier :** `apps/backend/src/modules/launcher/sodiumPreset.ts`
+
 **Banc d'essai :** `apps/backend/scripts/test-sodium-preset.ts`
 
 Installer un mod de performance et ne pas le configurer, c'est prendre la moitié
@@ -465,6 +481,7 @@ Les réglages Sodium écartés sont listés en 3.5.
 ## 1.5 La machine virtuelle Java : dix drapeaux
 
 **Fichier :** `apps/backend/src/modules/launcher/jvmFlags.ts`
+
 **Banc d'essai :** `apps/backend/scripts/test-jvm-flags.ts`
 
 ### Pourquoi c'est le levier le plus lourd du projet
@@ -2107,6 +2124,7 @@ d'actifs de la vraie 0.7.20 :
 ## 5.3 L'interrupteur du serveur
 
 **Fichiers :** `net/ModulePolicy.java`, `net/PolicyPayload.java`
+
 **Documentation :** `docs/protocole-politique-modules.md`
 
 | | |
