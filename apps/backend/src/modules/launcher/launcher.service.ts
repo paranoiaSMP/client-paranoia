@@ -192,16 +192,16 @@ export async function launchMinecraft(
 
 				const banRes = await fetch(banUrl.toString(), {
 					headers: {
-						"x-launcher-secret": env.LAUNCHER_API_SECRET
+						...(env.LAUNCHER_API_SECRET ? { "x-launcher-secret": env.LAUNCHER_API_SECRET } : {})
 					}
 				});
-				if (banRes.ok) {
-					const banData = await banRes.json().catch(() => ({}));
-					if (banData.banned) {
-						throw new Error(
-							`Vous êtes banni. Raison: ${banData.reason || "Non spécifiée"}`,
-						);
-					}
+				const banData = await banRes.json().catch(() => ({}));
+				if (banData.banned) {
+					throw new Error(
+						`Vous êtes banni. Raison: ${banData.reason || "Non spécifiée"}`,
+					);
+				} else if (!banRes.ok) {
+					console.warn(`[Launcher] Ban API a renvoyé un statut non OK: ${banRes.status}`);
 				}
 			} catch (err) {
 				// `err.message` sur une valeur non-Error levait une seconde
@@ -654,30 +654,32 @@ export async function launchMinecraft(
 			if (banApiUrl) {
 				banCheckInterval = setInterval(async () => {
 					try {
-						const banUrl = new URL(`${banApiUrl}/check`);
+						const banUrl = new URL(banApiUrl);
 						banUrl.searchParams.set("uuid", account.minecraftUuid);
 						banUrl.searchParams.set("username", account.minecraftUsername);
 						
 						const banRes = await fetch(banUrl.toString(), {
-							headers: { "x-launcher-secret": env.LAUNCHER_API_SECRET }
+							headers: {
+								...(env.LAUNCHER_API_SECRET ? { "x-launcher-secret": env.LAUNCHER_API_SECRET } : {})
+							}
 						});
 						
-						if (banRes.ok) {
-							const banData = await banRes.json().catch(() => ({}));
-							if (banData.banned) {
-								console.warn(`[Launcher] Joueur banni en jeu. Raison: ${banData.reason}. Arrêt du jeu.`);
-								addLog(`[Launcher] Banni en cours de jeu ! Fermeture forcée.`);
-								
-								// Afficher le message d'erreur
-								updateStatus({
-									state: "error",
-									progress: 0,
-									text: `Vous avez été banni en cours de jeu. Raison: ${banData.reason || "Non spécifiée"}`
-								});
-								
-								// Tuer le processus du jeu
-								proc.kill();
-							}
+						const banData = await banRes.json().catch(() => ({}));
+						if (banData.banned) {
+							console.warn(`[Launcher] Joueur banni en jeu. Raison: ${banData.reason}. Arrêt du jeu.`);
+							addLog(`[Launcher] Banni en cours de jeu ! Fermeture forcée.`);
+							
+							// Afficher le message d'erreur
+							updateStatus({
+								state: "error",
+								progress: 0,
+								text: `Vous avez été banni en cours de jeu. Raison: ${banData.reason || "Non spécifiée"}`
+							});
+							
+							// Tuer le processus du jeu
+							proc.kill();
+						} else if (!banRes.ok) {
+							console.warn(`[Launcher] Ban API a renvoyé un statut non OK: ${banRes.status}`);
 						}
 					} catch (e) {
 						// Ignorer les erreurs réseau pour ne pas faire crash le launcher
