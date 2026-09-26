@@ -35,13 +35,10 @@ const envSchema = z.object({
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
   MICROSOFT_REDIRECT_URI: z.string().url().optional(),
 
-  // Base URL for the Paranoia Studio website API
   SITE_API_URL: z.string().url().default("https://paranoiastudio.fr/api"),
 
-  // URL of the remote API to check for bans before launching.
   BAN_API_URL: z.string().url().optional(),
 
-  // URL of the remote API to fetch news for the launcher home screen.
   NEWS_API_URL: z.string().url().optional(),
 
   // URL of the remote API to fetch shop catalog and balances.

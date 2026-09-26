@@ -26,6 +26,20 @@ Base de projet professionnelle pour construire **Paranoia Client**:
 - Verification SHA-256 et reprise de telechargements
 - Mises a jour automatiques et observabilite
 
+## Documentation
+
+- [Dossier d optimisation](docs/dossier-optimisation.md) — tout ce qui fait de
+  Paranoia un client optimise : ce qui est pose, ou, pourquoi, avec quels
+  chiffres, et ce qui a ete refuse. La regle qui commande le reste est simple :
+  l essentiel des joueurs font du PvP, et une optimisation qui retire de l
+  information fait perdre le combat qu elle accelere.
+- [Protocole de politique des modules](docs/protocole-politique-modules.md) —
+  comment un serveur interdit un module, et comment eteindre une fonctionnalite
+  defectueuse chez tous les joueurs connectes sans publier de version.
+- [Protocole du badge utilisateurs](docs/protocole-badge-utilisateurs.md)
+- [Architecture](docs/architecture/overview.md) et [modele de
+  securite](docs/security/security-model.md)
+
 ## Demarrage rapide
 
 1. Installer Node 22+, pnpm et Rust. (Java 21 est telecharge automatiquement par
@@ -94,7 +108,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-L installeur NSIS est alors publie en release GitHub.
+L installeur NSIS est alors publie en release GitHub, **en preversion**: les
+admins peuvent l installer depuis la page de la release, les joueurs ne sont pas
+prevenus. Voir « Publier en deux temps » plus bas pour le second geste.
 
 L installeur n est pas signe: Windows SmartScreen affichera un avertissement
 d editeur inconnu tant qu un certificat de signature de code n est pas
@@ -179,19 +195,53 @@ Dans Settings > Secrets and variables > Actions:
 
 ### 4. Publier une version
 
-Merger ne suffit pas: une mise a jour est declenchee par une **release**.
+Merger ne suffit pas: une mise a jour est declenchee par une **release**. Et une
+release sort en deux temps -- les admins d abord, les joueurs ensuite.
 
 ```bash
-# adapter la version dans apps/launcher/src-tauri/tauri.conf.json, puis:
-git tag v0.2.0
-git push origin v0.2.0
+# 1. aligner les cinq fichiers de version, puis pousser la branche:
+node scripts/bump-version.mjs 0.7.21
+git commit -am "0.7.21"
+git push -u origin release/v0.7.21
 ```
 
-La CI construit l installeur, le signe, genere `latest.json` et publie le tout.
-Les clients installes voient la mise a jour a leur prochain demarrage.
+La CI construit les installeurs Windows et macOS, les signe et publie la release
+**en preversion**, sans `latest.json`. A ce stade:
+
+- les admins installent depuis la page de la release et testent en jeu;
+- les joueurs ne voient rien. Leur launcher lit
+  `releases/latest/download/latest.json`, et cette URL comme l API
+  `releases/latest` que lit la page de telechargement ignorent les preversions:
+  ils continuent de voir la derniere version promue, et leur launcher dit « a
+  jour ».
+
+```bash
+# 2. une fois la version essayee, prevenir les joueurs:
+git push -u origin promote/v0.7.21
+```
+
+Le workflow `promote` ne recompile rien: il lit les installeurs et les
+signatures deja attaches a la preversion, ecrit `latest.json` pour les deux
+plateformes, **puis** leve la preversion -- dans cet ordre, pour qu aucun client
+ne tombe sur une release visible sans manifeste. Il relit ensuite l URL du
+joueur et echoue si elle n annonce pas la bonne version pour les deux
+plateformes. Une version qu on ne promeut pas ne part jamais chez personne.
+
+Pour promouvoir un tag dont la branche `promote/**` existe deja -- un second
+push n y changerait rien et ne declencherait aucun workflow -- ou a ete
+supprimee: Actions > promote > Run workflow, avec le tag en entree.
+
+A savoir: repousser `release/vX.Y.Z` apres la promotion remet la release en
+preversion, puisque c est ce que le build ecrit. Les joueurs ne sont pas
+ramenes en arriere pour autant -- un launcher ne redescend jamais de version,
+il dira simplement « a jour » -- mais il faut alors promouvoir a nouveau.
+
+Pourquoi ce decoupage: la 0.7.19 a casse la consommation des pommes d or chez
+tout le monde en meme temps, et on l a appris par des plaintes en jeu.
 
 La version du tag doit correspondre a celle de `tauri.conf.json`, sinon les
-clients comparent une version qui n existe pas.
+clients comparent une version qui n existe pas -- la CI refuse de publier dans
+ce cas.
 
 > Tant que la cle publique n est pas renseignee, la verification echoue en
 > silence: le launcher fonctionne normalement, sans proposer de mise a jour.

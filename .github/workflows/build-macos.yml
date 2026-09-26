@@ -242,11 +242,10 @@ jobs:
       contents: write
 
     steps:
-      # Ce job ne compilait rien et n'avait donc pas besoin des sources. Il lui
-      # faut maintenant scripts/update-manifest.mjs.
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      # Aucun checkout: ce job ne compile rien, et le manifeste -- la seule
+      # chose qui demandait les sources ici -- appartient desormais a
+      # promote.yml. Les trois etapes qui restent ne lisent que les artefacts et
+      # l'API GitHub.
       - name: Determine release tag
         id: release
         shell: bash
@@ -274,9 +273,34 @@ jobs:
           fi
           echo "Signature valide : $sig"
 
-      # latest.json n'est volontairement pas dans cette liste: l'action ecrase
-      # l'actif sans le lire, et build-windows.yml publie sur la meme release.
-      # Voir l'etape suivante.
+      # `prerelease: true` comme dans build-windows.yml, et pour la meme raison:
+      # une version sort d'abord pour les admins seuls. L'URL que lit le
+      # launcher -- `releases/latest/download/latest.json` -- et l'API
+      # `releases/latest` que lit la page de telechargement ignorent toutes deux
+      # les preversions, donc aucun joueur n'est prevenu tant que
+      # `.github/workflows/promote.yml` n'a pas tourne. Les deux workflows
+      # doivent porter le meme drapeau: celui qui finit en dernier ecrit l'etat
+      # de la release, et un `false` ici rendrait publique une version que
+      # personne n'a encore testee.
+      #
+      # latest.json n'est pas dans cette liste, et n'y sera pas: l'action ecrase
+      # l'actif sans le lire, et deux ecrivains sur le meme actif etaient toute
+      # la cause du manifeste perdu de la 0.7.18. Le manifeste appartient
+      # desormais a la promotion, qui le compose une fois pour les deux
+      # plateformes a partir des actifs reellement publies.
+      #
+      # Note pour qui a corrige ce meme bug sur main, en parallele, avec un
+      # `gh release download` suivi d'une fusion en node: le diagnostic etait le
+      # bon. Ce qui changeait, c'est ce qui venait apres la fusion -- laisser
+      # action-gh-release televerser le resultat garde la course ouverte entre
+      # la lecture et l'ecriture, et l'entree de l'autre plateforme se perd
+      # exactement comme avant, sans que rien ne le dise.
+      # scripts/update-manifest.mjs possede l'actif, le relit apres l'avoir
+      # ecrit, et refait tout le cycle si son entree n'y a pas survecu; il est
+      # eprouve par scripts/test-update-manifest.mjs, neuf scenarios dont les
+      # deux courses. Un seul ecrivain rend la course impossible, mais la
+      # relecture reste: c'est elle qui distingue « publie » de « publie et
+      # toujours la ».
       #
       # Les notes de version sont laissees a build-windows.yml: les deux
       # workflows les generaient, et l'action les ajoute a celles deja presentes
@@ -286,49 +310,9 @@ jobs:
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: Paranoia Client ${{ steps.release.outputs.tag }}
+          prerelease: true
           fail_on_unmatched_files: true
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.app.tar.gz
             artifacts/**/*.app.tar.gz.sig
-
-      # En dernier, et par un script qui lit avant d'ecrire: build-windows.yml
-      # publie sur la meme release, et les deux manifestes d'une seule plateforme
-      # s'ecrasaient l'un l'autre -- en 0.7.18, cette entree darwin-aarch64 a
-      # disparu deux minutes apres avoir ete publiee, sans que rien ne passe au
-      # rouge.
-      #
-      # Note pour qui a corrige le meme bug sur main, en parallele, avec un
-      # `gh release download` suivi d'une fusion en node: le diagnostic etait le
-      # bon, et cette version le garde. Ce qui change, c'est ce qui vient apres
-      # la fusion. Cette etape-la laissait action-gh-release televerser le
-      # resultat, donc la course restait ouverte entre la lecture et l'ecriture:
-      # si l'autre plateforme publie dans cet intervalle, son entree est perdue
-      # exactement comme avant, et rien ne le dit. Le script ci-dessous possede
-      # l'actif, le relit apres l'avoir ecrit, et refait tout le cycle si son
-      # entree n'y a pas survecu. Il est eprouve par scripts/test-update-manifest.mjs,
-      # neuf scenarios dont les deux courses.
-      #
-      # C'est pour cela que latest.json a disparu de la liste `files` de l'etape
-      # precedente: l'action ecrase sans rien lire, et deux ecrivains sur le meme
-      # actif etaient toute la cause du bug.
-      - name: Publish update manifest
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          archive=$(find artifacts -name "*.app.tar.gz" | head -n 1)
-          if [ -z "$archive" ]; then
-            echo "::error::Archive .app.tar.gz absente"
-            exit 1
-          fi
-
-          name=$(basename "$archive")
-          name="${name// /.}"
-          base="https://github.com/${{ github.repository }}/releases/download"
-
-          node scripts/update-manifest.mjs \
-            --tag "${{ steps.release.outputs.tag }}" \
-            --platform darwin-aarch64 \
-            --signature "${archive}.sig" \
-            --url "$base/${{ steps.release.outputs.tag }}/$name"
