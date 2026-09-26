@@ -16,6 +16,7 @@ import { updatesRouter } from "./modules/updates/updates.routes.js";
 import { launcherRouter } from "./modules/launcher/launcher.routes.js";
 import { modsRouter } from "./modules/mods/modrinth.routes.js";
 import { settingsRouter } from "./modules/settings/settings.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 import { ModrinthUnavailableError } from "./modules/mods/modrinth.service.js";
 
 const app = express();
@@ -57,6 +58,7 @@ app.use("/v1/telemetry", telemetryRouter);
 app.use("/v1/launcher", launcherRouter);
 app.use("/v1/mods", modsRouter);
 app.use("/v1/settings", settingsRouter);
+app.use("/v1/reports", reportsRouter);
 app.use(
   (
     err: unknown,

@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { randomUUID } from "node:crypto";
 import { paranoiaDataDir } from "../launcher/paths.js";
 
 export interface StoredLauncherProfile {
@@ -96,6 +95,29 @@ export function markProfilePlayed(profileId: string): void {
   writeAll(profiles);
 }
 
+function slugify(text: string): string {
+  const slug = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return slug || "instance";
+}
+
+function generateProfileId(name: string, existingIds: Set<string>): string {
+  const base = slugify(name);
+  if (!existingIds.has(base)) {
+    return base;
+  }
+  let counter = 2;
+  while (existingIds.has(`${base}-${counter}`)) {
+    counter++;
+  }
+  return `${base}-${counter}`;
+}
+
 export function createProfile(
   input: Omit<
     StoredLauncherProfile,
@@ -104,8 +126,9 @@ export function createProfile(
 ): StoredLauncherProfile {
   const profiles = readAll();
   const now = new Date().toISOString();
+  const existingIds = new Set(profiles.map((p) => p.id));
   const profile: StoredLauncherProfile = {
-    id: randomUUID(),
+    id: generateProfileId(input.name, existingIds),
     favorite: profiles.length === 0,
     createdAt: now,
     updatedAt: now,
@@ -174,10 +197,12 @@ export function duplicateProfile(
   }
 
   const now = new Date().toISOString();
+  const existingIds = new Set(profiles.map((p) => p.id));
+  const newName = `${source.name} (copy)`;
   const duplicate: StoredLauncherProfile = {
     ...source,
-    id: randomUUID(),
-    name: `${source.name} (copy)`,
+    id: generateProfileId(newName, existingIds),
+    name: newName,
     favorite: false,
     createdAt: now,
     updatedAt: now,

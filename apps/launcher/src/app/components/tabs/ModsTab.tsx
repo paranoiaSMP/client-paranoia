@@ -11,6 +11,8 @@ import {
   FolderOpen,
   Plus,
   Check,
+  Sun,
+  Palette,
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LauncherProfile } from "@paranoia/contracts";
@@ -20,6 +22,8 @@ import {
   listProjectVersions,
   removeMod,
   searchMods,
+  toggleMod,
+  type ContentType,
   type InstalledMod,
   type ModSearchHit,
 } from "../../../shared/api/modsClient";
@@ -31,11 +35,6 @@ type ModsTabProps = {
   setError: (err: string | null) => void;
 };
 
-/**
- * Les erreurs remontees a l'application n'etaient affichees que sur l'ecran
- * d'echec au demarrage: une recherche ou une installation qui echouait ne
- * produisait donc aucun message. On les montre ici, dans l'onglet concerne.
- */
 function ErrorNotice({
   message,
   onDismiss,
@@ -70,6 +69,7 @@ export function ModsTab({
   setError,
 }: ModsTabProps) {
   const { t } = useTranslation();
+  const [contentType, setContentType] = useState<ContentType>("mod");
   const [page, setPage] = useState(1);
   const [totalHits, setTotalHits] = useState(0);
   const profile =
@@ -94,19 +94,29 @@ export function ModsTab({
   const refreshInstalled = useCallback(async () => {
     if (!profile) return;
     try {
-      setInstalled(await listInstalledMods(profile.id));
+      setInstalled(await listInstalledMods(profile.id, contentType));
     } catch (e) {
-      report(e instanceof Error ? e.message : "Lecture des mods impossible");
+      report(e instanceof Error ? e.message : "Lecture du contenu impossible");
     }
-  }, [profile, report]);
+  }, [profile, report, contentType]);
 
   useEffect(() => {
     refreshInstalled();
   }, [refreshInstalled]);
 
+  function switchContentType(type: ContentType) {
+    if (type === contentType) return;
+    setContentType(type);
+    setHits([]);
+    setTotalHits(0);
+    setQuery("");
+    setPage(1);
+    setNotice(null);
+    report(null);
+  }
+
   async function runSearch(targetPage = 1) {
     setPage(targetPage);
-    // setSearching(true); (handled below)
     if (!profile) return;
     setSearching(true);
     report(null);
@@ -114,7 +124,8 @@ export function ModsTab({
       const result = await searchMods({
         query,
         gameVersion: profile.minecraftVersion,
-        loader: "fabric",
+        loader: contentType === "mod" ? "fabric" : undefined,
+        projectType: contentType,
         limit: 20,
         offset: (targetPage - 1) * 20,
       });
@@ -134,10 +145,9 @@ export function ModsTab({
     report(null);
     setNotice(null);
     try {
-      // On prend la version la plus recente compatible avec ce profil.
       const versions = await listProjectVersions(hit.projectId, {
         gameVersion: profile.minecraftVersion,
-        loader: "fabric",
+        loader: contentType === "mod" ? "fabric" : undefined,
       });
 
       const version = versions[0];
@@ -152,12 +162,11 @@ export function ModsTab({
         projectId: hit.projectId,
         versionId: version.versionId,
         gameVersion: profile.minecraftVersion,
-        loader: "fabric",
+        loader: contentType === "mod" ? "fabric" : undefined,
+        projectType: contentType,
       });
       await refreshInstalled();
 
-      // Fabric API et consorts arrivent avec le mod: on le dit, sinon leur
-      // apparition dans la liste ressemble a un bug.
       if (result.dependencies.length > 0) {
         setNotice(
           `${hit.title} installé avec ${result.dependencies.length} dépendance${result.dependencies.length > 1 ? "s" : ""} : ` +
@@ -185,10 +194,20 @@ export function ModsTab({
   async function handleRemove(fileName: string) {
     if (!profile) return;
     try {
-      await removeMod(profile.id, fileName);
+      await removeMod(profile.id, fileName, contentType);
       await refreshInstalled();
     } catch (e) {
       report(e instanceof Error ? e.message : "Suppression impossible");
+    }
+  }
+
+  async function handleToggle(fileName: string) {
+    if (!profile) return;
+    try {
+      await toggleMod(profile.id, fileName, contentType);
+      await refreshInstalled();
+    } catch (e) {
+      report(e instanceof Error ? e.message : "Impossible de modifier l'état");
     }
   }
 
@@ -201,10 +220,67 @@ export function ModsTab({
     );
   }
 
+  const FallbackIcon =
+    contentType === "shader"
+      ? Sun
+      : contentType === "resourcepack"
+      ? Palette
+      : Package;
+
+  const typeTitle =
+    contentType === "shader"
+      ? "Shaders"
+      : contentType === "resourcepack"
+      ? "Packs de textures"
+      : "Mods";
+
+  const searchPlaceholder =
+    contentType === "shader"
+      ? "Rechercher des shaders..."
+      : contentType === "resourcepack"
+      ? "Rechercher des packs de textures..."
+      : t("mods.searchPlaceholder");
+
   return (
     <div className="w-full animate-in fade-in duration-400 flex flex-col pt-2 max-w-[1000px] mx-auto">
-      
-
+      <div className="flex items-center gap-1.5 mb-3 bg-surface p-1 rounded-xl border border-divider w-fit">
+        <button
+          type="button"
+          onClick={() => switchContentType("mod")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all ${
+            contentType === "mod"
+              ? "bg-accent text-white shadow-sm"
+              : "text-neutral-400 hover:text-ink hover:bg-white/5"
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Mods</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchContentType("shader")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all ${
+            contentType === "shader"
+              ? "bg-accent text-white shadow-sm"
+              : "text-neutral-400 hover:text-ink hover:bg-white/5"
+          }`}
+        >
+          <Sun className="w-4 h-4" />
+          <span>Shaders</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchContentType("resourcepack")}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all ${
+            contentType === "resourcepack"
+              ? "bg-accent text-white shadow-sm"
+              : "text-neutral-400 hover:text-ink hover:bg-white/5"
+          }`}
+        >
+          <Palette className="w-4 h-4" />
+          <span>Texture Packs</span>
+        </button>
+      </div>
 
       {/* Search Bar */}
       <div className="flex items-center gap-3 w-full mb-3">
@@ -214,7 +290,7 @@ export function ModsTab({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && runSearch(1)}
-            placeholder={t("mods.searchPlaceholder")}
+            placeholder={searchPlaceholder}
             className="bg-transparent border-none outline-none text-sm md:text-base font-medium w-full text-ink placeholder:text-neutral-600"
           />
         </div>
@@ -271,7 +347,7 @@ export function ModsTab({
 
       {notice && (
         <div className="mb-4 bg-accent/10 border border-accent/30 rounded-lg px-3 py-2.5 flex items-start gap-2.5">
-          <Package className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+          <FallbackIcon className="w-4 h-4 text-accent shrink-0 mt-0.5" />
           <p className="text-sm text-accent-300 flex-1 break-words">{notice}</p>
           <button
             onClick={() => setNotice(null)}
@@ -301,7 +377,7 @@ export function ModsTab({
                     />
                   ) : (
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-divider shrink-0 flex items-center justify-center">
-                      <Package className="w-8 h-8 text-neutral-600" />
+                      <FallbackIcon className="w-8 h-8 text-neutral-600" />
                     </div>
                   )}
 
@@ -313,8 +389,6 @@ export function ModsTab({
                     <p className="text-neutral-300 text-xs md:text-sm line-clamp-2 leading-relaxed">
                       {hit.description}
                     </p>
-                    
-
                   </div>
                 </div>
 
@@ -347,24 +421,30 @@ export function ModsTab({
         </div>
       )}
 
-      {/* Installed Mods list at the bottom */}
+      {/* Installed list at the bottom */}
       <div className="mt-4 border-t border-divider pt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-ink">
-            Mods de ce profil{" "}
+            {typeTitle} de ce profil{" "}
             <span className="text-neutral-500 font-normal">
               ({installed.length})
             </span>
           </h2>
           <p className="text-neutral-600 text-xs hidden sm:block">
-            InstallÃ©s dans ce profil uniquement, filtrÃ©s pour Fabric {profile.minecraftVersion}.
+            {contentType === "mod"
+              ? `Installés dans ce profil uniquement, filtrés pour Fabric ${profile.minecraftVersion}.`
+              : "Installés dans ce profil uniquement."}
           </p>
         </div>
 
         {installed.length === 0 ? (
           <div className="bg-surface border border-divider rounded-xl p-6 text-center">
             <p className="text-neutral-600 text-sm">
-              Aucun mod installÃ© sur ce profil.
+              {contentType === "shader"
+                ? "Aucun shader installé sur ce profil."
+                : contentType === "resourcepack"
+                ? "Aucun pack de textures installé sur ce profil."
+                : "Aucun mod installé sur ce profil."}
             </p>
           </div>
         ) : (
@@ -372,10 +452,46 @@ export function ModsTab({
             {installed.map((mod) => (
               <div
                 key={mod.fileName}
-                className="bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-4 hover:border-neutral-700 transition-colors"
+                className={`bg-surface border border-divider rounded-lg px-4 py-3 flex items-center gap-3 hover:border-neutral-700 transition-colors ${
+                  !mod.enabled ? "opacity-60" : ""
+                }`}
               >
-                <Package className="w-5 h-5 text-neutral-600 shrink-0" />
-                <span className="text-sm truncate flex-1 font-medium">{mod.fileName}</span>
+                <button
+                  type="button"
+                  onClick={() => handleToggle(mod.fileName)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    mod.enabled ? "bg-accent" : "bg-neutral-700"
+                  }`}
+                  title={mod.enabled ? "Désactiver" : "Activer"}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      mod.enabled ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+                {mod.iconUrl ? (
+                  <img
+                    src={mod.iconUrl}
+                    alt={mod.name ?? mod.fileName}
+                    className="w-8 h-8 rounded-lg object-cover shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-divider flex items-center justify-center shrink-0">
+                    <FallbackIcon className="w-4 h-4 text-neutral-600" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium truncate ${mod.enabled ? "text-ink" : "text-neutral-400 line-through"}`}>
+                    {mod.name ?? mod.fileName}
+                  </div>
+                  {mod.name && mod.name !== mod.fileName && (
+                    <div className="text-xs text-neutral-600 truncate font-mono">
+                      {mod.fileName}
+                    </div>
+                  )}
+                </div>
                 <span className="text-neutral-600 text-xs shrink-0 font-mono">
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>

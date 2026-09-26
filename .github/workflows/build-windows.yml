@@ -290,4 +290,21 @@ jobs:
           files: |
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
-            mod-jars/**/*.jar
+
+      - name: Publish update manifest
+        if: steps.release.outputs.tag != ''
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $nsis = "apps/launcher/src-tauri/target/release/bundle/nsis"
+          $installer = Get-ChildItem "$nsis/*-setup.exe" | Select-Object -First 1
+          $name = $installer.Name.Replace(' ', '.')
+          $base = "https://github.com/${{ github.repository }}/releases/download"
+
+          node scripts/update-manifest.mjs `
+            --tag "${{ steps.release.outputs.tag }}" `
+            --platform windows-x86_64 `
+            --signature "$($installer.FullName).sig" `
+            --url "$base/${{ steps.release.outputs.tag }}/$name"
+          if ($LASTEXITCODE -ne 0) { throw "publication du manifeste echouee" }

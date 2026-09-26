@@ -5,7 +5,7 @@ import { ensureFabricApi } from "../launcher/fabricApi.js";
 import { importProfilesFromPaths } from "./profiles.import.js";
 import { importMrPack } from "./mrpack.service.js";
 import { dirname } from "node:path";
-import { cpSync } from "node:fs";
+import { cpSync, existsSync } from "node:fs";
 import { ensurePerformanceMods } from "../launcher/performanceMods.js";
 import {
 	createProfile,
@@ -142,6 +142,10 @@ profilesRouter.patch("/:id", (req, res) => {
 		return res.status(404).json({ message: "profile not found" });
 	}
 
+	if (patch.minecraftVersion) {
+		void prepareInstance(profile);
+	}
+
 	return res.json(profile);
 });
 
@@ -159,6 +163,16 @@ profilesRouter.post("/:id/duplicate", async (req, res, next) => {
 		const duplicated = duplicateProfile(req.params.id);
 		if (!duplicated) {
 			return res.status(404).json({ message: "profile not found" });
+		}
+
+		const sourceDir = instanceDir(req.params.id);
+		const targetDir = instanceDir(duplicated.id);
+		if (existsSync(sourceDir)) {
+			try {
+				cpSync(sourceDir, targetDir, { recursive: true });
+			} catch (e) {
+				logger.warn({ err: e }, "[Profils] Erreur copie dossier instance");
+			}
 		}
 
 		await prepareInstance(duplicated);

@@ -52,6 +52,9 @@ export function App() {
 	const [error, setError] = useState<string | null>(null);
 	const [screen, setScreen] = useState<Screen>("home");
 	const [overlay, setOverlay] = useState<Overlay>("none");
+	const [bugReportData, setBugReportData] = useState<
+		{ category?: string | undefined; description?: string | undefined } | undefined
+	>(undefined);
 	const version = useAppVersion();
 
 	const {
@@ -65,6 +68,7 @@ export function App() {
 		handleLocalDevContinue,
 		handleSwitchAccount,
 		handleLogout,
+		handleDeleteAccount,
 	} = useAuth(setError);
 
 	const {
@@ -164,6 +168,9 @@ export function App() {
 					onNavigate={setScreen}
 					modCount={modCount}
 					account={account}
+					accounts={accounts}
+					onSwitchAccount={handleSwitchAccount}
+					onAddAccount={handleMicrosoftConnect}
 				/>
 
 				<main className="flex min-w-0 flex-1 flex-col">
@@ -180,6 +187,10 @@ export function App() {
 							onStop={() => void cancel()}
 							onGoVersions={() => setScreen("versions")}
 							onGoCosmetics={() => setScreen("cosmetics")}
+							onReportBug={(initialData) => {
+								setBugReportData(initialData);
+								setOverlay("report_bug");
+							}}
 						/>
 					)}
 
@@ -217,6 +228,7 @@ export function App() {
 							connecting={connectingMicrosoft}
 							onConnect={handleMicrosoftConnect}
 							onSwitch={handleSwitchAccount}
+							onDeleteAccount={handleDeleteAccount}
 						/>
 					)}
 
@@ -248,7 +260,10 @@ export function App() {
 
 			<AppOverlays
 				active={overlay}
-				onClose={() => setOverlay("none")}
+				onClose={() => {
+					setOverlay("none");
+					setBugReportData(undefined);
+				}}
 				config={config}
 				error={error}
 				connected={connected}
@@ -266,6 +281,10 @@ export function App() {
 				creation={creation}
 				isDragging={isDragging}
 				isProcessing={isProcessing}
+				account={account}
+				ramMaxMb={settings?.ramMaxMb}
+				launcherVersion={version}
+				bugReportData={bugReportData}
 			/>
 		</div>
 	);

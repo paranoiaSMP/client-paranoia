@@ -30,7 +30,7 @@ export type Screen =
 	| "logs";
 
 /** Ce qui s'ouvre par-dessus l'ecran courant, sans le remplacer. */
-export type Overlay = "none" | "create_profile" | "migrate_profile" | "instance";
+export type Overlay = "none" | "create_profile" | "migrate_profile" | "instance" | "report_bug";
 
 export type NavItem = {
 	screen: Screen;
