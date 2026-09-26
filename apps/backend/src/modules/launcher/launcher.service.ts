@@ -596,11 +596,18 @@ export async function launchMinecraft(
 			});
 		});
 
+		let banCheckInterval: ReturnType<typeof setInterval> | null = null;
+
 		launcher.on("close", (e) => {
 			console.log(`[MC Launcher Close] Exited with code ${e}`);
 			activeLaunchers.delete(profileId);
 			activeProcesses.delete(profileId);
-			updateStatus({ state: "idle", progress: 0, text: "" });
+			if (banCheckInterval) clearInterval(banCheckInterval);
+			
+			// Si on n'est pas déjà en erreur (ex: ban en cours de jeu), on remet en idle
+			if (launchStatuses.get(profileId)?.state !== "error") {
+				updateStatus({ state: "idle", progress: 0, text: "" });
+			}
 			setIdlePresence();
 			addLog(`[Launcher] Jeu fermé avec le code de sortie ${e}`);
 		});
@@ -641,6 +648,42 @@ export async function launchMinecraft(
 				text: "Jeu en cours d'execution",
 			});
 			setPlayingPresence(minecraftVersion, account.minecraftUsername);
+
+			// Surveiller les bans en arrière-plan pendant que le jeu tourne (toutes les 60 secondes)
+			const banApiUrl = env.BAN_API_URL;
+			if (banApiUrl) {
+				banCheckInterval = setInterval(async () => {
+					try {
+						const banUrl = new URL(`${banApiUrl}/check`);
+						banUrl.searchParams.set("uuid", account.minecraftUuid);
+						banUrl.searchParams.set("username", account.minecraftUsername);
+						
+						const banRes = await fetch(banUrl.toString(), {
+							headers: { "x-launcher-secret": env.LAUNCHER_API_SECRET }
+						});
+						
+						if (banRes.ok) {
+							const banData = await banRes.json().catch(() => ({}));
+							if (banData.banned) {
+								console.warn(`[Launcher] Joueur banni en jeu. Raison: ${banData.reason}. Arrêt du jeu.`);
+								addLog(`[Launcher] Banni en cours de jeu ! Fermeture forcée.`);
+								
+								// Afficher le message d'erreur
+								updateStatus({
+									state: "error",
+									progress: 0,
+									text: `Vous avez été banni en cours de jeu. Raison: ${banData.reason || "Non spécifiée"}`
+								});
+								
+								// Tuer le processus du jeu
+								proc.kill();
+							}
+						}
+					} catch (e) {
+						// Ignorer les erreurs réseau pour ne pas faire crash le launcher
+					}
+				}, 60000);
+			}
 		}
 	} catch (err) {
 		console.error(`[MC Launcher Error]`, err);

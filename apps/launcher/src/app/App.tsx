@@ -266,6 +266,7 @@ export function App() {
 				}}
 				config={config}
 				error={error}
+				onClearError={() => setError(null)}
 				connected={connected}
 				mainProfile={mainProfile}
 				refreshProfiles={refreshProfiles}

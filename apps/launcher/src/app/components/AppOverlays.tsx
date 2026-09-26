@@ -16,6 +16,7 @@ type AppOverlaysProps = {
 
 	config: RemoteConfiguration | null;
 	error: string | null;
+	onClearError?: () => void;
 	connected: boolean;
 
 	mainProfile: LauncherProfile | null;
@@ -57,6 +58,7 @@ export function AppOverlays({
 	onClose,
 	config,
 	error,
+	onClearError,
 	connected,
 	mainProfile,
 	refreshProfiles,
@@ -174,6 +176,30 @@ export function AppOverlays({
 				initialCategory={bugReportData?.category}
 				initialDescription={bugReportData?.description}
 			/>
+
+			{/* Modal pour afficher les erreurs globales (ex: Ban) */}
+			<Modal
+				isOpen={!!error && active === "none" && !creation.isCreating}
+				onClose={() => onClearError?.()}
+				title="Erreur"
+			>
+				<div className="flex flex-col items-center p-6 gap-6 w-[400px]">
+					<div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-500 ring-1 ring-red-500/30">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+					</div>
+					<div className="text-center">
+						<h3 className="mb-2 text-xl font-bold text-ink">Action impossible</h3>
+						<p className="text-sm text-neutral-300">{error}</p>
+					</div>
+					<button
+						type="button"
+						onClick={() => onClearError?.()}
+						className="w-full rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface"
+					>
+						Fermer
+					</button>
+				</div>
+			</Modal>
 		</>
 	);
 }
