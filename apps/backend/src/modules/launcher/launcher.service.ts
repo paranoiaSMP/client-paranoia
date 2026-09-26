@@ -188,8 +188,13 @@ export async function launchMinecraft(
 				// Le site doit renvoyer du JSON. S'il renvoie { banned: true, reason: "..." } on bloque.
 				const banUrl = new URL(env.BAN_API_URL);
 				banUrl.searchParams.set("uuid", account.minecraftUuid);
+				banUrl.searchParams.set("username", account.minecraftUsername);
 
-				const banRes = await fetch(banUrl.toString());
+				const banRes = await fetch(banUrl.toString(), {
+					headers: {
+						"x-launcher-secret": env.LAUNCHER_API_SECRET
+					}
+				});
 				if (banRes.ok) {
 					const banData = await banRes.json().catch(() => ({}));
 					if (banData.banned) {
