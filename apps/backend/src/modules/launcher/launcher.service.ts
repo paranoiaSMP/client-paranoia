@@ -20,6 +20,8 @@ import { applyGraphicsPreset } from "./graphicsPreset.js";
 import { applySodiumPreset } from "./sodiumPreset.js";
 import { instanceDir, paranoiaDataDir, vanillaMinecraftDir } from "./paths.js";
 import { env } from "../../config/env.js";
+import { listAccounts, isExpired, saveAccount } from "../auth/accounts.store.js";
+import { refreshMicrosoftAccount } from "../auth/auth.microsoft.js";
 
 export type LaunchStatus = {
 	state:
@@ -479,10 +481,27 @@ export async function launchMinecraft(
 			text: "Preparation du lancement...",
 		});
 
+		let currentAccessToken = account.accessToken;
+		try {
+			const normTargetUuid = (account.minecraftUuid || "").replace(/-/g, "").toLowerCase();
+			const stored = listAccounts().find(
+				(a) => (a.minecraftUuid || "").replace(/-/g, "").toLowerCase() === normTargetUuid,
+			);
+			if (stored) {
+				if (isExpired(stored)) {
+					const refreshed = saveAccount(await refreshMicrosoftAccount(stored.refreshToken));
+					currentAccessToken = refreshed.accessToken;
+				} else {
+					currentAccessToken = stored.accessToken;
+				}
+			}
+		} catch {
+		}
+
 		const opts: any = {
 			clientPackage: null as any,
 			authorization: {
-				access_token: account.accessToken,
+				access_token: currentAccessToken,
 				client_token: "paranoia-client",
 				uuid: account.minecraftUuid,
 				name: account.minecraftUsername,

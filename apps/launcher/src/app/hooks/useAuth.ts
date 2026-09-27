@@ -10,6 +10,7 @@ import {
   refreshAccount,
   forgetAccount,
 } from "../../shared/api/authClient";
+import { waitForApi } from "../../shared/api/http";
 
 const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
 
@@ -21,12 +22,16 @@ export function useAuth(setError: (err: string | null) => void) {
   const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
   const [restoringSession, setRestoringSession] = useState(true);
 
-
   useEffect(() => {
     let cancelled = false;
 
     async function restore() {
       try {
+        await waitForApi();
+        if (cancelled) {
+          return;
+        }
+
         const saved = await listSavedAccounts();
         if (cancelled || saved.length === 0) {
           return;
@@ -40,21 +45,22 @@ export function useAuth(setError: (err: string | null) => void) {
           return;
         }
 
-        const usable = await refreshAccount(activeTarget.id);
-        if (cancelled) {
-          return;
-        }
+        setAccount(activeTarget);
+        setConnected(true);
+        localStorage.setItem("paranoia_active_account_id", activeTarget.id);
 
-        if (usable) {
-          setAccount(usable);
-          localStorage.setItem("paranoia_active_account_id", usable.id);
-          setAccounts((prev) =>
-            prev.map((a) => (a.id === usable.id ? usable : a)),
-          );
-          setConnected(true);
-        } else {
-          setAccounts((prev) => prev.filter((a) => a.id !== activeTarget.id));
-          localStorage.removeItem("paranoia_active_account_id");
+        try {
+          const usable = await refreshAccount(activeTarget.id);
+          if (cancelled) {
+            return;
+          }
+          if (usable) {
+            setAccount(usable);
+            setAccounts((prev) =>
+              prev.map((a) => (a.id === usable.id ? usable : a)),
+            );
+          }
+        } catch {
         }
       } catch {
       } finally {
@@ -147,21 +153,18 @@ export function useAuth(setError: (err: string | null) => void) {
 
   async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
+    setConnected(true);
     localStorage.setItem("paranoia_active_account_id", target.id);
 
-    const usable = await refreshAccount(target.id);
-    if (usable) {
-      setAccount(usable);
-      localStorage.setItem("paranoia_active_account_id", usable.id);
-      setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
-      return;
+    try {
+      const usable = await refreshAccount(target.id);
+      if (usable) {
+        setAccount(usable);
+        localStorage.setItem("paranoia_active_account_id", usable.id);
+        setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
+      }
+    } catch {
     }
-
-    setAccounts((prev) => prev.filter((a) => a.id !== target.id));
-    localStorage.removeItem("paranoia_active_account_id");
-    setAccount(null);
-    setConnected(false);
-    setError(t("topbar.auth_error"));
   }
 
   async function handleLogout() {

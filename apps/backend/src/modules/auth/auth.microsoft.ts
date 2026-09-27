@@ -23,6 +23,13 @@ export function getMicrosoftAuthorizeUrl(redirectUri: string, state: string) {
   return { authorizeUrl: url.toString() };
 }
 
+export class InvalidGrantError extends Error {
+  constructor(message = "Refresh token expired or revoked") {
+    super(message);
+    this.name = "InvalidGrantError";
+  }
+}
+
 async function requestOauthTokens(
   params: URLSearchParams,
 ): Promise<{ oauthToken: string; refreshToken: string }> {
@@ -33,6 +40,16 @@ async function requestOauthTokens(
   });
 
   if (!response.ok) {
+    if (response.status === 400) {
+      try {
+        const errJson = (await response.json()) as { error?: string; error_description?: string };
+        if (errJson?.error === "invalid_grant") {
+          throw new InvalidGrantError(errJson.error_description || "invalid_grant");
+        }
+      } catch (e) {
+        if (e instanceof InvalidGrantError) throw e;
+      }
+    }
     throw new Error(`Failed to obtain Microsoft token: ${response.status}`);
   }
 

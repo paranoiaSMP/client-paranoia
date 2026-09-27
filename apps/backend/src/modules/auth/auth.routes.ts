@@ -4,6 +4,7 @@ import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
   refreshMicrosoftAccount,
+  InvalidGrantError,
 } from "./auth.microsoft.js";
 import { createAuthState, consumeAuthState, safeEquals } from "./auth.state.js";
 import {
@@ -104,13 +105,14 @@ authRouter.post("/accounts/:id/refresh", async (req, res, next) => {
     let refreshed: StoredAccount;
     try {
       refreshed = saveAccount(await refreshMicrosoftAccount(account.refreshToken));
-    } catch {
-      // Le refresh token de Microsoft a une duree de vie limitee: une fois
-      // perime, seule une reconnexion complete peut rendre la main.
-      deleteAccount(account.id);
-      return res
-        .status(401)
-        .json({ message: "session expired, sign in again" });
+    } catch (err) {
+      if (err instanceof InvalidGrantError) {
+        deleteAccount(account.id);
+        return res
+          .status(401)
+          .json({ message: "session expired, sign in again" });
+      }
+      return res.status(503).json({ message: "auth service temporarily unavailable" });
     }
 
     return res.json(refreshed);
