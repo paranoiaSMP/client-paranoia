@@ -50,10 +50,14 @@ function detectTarget(): JavaTarget {
   }
 }
 
-function adoptiumUrl(major: number, target: JavaTarget): string {
+function adoptiumUrl(
+  major: number,
+  target: JavaTarget,
+  imageType: "jre" | "jdk" = "jre",
+): string {
   return (
     `https://api.adoptium.net/v3/binary/latest/${major}/ga/` +
-    `${target.os}/${target.arch}/jre/hotspot/normal/eclipse`
+    `${target.os}/${target.arch}/${imageType}/hotspot/normal/eclipse`
   );
 }
 
@@ -92,7 +96,7 @@ async function extractArchive(
 
 /**
  * Find the directory Adoptium extracted, whatever exact version it carries
- * (`jdk-21.0.5+11-jre`, `jdk-21.0.6+7-jre`, ...).
+ * (`jdk-21.0.5+11-jre`, `jdk-25.0.4.1+1`, `jdk-17.0.6+7`, ...).
  */
 async function findExtractedRuntime(
   targetDir: string,
@@ -100,14 +104,22 @@ async function findExtractedRuntime(
   before: Set<string>,
 ): Promise<string> {
   const entries = await fs.readdir(targetDir, { withFileTypes: true });
-  const candidate = entries.find(
-    (entry) =>
-      entry.isDirectory() &&
-      !before.has(entry.name) &&
-      // Java 8 s'extrait dans jdk8u..., les suivants dans jdk-17, jdk-21...
-      (entry.name.startsWith(`jdk-${major}`) ||
-        entry.name.startsWith(`jdk${major}u`)),
+  const matchesMajor = (name: string) =>
+    name.startsWith(`jdk-${major}`) ||
+    name.startsWith(`jdk${major}u`) ||
+    name.startsWith(`jre-${major}`) ||
+    name.startsWith(`jre${major}u`);
+
+  // Chercher d'abord un nouveau dossier qui n'existait pas avant l'extraction
+  let candidate = entries.find(
+    (entry) => entry.isDirectory() && !before.has(entry.name) && matchesMajor(entry.name),
   );
+
+  // Si aucun nouveau dossier n'est trouve (ex: extraction precedente interrompue),
+  // chercher parmi tous les dossiers existants correspondant a cette majeure
+  if (!candidate) {
+    candidate = entries.find((entry) => entry.isDirectory() && matchesMajor(entry.name));
+  }
 
   if (!candidate) {
     throw new Error("Impossible de trouver le dossier Java extrait");
@@ -133,6 +145,9 @@ export async function ensureJava(
   const existing = installLayout(javaHome);
 
   if (existsSync(existing.java)) {
+    if (process.platform !== "win32") {
+      await fs.chmod(existing.java, 0o755).catch(() => {});
+    }
     return existing;
   }
 
@@ -145,19 +160,28 @@ export async function ensureJava(
   let response;
   try {
     response = await axios({
-    url: adoptiumUrl(major, target),
-    method: "GET",
-    responseType: "stream",
-    maxRedirects: 5,
-    timeout: 120_000,
+      url: adoptiumUrl(major, target, "jre"),
+      method: "GET",
+      responseType: "stream",
+      maxRedirects: 5,
+      timeout: 120_000,
     });
   } catch (err) {
-    // Adoptium ne publie pas toutes les majeures: un message clair vaut mieux
-    // qu'une erreur reseau brute.
-    throw new Error(
-      `Java ${major} indisponible au telechargement (${target.os}/${target.arch}). ` +
-        `Detail: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    // Si le JRE n'est pas disponible pour cette version, repli sur le JDK complet
+    try {
+      response = await axios({
+        url: adoptiumUrl(major, target, "jdk"),
+        method: "GET",
+        responseType: "stream",
+        maxRedirects: 5,
+        timeout: 120_000,
+      });
+    } catch {
+      throw new Error(
+        `Java ${major} indisponible au telechargement (${target.os}/${target.arch}). ` +
+          `Detail: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   const totalLength = Number.parseInt(
@@ -201,6 +225,10 @@ export async function ensureJava(
 
   if (process.platform !== "win32") {
     await fs.chmod(install.java, 0o755);
+    const jspawnhelper = path.join(javaHome, "lib", "jspawnhelper");
+    if (existsSync(jspawnhelper)) {
+      await fs.chmod(jspawnhelper, 0o755).catch(() => {});
+    }
   }
 
   return install;

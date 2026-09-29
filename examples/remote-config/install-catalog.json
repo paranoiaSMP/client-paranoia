@@ -5,63 +5,63 @@
       "minecraftVersion": "26.1.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "performance",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "balanced",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "pvp",
       "graphicsModeId": "beauty",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "survival",
       "graphicsModeId": "performance",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "survival",
       "graphicsModeId": "balanced",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "survival",
       "graphicsModeId": "beauty",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "classic",
       "graphicsModeId": "performance",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "classic",
       "graphicsModeId": "balanced",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {
       "minecraftVersion": "26.1.2",
       "profileTypeId": "classic",
       "graphicsModeId": "beauty",
-      "requiredJavaMajor": 21,
+      "requiredJavaMajor": 25,
       "artifacts": []
     },
     {

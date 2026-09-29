@@ -185,10 +185,27 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
 
     let appdata = env::var("APPDATA").unwrap_or_default();
     let userprofile = env::var("USERPROFILE").unwrap_or_default();
+    let home = env::var("HOME").unwrap_or_default();
+    let xdg_data = env::var("XDG_DATA_HOME").unwrap_or_else(|_| {
+        if !home.is_empty() {
+            format!("{}/.local/share", home)
+        } else {
+            String::new()
+        }
+    });
 
     // 1. Official Launcher
+    let mut mc_dirs = Vec::new();
     if !appdata.is_empty() {
-        let mc_dir = Path::new(&appdata).join(".minecraft");
+        mc_dirs.push(Path::new(&appdata).join(".minecraft"));
+    }
+    if !home.is_empty() {
+        mc_dirs.push(Path::new(&home).join(".minecraft"));
+        mc_dirs.push(Path::new(&home).join(".var/app/com.mojang.Minecraft/.minecraft"));
+        mc_dirs.push(Path::new(&home).join("Library/Application Support/minecraft"));
+    }
+
+    for mc_dir in &mc_dirs {
         let profiles_json = mc_dir.join("launcher_profiles.json");
         if profiles_json.exists() {
             if let Ok(content) = fs::read_to_string(&profiles_json) {
@@ -198,12 +215,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                             let name = v.get("name").and_then(|n| n.as_str()).unwrap_or(k);
                             let options_path = mc_dir.join("options.txt");
                             if options_path.exists() {
-                                profiles.push(DetectedProfile {
-                                    id: format!("official_{}", k),
-                                    label: format!("Launcher Officiel : {}", name),
-                                    options_path: options_path.to_string_lossy().into_owned(),
-                                    launcher: "Minecraft Official Launcher".to_string(),
-                                });
+                                let prof_id = format!("official_{}", k);
+                                if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                                    profiles.push(DetectedProfile {
+                                        id: prof_id,
+                                        label: format!("Launcher Officiel : {}", name),
+                                        options_path: options_path.to_string_lossy().into_owned(),
+                                        launcher: "Minecraft Official Launcher".to_string(),
+                                    });
+                                }
                             }
                         }
                     }
@@ -213,8 +233,19 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     }
 
     // 2. Prism Launcher
+    let mut prism_dirs = Vec::new();
     if !appdata.is_empty() {
-        let prism_dir = Path::new(&appdata).join("PrismLauncher").join("instances");
+        prism_dirs.push(Path::new(&appdata).join("PrismLauncher").join("instances"));
+    }
+    if !xdg_data.is_empty() {
+        prism_dirs.push(Path::new(&xdg_data).join("PrismLauncher").join("instances"));
+    }
+    if !home.is_empty() {
+        prism_dirs.push(Path::new(&home).join(".var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances"));
+        prism_dirs.push(Path::new(&home).join("Library/Application Support/PrismLauncher/instances"));
+    }
+
+    for prism_dir in &prism_dirs {
         if prism_dir.exists() {
             if let Ok(entries) = fs::read_dir(prism_dir) {
                 for entry in entries.flatten() {
@@ -223,12 +254,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                     let options_path = mc_dir.join("options.txt");
                     if options_path.exists() {
                         let name = entry.file_name().to_string_lossy().into_owned();
-                        profiles.push(DetectedProfile {
-                            id: format!("prism_{}", name),
-                            label: format!("Prism Launcher : {}", name),
-                            options_path: options_path.to_string_lossy().into_owned(),
-                            launcher: "Prism Launcher".to_string(),
-                        });
+                        let prof_id = format!("prism_{}", name);
+                        if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                            profiles.push(DetectedProfile {
+                                id: prof_id,
+                                label: format!("Prism Launcher : {}", name),
+                                options_path: options_path.to_string_lossy().into_owned(),
+                                launcher: "Prism Launcher".to_string(),
+                            });
+                        }
                     }
                 }
             }
@@ -236,8 +270,19 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     }
 
     // 3. Modrinth App
+    let mut modrinth_dirs = Vec::new();
     if !appdata.is_empty() {
-        let modrinth_dir = Path::new(&appdata).join("ModrinthApp").join("profiles");
+        modrinth_dirs.push(Path::new(&appdata).join("ModrinthApp").join("profiles"));
+    }
+    if !xdg_data.is_empty() {
+        modrinth_dirs.push(Path::new(&xdg_data).join("ModrinthApp").join("profiles"));
+    }
+    if !home.is_empty() {
+        modrinth_dirs.push(Path::new(&home).join(".var/app/com.modrinth.ModrinthApp/data/ModrinthApp/profiles"));
+        modrinth_dirs.push(Path::new(&home).join("Library/Application Support/ModrinthApp/profiles"));
+    }
+
+    for modrinth_dir in &modrinth_dirs {
         if modrinth_dir.exists() {
             if let Ok(entries) = fs::read_dir(modrinth_dir) {
                 for entry in entries.flatten() {
@@ -245,12 +290,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                     let options_path = profile_dir.join("options.txt");
                     if options_path.exists() {
                         let name = entry.file_name().to_string_lossy().into_owned();
-                        profiles.push(DetectedProfile {
-                            id: format!("modrinth_{}", name),
-                            label: format!("Modrinth App : {}", name),
-                            options_path: options_path.to_string_lossy().into_owned(),
-                            launcher: "Modrinth App".to_string(),
-                        });
+                        let prof_id = format!("modrinth_{}", name);
+                        if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                            profiles.push(DetectedProfile {
+                                id: prof_id,
+                                label: format!("Modrinth App : {}", name),
+                                options_path: options_path.to_string_lossy().into_owned(),
+                                launcher: "Modrinth App".to_string(),
+                            });
+                        }
                     }
                 }
             }
@@ -258,11 +306,16 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     }
 
     // 4. CurseForge
+    let mut curse_dirs = Vec::new();
     if !userprofile.is_empty() {
-        let curse_dir = Path::new(&userprofile)
-            .join("curseforge")
-            .join("minecraft")
-            .join("Instances");
+        curse_dirs.push(Path::new(&userprofile).join("curseforge").join("minecraft").join("Instances"));
+    }
+    if !home.is_empty() {
+        curse_dirs.push(Path::new(&home).join("curseforge").join("minecraft").join("Instances"));
+        curse_dirs.push(Path::new(&home).join("Documents/curseforge/minecraft/Instances"));
+    }
+
+    for curse_dir in &curse_dirs {
         if curse_dir.exists() {
             if let Ok(entries) = fs::read_dir(curse_dir) {
                 for entry in entries.flatten() {
@@ -270,12 +323,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                     let options_path = instance_dir.join("options.txt");
                     if options_path.exists() {
                         let name = entry.file_name().to_string_lossy().into_owned();
-                        profiles.push(DetectedProfile {
-                            id: format!("curseforge_{}", name),
-                            label: format!("CurseForge : {}", name),
-                            options_path: options_path.to_string_lossy().into_owned(),
-                            launcher: "CurseForge App".to_string(),
-                        });
+                        let prof_id = format!("curseforge_{}", name);
+                        if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                            profiles.push(DetectedProfile {
+                                id: prof_id,
+                                label: format!("CurseForge : {}", name),
+                                options_path: options_path.to_string_lossy().into_owned(),
+                                launcher: "CurseForge App".to_string(),
+                            });
+                        }
                     }
                 }
             }
@@ -283,8 +339,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     }
 
     // 5. Lunar Client
+    let mut lunar_dirs = Vec::new();
     if !userprofile.is_empty() {
-        let lunar_dir = Path::new(&userprofile).join(".lunarclient");
+        lunar_dirs.push(Path::new(&userprofile).join(".lunarclient"));
+    }
+    if !home.is_empty() {
+        lunar_dirs.push(Path::new(&home).join(".lunarclient"));
+    }
+
+    for lunar_dir in &lunar_dirs {
         let lunar_options_1 = lunar_dir
             .join("offline")
             .join("multiver")
@@ -300,26 +363,39 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
         };
 
         if let Some(opts) = valid_lunar_options {
-            profiles.push(DetectedProfile {
-                id: "lunar_default".to_string(),
-                label: "Lunar Client".to_string(),
-                options_path: opts.to_string_lossy().into_owned(),
-                launcher: "Lunar Client".to_string(),
-            });
+            if !profiles.iter().any(|p: &DetectedProfile| p.id == "lunar_default") {
+                profiles.push(DetectedProfile {
+                    id: "lunar_default".to_string(),
+                    label: "Lunar Client".to_string(),
+                    options_path: opts.to_string_lossy().into_owned(),
+                    launcher: "Lunar Client".to_string(),
+                });
+            }
+            break;
         }
     }
 
     // 5.b Feather Client
+    let mut feather_dirs = Vec::new();
     if !appdata.is_empty() {
-        let feather_dir = Path::new(&appdata).join(".feather");
+        feather_dirs.push(Path::new(&appdata).join(".feather"));
+    }
+    if !home.is_empty() {
+        feather_dirs.push(Path::new(&home).join(".feather"));
+    }
+
+    for feather_dir in &feather_dirs {
         let feather_options = feather_dir.join("user-profile").join("options.txt");
         if feather_options.exists() {
-            profiles.push(DetectedProfile {
-                id: "feather_default".to_string(),
-                label: "Feather Client".to_string(),
-                options_path: feather_options.to_string_lossy().into_owned(),
-                launcher: "Feather Client".to_string(),
-            });
+            if !profiles.iter().any(|p: &DetectedProfile| p.id == "feather_default") {
+                profiles.push(DetectedProfile {
+                    id: "feather_default".to_string(),
+                    label: "Feather Client".to_string(),
+                    options_path: feather_options.to_string_lossy().into_owned(),
+                    launcher: "Feather Client".to_string(),
+                });
+            }
+            break;
         }
     }
 
@@ -331,14 +407,21 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
         ("gdlauncher_next", "GDLauncher"),
     ];
 
+    let mut base_dirs = Vec::new();
     if !appdata.is_empty() {
+        base_dirs.push(Path::new(&appdata).to_path_buf());
+    }
+    if !xdg_data.is_empty() {
+        base_dirs.push(Path::new(&xdg_data).to_path_buf());
+    }
+
+    for base_dir in &base_dirs {
         for (dir_name, launcher_name) in multimc_forks.iter() {
-            let instances_dir = Path::new(&appdata).join(dir_name).join("instances");
+            let instances_dir = base_dir.join(dir_name).join("instances");
             if instances_dir.exists() {
                 if let Ok(entries) = fs::read_dir(instances_dir) {
                     for entry in entries.flatten() {
                         let instance_dir = entry.path();
-                        // GDLauncher et ATLauncher peuvent avoir la racine dans l'instance
                         let mut mc_dir = instance_dir.join(".minecraft");
                         if !mc_dir.exists() {
                             mc_dir = instance_dir.clone();
@@ -347,12 +430,15 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
                         let options_path = mc_dir.join("options.txt");
                         if options_path.exists() {
                             let name = entry.file_name().to_string_lossy().into_owned();
-                            profiles.push(DetectedProfile {
-                                id: format!("{}_{}", dir_name, name),
-                                label: format!("{} : {}", launcher_name, name),
-                                options_path: options_path.to_string_lossy().into_owned(),
-                                launcher: launcher_name.to_string(),
-                            });
+                            let prof_id = format!("{}_{}", dir_name, name);
+                            if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                                profiles.push(DetectedProfile {
+                                    id: prof_id,
+                                    label: format!("{} : {}", launcher_name, name),
+                                    options_path: options_path.to_string_lossy().into_owned(),
+                                    launcher: launcher_name.to_string(),
+                                });
+                            }
                         }
                     }
                 }

@@ -232,9 +232,12 @@ export async function launchMinecraft(
 
 		// 1. Verifier et telecharger le Java attendu par cette version de Minecraft.
 		// Le manifeste peut l'imposer; sinon Mojang le declare dans ses metadonnees.
-		const javaMajor =
-			manifest.requiredJavaMajor ||
-			(await requiredJavaMajor(profile.minecraftVersion));
+		// On prend le maximum des deux pour eviter qu'un manifeste mal renseigne
+		// n'impose une version de Java inferieure a ce que Minecraft / Fabric reclame.
+		const javaMajor = Math.max(
+			manifest.requiredJavaMajor || 0,
+			await requiredJavaMajor(profile.minecraftVersion),
+		);
 
 		updateStatus({
 			state: "downloading_java",
