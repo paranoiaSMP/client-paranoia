@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { AlertTriangle, LogIn, Pickaxe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MicrosoftAccount } from "@paranoia/contracts";
@@ -65,7 +66,7 @@ export function LoadingScreen() {
 
 	return (
 		<Frame>
-			<div className="flex animate-pulse flex-col items-center gap-4">
+			<div className="flex flex-col items-center gap-4">
 				<Pickaxe
 					className="size-16 animate-bounce text-accent-600"
 					strokeWidth={2.5}
@@ -107,6 +108,20 @@ export function LoginScreen({
 	onLocalDevContinue,
 	onSwitchAccount,
 }: LoginScreenProps) {
+	const attemptedAutoLogin = useRef(false);
+
+	useEffect(() => {
+		if (
+			accounts.length === 0 &&
+			!connectingMicrosoft &&
+			navigator.userAgent.toLowerCase().includes("windows") &&
+			!attemptedAutoLogin.current
+		) {
+			attemptedAutoLogin.current = true;
+			onConnectMicrosoft();
+		}
+	}, [accounts.length, connectingMicrosoft, onConnectMicrosoft]);
+
 	return (
 		<Frame>
 			<div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">

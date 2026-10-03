@@ -53,7 +53,6 @@ export function LogsTab() {
 		}
 	};
 
-	// Helper to colorize log lines
 	const getLineColor = (line: string) => {
 		const upper = line.toUpperCase();
 		if (upper.includes("ERROR") || upper.includes("ERR") || upper.includes("EXCEPTION") || upper.includes("FATAL")) {

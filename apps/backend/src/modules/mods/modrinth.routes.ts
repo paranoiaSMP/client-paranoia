@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { exportProfile } from "../profiles/profiles.store.js";
 import {
+  getProject,
   installMod,
   listInstalledMods,
   listProjectVersions,
@@ -35,6 +36,14 @@ modsRouter.get("/search", async (req, res, next) => {
   try {
     const params = searchSchema.parse(req.query);
     return res.json(await searchMods(params));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+modsRouter.get("/projects/:projectId", async (req, res, next) => {
+  try {
+    return res.json(await getProject(req.params.projectId));
   } catch (err) {
     return next(err);
   }
