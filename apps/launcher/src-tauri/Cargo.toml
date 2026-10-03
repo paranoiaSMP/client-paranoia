@@ -1,6 +1,6 @@
 [package]
 name = "paranoia-launcher"
-version = "0.7.28"
+version = "0.7.29"
 description = "Paranoia Client Launcher"
 authors = ["Paranoia Team"]
 license = "Proprietary"
