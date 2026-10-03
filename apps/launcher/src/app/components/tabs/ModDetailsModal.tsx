@@ -44,7 +44,6 @@ export function ModDetailsModal({
       isOpen={isOpen}
       onClose={onClose}
       title={hit.title}
-      className="max-w-3xl w-full h-[80vh] flex flex-col"
     >
       <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
         <div className="flex flex-col md:flex-row gap-6">
