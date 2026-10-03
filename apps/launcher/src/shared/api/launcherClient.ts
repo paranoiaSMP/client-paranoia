@@ -63,3 +63,23 @@ export async function clearGameLogs(): Promise<{ status: string }> {
 		method: "POST",
 	});
 }
+
+/** Un Java trouve sur la machine par le backend. */
+export type JavaTrouve = {
+	chemin: string;
+	major: number;
+	version: string;
+	vendeur: string;
+	arch: string;
+	origine: string;
+};
+
+/**
+ * Les Java deja installes, interroges un par un par le backend.
+ *
+ * <p>Le champ « chemin Java » des parametres attendait un chemin absolu tape a
+ * la main. Personne ne connait le sien, et le launcher ne regardait nulle part.
+ */
+export async function detecterJava(): Promise<JavaTrouve[]> {
+	return apiRequest<JavaTrouve[]>("/v1/launcher/java");
+}

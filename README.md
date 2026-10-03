@@ -208,6 +208,31 @@ reconnectait pour rien:
 Microsoft servi en local: session valable, renouvellement complet, jeton refuse,
 Xbox Live en panne, panne passagere rattrapee, et lancement avec un jeton perime.
 
+## Trouver Java
+
+Le launcher telecharge son propre runtime, par version de Java que Minecraft
+reclame (21 pour les 1.21.x, 25 pour les 26.x). Il sait aussi, desormais,
+**trouver ceux qui sont deja sur la machine**:
+
+- `JAVA_HOME`, le `PATH`, les runtimes du launcher Mojang (la source la plus
+  utile: presque tout joueur en a), les installations systeme de chaque editeur,
+  et ce que Paranoia a telecharge lui-meme;
+- chaque candidat est **execute** (`-XshowSettings:properties -version`) pour
+  lire sa version, son vendeur et son architecture reels. Un dossier nomme
+  `jre-17` peut contenir n importe quoi, et un script appele `java` n est pas un
+  Java;
+- Parametres > Java > « Detecter les Java installes » les liste et remplit le
+  champ d un clic, au lieu d attendre un chemin absolu tape a la main.
+
+Deux consequences au lancement: un chemin Java choisi par le joueur est utilise
+**sans attendre** le telechargement (il etait respecte, mais apres deux cents
+megaoctets inutiles), et si le telechargement echoue -- antivirus, disque plein,
+reseau d entreprise -- le launcher se rabat sur un Java de la bonne majeure
+trouve sur la machine au lieu de refuser de jouer.
+
+`pnpm --filter @paranoia/backend test:java` eprouve tout cela contre de faux
+binaires, sans qu aucun Java soit necessaire.
+
 ## Mises a jour automatiques
 
 Le launcher interroge la derniere release au demarrage et propose la mise a

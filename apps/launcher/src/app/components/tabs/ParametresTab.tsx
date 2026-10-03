@@ -6,6 +6,10 @@ import {
   saveSettings,
   type LauncherSettings,
 } from "../../../shared/api/settingsClient";
+import {
+  detecterJava as demandeLesJava,
+  type JavaTrouve,
+} from "../../../shared/api/launcherClient";
 
 type ParametresTabProps = {
   importJson: string;
@@ -29,6 +33,10 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
   const [ramMin, setRamMin] = useState(2);
   const [ramMax, setRamMax] = useState(4);
   const [javaPath, setJavaPath] = useState("");
+  // null tant qu'on n'a pas cherche: un tableau vide veut dire « cherche, rien
+  // trouve », et les deux ne s'affichent pas pareil.
+  const [javasTrouves, setJavasTrouves] = useState<JavaTrouve[] | null>(null);
+  const [detection, setDetection] = useState(false);
   // Vide, et non l'ancien defaut: les drapeaux viennent du launcher, qui les
   // choisit selon la version de Java. Ce champ est ce que le joueur ajoute.
   const [jvmArgs, setJvmArgs] = useState("");
@@ -71,6 +79,20 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
       cancelled = true;
     };
   }, []);
+
+  async function detecterJava() {
+    setDetection(true);
+    try {
+      setJavasTrouves(await demandeLesJava());
+    } catch {
+      // Le backend repond toujours une liste, meme vide: une erreur ici est un
+      // probleme de service local, pas une absence de Java. On l'affiche comme
+      // « aucun trouve » plutot que de laisser le bouton tourner.
+      setJavasTrouves([]);
+    } finally {
+      setDetection(false);
+    }
+  }
 
   async function handleSave() {
     setSaveState("saving");
@@ -144,13 +166,65 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
         
         <div className="mb-4">
           <label className="text-neutral-300 text-xs block mb-2">Chemin Java (laisser vide = auto)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={javaPath}
             onChange={e => setJavaPath(e.target.value)}
             placeholder="C:\Program Files\Java\jdk-21\bin\javaw.exe"
             className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors"
           />
+
+          {/* Personne ne connait par coeur le chemin de son Java. Le champ
+              ci-dessus le demandait quand meme, et sans lui le launcher n'avait
+              que son propre telechargement -- donc rien, le jour ou il echoue. */}
+          <div className="flex items-center gap-3 mt-2">
+            <button
+              type="button"
+              onClick={detecterJava}
+              disabled={detection}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg border border-divider text-neutral-300 hover:text-ink hover:border-neutral-600 disabled:opacity-50 transition-colors"
+            >
+              {detection ? "Recherche..." : "Détecter les Java installés"}
+            </button>
+            {javaPath && (
+              <button
+                type="button"
+                onClick={() => setJavaPath("")}
+                className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
+              >
+                revenir au Java du launcher
+              </button>
+            )}
+          </div>
+
+          {javasTrouves !== null && javasTrouves.length === 0 && (
+            <p className="mt-2 text-xs text-amber-400/90">
+              Aucun Java trouvé sur cette machine. Le launcher téléchargera le
+              sien au prochain lancement.
+            </p>
+          )}
+
+          {javasTrouves !== null && javasTrouves.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {javasTrouves.map((java) => (
+                <li key={java.chemin}>
+                  <button
+                    type="button"
+                    onClick={() => setJavaPath(java.chemin)}
+                    className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
+                      javaPath === java.chemin
+                        ? "border-accent bg-accent/10"
+                        : "border-divider hover:border-neutral-600"
+                    }`}
+                  >
+                    <span className="text-ink font-bold">Java {java.major}</span>
+                    <span className="text-neutral-500"> · {java.version} · {java.arch} · {java.origine}</span>
+                    <span className="block text-neutral-600 font-mono truncate">{java.chemin}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div>
