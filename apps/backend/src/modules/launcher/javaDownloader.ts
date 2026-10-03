@@ -6,6 +6,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createWriteStream, existsSync } from "node:fs";
 import { pipeline } from "node:stream/promises";
+import { Readable } from "node:stream";
 
 const execFileAsync = promisify(execFile);
 
@@ -157,25 +158,15 @@ export async function ensureJava(
   await fs.mkdir(targetDir, { recursive: true });
   const archivePath = path.join(targetDir, `jre-${major}.${target.archive}`);
 
-  let response;
+  let response: Response;
   try {
-    response = await axios({
-      url: adoptiumUrl(major, target, "jre"),
-      method: "GET",
-      responseType: "stream",
-      maxRedirects: 5,
-      timeout: 120_000,
-    });
+    response = await fetch(adoptiumUrl(major, target, "jre"));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
   } catch (err) {
     // Si le JRE n'est pas disponible pour cette version, repli sur le JDK complet
     try {
-      response = await axios({
-        url: adoptiumUrl(major, target, "jdk"),
-        method: "GET",
-        responseType: "stream",
-        maxRedirects: 5,
-        timeout: 120_000,
-      });
+      response = await fetch(adoptiumUrl(major, target, "jdk"));
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch {
       throw new Error(
         `Java ${major} indisponible au telechargement (${target.os}/${target.arch}). ` +
@@ -185,12 +176,18 @@ export async function ensureJava(
   }
 
   const totalLength = Number.parseInt(
-    (response.headers["content-length"] as string) || "0",
+    response.headers.get("content-length") || "0",
     10,
   );
   let downloadedLength = 0;
 
-  response.data.on("data", (chunk: Buffer) => {
+  if (!response.body) {
+    throw new Error("La reponse ne contient pas de donnees");
+  }
+
+  const stream = Readable.fromWeb(response.body as any);
+
+  stream.on("data", (chunk: Buffer) => {
     downloadedLength += chunk.length;
     if (totalLength > 0) {
       onProgress(
@@ -200,7 +197,7 @@ export async function ensureJava(
     }
   });
 
-  await pipeline(response.data, createWriteStream(archivePath));
+  await pipeline(stream, createWriteStream(archivePath));
 
   onProgress(`Extraction de Java ${major}...`, 100);
 
