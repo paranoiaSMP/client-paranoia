@@ -3,16 +3,14 @@ import { z } from "zod";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
-  refreshMicrosoftAccount,
+  EchecRenouvellement,
 } from "./auth.microsoft.js";
+import { sessionUtilisable } from "./auth.session.js";
 import { createAuthState, consumeAuthState, safeEquals } from "./auth.state.js";
 import {
   deleteAccount,
-  getAccount,
-  isExpired,
   listAccounts,
   saveAccount,
-  type StoredAccount,
 } from "./accounts.store.js";
 
 export const authRouter = Router();
@@ -92,29 +90,32 @@ authRouter.delete("/accounts/:id", (req, res) => {
  */
 authRouter.post("/accounts/:id/refresh", async (req, res, next) => {
   try {
-    const account = getAccount(req.params.id);
-    if (!account) {
+    const session = await sessionUtilisable(req.params.id);
+    if (!session) {
       return res.status(404).json({ message: "account not found" });
     }
-
-    if (!isExpired(account)) {
-      return res.json(account);
-    }
-
-    let refreshed: StoredAccount;
-    try {
-      refreshed = saveAccount(await refreshMicrosoftAccount(account.refreshToken));
-    } catch {
-      // Le refresh token de Microsoft a une duree de vie limitee: une fois
-      // perime, seule une reconnexion complete peut rendre la main.
-      deleteAccount(account.id);
-      return res
-        .status(401)
-        .json({ message: "session expired, sign in again" });
-    }
-
-    return res.json(refreshed);
+    return res.json(session);
   } catch (err) {
+    // Deux echecs tres differents, et les confondre coutait une reconnexion.
+    //
+    // Microsoft refuse le jeton (`invalid_grant`): le compte a ete oublie, il
+    // faut repasser par la fenetre de connexion. C'est un 401, et l'interface
+    // ramene le joueur a l'ecran de connexion.
+    //
+    // Tout le reste -- Xbox Live en panne, reseau pas encore la, 500 passager
+    // -- laisse le compte en place. C'est un 503: l'interface le garde, le dit,
+    // et reessaiera. Le joueur n'a rien a faire.
+    if (err instanceof EchecRenouvellement) {
+      if (err.definitif) {
+        return res
+          .status(401)
+          .json({ message: "session expired, sign in again" });
+      }
+      return res.status(503).json({
+        message: `session non renouvelee: ${err.message}`,
+        retriable: true,
+      });
+    }
     return next(err);
   }
 });

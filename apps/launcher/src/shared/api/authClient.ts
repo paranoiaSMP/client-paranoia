@@ -3,7 +3,7 @@ import {
   MicrosoftAuthCallbackRequest,
   MicrosoftAccount,
 } from "@paranoia/contracts";
-import { apiRequest } from "./http";
+import { apiRequest, ErreurApi } from "./http";
 
 export async function getMicrosoftAuthorizeUrl(
   redirectUri: string,
@@ -29,19 +29,38 @@ export async function listSavedAccounts(): Promise<MicrosoftAccount[]> {
 }
 
 /**
- * Renvoie une session utilisable, renouvelee si le jeton Minecraft a expire.
- * Retourne null quand il faut repasser par la connexion Microsoft.
+ * Resultat d'un renouvellement de session.
+ *
+ * <p>Trois issues et non deux, parce que les confondre coutait une
+ * reconnexion: le compte peut etre utilisable, definitivement perdu, ou
+ * simplement pas renouvelable a cet instant -- reseau coupe au demarrage,
+ * Xbox Live en panne. Le troisieme cas garde le compte et se retente.
  */
+export type Renouvellement =
+  | { etat: "ok"; compte: MicrosoftAccount }
+  | { etat: "reconnexion" }
+  | { etat: "reessayer"; raison: string };
+
 export async function refreshAccount(
   accountId: string,
-): Promise<MicrosoftAccount | null> {
+): Promise<Renouvellement> {
   try {
-    return await apiRequest<MicrosoftAccount>(
+    const compte = await apiRequest<MicrosoftAccount>(
       `/v1/auth/accounts/${encodeURIComponent(accountId)}/refresh`,
       { method: "POST" },
     );
-  } catch {
-    return null;
+    return { etat: "ok", compte };
+  } catch (err) {
+    // 401 et 404 sont les deux reponses qui disent que ce compte n'existe
+    // plus de notre cote: Microsoft a refuse son jeton, ou il a ete oublie.
+    const status = err instanceof ErreurApi ? err.status : 0;
+    if (status === 401 || status === 404) {
+      return { etat: "reconnexion" };
+    }
+    return {
+      etat: "reessayer",
+      raison: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 

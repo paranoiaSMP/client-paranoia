@@ -20,24 +20,33 @@ export interface StoredAccount {
   expiresAt: string;
 }
 
-const DB_PATH = join(paranoiaDataDir(), "accounts.json");
+/**
+ * Resolu a chaque appel, et non une fois au chargement du module.
+ *
+ * <p>Meme forme que le cache des versions de Minecraft, et pour la meme
+ * raison: fige a l'import, le chemin emporte avec lui le dossier de donnees
+ * tel qu'il etait a ce moment-la. C'est sans effet en production -- il ne
+ * change pas -- mais cela rendait le magasin impossible a eprouver: le banc
+ * detourne le dossier par l'environnement, et le module l'avait deja lu.
+ */
+const DB_PATH = () => join(paranoiaDataDir(), "accounts.json");
 
 /**
  * The file holds Minecraft session tokens, so it is created 0600: readable by
  * the player's account only. Windows ignores the mode, hence the try/catch.
  */
 function ensureStore() {
-  const dir = dirname(DB_PATH);
+  const dir = dirname(DB_PATH());
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
 
-  if (!existsSync(DB_PATH)) {
-    writeFileSync(DB_PATH, "[]", { encoding: "utf-8", mode: 0o600 });
+  if (!existsSync(DB_PATH())) {
+    writeFileSync(DB_PATH(), "[]", { encoding: "utf-8", mode: 0o600 });
   }
 
   try {
-    chmodSync(DB_PATH, 0o600);
+    chmodSync(DB_PATH(), 0o600);
   } catch {
     // systeme de fichiers sans permissions POSIX
   }
@@ -64,7 +73,7 @@ function deduplicate(accounts: StoredAccount[]): StoredAccount[] {
 function readAll(): StoredAccount[] {
   ensureStore();
   try {
-    const parsed = JSON.parse(readFileSync(DB_PATH, "utf-8"));
+    const parsed = JSON.parse(readFileSync(DB_PATH(), "utf-8"));
     if (!Array.isArray(parsed)) return [];
     const deduped = deduplicate(parsed as StoredAccount[]);
     if (deduped.length !== parsed.length) {
@@ -78,7 +87,7 @@ function readAll(): StoredAccount[] {
 
 function writeAll(accounts: StoredAccount[]) {
   ensureStore();
-  writeFileSync(DB_PATH, JSON.stringify(accounts, null, 2), {
+  writeFileSync(DB_PATH(), JSON.stringify(accounts, null, 2), {
     encoding: "utf-8",
     mode: 0o600,
   });

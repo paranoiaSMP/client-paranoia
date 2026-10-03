@@ -13,6 +13,25 @@ const API_BASE_URL =
 
 export { API_BASE_URL };
 
+/**
+ * Une erreur du backend, avec son code.
+ *
+ * <p>Le code manquait, et une seule chose s'en servait vraiment: le
+ * renouvellement de session. Sans lui, « Microsoft a refuse ton jeton » et
+ * « Xbox Live ne repond pas » arrivaient a l'interface sous la meme forme, et
+ * elle traitait les deux comme une deconnexion -- donc une reconnexion
+ * complete pour une panne de trois secondes.
+ */
+export class ErreurApi extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ErreurApi";
+    this.status = status;
+  }
+}
+
 async function errorMessage(response: Response): Promise<string> {
   const body = await response.text();
 
@@ -79,7 +98,7 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    throw new Error(await errorMessage(response));
+    throw new ErreurApi(await errorMessage(response), response.status);
   }
 
   if (response.status === 204) {

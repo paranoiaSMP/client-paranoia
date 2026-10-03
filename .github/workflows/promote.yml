@@ -68,21 +68,40 @@ jobs:
       # Une promotion doit porter sur une preversion. Promouvoir ce qui est deja
       # public ne ferait rien de mal, mais cacherait une erreur: quelqu'un croit
       # avoir franchi une etape qui n'a pas eu lieu.
-      - name: Verify it is a prerelease
+      - name: Verify there is something left to promote
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.promote.outputs.tag }}
+          DEPOT: ${{ github.repository }}
         run: |
           # map(tostring) et non join seul: les deux champs sont des booleens, et
           # join refuse tout ce qui n'est pas une chaine.
           etat=$(gh release view "$TAG" \
             --json isPrerelease,isDraft -q '[.isPrerelease, .isDraft] | map(tostring) | join(",")')
-          echo "prerelease,draft = $etat"
+          # Ce que GitHub designe comme derniere release: c'est cette valeur,
+          # et non le drapeau de preversion, qui decide de ce que le launcher
+          # telecharge. Les deux ne vont pas ensemble -- voir l'etape de
+          # publication plus bas.
+          derniere=$(gh api "repos/$DEPOT/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+          echo "prerelease,draft = $etat | derniere release = ${derniere:-aucune}"
+
           case "$etat" in
-            true,false) echo "preversion confirmee" ;;
-            false,*) echo "::error::$TAG est deja publiee, rien a promouvoir"; exit 1 ;;
-            *) echo "::error::etat inattendu ($etat)"; exit 1 ;;
+            true,false)
+              echo "preversion confirmee" ;;
+            false,false)
+              # Promotion a moitie faite: la preversion a ete levee sans que la
+              # release devienne la derniere. Refuser ici laisserait la version
+              # publique et invisible, ce qui est le pire des deux etats; on
+              # termine le travail au lieu de s'arreter dessus.
+              if [ "$derniere" = "$TAG" ]; then
+                echo "::error::$TAG est deja promue, rien a faire"
+                exit 1
+              fi
+              echo "::warning::$TAG est publique mais n'est pas la derniere release: promotion a terminer" ;;
+            *)
+              echo "::error::etat inattendu ($etat)"
+              exit 1 ;;
           esac
 
       # Les signatures et les noms d'actifs reels, lus sur la release plutot que
@@ -164,9 +183,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.promote.outputs.tag }}
+          DEPOT: ${{ github.repository }}
         run: |
-          gh release edit "$TAG" --prerelease=false
-          echo "$TAG est desormais publique"
+          # make_latest autant que prerelease, et c'est la lecon de la 0.7.30.
+          #
+          # Lever la preversion ne suffit pas: une release creee en preversion
+          # est marquee « pas la derniere », et ce marquage ne bouge pas tout
+          # seul quand on retire le drapeau. GitHub a donc continue de designer
+          # la 0.7.29 comme derniere release, et
+          # `releases/latest/download/latest.json` -- la seule URL que le
+          # launcher interroge -- a continue de servir son manifeste. La 0.7.30
+          # etait publique, telechargeable, et invisible: personne ne l'a recue.
+          #
+          # L'API REST plutot que `gh release edit --latest`: make_latest y est
+          # un champ documente du PATCH, et on lit la reponse pour savoir ce que
+          # GitHub a reellement retenu.
+          id=$(gh api "repos/$DEPOT/releases/tags/$TAG" --jq '.id')
+          gh api --method PATCH "repos/$DEPOT/releases/$id" \
+            -F prerelease=false -f make_latest=true \
+            --jq '"prerelease=\(.prerelease) draft=\(.draft)"'
+          echo "$TAG est desormais publique et designee comme derniere"
 
       # Lire ce qu'on vient de faire, et non se fier au code de sortie: c'est la
       # regle tenue partout ailleurs dans ce depot. Et on lit l'URL du joueur,
@@ -175,10 +211,24 @@ jobs:
       - name: Verify what a player will now read
         shell: bash
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPOT: ${{ github.repository }}
           TAG: ${{ steps.promote.outputs.tag }}
           PLATEFORMES: ${{ steps.manifeste.outputs.plateformes }}
         run: |
+          # D'abord la question a laquelle l'API repond sans cache: quelle
+          # release GitHub designe-t-il comme la derniere ? La 0.7.30 a echoue
+          # ici pendant une minute sur « le manifeste n'annonce pas 0.7.30 »,
+          # alors que le manifeste etait juste et que c'etait le pointeur qui
+          # etait reste sur la version precedente. Le message d'erreur
+          # designait le mauvais coupable.
+          derniere=$(gh api "repos/$DEPOT/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+          if [ "$derniere" != "$TAG" ]; then
+            echo "::error::GitHub designe $derniere comme derniere release, pas $TAG -- le launcher continuera de lire son manifeste"
+            exit 1
+          fi
+          echo "derniere release = $TAG"
+
           url="https://github.com/$DEPOT/releases/latest/download/latest.json"
           attendu="${TAG#v}"
           # Les plateformes comptent autant que la version: un manifeste qui
