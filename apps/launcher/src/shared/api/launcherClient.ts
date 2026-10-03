@@ -26,6 +26,11 @@ export async function launchMinecraftGame(
 			minecraftVersion,
 			ramMb,
 			account: {
+				// L'identifiant en plus du jeton: c'est lui qui permet au backend
+				// d'aller chercher la session enregistree et de la renouveler si
+				// elle a expire depuis le demarrage du launcher. Sans lui, un
+				// launcher ouvert depuis la veille lance le jeu avec un jeton mort.
+				id: account.id,
 				minecraftUuid: account.minecraftUuid,
 				minecraftUsername: account.minecraftUsername,
 				accessToken: account.accessToken,

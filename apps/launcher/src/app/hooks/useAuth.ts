@@ -9,9 +9,40 @@ import {
   listSavedAccounts,
   refreshAccount,
   forgetAccount,
+  type Renouvellement,
 } from "../../shared/api/authClient";
 
 const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
+
+/**
+ * Renouvelle, et laisse au reseau le temps d'arriver.
+ *
+ * <p>Le launcher demarre souvent avant la connexion: session Windows qui
+ * s'ouvre, Wi-Fi qui s'associe, VPN qui se monte. Le premier essai tombe donc
+ * dans le trou, et c'est la panne la plus courante -- pas une session perdue.
+ * Trois essais sur une dizaine de secondes suffisent a la traverser.
+ *
+ * <p>On s'arrete des que Microsoft repond que le compte est a refaire:
+ * insister n'apporterait rien.
+ */
+async function renouvelleAvecPatience(
+  accountId: string,
+  annule: () => boolean,
+): Promise<Renouvellement> {
+  let dernier: Renouvellement = { etat: "reessayer", raison: "jamais tente" };
+
+  for (let essai = 1; essai <= 3; essai++) {
+    dernier = await refreshAccount(accountId);
+    if (dernier.etat !== "reessayer" || annule()) {
+      return dernier;
+    }
+    if (essai < 3) {
+      await new Promise((resoudre) => setTimeout(resoudre, essai * 2000));
+    }
+  }
+
+  return dernier;
+}
 
 export function useAuth(setError: (err: string | null) => void) {
   const { t } = useTranslation();
@@ -40,21 +71,32 @@ export function useAuth(setError: (err: string | null) => void) {
           return;
         }
 
-        const usable = await refreshAccount(activeTarget.id);
+        const resultat = await renouvelleAvecPatience(activeTarget.id, () => cancelled);
         if (cancelled) {
           return;
         }
 
-        if (usable) {
+        if (resultat.etat === "ok") {
+          const usable = resultat.compte;
           setAccount(usable);
           localStorage.setItem("paranoia_active_account_id", usable.id);
           setAccounts((prev) =>
             prev.map((a) => (a.id === usable.id ? usable : a)),
           );
           setConnected(true);
-        } else {
+        } else if (resultat.etat === "reconnexion") {
+          // Microsoft a refuse le jeton: le compte n'existe plus, ici comme
+          // cote backend.
           setAccounts((prev) => prev.filter((a) => a.id !== activeTarget.id));
           localStorage.removeItem("paranoia_active_account_id");
+        } else {
+          // Panne passagere. Le compte reste, et le joueur avec: le
+          // renouvellement sera retente au lancement, cote backend, ou au
+          // prochain demarrage. Le renvoyer a l'ecran de connexion pour un
+          // Xbox Live qui tousse etait exactement le defaut a corriger.
+          setAccount(activeTarget);
+          setConnected(true);
+          console.warn("[auth] session non renouvelee:", resultat.raison);
         }
       } catch {
       } finally {
@@ -147,13 +189,23 @@ export function useAuth(setError: (err: string | null) => void) {
 
   async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
+    setConnected(true);
     localStorage.setItem("paranoia_active_account_id", target.id);
 
-    const usable = await refreshAccount(target.id);
-    if (usable) {
+    const resultat = await refreshAccount(target.id);
+    if (resultat.etat === "ok") {
+      const usable = resultat.compte;
       setAccount(usable);
       localStorage.setItem("paranoia_active_account_id", usable.id);
       setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
+      return;
+    }
+
+    if (resultat.etat === "reessayer") {
+      // Comme au demarrage: on garde le compte selectionne. Le lancement
+      // retentera le renouvellement, et c'est a ce moment-la seulement qu'un
+      // echec empeche vraiment de jouer.
+      console.warn("[auth] session non renouvelee:", resultat.raison);
       return;
     }
 

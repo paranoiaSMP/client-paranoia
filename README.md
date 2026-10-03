@@ -176,13 +176,37 @@ Les fonctionnalites metier (orchestration d installation complete, anti-cheat ru
 
 Points connus restant a traiter:
 
-- les jetons de compte vivent en memoire du launcher: le `refreshToken` n est
-  pas encore utilise, il faut se reconnecter apres expiration;
 - `/v1/launcher/play` et les routes de profils ne sont pas authentifiees; elles
   ne sont protegees que par la restriction CORS et l ecoute en local;
 - la signature des manifestes (`signature`) n est pas encore verifiee;
 - l historique git contient encore ~137 Mo de JARs Gradle supprimes du suivi:
   seul un reecriture d historique (git filter-repo / BFG) peut les enlever.
+
+## Rester connecte
+
+Les comptes sont ecrits dans `accounts.json` (droits 0600) a cote des autres
+donnees du launcher, avec le jeton de renouvellement Microsoft. Au demarrage, la
+session est renouvelee en silence; le joueur ne repasse par la fenetre Microsoft
+que lorsque Microsoft refuse explicitement ce jeton -- expire, revoque, ou mot
+de passe change.
+
+Deux regles tiennent cette promesse, et chacune corrige un cas ou l on se
+reconnectait pour rien:
+
+- **une panne n est pas une deconnexion.** La chaine compte cinq appels reseau
+  (Microsoft, Xbox Live, XSTS, Minecraft, le profil), et le compte n est oublie
+  que sur un `invalid_grant`. Un Wi-Fi pas encore associe au demarrage ou un
+  Xbox Live en panne laissent le compte en place, et le renouvellement est
+  retente -- trois fois cote backend, trois fois cote interface;
+- **le jeton est renouvele au lancement, pas seulement au demarrage.** Un
+  launcher laisse ouvert une journee lancait le jeu avec un jeton perime, et
+  Minecraft repondait « Invalid session » apres tout le telechargement.
+  `/v1/launcher/play` resout maintenant la session cote backend, juste avant de
+  lancer.
+
+`pnpm --filter @paranoia/backend test:auth` eprouve tout cela contre un faux
+Microsoft servi en local: session valable, renouvellement complet, jeton refuse,
+Xbox Live en panne, panne passagere rattrapee, et lancement avec un jeton perime.
 
 ## Mises a jour automatiques
 
