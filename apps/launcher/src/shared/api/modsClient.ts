@@ -53,6 +53,22 @@ export async function searchMods(opts: {
   return apiRequest(`/v1/mods/search?${params.toString()}`);
 }
 
+export type ModProject = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  body: string;
+  gallery: { url: string; featured: boolean; title?: string; description?: string }[];
+  icon_url?: string;
+  downloads: number;
+  author?: string;
+};
+
+export async function getProject(projectId: string): Promise<ModProject> {
+  return apiRequest(`/v1/mods/projects/${encodeURIComponent(projectId)}`);
+}
+
 export async function listProjectVersions(
   projectId: string,
   opts: { gameVersion?: string | undefined; loader?: string | undefined } = {},

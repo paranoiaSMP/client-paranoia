@@ -546,3 +546,7 @@ export async function removeMod(
   }
   return true;
 }
+
+export async function getProject(projectId: string): Promise<any> {
+  return modrinthGet<any>(`/project/${encodeURIComponent(projectId)}`, {});
+}
