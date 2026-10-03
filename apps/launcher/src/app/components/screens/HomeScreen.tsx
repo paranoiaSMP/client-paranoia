@@ -5,6 +5,7 @@ import type {
 	MicrosoftAccount,
 	NewsItem,
 } from "@paranoia/contracts";
+import { ExpandableNews } from "../ExpandableNews";
 
 import { SkinViewer3D } from "../../../components/SkinViewer3D";
 import type { LaunchStatusResponse } from "../../../shared/api/launcherClient";
@@ -259,47 +260,10 @@ export function HomeScreen({
 							Aucune actualité pour le moment.
 						</p>
 					) : (
-						<div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-4">
-							{news.slice(0, 3).map((item) => (
-								<NewsCard key={item.id} item={item} />
-							))}
-						</div>
+						<ExpandableNews news={news} />
 					)
 				)}
 			</section>
 		</div>
-	);
-}
-
-function NewsCard({ item }: { item: NewsItem }) {
-	// `publishedAt` est une date ISO. Elle s'affichait telle quelle par endroits,
-	// ce qui donnait « 2026-09-14T00:00:00.000Z » dans une carte de trois lignes.
-	const date = new Date(item.publishedAt);
-	const label = Number.isNaN(date.getTime())
-		? item.publishedAt
-		: date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-
-	return (
-		<article className="flex flex-col overflow-hidden rounded-md bg-surface">
-			<div className="h-[120px] bg-gradient-to-br from-accent-900 to-neutral-900">
-				{item.imageUrl && (
-					<img alt="" className="size-full object-cover" src={item.imageUrl} />
-				)}
-			</div>
-			<div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-3">
-				{item.tags[0] && (
-					<span className="self-start rounded-[6px] bg-accent-800 px-2.5 py-0.5 text-[11px] text-accent-100">
-						{item.tags[0]}
-					</span>
-				)}
-				<h3 className="m-0 text-[15.5px] font-medium leading-tight">
-					{item.title}
-				</h3>
-				<p className="m-0 flex-1 text-[13.5px] text-neutral-300">
-					{item.excerpt}
-				</p>
-				<span className="text-[12.5px] text-neutral-400">{label}</span>
-			</div>
-		</article>
 	);
 }
