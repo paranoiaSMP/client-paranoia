@@ -144,8 +144,30 @@ Deux regles appliquees au telechargement:
 - `targetPath` est toujours resolu **dans** le dossier d installation, un
   chemin remontant vers le parent est refuse.
 
-Les entrees dont `fabricLoaderVersion` est absent lancent Minecraft en vanilla.
-Renseigner ce champ pour que le mod Fabric du client soit charge.
+Les entrees dont `fabricLoaderVersion` est absent ne lancent pas pour autant un
+jeu vanilla: le launcher resout alors le dernier loader Fabric publie pour cette
+version de Minecraft, et ne retombe sur vanilla que si Fabric ne la supporte pas
+encore. Renseigner le champ sert a epingler un loader precis.
+
+### Versions proposees au joueur
+
+La liste vient du manifeste de Mojang, pas de ce fichier: `supportedMinecraftVersions`
+n en est que le secours hors ligne. Deux consequences:
+
+- une nouvelle version de Minecraft apparait sans qu on publie quoi que ce soit;
+- le catalogue, lui, doit porter une entree par version qu on veut servir avec
+  le mod Paranoia -- c est lui qui porte l empreinte et l URL du jar. Une version
+  absente du catalogue se lance tres bien, sans le mod.
+
+**La derniere snapshot** est proposee a part, apres les releases, et une seule:
+celle que Mojang annonce dans `latest.snapshot`, et seulement si elle est plus
+recente que la derniere release. Elle n est pas melangee aux releases parce qu
+elle serait alors la premiere de la liste, donc le defaut propose a quelqu un qui
+veut simplement jouer. Sur une snapshot, le mod Paranoia n existe pas et Fabric
+n a pas toujours publie: l assistant de creation le dit.
+
+`pnpm --filter @paranoia/backend test:versions` eprouve tout cela contre un
+manifeste servi en local, le jour d une sortie et le mode hors ligne compris.
 
 ## Etat actuel
 

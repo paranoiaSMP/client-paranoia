@@ -177,6 +177,16 @@ export function ProfileCreation({
                   {config.clientModVersions?.includes(v) ? "  — Client Paranoia" : ""}
                 </option>
               ))}
+
+              {/* La snapshot est a part, et apres les releases: elle est par
+                  construction plus recente que toutes, donc en tete de liste
+                  elle deviendrait le choix par defaut d'un joueur qui veut
+                  simplement jouer. */}
+              {config?.latestSnapshot && (
+                <option value={config.latestSnapshot}>
+                  {config.latestSnapshot}  — dernière snapshot
+                </option>
+              )}
             </select>
 
             {/* Le launcher propose toutes les versions publiees par Mojang,
@@ -189,6 +199,19 @@ export function ProfileCreation({
                 Le client Paranoia n'existe pas pour cette version. L'instance
                 se lancera en Minecraft normal. Versions couvertes :{" "}
                 {config.clientModVersions.join(", ")}.
+              </p>
+            )}
+
+            {/* Dit a part de l'avertissement ci-dessus, qui ne parle que du
+                mod: sur une snapshot, Fabric et Sodium peuvent manquer
+                egalement, et c'est le monde du joueur qui est en jeu. */}
+            {config?.latestSnapshot === minecraftVersion && (
+              <p className="mt-2 text-xs text-amber-400/90">
+                Version de test publiée par Mojang avant la sortie. Fabric et
+                les mods d'optimisation n'existent parfois pas encore pour
+                elle, et un monde ouvert dans une snapshot ne se rouvre pas
+                toujours dans la version précédente. À réserver à un profil
+                dédié.
               </p>
             )}
           </div>

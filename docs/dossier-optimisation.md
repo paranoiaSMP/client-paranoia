@@ -6,6 +6,10 @@ avec quels chiffres, et ce qui a été refusé.**
 Version du dossier : 25 septembre 2026 — état du dépôt `paranoiaSMP/client-paranoia`
 au commit `8d599e2`, versions publiées 0.7.20.
 
+Mise à jour du 3 octobre 2026 : les versions de Minecraft couvertes (1.1), les
+versions de test (1.1), le banc des versions (4.3) et la suite à donner (annexe
+G). Le reste du dossier n'a pas été revérifié contre le dépôt à cette date.
+
 ---
 
 ## Comment lire ce dossier
@@ -90,7 +94,7 @@ sur cinquante pages.
 **Partie IV — Comment on sait que ça marche**
 - 4.1 Les sondes : lire l'API plutôt que la deviner
 - 4.2 Les sondes de bytecode
-- 4.3 Les quatre bancs d'essai
+- 4.3 Les cinq bancs d'essai
 - 4.4 Les vérifications de build
 - 4.5 Le panneau de diagnostic comme preuve en jeu
 - 4.6 Ce qui n'est pas mesuré
@@ -249,6 +253,7 @@ Gradle :
 | 1.21.11 | construite, publiée | `paranoia-client-0.5.0+1.21.11.jar` (209 Ko) |
 | 26.1.2 | déclarée, en attente de mappings Fabric | — |
 | 26.2 | déclarée, en attente de mappings Fabric | — |
+| 26.3 | déclarée, en attente de mappings Fabric | — |
 
 Les sources de `src/main/java` sont recompilées dans chaque sous-projet, contre le
 jar Minecraft de sa version : c'est ce qui permet au HUD et au menu d'utiliser
@@ -261,6 +266,28 @@ dépôt : Fabric ne publie pas de mappings yarn pour toute la ligne 26. Le
 `settings.gradle` ignore un sous-projet dont les mappings manquent plutôt que
 d'échouer, et la version se construira d'elle-même au premier build qui suivra
 leur publication.
+
+Déclarer une version à l'avance ne coûte donc rien et évite d'avoir à y penser
+le jour où les mappings paraissent. Ce que cela demande en revanche, c'est que
+le catalogue ait ses entrées pour cette version : sans elles, le jar serait
+construit et publié sans jamais être installé, puisque c'est le catalogue qui
+porte l'empreinte et l'URL du mod. Les trois versions `26.x` y figurent, avec
+**Java 25** — c'est la ligne 26 qui l'impose, et une valeur fausse ici gagne
+contre les métadonnées de Mojang.
+
+### Les versions de test
+
+Le launcher propose aussi **la dernière snapshot**, et une seule : celle que
+Mojang annonce dans `latest.snapshot`, quand elle est plus récente que la
+dernière release. Elle est tenue **hors** de la liste des releases, pour une
+raison qui n'est pas cosmétique : une snapshot est par construction la plus
+récente de toutes, donc en tête de liste elle deviendrait la version proposée
+par défaut à quelqu'un qui veut simplement jouer.
+
+Sur une snapshot, Fabric est résolu dynamiquement comme pour n'importe quelle
+version, et le jeu démarre en vanilla si Fabric n'a pas encore publié. Le mod
+Paranoia, lui, n'existe pas : aucun jar n'est compilé pour une version de test.
+L'assistant le dit avant la création du profil.
 
 ## 1.2 Les six mods de performance
 
@@ -1908,7 +1935,7 @@ La deuxième ligne mérite d'être soulignée : **le mixin visait la mauvaise m�
 et c'est la sonde de bytecode qui l'a corrigé avant publication.** L'outillage a
 fonctionné ; c'est la décision de publier une moitié qui a échoué.
 
-## 4.3 Les quatre bancs d'essai
+## 4.3 Les cinq bancs d'essai
 
 Tous tournent dans le job `checks` de `build-windows`, **à chaque push**, et non
 seulement les jours de release.
@@ -1956,6 +1983,26 @@ Il tourne à chaque push pour une raison précise : ce script ne s'exécute qu'�
 publication, et son échec ne se voit pas là où on regarde — la release part, les
 jobs restent verts, et **seul un joueur qui ne reçoit plus de mise à jour le
 découvre**.
+
+### Banc 5 — la liste des versions et la snapshot
+
+`apps/backend/scripts/test-minecraft-versions.ts`, six scénarios contre un
+manifeste Mojang servi en local — donc sans appel réseau, et vert même quand
+`piston-meta.mojang.com` est injoignable.
+
+Il existe parce que les deux défauts possibles de ce code sont **silencieux** :
+
+- une snapshot qui se glisse dans la liste des releases s'y retrouve en tête —
+  elle est par construction la plus récente — donc elle devient la version
+  proposée par défaut à quelqu'un qui veut juste jouer ;
+- une snapshot annoncée le jour d'une sortie, quand Mojang met `latest.snapshot`
+  à l'identifiant de la release, affiche une release sous un nom qui n'est pas
+  le sien.
+
+Dans les deux cas le profil se crée, le jeu se lance, et c'est le joueur qui
+découvre qu'il n'est pas sur la version qu'il croyait. Le banc couvre aussi le
+mode hors ligne : la dernière liste connue **et** la dernière snapshot connue
+survivent au redémarrage.
 
 ## 4.4 Les vérifications de build
 
@@ -2453,10 +2500,19 @@ encore été observé. La désynchronisation assumée (2.8) est le point à surv
 si elle se produit souvent, la décision de ne pas la corriger devra être revue.
 
 **7. 26.x.**
-Les versions 26.1.2 et 26.2 sont déclarées et se construiront d'elles-mêmes dès que
-Fabric publiera ses mappings yarn. Rien à faire d'ici là — mais il faudra alors
-repasser les sondes, parce que c'est exactement le genre de saut où une signature
-bouge.
+Les versions 26.1.2, 26.2 et 26.3 sont déclarées, avec leurs entrées de
+catalogue et Java 25, et se construiront d'elles-mêmes dès que Fabric publiera
+ses mappings yarn. Rien à faire d'ici là — mais il faudra alors repasser les
+sondes, parce que c'est exactement le genre de saut où une signature bouge, et
+remettre 26.x dans les cas du test de fumée du sidecar, d'où il est écarté tant
+qu'aucun jar ne peut exister.
+
+**8. La snapshot, en jeu.**
+Le mécanisme est en place et éprouvé contre un manifeste local (six scénarios,
+dont le jour d'une sortie et le mode hors ligne). Ce qui n'a pas été observé,
+c'est un lancement réel sur une snapshot : Fabric y publie vite, mais pas
+toujours, et c'est le premier endroit où le chemin « pas de loader, on lance en
+vanilla » servira pour de bon.
 
 ---
 

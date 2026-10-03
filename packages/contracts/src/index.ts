@@ -195,4 +195,18 @@ export interface RemoteConfiguration {
    * la moindre explication.
    */
   clientModVersions?: string[];
+  /**
+   * La derniere snapshot publiee par Mojang, quand elle est plus recente que
+   * la derniere release.
+   *
+   * <p>Hors de `supportedMinecraftVersions` volontairement: une snapshot ne se
+   * choisit pas pour jouer sur un serveur, elle se choisit pour essayer la
+   * prochaine version. Melangee aux releases elle serait prise pour l'une
+   * d'elles, et elle serait aussi, par construction, toujours en tete de liste
+   * -- donc le defaut propose a la creation d'un profil.
+   *
+   * <p>Absente quand Mojang n'annonce rien de plus recent que la derniere
+   * release, ce qui est le cas le jour d'une sortie.
+   */
+  latestSnapshot?: string;
 }

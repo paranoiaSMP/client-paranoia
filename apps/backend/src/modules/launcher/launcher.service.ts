@@ -10,6 +10,7 @@ import {
 	setPlayingPresence,
 } from "../discord/discord.service.js";
 import { getManifest } from "../catalog/catalog.routes.js";
+import { minecraftVersionType } from "../catalog/minecraftVersions.js";
 import { exportProfile } from "../profiles/profiles.store.js";
 import { ensureFabric } from "./fabricDownloader.js";
 import { latestStableLoader } from "./fabricVersions.js";
@@ -497,7 +498,11 @@ export async function launchMinecraft(
 			root: rootPath,
 			version: {
 				number: minecraftVersion,
-				type: "release",
+				// Le type reel, et non « release » pour tout le monde: c'est ce que
+				// le jeu affiche dans F3 et ce qu'il joint a un rapport de plantage.
+				// Une snapshot annoncee comme une release est le genre de detail qui
+				// fait chercher au mauvais endroit pendant une heure.
+				type: await minecraftVersionType(minecraftVersion),
 			},
 			memory: {
 				// La RAM du profil reste prioritaire; les parametres fournissent le
