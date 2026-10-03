@@ -8,6 +8,7 @@ import {
 	clearGameLogs,
 } from "./launcher.service.js";
 import { markProfilePlayed } from "../profiles/profiles.store.js";
+import { detecteJava, sondeJava } from "./javaDetect.js";
 import { sessionDeLancement } from "../auth/auth.session.js";
 import { EchecRenouvellement } from "../auth/auth.microsoft.js";
 
@@ -62,6 +63,35 @@ launcherRouter.post("/play", async (req, res, next) => {
 			});
 		}
 		next(err);
+	}
+});
+
+/**
+ * Les Java installes sur la machine, pour que le joueur choisisse au lieu de
+ * taper un chemin absolu qu'il ne connait pas.
+ */
+launcherRouter.get("/java", async (_req, res, next) => {
+	try {
+		return res.json(await detecteJava());
+	} catch (err) {
+		return next(err);
+	}
+});
+
+/**
+ * Verifie un chemin saisi a la main et rend ce que la JVM declare.
+ *
+ * <p>Repondre « ce fichier n'est pas un Java » au moment ou on le choisit vaut
+ * mieux que de le decouvrir a l'echec du lancement, apres le telechargement.
+ */
+launcherRouter.post("/java/verifier", async (req, res, next) => {
+	try {
+		const { chemin } = z
+			.object({ chemin: z.string().min(1).max(512) })
+			.parse(req.body);
+		return res.json(await sondeJava(chemin));
+	} catch (err) {
+		return next(err);
 	}
 });
 

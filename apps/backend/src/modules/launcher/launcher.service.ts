@@ -2,6 +2,7 @@ import { Client } from "minecraft-launcher-core";
 import fs from "node:fs";
 import path from "node:path";
 import { ensureJava } from "./javaDownloader.js";
+import { javaInstallePour } from "./javaDetect.js";
 import { requiredJavaMajor } from "./javaRequirement.js";
 import { tuningFlags } from "./jvmFlags.js";
 import { readSettings } from "../settings/settings.store.js";
@@ -139,6 +140,21 @@ export function cancelLaunch(profileId: string) {
 	}
 }
 
+/**
+ * Le binaire de console a cote d'un `javaw`, ou le chemin tel quel.
+ *
+ * <p>Sous Windows, `javaw.exe` n'ouvre pas de console et n'ecrit donc nulle
+ * part: l'installateur Fabric, dont on lit la sortie, ne rendrait jamais rien.
+ * Les deux binaires vivent toujours dans le meme dossier.
+ */
+function consoleVoisine(chemin: string): string {
+	if (!chemin.toLowerCase().endsWith("javaw.exe")) {
+		return chemin;
+	}
+	const voisine = chemin.slice(0, -"javaw.exe".length) + "java.exe";
+	return fs.existsSync(voisine) ? voisine : chemin;
+}
+
 export async function launchMinecraft(
 	profileId: string,
 	minecraftVersion: string,
@@ -245,18 +261,60 @@ export async function launchMinecraft(
 			progress: 0,
 			text: `Verification de Java ${javaMajor}...`,
 		});
-		const java = await ensureJava(
-			javaMajor,
-			rootPath,
-			(text: string, percentage: number) => {
-				updateStatus({ state: "downloading_java", progress: percentage, text });
-			},
-		);
+
+		// Le Java choisi par le joueur passe avant tout, et surtout avant le
+		// telechargement: il etait respecte, mais seulement apres avoir attendu
+		// deux cents megaoctets de runtime dont on n'allait rien faire.
+		let javaExecutable = settings.javaPath.trim();
+		let java: Awaited<ReturnType<typeof ensureJava>> | null = null;
+
+		if (!javaExecutable) {
+			try {
+				java = await ensureJava(
+					javaMajor,
+					rootPath,
+					(text: string, percentage: number) => {
+						updateStatus({ state: "downloading_java", progress: percentage, text });
+					},
+				);
+				javaExecutable = java.javaw;
+			} catch (err) {
+				// Le telechargement echoue -- antivirus, disque plein, reseau
+				// d'entreprise, Adoptium indisponible -- et c'etait jusqu'ici la fin
+				// de la partie. La machine porte pourtant presque toujours un Java:
+				// celui du launcher Mojang, celui d'une installation systeme. On le
+				// cherche avant d'abandonner.
+				updateStatus({
+					state: "downloading_java",
+					progress: 0,
+					text: `Java ${javaMajor} non telecharge, recherche sur la machine...`,
+				});
+
+				const installe = await javaInstallePour(javaMajor);
+				if (!installe) {
+					throw new Error(
+						`Java ${javaMajor} n'a pas pu etre telecharge et aucun Java ${javaMajor} ` +
+							`n'a ete trouve sur la machine. Installe-le, ou indique son chemin ` +
+							`dans Parametres > Java. Detail: ${
+								err instanceof Error ? err.message : String(err)
+							}`,
+					);
+				}
+
+				javaExecutable = installe.chemin;
+				const message = `Java ${installe.major} trouve sur la machine (${installe.origine}): ${installe.chemin}`;
+				console.warn(`[Launcher] ${message}`);
+				addLog(`[Launcher] ${message}`);
+			}
+		}
 
 		if (cancelFlags.get(profileId)) throw new Error("Lancement annulé");
 
-		// Un chemin Java saisi dans les parametres prime sur le runtime telecharge.
-		const javaExecutable = settings.javaPath.trim() || java.javaw;
+		// L'installateur Fabric veut un binaire de console: son resultat se lit
+		// sur la sortie standard, et `javaw` n'en a pas. Le runtime telecharge
+		// fournit les deux; un chemin saisi par le joueur peut pointer `javaw`,
+		// auquel cas le `java` d'a cote fait l'affaire.
+		const javaConsole = java?.java ?? consoleVoisine(javaExecutable);
 
 		// 2. Installer Fabric
 		// Le manifeste peut epingler un loader precis; sinon on prend le dernier
@@ -287,7 +345,7 @@ export async function launchMinecraft(
 				rootPath,
 				manifest.minecraftVersion,
 				loaderVersion,
-				java.java,
+				javaConsole,
 				(text, percentage) => {
 					updateStatus({
 						state: "downloading_assets",
