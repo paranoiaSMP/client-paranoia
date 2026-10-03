@@ -139,7 +139,8 @@ async function main() {
       // Resolve via @prisma/client node package
       (() => {
         try {
-          return join(dirname(require.resolve("@prisma/client/package.json")), "..", ".prisma", "client");
+          // Go up two levels: from @prisma/client to @prisma to node_modules, then into .prisma/client
+          return join(dirname(require.resolve("@prisma/client/package.json")), "..", "..", ".prisma", "client");
         } catch {
           return "";
         }
