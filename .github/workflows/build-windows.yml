@@ -53,6 +53,9 @@ jobs:
       - name: Test the Sodium preset
         run: pnpm --filter @paranoia/backend test:sodium
 
+      - name: Test the Minecraft version list and the snapshot
+        run: pnpm --filter @paranoia/backend test:versions
+
       - name: Setup JDK 21 and 25
         uses: actions/setup-java@v4
         with:
@@ -228,6 +231,25 @@ jobs:
                 }
                 Write-Host "mod client $label : OK ($($manifest.clientMod.fileName))"
               }
+
+              # Une snapshot: manifeste rendu pour la bonne version, et sans le
+              # jar d'une autre -- il serait refuse au telechargement, ou charge.
+              $horsCatalogue = @{
+                minecraftVersion = "26w40a"
+                profileTypeId = "pvp"
+                graphicsModeId = "balanced"
+              } | ConvertTo-Json -Compress
+
+              $snap = Invoke-RestMethod -Uri "http://127.0.0.1:47820/v1/catalog/manifest" `
+                -Method Post -ContentType "application/json" -Body $horsCatalogue -TimeoutSec 5
+
+              if ($snap.minecraftVersion -ne "26w40a") {
+                throw "manifeste d'une snapshot : version rendue $($snap.minecraftVersion)"
+              }
+              if ($snap.clientMod) {
+                throw "manifeste d'une snapshot : clientMod $($snap.clientMod.fileName) alors qu'aucun jar n'existe"
+              }
+              Write-Host "snapshot hors catalogue : OK (manifeste vanilla, sans mod)"
             }
           } finally {
             Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue

@@ -7,7 +7,10 @@ import type {
 } from "@paranoia/contracts";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { minecraftReleasesOrFallback } from "./minecraftVersions.js";
+import {
+  latestSnapshotOrNull,
+  minecraftReleasesOrFallback,
+} from "./minecraftVersions.js";
 import stableConfig from "../../../../../examples/remote-config/stable-config.json" with { type: "json" };
 import installCatalog from "../../../../../examples/remote-config/install-catalog.json" with { type: "json" };
 
@@ -68,6 +71,11 @@ catalogRouter.get("/remote-config", async (_req, res, next) => {
       base.supportedMinecraftVersions,
     );
 
+    // A part, et pas dans la liste ci-dessus: une snapshot ne se choisit pas
+    // pour jouer sur un serveur, elle se choisit pour essayer la prochaine
+    // version. La melanger aux releases la ferait prendre pour l'une d'elles.
+    const latestSnapshot = await latestSnapshotOrNull();
+
     // Versions reellement couvertes par le mod, tirees du catalogue: elles
     // changent a chaque release, il ne faut pas les ecrire a la main.
     const clientModVersions = [
@@ -78,7 +86,12 @@ catalogRouter.get("/remote-config", async (_req, res, next) => {
       ),
     ];
 
-    return res.json({ ...base, supportedMinecraftVersions, clientModVersions });
+    return res.json({
+      ...base,
+      supportedMinecraftVersions,
+      clientModVersions,
+      ...(latestSnapshot ? { latestSnapshot } : {}),
+    });
   } catch (err) {
     return next(err);
   }

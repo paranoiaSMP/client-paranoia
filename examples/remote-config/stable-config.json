@@ -1,7 +1,15 @@
 {
   "schemaVersion": "1.0.0",
   "releaseChannel": "stable",
-  "supportedMinecraftVersions": ["1.21.11", "1.21.10", "1.21.8", "1.20.6"],
+  "supportedMinecraftVersions": [
+    "26.3",
+    "26.2",
+    "26.1.2",
+    "1.21.11",
+    "1.21.10",
+    "1.21.8",
+    "1.20.6"
+  ],
   "profileTypes": [
     {
       "id": "pvp",

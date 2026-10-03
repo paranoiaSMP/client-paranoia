@@ -258,7 +258,12 @@ jobs:
         if: always()
         working-directory: apps/client-mod
         run: |
-          for version in 1.21.8 1.21.11 26.1.2 26.2; do
+          # La liste est lue sur le disque, comme dans settings.gradle, et non
+          # ecrite ici. Ecrite, elle etait deja fausse: 1.21.10 n'y figurait pas
+          # alors qu'elle se construit et se publie depuis des semaines, donc la
+          # sonde ne disait rien d'elle. Ajouter une version demandait deux
+          # gestes, et en oublier un ne se voyait pas.
+          for version in $(ls -1 versions | sort -V); do
             # Une version que Fabric n'outille pas encore n'a ni classpath ni
             # jar: la sonde n'a rien a lire et ce n'est pas une erreur.
             if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then
