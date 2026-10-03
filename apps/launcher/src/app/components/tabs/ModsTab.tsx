@@ -441,10 +441,10 @@ export function ModsTab({
           <div className="bg-surface border border-divider rounded-xl p-6 text-center">
             <p className="text-neutral-600 text-sm">
               {contentType === "shader"
-                ? "Aucun shader installé sur ce profil."
+                ? "Aucun shader installé. Utilisez la barre de recherche au-dessus pour en ajouter."
                 : contentType === "resourcepack"
-                ? "Aucun pack de textures installé sur ce profil."
-                : "Aucun mod installé sur ce profil."}
+                ? "Aucun pack de textures installé. Utilisez la barre de recherche au-dessus pour en ajouter."
+                : "Aucun mod installé. Utilisez la barre de recherche au-dessus pour en ajouter."}
             </p>
           </div>
         ) : (
