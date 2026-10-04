@@ -170,7 +170,7 @@ export function ParametresTab({ importJson, setImportJson, handleImportProfile, 
             type="text"
             value={javaPath}
             onChange={e => setJavaPath(e.target.value)}
-            placeholder="C:\Program Files\Java\jdk-21\bin\javaw.exe"
+            placeholder="Chemin absolu (ex: /usr/lib/jvm/... ou C:\Program Files\...)"
             className="w-full bg-ground border border-divider rounded-lg px-3 py-2.5 text-sm text-ink font-mono placeholder:text-neutral-700 focus:outline-none focus:border-accent transition-colors"
           />
 
