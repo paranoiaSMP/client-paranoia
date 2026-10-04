@@ -119,9 +119,9 @@ jobs:
           # la boucle, et le jour ou l'un de ces programmes lira une ligne, la
           # boucle sautera une plateforme sans rien dire.
           plateformes=(
-            "windows-x86_64 -setup\.exe$"
+            "windows-x86_64 -setup\.nsis\.zip$"
             "darwin-aarch64 \.app\.tar\.gz$"
-            "linux-x86_64 \.AppImage$"
+            "linux-x86_64 \.AppImage\.tar\.gz$"
           )
           posees=""
 
