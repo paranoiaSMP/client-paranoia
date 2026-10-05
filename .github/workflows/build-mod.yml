@@ -427,6 +427,77 @@ jobs:
             cat build/fabric-resolution.txt
           fi
 
+      # Sonde dediee a l'ecran d'accueil Paranoia, qui remplace l'ecran-titre.
+      #
+      # Elle cherche par NOM SIMPLE dans le classpath reel, et non par nom
+      # complet. C'est la difference qui compte: une FQN devinee ne repond que
+      # « classe introuvable », ce qui n'apprend rien -- ni ou la classe est
+      # passee, ni si elle existe encore. Le nom simple, lui, survit aux
+      # deplacements de paquet, et c'est precisement ce qui arrive au panorama
+      # entre les versions ciblees.
+      #
+      # Tout le mod ne dessine aujourd'hui que des rectangles et du texte:
+      # `fill` et `drawText` sont les deux seules signatures qui n'ont pas bouge
+      # de 1.21.8 a 26.3. Un fond en panorama sort de ce cadre pour la premiere
+      # fois, d'ou cette lecture avant d'ecrire quoi que ce soit.
+      - name: Probe the title screen and panorama API
+        if: always()
+        working-directory: apps/client-mod
+        run: |
+          simples="TitleScreen CubeMapRenderer RotatingCubeMapRenderer PanoramaRenderer
+                   LogoDrawer SelectWorldScreen MultiplayerScreen OptionsScreen"
+
+          for version in $(ls -1 versions | sort -V); do
+            if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then
+              echo "=============== $version (pas encore construite, ignoree)"
+              continue
+            fi
+            cp=$(cat "versions/$version/build/compile-classpath.txt")
+            # Seulement les jars de Minecraft: parcourir les quelque deux cents
+            # jars du classpath avec unzip coute une minute pour rien.
+            jars=$(printf '%s' "$cp" | tr ':' '\n' | grep -E 'minecraft.*\.jar$' || true)
+            echo "=============== $version"
+
+            for simple in $simples; do
+              fqns=$(for jar in $jars; do
+                unzip -l "$jar" 2>/dev/null \
+                  | grep -oE "net/minecraft/[a-z0-9/]*${simple}\.class" || true
+              done | sort -u | sed 's|/|.|g; s|\.class$||')
+
+              if [ -z "$fqns" ]; then
+                echo "--- $simple: INTROUVABLE"
+                continue
+              fi
+
+              for fqn in $fqns; do
+                echo "--- $fqn"
+                javap -p -cp "$cp" "$fqn" 2>/dev/null | sed 's/^ */    /' | head -40 \
+                  || echo "    (illisible)"
+              done
+            done
+
+            # Ces quatre-la ne changent pas de paquet; ce sont leurs signatures
+            # qui bougent, et l'ecran d'accueil en depend directement: dessiner
+            # une texture, poser un fond, ouvrir un ecran, ouvrir un lien.
+            for entry in \
+              "net.minecraft.client.gui.DrawContext:rawTexture|rawGuiTexture|rawSprite" \
+              "net.minecraft.client.gui.screen.Screen:enderBackground|lur|anorama|enderInGameBackground|enderDarkening" \
+              "net.minecraft.client.MinecraftClient:setScreen|etWindow|etSession" \
+              "net.minecraft.client.gui.screen.ConfirmLinkScreen:*"
+            do
+              class="${entry%%:*}"
+              members="${entry#*:}"
+              echo "--- $class"
+              if [ "$members" = "*" ]; then
+                javap -p -cp "$cp" "$class" 2>/dev/null | head -20 \
+                  || echo "    (classe introuvable)"
+              else
+                javap -p -cp "$cp" "$class" 2>/dev/null \
+                  | grep -E "  .*($members)" || echo "    (aucun membre correspondant)"
+              fi
+            done
+          done
+
       # En toute derniere position, et seulement quand le build a echoue.
       #
       # Raison d'etre: les erreurs de compilation etaient imprimees par Gradle au
