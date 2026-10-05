@@ -63,15 +63,51 @@ public final class TitleController {
     }
 
     /**
-     * Un bouton pose: sa place, son texte, et ce qu'il fait.
+     * Un bouton pose: sa place, ce qu'il montre, et ce qu'il fait.
      *
-     * <p>{@code icone} n'est rempli que pour les carres du bas, {@code label}
-     * que pour les barres. Un bouton n'est jamais les deux.
+     * <p>Une barre porte une icone <em>et</em> un texte, centres ensemble --
+     * c'est la disposition du modele. Un carre du bas ne porte qu'une icone,
+     * et son {@code label} est nul.
      */
     private record Bouton(
         Action action, String label, String icone,
-        int x, int y, int w, int h, boolean accent) {
+        int x, int y, int w, int h, boolean boutique) {
     }
+
+    /*
+     * Les mesures, relevees sur le modele plutot qu'approchees a l'oeil.
+     *
+     * <p>La capture fait 1917 de large pour une interface a l'echelle 2: tout
+     * ce qui suit est donc la moitie de ce qu'on y mesure. La barre y fait 398
+     * sur 40 avec 8 d'ecart, soit 200 sur 20 avec 4 -- exactement les
+     * dimensions d'un bouton de Minecraft. Le modele ne les a pas inventees,
+     * il les a rhabillees, et il n'y a aucune raison de s'en ecarter.
+     */
+
+    /** Barre pleine largeur: Solo, Multijoueur. */
+    private static final int BARRE_L = 200;
+    private static final int BARRE_H = 20;
+    /** Ecart vertical entre deux barres, et horizontal entre les deux demies. */
+    private static final int ECART = 4;
+    /** Demi-barre: la rangee du bas en porte deux. */
+    private static final int DEMI_L = (BARRE_L - ECART) / 2;
+    /** Cote de la zone cliquable d'un carre du bas, et pas entre deux centres. */
+    private static final int CARRE = 20;
+    private static final int PAS_CARRE = 23;
+
+    /*
+     * Les couleurs, relevees elles aussi. Le fond d'une barre rend (19, 21, 27)
+     * au-dessus d'un panorama clair comme au-dessus d'un panorama sombre: il
+     * est donc opaque, et non un noir translucide comme on pourrait le croire.
+     */
+    private static final int BARRE = 0xFF13151B;
+    private static final int BARRE_SURVOL = 0xFF1E2129;
+    private static final int BARRE_BORD = 0x1FE9E9ED;
+    /** La boutique garde sa couleur propre: c'est ce qui la distingue. */
+    private static final int VERT_FOND = 0xFF101E12;
+    private static final int VERT_FOND_SURVOL = 0xFF17301C;
+    private static final int VERT_BORD = 0xFF2A4A38;
+    private static final int VERT = 0xFF5BD98A;
 
     private static final String[] PHRASES = {
         "Tourne plus vite que prevu",
@@ -174,7 +210,9 @@ public final class TitleController {
 
     private void logo(DrawContext context, Teinte teinte) {
         int milieu = width / 2;
-        int haut = Math.max(24, height / 2 - 96);
+        // Le modele centre son logo 76 au-dessus du milieu de l'ecran, soit
+        // 45 au-dessus de la premiere barre.
+        int haut = Math.max(12, height / 2 - 88);
 
         // Trois fois la taille du texte, autour du point ou il doit tomber: la
         // police du jeu n'a qu'un corps, et c'est la seule facon d'avoir un
@@ -196,28 +234,43 @@ public final class TitleController {
         boolean survole = MenuTheme.inside(
             mouseX, mouseY, bouton.x(), bouton.y(), bouton.w(), bouton.h());
 
-        int fond = bouton.accent()
-            ? (survole ? teinte.argb() : teinte.voile())
-            : (survole ? MenuTheme.CARD_HOVER : MenuTheme.CARD);
-        MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), fond);
-        MenuTheme.outline(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
-            survole ? teinte.argb() : MenuTheme.CARD_BORDER);
-
-        if (bouton.icone() != null) {
-            // Deux pixels d'ecran par pixel de la grille: l'icone fait alors
-            // 18 de cote dans un carre de 22, soit deux de marge tout autour.
-            int pixel = 2;
-            int cote = ModuleIcons.size(pixel);
+        // Un carre du bas n'a pas de fond au repos: sur le modele, seules les
+        // icones flottent au-dessus du panorama. Le fond n'apparait qu'au
+        // survol, et c'est lui qui dit que la zone cliquable est plus large
+        // que l'icone.
+        if (bouton.label() == null) {
+            if (survole) {
+                MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
+                    MenuTheme.ROW_HOVER);
+            }
             ModuleIcons.draw(context, bouton.icone(),
-                bouton.x() + (bouton.w() - cote) / 2,
-                bouton.y() + (bouton.h() - cote) / 2,
-                pixel,
+                bouton.x() + (bouton.w() - ModuleIcons.size(1)) / 2,
+                bouton.y() + (bouton.h() - ModuleIcons.size(1)) / 2,
+                1,
                 survole ? teinte.argb() : MenuTheme.TEXT);
             return;
         }
 
-        MenuTheme.centered(context, font, bouton.label(), bouton.x(), bouton.w(),
-            bouton.y() + (bouton.h() - font.fontHeight) / 2 + 1, MenuTheme.TEXT);
+        int fond = bouton.boutique()
+            ? (survole ? VERT_FOND_SURVOL : VERT_FOND)
+            : (survole ? BARRE_SURVOL : BARRE);
+        int bord = bouton.boutique()
+            ? VERT_BORD
+            : (survole ? teinte.argb() : BARRE_BORD);
+        int encre = bouton.boutique() ? VERT : MenuTheme.TEXT;
+
+        MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), fond);
+        MenuTheme.outline(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), bord);
+
+        // Icone et texte centres ensemble, et non le texte seul: c'est la
+        // disposition du modele, ou le couple se lit comme un seul bloc.
+        int cote = ModuleIcons.size(1);
+        int bloc = cote + 4 + font.getWidth(bouton.label());
+        int x = bouton.x() + (bouton.w() - bloc) / 2;
+
+        ModuleIcons.draw(context, bouton.icone(), x, bouton.y() + (bouton.h() - cote) / 2, 1, encre);
+        MenuTheme.text(context, font, bouton.label(), x + cote + 4,
+            bouton.y() + (bouton.h() - font.fontHeight) / 2 + 1, encre);
     }
 
     /** Qui est connecte, en haut a gauche, comme dans le launcher. */
@@ -234,9 +287,9 @@ public final class TitleController {
     private void pied(DrawContext context) {
         MenuTheme.text(context, font,
             "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
-            8, height - 14, MenuTheme.TEXT_DIM);
+            8, height - 10, MenuTheme.TEXT_DIM);
         MenuTheme.right(context, font, "Non affilie a Mojang",
-            0, width - 8, height - 14, MenuTheme.TEXT_DIM);
+            0, width - 8, height - 10, MenuTheme.TEXT_DIM);
     }
 
     // --------------------------------------------------------------- position
@@ -251,27 +304,26 @@ public final class TitleController {
     private void dispose() {
         boutons.clear();
 
-        int largeBarre = 220;
-        int hauteurBarre = 22;
-        int espace = 6;
-        int gauche = (width - largeBarre) / 2;
-        int y = Math.max(72, height / 2 - 18);
+        int gauche = (width - BARRE_L) / 2;
+        // La premiere barre tombe 31 au-dessus du milieu de l'ecran sur le
+        // modele (236 contre 266 en coordonnees d'interface). Trois rangees
+        // suivent, au pas de BARRE_H + ECART.
+        int y = height / 2 - 31;
 
-        boutons.add(new Bouton(Action.SOLO, "Solo", null,
-            gauche, y, largeBarre, hauteurBarre, false));
-        y += hauteurBarre + espace;
-        boutons.add(new Bouton(Action.MULTI, "Multijoueur", null,
-            gauche, y, largeBarre, hauteurBarre, false));
-        y += hauteurBarre + espace;
+        boutons.add(new Bouton(Action.SOLO, "Solo", "titre-solo",
+            gauche, y, BARRE_L, BARRE_H, false));
+        y += BARRE_H + ECART;
+        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "titre-multi",
+            gauche, y, BARRE_L, BARRE_H, false));
+        y += BARRE_H + ECART;
 
-        int demi = (largeBarre - espace) / 2;
-        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", null,
-            gauche, y, demi, hauteurBarre, false));
-        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", null,
-            gauche + demi + espace, y, largeBarre - demi - espace, hauteurBarre, true));
+        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "titre-paranoia",
+            gauche, y, DEMI_L, BARRE_H, false));
+        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "titre-boutique",
+            gauche + DEMI_L + ECART, y, BARRE_L - DEMI_L - ECART, BARRE_H, true));
 
-        // Les carres, sous les barres, centres comme elles.
-        int cote = 22;
+        // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
+        // y commence a 17 du bord, et deux centres voisins sont distants de 23.
         Action[] carres = {
             Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA, Action.QUITTER,
         };
@@ -279,12 +331,12 @@ public final class TitleController {
             "titre-options", "titre-paranoia", "titre-teinte", "titre-panorama", "titre-quitter",
         };
 
-        int total = carres.length * cote + (carres.length - 1) * espace;
+        int total = (carres.length - 1) * PAS_CARRE + CARRE;
         int x = (width - total) / 2;
-        int bas = y + hauteurBarre + 14;
+        int bas = height - 17 - (CARRE - ModuleIcons.size(1)) / 2;
         for (int i = 0; i < carres.length; i++) {
-            boutons.add(new Bouton(carres[i], null, icones[i], x, bas, cote, cote, false));
-            x += cote + espace;
+            boutons.add(new Bouton(carres[i], null, icones[i], x, bas, CARRE, CARRE, false));
+            x += PAS_CARRE;
         }
     }
 
