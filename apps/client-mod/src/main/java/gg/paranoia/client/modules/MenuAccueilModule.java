@@ -26,7 +26,7 @@ public final class MenuAccueilModule extends Module {
     private final BooleanSetting splash =
         add(new BooleanSetting("splash", "Phrase du jour", true));
     private final EnumSetting<Panorama> panorama = add(new EnumSetting<>(
-        "panorama", "Panorama", Panorama.NOCTURNE, Panorama.values(), Panorama::label));
+        "panorama", "Panorama", Panorama.SPAWN, Panorama.values(), Panorama::label));
     private final EnumSetting<Teinte> teinte = add(new EnumSetting<>(
         "teinte", "Teinte", Teinte.AMETHYSTE, Teinte.values(), Teinte::label));
 

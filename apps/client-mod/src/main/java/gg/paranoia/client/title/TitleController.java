@@ -350,6 +350,6 @@ public final class TitleController {
 
     private Panorama panoramaChoisi() {
         MenuAccueilModule reglages = MenuAccueilModule.instance();
-        return reglages == null ? Panorama.NOCTURNE : reglages.panorama();
+        return reglages == null ? Panorama.SPAWN : reglages.panorama();
     }
 }
