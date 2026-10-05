@@ -215,9 +215,9 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -n 1)
+          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage.tar.gz" ! -name "*.sig" | head -n 1)
           if [ -z "$archive" ]; then
-            echo "::error::Archive .AppImage absente"
+            echo "::error::Archive .AppImage.tar.gz absente"
             exit 1
           fi
 
@@ -268,6 +268,8 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.sig
             apps/launcher/src-tauri/target/release/bundle/deb/*.deb
             apps/launcher/src-tauri/target/release/bundle/appimage/latest.json
