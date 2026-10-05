@@ -323,6 +323,57 @@ jobs:
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.nsis.zip
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.nsis.zip.sig
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
+            mod-jars/**/*.jar
+
+      # Les jars du mod etaient attaches ici jusqu'au 25 septembre, et la ligne
+      # a ete retiree -- mais pas l'injection, qui continue d'ecrire dans le
+      # catalogue des URL de release GitHub. Chaque telechargement du mod
+      # repondait donc 404, et comme un mod qui ne s'installe pas ne doit jamais
+      # empecher de jouer, le jeu se lancait sans le client Paranoia, sans que
+      # rien ne le dise au joueur. Quatre versions ont ete publiees ainsi.
+      #
+      # Une URL qui ne repond pas fait echouer la publication a partir de
+      # maintenant: c'est la seule facon que ce silence-la ne revienne pas.
+      - name: Verify every injected mod URL resolves
+        if: steps.release.outputs.tag != ''
+        shell: pwsh
+        run: |
+          $catalogue = Get-Content examples/remote-config/install-catalog.json -Raw | ConvertFrom-Json
+          $urls = $catalogue.entries |
+            Where-Object { $_.clientMod } |
+            ForEach-Object { $_.clientMod.downloadUrl } |
+            Select-Object -Unique
+
+          if (-not $urls) {
+            throw "le catalogue ne reference aucun mod: l'injection n'a pas eu lieu"
+          }
+
+          # Trois essais: la release vient d'etre creee, et ses actifs ne sont
+          # pas toujours servis dans la seconde. Faire echouer une publication
+          # sur une propagation en cours serait pire que le defaut corrige ici.
+          $manquants = @()
+          foreach ($url in $urls) {
+            $ok = $false
+            foreach ($essai in 1..3) {
+              try {
+                $reponse = Invoke-WebRequest -Uri $url -Method Head -MaximumRedirection 5
+                Write-Host "$($reponse.StatusCode)  $url"
+                $ok = $true
+                break
+              } catch {
+                if ($essai -lt 3) { Start-Sleep -Seconds (5 * $essai) }
+              }
+            }
+            if (-not $ok) {
+              $manquants += $url
+              Write-Host "ECHEC   $url"
+            }
+          }
+
+          if ($manquants.Count -gt 0) {
+            throw "$($manquants.Count) jar(s) annonce(s) par le catalogue sont absents de la release"
+          }
+          Write-Host "les $($urls.Count) jars annonces par le catalogue sont bien publies"
 
       - name: Publish update manifest
         if: steps.release.outputs.tag != ''
