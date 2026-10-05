@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Bug, ChevronDown, Layers, Play, X } from "lucide-react";
+import { AlertTriangle, Bug, ChevronDown, Layers, Maximize2, Play, X } from "lucide-react";
 import type {
 	LauncherProfile,
 	MicrosoftAccount,
@@ -65,6 +65,7 @@ export function HomeScreen({
 	onReportBug,
 }: HomeScreenProps) {
 	const [newsExpanded, setNewsExpanded] = useState(true);
+	const [isFullNewsOpen, setIsFullNewsOpen] = useState(false);
 	// La progression arrive de 0 a 100. L'ancien accueil la multipliait encore
 	// par cent avant de la poser en largeur: la barre passait a fond des le
 	// premier pourcent, et le debordement etant masque, elle avait l'air de
@@ -239,19 +240,32 @@ export function HomeScreen({
 							<span>Signaler un bug</span>
 						</button>
 					</div>
-					<button
-						type="button"
-						onClick={() => setNewsExpanded((prev) => !prev)}
-						aria-expanded={newsExpanded}
-						className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
-					>
-						<span>{newsExpanded ? "Réduire" : "Afficher"}</span>
-						<ChevronDown
-							className={`size-4 transition-transform duration-200 ${
-								newsExpanded ? "" : "-rotate-90"
-							}`}
-						/>
-					</button>
+					<div className="flex items-center gap-2">
+						{news.length > 0 && (
+							<button
+								type="button"
+								onClick={() => setIsFullNewsOpen(true)}
+								className="flex items-center gap-1.5 rounded-md border border-divider px-2.5 py-1 text-xs font-medium text-neutral-400 hover:text-ink hover:border-neutral-600 transition-colors"
+								title="Voir toutes les actualités en grand"
+							>
+								<Maximize2 className="size-3.5 text-accent-400" />
+								<span>Voir en grand</span>
+							</button>
+						)}
+						<button
+							type="button"
+							onClick={() => setNewsExpanded((prev) => !prev)}
+							aria-expanded={newsExpanded}
+							className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
+						>
+							<span>{newsExpanded ? "Réduire" : "Afficher"}</span>
+							<ChevronDown
+								className={`size-4 transition-transform duration-200 ${
+									newsExpanded ? "" : "-rotate-90"
+								}`}
+							/>
+						</button>
+					</div>
 				</div>
 
 				{newsExpanded && (
@@ -260,7 +274,12 @@ export function HomeScreen({
 							Aucune actualité pour le moment.
 						</p>
 					) : (
-						<ExpandableNews news={news} />
+						<ExpandableNews
+							news={news}
+							isOpenInFull={isFullNewsOpen}
+							onCloseFull={() => setIsFullNewsOpen(false)}
+							onOpenFull={() => setIsFullNewsOpen(true)}
+						/>
 					)
 				)}
 			</section>

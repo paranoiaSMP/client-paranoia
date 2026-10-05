@@ -6,24 +6,34 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, children, title }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, maxWidth = "max-w-5xl" }: ModalProps) {
   useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
     } else {
       document.body.style.overflow = "auto";
     }
+
     return () => {
       document.body.style.overflow = "auto";
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -33,10 +43,10 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
           />
           
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative z-10 w-full max-w-5xl max-h-[90vh] min-h-[50vh] overflow-hidden rounded-[20px] border border-well bg-[#141414] shadow-2xl flex flex-col"
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            className={`relative z-10 w-full ${maxWidth} max-h-[90vh] overflow-hidden rounded-2xl border border-divider bg-ground shadow-2xl flex flex-col`}
           >
             {title && (
               <div className="flex items-center justify-between border-b border-well p-4 bg-surface">

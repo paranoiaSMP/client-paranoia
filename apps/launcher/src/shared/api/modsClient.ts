@@ -58,11 +58,22 @@ export type ModProject = {
   slug: string;
   title: string;
   description: string;
-  body: string;
-  gallery: { url: string; featured: boolean; title?: string; description?: string }[];
-  icon_url?: string;
+  body?: string;
+  gallery?: { url: string; featured?: boolean; title?: string; description?: string }[];
+  icon_url?: string | null;
   downloads: number;
   author?: string;
+  categories?: string[];
+  client_side?: string;
+  server_side?: string;
+  source_url?: string | null;
+  issues_url?: string | null;
+  wiki_url?: string | null;
+  discord_url?: string | null;
+  donation_urls?: { id?: string; platform?: string; url: string }[];
+  license?: { id?: string; name?: string; url?: string | null } | null;
+  published?: string;
+  updated?: string;
 };
 
 export async function getProject(projectId: string): Promise<ModProject> {
