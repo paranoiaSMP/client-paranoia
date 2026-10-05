@@ -59,6 +59,9 @@ jobs:
       - name: Test the Microsoft session renewal
         run: pnpm --filter @paranoia/backend test:auth
 
+      - name: Test the session restore at startup
+        run: pnpm --filter @paranoia/backend test:restore
+
       - name: Test the Java detection
         run: pnpm --filter @paranoia/backend test:java
 

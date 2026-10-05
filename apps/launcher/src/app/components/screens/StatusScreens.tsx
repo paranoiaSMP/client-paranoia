@@ -83,6 +83,14 @@ type LoginScreenProps = {
 	account: MicrosoftAccount | null;
 	accounts: MicrosoftAccount[];
 	connectingMicrosoft: boolean;
+	/**
+	 * Autorise l'ouverture spontanee de la fenetre Microsoft.
+	 *
+	 * <p>Calcule par {@code useAuth}, qui est le seul a savoir si la liste vide
+	 * veut dire « aucun compte » ou « on n'a pas pu lire le magasin », et si le
+	 * joueur vient de se deconnecter.
+	 */
+	connexionAutomatiqueAutorisee: boolean;
 	devModeAvailable: boolean;
 	onConnectMicrosoft: () => void;
 	onLocalDevContinue: () => void;
@@ -103,6 +111,7 @@ type LoginScreenProps = {
 export function LoginScreen({
 	accounts,
 	connectingMicrosoft,
+	connexionAutomatiqueAutorisee,
 	devModeAvailable,
 	onConnectMicrosoft,
 	onLocalDevContinue,
@@ -110,17 +119,20 @@ export function LoginScreen({
 }: LoginScreenProps) {
 	const attemptedAutoLogin = useRef(false);
 
+	// La condition etait « la liste est vide », et la liste etait vide a chaque
+	// demarrage: la fenetre Microsoft s'ouvrait donc toute seule a chaque
+	// lancement, devant un joueur deja connecte. Elle restait ensuite ouverte,
+	// son etiquette prise, et « Ajouter un compte » n'ouvrait plus rien.
 	useEffect(() => {
 		if (
-			accounts.length === 0 &&
+			connexionAutomatiqueAutorisee &&
 			!connectingMicrosoft &&
-			navigator.userAgent.toLowerCase().includes("windows") &&
 			!attemptedAutoLogin.current
 		) {
 			attemptedAutoLogin.current = true;
 			onConnectMicrosoft();
 		}
-	}, [accounts.length, connectingMicrosoft, onConnectMicrosoft]);
+	}, [connexionAutomatiqueAutorisee, connectingMicrosoft, onConnectMicrosoft]);
 
 	return (
 		<Frame>

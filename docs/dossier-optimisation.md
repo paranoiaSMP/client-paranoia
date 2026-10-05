@@ -1935,7 +1935,7 @@ La deuxième ligne mérite d'être soulignée : **le mixin visait la mauvaise m�
 et c'est la sonde de bytecode qui l'a corrigé avant publication.** L'outillage a
 fonctionné ; c'est la décision de publier une moitié qui a échoué.
 
-## 4.3 Les cinq bancs d'essai
+## 4.3 Les bancs d'essai
 
 Tous tournent dans le job `checks` de `build-windows`, **à chaque push**, et non
 seulement les jours de release.
@@ -2003,6 +2003,21 @@ Dans les deux cas le profil se crée, le jeu se lance, et c'est le joueur qui
 découvre qu'il n'est pas sur la version qu'il croyait. Le banc couvre aussi le
 mode hors ligne : la dernière liste connue **et** la dernière snapshot connue
 survivent au redémarrage.
+
+### Bancs 6 à 8 — ce qui n'est pas de l'optimisation, et tourne au même endroit
+
+Trois bancs ne mesurent aucune image par seconde et sont listés ici pour que le
+job `checks` soit décrit en entier :
+
+| Banc | Fichier | Ce qu'il protège |
+|---|---|---|
+| session Microsoft | `apps/backend/scripts/test-auth-session.ts` | ne pas se reconnecter : un compte n'est oublié que sur un refus explicite de Microsoft, jamais sur une panne de la chaîne |
+| restauration au démarrage | `apps/backend/scripts/test-auth-restore.ts` | **l'interface attend le service local avant de conclure qu'aucun compte n'est enregistré** — et un échec de lecture ne se confond pas avec une absence de compte |
+| détection de Java | `apps/backend/scripts/test-java-detect.ts` | trouver les Java déjà installés, sans demander un chemin absolu que personne ne connaît |
+
+Les trois existent pour la même raison que les cinq autres : leurs défauts sont
+silencieux. Le launcher qui redemande une connexion ne plante pas, il **demande
+poliment** — et le joueur en conclut que c'est normal.
 
 ## 4.4 Les vérifications de build
 
@@ -2408,6 +2423,10 @@ que soit sa version, parce que deux exemplaires empêchent Fabric de démarrer.
 | banc du préréglage vidéo | `apps/backend/scripts/test-graphics-preset.ts` |
 | banc des drapeaux JVM | `apps/backend/scripts/test-jvm-flags.ts` |
 | banc du préréglage Sodium | `apps/backend/scripts/test-sodium-preset.ts` |
+| banc de la liste des versions | `apps/backend/scripts/test-minecraft-versions.ts` |
+| banc de la session Microsoft | `apps/backend/scripts/test-auth-session.ts` |
+| banc de la restauration au démarrage | `apps/backend/scripts/test-auth-restore.ts` |
+| banc de la détection de Java | `apps/backend/scripts/test-java-detect.ts` |
 | banc du manifeste | `scripts/test-update-manifest.mjs` |
 | manifeste de mise à jour | `scripts/update-manifest.mjs` |
 | publication en deux temps | `.github/workflows/promote.yml` |

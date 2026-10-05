@@ -167,6 +167,18 @@ function enregistre(magasin: any, expiree: boolean) {
   });
 }
 
+/** Un compte nomme, pour les scenarios a plusieurs joueurs. */
+function enregistreNomme(magasin: any, uuid: string, pseudonyme: string) {
+  return magasin.saveAccount({
+    minecraftUuid: uuid,
+    minecraftUsername: pseudonyme,
+    skinUrl: "",
+    minecraftAccessToken: `minecraft-${pseudonyme.toLowerCase()}`,
+    microsoftRefreshToken: `refresh-${pseudonyme.toLowerCase()}`,
+    expiresAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+  });
+}
+
 async function principal() {
   console.log("\n--- session encore valable: aucun appel reseau");
   {
@@ -334,6 +346,76 @@ async function principal() {
     verifie(
       pour.accessToken === "minecraft-neuf",
       "un launcher anterieur a la 0.7.31 profite quand meme du renouvellement",
+    );
+    faux.ferme();
+  }
+
+  console.log("\n--- plusieurs comptes: le magasin les garde tous");
+  {
+    const faux = await sers({});
+    const donnees = dossierJetable();
+    const { magasin } = await charge(faux.base, donnees);
+
+    const premier = enregistreNomme(magasin, "uuid-un", "Joueur");
+    const second = enregistreNomme(magasin, "uuid-deux", "Amie");
+
+    verifie(magasin.listAccounts().length === 2, "les deux comptes sont rendus");
+    verifie(
+      magasin.getAccount(premier.id)?.minecraftUsername === "Joueur" &&
+        magasin.getAccount(second.id)?.minecraftUsername === "Amie",
+      "chacun est retrouvable par son identifiant",
+    );
+    verifie(premier.id !== second.id, "ils ont deux identifiants distincts");
+
+    // Le cas qui comptait: le joueur se reconnecte avec le premier compte
+    // alors que le second est enregistre. Le magasin remplace le premier, et
+    // le second ne doit pas partir avec.
+    const premierANeuf = enregistreNomme(magasin, "uuid-un", "Joueur");
+    verifie(
+      premierANeuf.id === premier.id,
+      "se reconnecter garde le meme identifiant de compte",
+    );
+    verifie(
+      magasin.listAccounts().length === 2,
+      "LE SECOND COMPTE SURVIT a la reconnexion du premier",
+    );
+
+    // Et au redemarrage du launcher: le magasin est relu depuis le disque, et
+    // sa deduplication passe sur chaque lecture.
+    compteur++;
+    const relu = await import(
+      `../src/modules/auth/accounts.store.js?essai=${compteur}`
+    );
+    process.env.XDG_DATA_HOME = donnees;
+    verifie(
+      relu.listAccounts().length === 2,
+      "les deux comptes sont encore la apres un redemarrage",
+    );
+    verifie(
+      relu
+        .listAccounts()
+        .map((c: any) => c.minecraftUsername)
+        .sort()
+        .join(",") === "Amie,Joueur",
+      "et ce sont bien les deux memes",
+    );
+    faux.ferme();
+  }
+
+  console.log("\n--- le meme compte deux fois: une seule entree");
+  {
+    const faux = await sers({});
+    const { magasin } = await charge(faux.base, dossierJetable());
+
+    enregistreNomme(magasin, "uuid-un", "Joueur");
+    // Microsoft renvoie l'UUID sans tirets ici, avec ailleurs, et le
+    // pseudonyme peut changer de casse: aucune des trois formes ne doit
+    // produire un doublon.
+    enregistreNomme(magasin, "UUID-UN", "joueur");
+
+    verifie(
+      magasin.listAccounts().length === 1,
+      "un compte deja connu n'est pas duplique",
     );
     faux.ferme();
   }
