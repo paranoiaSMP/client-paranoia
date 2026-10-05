@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import type { MicrosoftAccount } from "@paranoia/contracts";
 import {
   getMicrosoftAuthorizeUrl,
   completeMicrosoftCallback,
+  comptesEnregistres,
   listSavedAccounts,
   refreshAccount,
   forgetAccount,
@@ -13,6 +14,11 @@ import {
 } from "../../shared/api/authClient";
 
 const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
+
+/** Vrai sur Windows, seul systeme ou la connexion s'ouvre d'elle-meme. */
+function surWindows(): boolean {
+  return navigator.userAgent.toLowerCase().includes("windows");
+}
 
 /**
  * Renouvelle, et laisse au reseau le temps d'arriver.
@@ -51,6 +57,26 @@ export function useAuth(setError: (err: string | null) => void) {
   const [accounts, setAccounts] = useState<MicrosoftAccount[]>([]);
   const [connectingMicrosoft, setConnectingMicrosoft] = useState(false);
   const [restoringSession, setRestoringSession] = useState(true);
+  /**
+   * Vrai quand le magasin de comptes a reellement repondu.
+   *
+   * <p>A distinguer d'une liste vide: « le joueur n'a aucun compte » et « on
+   * n'a pas pu savoir » menent au meme ecran mais pas aux memes droits. Seul le
+   * premier autorise le launcher a ouvrir la fenetre Microsoft de lui-meme.
+   */
+  const [magasinLu, setMagasinLu] = useState(false);
+  /**
+   * Vrai apres une deconnexion demandee par le joueur.
+   *
+   * <p>Sans ce drapeau, se deconnecter du dernier compte sur Windows ramenait
+   * l'ecran de connexion, qui rouvrait aussitot la fenetre Microsoft: la
+   * deconnexion etait impossible a obtenir.
+   */
+  const [deconnexionVolontaire, setDeconnexionVolontaire] = useState(false);
+  /** Etiquette de la fenetre Microsoft en cours, rendue par Tauri a l'ouverture. */
+  const fenetreConnexion = useRef<string | null>(null);
+  /** Vrai des que Microsoft a renvoye un code pour la tentative en cours. */
+  const codeRecu = useRef(false);
 
 
   useEffect(() => {
@@ -58,8 +84,15 @@ export function useAuth(setError: (err: string | null) => void) {
 
     async function restore() {
       try {
-        const saved = await listSavedAccounts();
-        if (cancelled || saved.length === 0) {
+        const saved = await comptesEnregistres();
+        if (cancelled) {
+          return;
+        }
+
+        // Le magasin a parle: on sait maintenant si le joueur a deja un compte,
+        // et l'ecran de connexion peut s'autoriser a ouvrir Microsoft.
+        setMagasinLu(true);
+        if (saved.length === 0) {
           return;
         }
 
@@ -98,7 +131,13 @@ export function useAuth(setError: (err: string | null) => void) {
           setConnected(true);
           console.warn("[auth] session non renouvelee:", resultat.raison);
         }
-      } catch {
+      } catch (err) {
+        // Avale en silence, cet echec donnait un launcher qui affirmait que le
+        // joueur n'avait pas de compte. Il en a peut-etre un: on ne sait pas.
+        console.warn(
+          "[auth] comptes enregistres illisibles:",
+          err instanceof Error ? err.message : String(err),
+        );
       } finally {
         if (!cancelled) {
           setRestoringSession(false);
@@ -122,6 +161,9 @@ export function useAuth(setError: (err: string | null) => void) {
       const state = url.searchParams.get("state");
 
       if (code) {
+        // Avant tout await: la fermeture de la fenetre suit immediatement, et
+        // ne doit pas etre prise pour un abandon.
+        codeRecu.current = true;
         try {
           if (!state) {
             throw new Error(t("topbar.auth_error"));
@@ -146,6 +188,18 @@ export function useAuth(setError: (err: string | null) => void) {
             return [...filtered, authAccount];
           });
           setConnected(true);
+          setDeconnexionVolontaire(false);
+
+          // Puis la liste telle que le magasin la connait. C'est `accounts.json`
+          // qui fait foi, pas ce que l'interface avait en memoire: quand la
+          // liste de depart n'a pas pu etre lue, le compte qui vient d'arriver
+          // etait le seul que l'interface montrait, et les autres restaient
+          // invisibles -- d'ou un launcher qui semblait n'accepter qu'un compte.
+          const tous = await listSavedAccounts().catch(() => null);
+          if (tous && tous.length > 0) {
+            setAccounts(tous);
+            setMagasinLu(true);
+          }
         } catch (e) {
           setError(e instanceof Error ? e.message : t("topbar.auth_error"));
         } finally {
@@ -160,12 +214,51 @@ export function useAuth(setError: (err: string | null) => void) {
   }, [setError, t]);
 
 
+  /**
+   * La fenetre Microsoft a disparu sans qu'un code arrive: la tentative est
+   * abandonnee.
+   *
+   * <p>Rien ne le disait a l'interface. Refermer la fenetre -- celle que
+   * l'ecran de connexion ouvrait tout seul au demarrage, le plus souvent --
+   * laissait donc le launcher a « Connexion... » pour de bon: le bouton
+   * « Ajouter un compte » restait grise, et plus aucun compte ne pouvait
+   * s'ajouter jusqu'au redemarrage.
+   */
+  useEffect(() => {
+    const unlisten = listen<string>("microsoft-login-closed", (event) => {
+      if (event.payload !== fenetreConnexion.current) {
+        // Une fenetre d'une tentative precedente.
+        return;
+      }
+      fenetreConnexion.current = null;
+      if (codeRecu.current) {
+        // Fermee par le launcher lui-meme, le code en main: la connexion suit
+        // son cours et c'est elle qui rendra la main.
+        return;
+      }
+      setConnectingMicrosoft(false);
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
+
+
   async function handleMicrosoftConnect() {
     try {
       setConnectingMicrosoft(true);
       setError(null);
+      // La tentative precedente ne compte plus: si sa fenetre est fermee
+      // maintenant -- c'est meme ce que fait Tauri avant d'ouvrir la nouvelle
+      // -- ce n'est pas celle-ci qui est abandonnee.
+      fenetreConnexion.current = null;
+      codeRecu.current = false;
+
       const { authorizeUrl } = await getMicrosoftAuthorizeUrl(REDIRECT_URI);
-      await invoke("open_microsoft_login", { url: authorizeUrl });
+      fenetreConnexion.current = await invoke<string>("open_microsoft_login", {
+        url: authorizeUrl,
+      });
     } catch (e) {
       setConnectingMicrosoft(false);
       setError(e instanceof Error ? e.message : t("topbar.auth_launch_error"));
@@ -220,6 +313,7 @@ export function useAuth(setError: (err: string | null) => void) {
     const current = account;
     const remaining = accounts.filter((a) => a.id !== current?.id);
     setAccounts(remaining);
+    setDeconnexionVolontaire(true);
 
     const next = remaining[0] ?? null;
     setAccount(next);
@@ -241,6 +335,9 @@ export function useAuth(setError: (err: string | null) => void) {
     }
     const remaining = accounts.filter((a) => a.id !== id);
     setAccounts(remaining);
+    if (remaining.length === 0) {
+      setDeconnexionVolontaire(true);
+    }
     if (account?.id === id) {
       const next = remaining[0] ?? null;
       setAccount(next);
@@ -259,6 +356,21 @@ export function useAuth(setError: (err: string | null) => void) {
     accounts,
     connectingMicrosoft,
     restoringSession,
+    /**
+     * Le launcher peut-il ouvrir la fenetre Microsoft sans qu'on le lui
+     * demande ?
+     *
+     * <p>Trois conditions, et elles manquaient toutes les trois a l'ecran de
+     * connexion, qui se contentait d'une liste vide. Il faut que le magasin ait
+     * repondu -- une liste vide par erreur reseau n'est pas une absence de
+     * compte --, que le joueur ne vienne pas de se deconnecter, et que ce soit
+     * Windows, ou cette ouverture spontanee est le comportement attendu.
+     */
+    connexionAutomatiqueAutorisee:
+      magasinLu &&
+      accounts.length === 0 &&
+      !deconnexionVolontaire &&
+      surWindows(),
     devModeAvailable: import.meta.env.DEV,
     handleMicrosoftConnect,
     handleLocalDevContinue,

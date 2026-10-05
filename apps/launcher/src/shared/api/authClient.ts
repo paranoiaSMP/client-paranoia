@@ -3,7 +3,7 @@ import {
   MicrosoftAuthCallbackRequest,
   MicrosoftAccount,
 } from "@paranoia/contracts";
-import { apiRequest, ErreurApi } from "./http";
+import { apiRequest, ErreurApi, waitForApi } from "./http";
 
 export async function getMicrosoftAuthorizeUrl(
   redirectUri: string,
@@ -26,6 +26,42 @@ export async function completeMicrosoftCallback(
 /** Comptes deja connectes lors des sessions precedentes. */
 export async function listSavedAccounts(): Promise<MicrosoftAccount[]> {
   return apiRequest<MicrosoftAccount[]>("/v1/auth/accounts");
+}
+
+/**
+ * Les comptes enregistres, apres avoir laisse au service local le temps
+ * d'ecouter.
+ *
+ * <p>C'est la forme a utiliser au demarrage du launcher, et son absence etait
+ * le defaut: le backend est un processus voisin demarre par Tauri en meme temps
+ * que la fenetre, et il met environ une seconde a ecouter. La liste des
+ * comptes, elle, etait demandee des le premier rendu -- donc avant. L'appel
+ * partait en erreur reseau a chaque demarrage, et le launcher en concluait
+ * qu'aucun compte n'etait enregistre: le joueur retrouvait l'ecran de connexion
+ * a chaque lancement, et sur Windows la fenetre Microsoft s'ouvrait d'elle-meme
+ * par-dessus.
+ *
+ * <p>Le reste du demarrage attendait deja le service de cette facon; seule
+ * l'authentification ne le faisait pas.
+ *
+ * @throws si le service ne repond pas, ou si la liste reste illisible. Un echec
+ *     doit se distinguer d'une liste vide: le premier ne dit rien des comptes
+ *     du joueur, le second dit qu'il n'en a aucun.
+ */
+export async function comptesEnregistres(
+  attenteMaxMs?: number,
+): Promise<MicrosoftAccount[]> {
+  await waitForApi(attenteMaxMs);
+
+  // Un dernier filet: la liste est relue une fois si elle echoue malgre un
+  // service qui repond, plutot que de renvoyer le joueur a l'ecran de connexion
+  // sur un aller-retour local rate.
+  try {
+    return await listSavedAccounts();
+  } catch {
+    await new Promise((resoudre) => setTimeout(resoudre, 500));
+    return listSavedAccounts();
+  }
 }
 
 /**

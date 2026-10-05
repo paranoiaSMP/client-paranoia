@@ -63,6 +63,7 @@ export function App() {
 		account,
 		accounts,
 		connectingMicrosoft,
+		connexionAutomatiqueAutorisee,
 		devModeAvailable,
 		handleMicrosoftConnect,
 		handleLocalDevContinue,
@@ -149,6 +150,7 @@ export function App() {
 				account={account}
 				accounts={accounts}
 				connectingMicrosoft={connectingMicrosoft}
+				connexionAutomatiqueAutorisee={connexionAutomatiqueAutorisee}
 				devModeAvailable={devModeAvailable}
 				onConnectMicrosoft={handleMicrosoftConnect}
 				onLocalDevContinue={handleLocalDevContinue}

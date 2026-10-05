@@ -57,15 +57,51 @@ async fn download_and_verify(
     Ok(())
 }
 
+/// Numero de la prochaine fenetre de connexion, pour que son etiquette n'ait
+/// jamais servi.
+static OUVERTURES_CONNEXION: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// Prefixe des etiquettes des fenetres de connexion Microsoft.
+const ETIQUETTE_CONNEXION: &str = "microsoft-login";
+
+/// Ouvre la fenetre de connexion Microsoft et rend son etiquette.
+///
+/// L'etiquette repart a l'interface, qui s'en sert pour reconnaitre la
+/// fermeture de *sa* fenetre: sans elle, elle resterait a « Connexion... »,
+/// tous ses boutons grises, lorsque le joueur referme la fenetre sans aller
+/// jusqu'au bout.
 #[tauri::command]
-async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), String> {
+async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<String, String> {
+    use std::sync::atomic::Ordering;
     use tauri::{Emitter, Manager};
+
+    // Tauri refuse de construire une fenetre dont l'etiquette est deja prise,
+    // et celle-ci etait fixe. Une fenetre de connexion encore ouverte -- celle
+    // que l'ecran de connexion ouvrait de lui-meme au demarrage, par exemple,
+    // souvent passee derriere la fenetre principale -- faisait donc echouer
+    // toute ouverture suivante: « Ajouter un compte » ne montrait rien, et le
+    // launcher semblait n'accepter qu'un seul compte.
+    //
+    // On ferme donc ce qui traine, et chaque ouverture porte son numero.
+    // `destroy` et non `close`: la fermeture doit etre effective avant la
+    // construction qui suit, sans attendre l'aller-retour d'un CloseRequested.
+    for (etiquette, fenetre) in app.webview_windows() {
+        if etiquette.starts_with(ETIQUETTE_CONNEXION) {
+            let _ = fenetre.destroy();
+        }
+    }
+
+    let etiquette = format!(
+        "{ETIQUETTE_CONNEXION}-{}",
+        OUVERTURES_CONNEXION.fetch_add(1, Ordering::Relaxed)
+    );
+    let a_fermer = etiquette.clone();
     let app_handle = app.clone();
 
     // We run it on the main thread
     let _ = tauri::WebviewWindowBuilder::new(
         &app,
-        "microsoft-login",
+        etiquette.as_str(),
         tauri::WebviewUrl::External(url.parse().map_err(|e| format!("Invalid URL: {}", e))?),
     )
     .title("Connexion Microsoft")
@@ -74,7 +110,7 @@ async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), 
         let url_str = nav_url.as_str();
         if url_str.starts_with("https://login.live.com/oauth20_desktop.srf") {
             let _ = app_handle.emit("microsoft-oauth-code", url_str);
-            if let Some(window) = app_handle.get_webview_window("microsoft-login") {
+            if let Some(window) = app_handle.get_webview_window(a_fermer.as_str()) {
                 let _ = window.close();
             }
             return false;
@@ -84,7 +120,7 @@ async fn open_microsoft_login(app: tauri::AppHandle, url: String) -> Result<(), 
     .build()
     .map_err(|e| e.to_string())?;
 
-    Ok(())
+    Ok(etiquette)
 }
 
 /// Dossier de donnees du launcher, aligne sur apps/backend/src/modules/launcher/paths.ts.
@@ -501,6 +537,18 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
+                if window.label().starts_with(ETIQUETTE_CONNEXION) {
+                    use tauri::Emitter;
+                    // Le joueur a pu refermer la fenetre sans aller au bout.
+                    // L'interface attendait alors un code qui ne viendrait
+                    // jamais: elle restait a « Connexion... », bouton grise, et
+                    // plus rien ne permettait d'ajouter un compte.
+                    let _ = window
+                        .app_handle()
+                        .emit("microsoft-login-closed", window.label());
+                    return;
+                }
+
                 if window.label() != "main" {
                     return;
                 }
