@@ -1,6 +1,7 @@
 package gg.paranoia.client.platform;
 
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.title.TitleController;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
@@ -44,6 +45,14 @@ public interface ClientPlatform {
      * logique commune.
      */
     Screen createMenuScreen(MenuController controller);
+
+    /**
+     * L'ecran d'accueil, qui remplace l'ecran-titre du jeu.
+     *
+     * <p>Comme le menu: tout est commun sauf la signature des entrees souris,
+     * qui a change en 1.21.9. Seule la coquille vit donc par version.
+     */
+    Screen createTitleScreen(TitleController controller);
 
     /**
      * Mise a l'echelle d'un HUD autour d'un point.

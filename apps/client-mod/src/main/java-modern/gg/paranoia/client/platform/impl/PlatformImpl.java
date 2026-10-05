@@ -1,6 +1,8 @@
 package gg.paranoia.client.platform.impl;
 
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.title.ParanoiaTitleScreen;
+import gg.paranoia.client.title.TitleController;
 import gg.paranoia.client.menu.ParanoiaMenuScreen;
 import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.HudRenderer;
@@ -58,6 +60,11 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public Screen createMenuScreen(MenuController controller) {
         return new ParanoiaMenuScreen(controller);
+    }
+
+    @Override
+    public Screen createTitleScreen(TitleController controller) {
+        return new ParanoiaTitleScreen(controller);
     }
 
     @Override

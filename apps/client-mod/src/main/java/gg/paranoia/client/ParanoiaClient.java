@@ -21,6 +21,7 @@ import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.hud.elements.ShieldHud;
 import gg.paranoia.client.hud.elements.TotemHud;
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.title.TitleController;
 import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
 import gg.paranoia.client.modules.BlockEntityCullingModule;
@@ -32,6 +33,7 @@ import gg.paranoia.client.modules.CrystalCleanupModule;
 import gg.paranoia.client.modules.EntityCullingModule;
 import gg.paranoia.client.modules.FocusFpsModule;
 import gg.paranoia.client.modules.HitIndicatorModule;
+import gg.paranoia.client.modules.MenuAccueilModule;
 import gg.paranoia.client.modules.MenuKeyModule;
 import gg.paranoia.client.modules.ParticleBudgetModule;
 import gg.paranoia.client.menu.ParanoiaMenu;
@@ -65,6 +67,7 @@ public final class ParanoiaClient {
     private static final Logger LOGGER = LoggerFactory.getLogger("ParanoiaClient");
     private static final HudRegistry REGISTRY = new HudRegistry();
     private static final MenuController CONTROLLER = new MenuController(REGISTRY);
+    private static final TitleController TITLE = new TitleController();
     private static final PresenceService PRESENCE = new PresenceService();
 
     /** Etat precedent de la touche, pour n'agir que sur le front d'appui. */
@@ -105,6 +108,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new EntityCullingModule());
         REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
+        REGISTRY.register(new MenuAccueilModule());
 
         // Les reglages sont lus apres l'enregistrement: un module absent du
         // fichier garde ses defauts, un module absent du code est ignore.
@@ -235,5 +239,15 @@ public final class ParanoiaClient {
 
     public static HudRegistry registry() {
         return REGISTRY;
+    }
+
+    /** Le mod menu, pour l'ecran d'accueil qui y renvoie. */
+    public static MenuController controller() {
+        return CONTROLLER;
+    }
+
+    /** L'ecran d'accueil, pour le mixin qui le pose a la place de l'ecran-titre. */
+    public static TitleController titleController() {
+        return TITLE;
     }
 }

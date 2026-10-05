@@ -20,6 +20,18 @@ public final class Platforms {
         current = platform;
     }
 
+    /**
+     * La plateforme est-elle installee ?
+     *
+     * <p>Pour le seul appelant qui s'execute possiblement avant le point
+     * d'entree de version: le mixin qui remplace l'ecran-titre. Le jeu pose
+     * son premier ecran tot, et une exception a cet instant empecherait
+     * Minecraft de demarrer.
+     */
+    public static boolean installed() {
+        return current != null;
+    }
+
     public static ClientPlatform get() {
         if (current == null) {
             // Arrive si du code partage s'execute avant le point d'entree de

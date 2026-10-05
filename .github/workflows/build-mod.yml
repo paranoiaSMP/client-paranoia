@@ -482,7 +482,8 @@ jobs:
             for entry in \
               "net.minecraft.client.gui.DrawContext:rawTexture|rawGuiTexture|rawSprite" \
               "net.minecraft.client.gui.screen.Screen:enderBackground|lur|anorama|enderInGameBackground|enderDarkening" \
-              "net.minecraft.client.MinecraftClient:setScreen|etWindow|etSession" \
+              "net.minecraft.client.MinecraftClient:setScreen|etWindow|etSession|cheduleStop|GameOptions options|currentScreen" \
+              "net.minecraft.client.session.Session:etUsername|etUuid" \
               "net.minecraft.client.gui.screen.ConfirmLinkScreen:*"
             do
               class="${entry%%:*}"
