@@ -13,6 +13,8 @@ import {
   Check,
   Sun,
   Palette,
+  Info,
+  Eye,
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LauncherProfile } from "@paranoia/contracts";
@@ -27,6 +29,7 @@ import {
   type InstalledMod,
   type ModSearchHit,
 } from "../../../shared/api/modsClient";
+import { ModDetailsModal } from "./ModDetailsModal";
 
 type ModsTabProps = {
   profiles: LauncherProfile[];
@@ -82,6 +85,50 @@ export function ModsTab({
   const [busyProject, setBusyProject] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selectedHitForDetails, setSelectedHitForDetails] = useState<ModSearchHit | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  function handleOpenDetails(hit: ModSearchHit) {
+    setSelectedHitForDetails(hit);
+    setIsDetailsOpen(true);
+  }
+
+  async function handleOpenInstalledDetails(mod: InstalledMod) {
+    const matchedHit = hits.find(
+      (h) =>
+        mod.fileName.toLowerCase().includes(h.slug.toLowerCase()) ||
+        mod.fileName.toLowerCase().includes(h.title.toLowerCase().replace(/ /g, "-")),
+    );
+    if (matchedHit) {
+      handleOpenDetails(matchedHit);
+      return;
+    }
+
+    const cleanName = (mod.name || mod.fileName)
+      .replace(/\.jar$/i, "")
+      .replace(/[-_]/g, " ")
+      .trim();
+    try {
+      setSearching(true);
+      const res = await searchMods({
+        query: cleanName,
+        gameVersion: profile?.minecraftVersion,
+        loader: "fabric",
+        projectType: contentType,
+        limit: 1,
+      });
+      const firstHit = res.hits[0];
+      if (firstHit) {
+        handleOpenDetails(firstHit);
+      } else {
+        setNotice(`Aucune fiche détaillée trouvée sur Modrinth pour "${mod.name || mod.fileName}".`);
+      }
+    } catch (e) {
+      report(e instanceof Error ? e.message : "Recherche des détails impossible");
+    } finally {
+      setSearching(false);
+    }
+  }
 
   const report = useCallback(
     (message: string | null) => {
@@ -368,12 +415,16 @@ export function ModsTab({
                 key={hit.projectId}
                 className="bg-ground border border-divider rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 hover:border-neutral-700 transition-colors group"
               >
-                <div className="flex flex-1 gap-4 md:gap-5 min-w-0">
+                <div
+                  onClick={() => handleOpenDetails(hit)}
+                  className="flex flex-1 gap-4 md:gap-5 min-w-0 cursor-pointer"
+                  title="Cliquer pour afficher la description et les informations"
+                >
                   {hit.iconUrl ? (
                     <img
                       src={hit.iconUrl}
                       alt=""
-                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-divider"
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-xl shrink-0 object-cover bg-divider group-hover:brightness-105 transition-all"
                     />
                   ) : (
                     <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-divider shrink-0 flex items-center justify-center">
@@ -383,34 +434,54 @@ export function ModsTab({
 
                   <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <h3 className="font-bold text-lg md:text-xl text-ink truncate">{hit.title}</h3>
-                      <span className="text-neutral-500 text-sm truncate hidden sm:inline">{t("mods.by")} {hit.author}</span>
+                      <h3 className="font-bold text-lg md:text-xl text-ink truncate group-hover:text-accent transition-colors">
+                        {hit.title}
+                      </h3>
+                      <span className="text-neutral-500 text-sm truncate hidden sm:inline">
+                        {t("mods.by")} {hit.author}
+                      </span>
                     </div>
                     <p className="text-neutral-300 text-xs md:text-sm line-clamp-2 leading-relaxed">
                       {hit.description}
                     </p>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-accent font-semibold">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Voir la description complète</span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex flex-row md:flex-col items-center md:items-end justify-between border-t md:border-t-0 md:border-l border-divider pt-4 md:pt-0 md:pl-5 shrink-0 gap-3 md:gap-4">
-                  <button
-                    onClick={() => handleInstall(hit)}
-                    disabled={isInstalling || isInstalled}
-                    className="w-full md:w-auto px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent/10 border border-accent text-accent disabled:opacity-50 disabled:border-neutral-700 disabled:text-neutral-500 disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
-                  >
-                    {isInstalling ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : isInstalled ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
-                    )}
-                    {isInstalled ? "Installé" : "Add to instance"}
-                  </button>
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDetails(hit)}
+                      className="px-3 py-2 bg-well hover:bg-neutral-800 border border-divider hover:border-neutral-600 text-neutral-300 hover:text-ink rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      title="Afficher la fiche détaillée"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-accent" />
+                      <span className="hidden sm:inline">Détails</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInstall(hit)}
+                      disabled={isInstalling || isInstalled}
+                      className="flex-1 md:flex-initial px-4 md:px-5 py-2 md:py-2.5 bg-transparent hover:bg-accent/10 border border-accent text-accent disabled:opacity-50 disabled:border-neutral-700 disabled:text-neutral-500 disabled:hover:bg-transparent rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-colors"
+                    >
+                      {isInstalling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : isInstalled ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                      {isInstalled ? "Installé" : "Ajouter"}
+                    </button>
+                  </div>
 
                   <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 text-neutral-300 text-xs md:text-sm font-semibold w-full md:w-auto">
                     <span className="flex items-center gap-1.5" title="Downloads">
-                      <Download className="w-4 h-4" />
+                      <Download className="w-4 h-4 text-accent" />
                       {formatDownloads(hit.downloads)}
                     </span>
                   </div>
@@ -474,16 +545,24 @@ export function ModsTab({
                   <img
                     src={mod.iconUrl}
                     alt={mod.name ?? mod.fileName}
-                    className="w-8 h-8 rounded-lg object-cover shrink-0"
+                    className="w-8 h-8 rounded-lg object-cover shrink-0 cursor-pointer hover:opacity-80"
+                    onClick={() => handleOpenInstalledDetails(mod)}
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg bg-divider flex items-center justify-center shrink-0">
+                  <div
+                    className="w-8 h-8 rounded-lg bg-divider flex items-center justify-center shrink-0 cursor-pointer hover:bg-well"
+                    onClick={() => handleOpenInstalledDetails(mod)}
+                  >
                     <FallbackIcon className="w-4 h-4 text-neutral-600" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium truncate ${mod.enabled ? "text-ink" : "text-neutral-400 line-through"}`}>
+                <div
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => handleOpenInstalledDetails(mod)}
+                  title="Cliquer pour afficher les détails du mod"
+                >
+                  <div className={`text-sm font-medium truncate ${mod.enabled ? "text-ink hover:text-accent" : "text-neutral-400 line-through"} transition-colors`}>
                     {mod.name ?? mod.fileName}
                   </div>
                   {mod.name && mod.name !== mod.fileName && (
@@ -496,6 +575,14 @@ export function ModsTab({
                   {(mod.size / 1024 / 1024).toFixed(1)} Mo
                 </span>
                 <button
+                  type="button"
+                  onClick={() => handleOpenInstalledDetails(mod)}
+                  className="shrink-0 p-2 bg-divider hover:bg-well text-neutral-400 hover:text-accent rounded-lg transition-colors"
+                  title="Voir la description et les détails"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => handleRemove(mod.fileName)}
                   className="shrink-0 p-2 bg-divider hover:bg-danger/20 text-neutral-500 hover:text-danger rounded-lg transition-colors"
                   title={t("mods.remove")}
@@ -507,6 +594,29 @@ export function ModsTab({
           </div>
         )}
       </div>
+
+      {/* Mod Details Modal */}
+      {selectedHitForDetails && (
+        <ModDetailsModal
+          hit={selectedHitForDetails}
+          isOpen={isDetailsOpen}
+          onClose={() => {
+            setIsDetailsOpen(false);
+            setSelectedHitForDetails(null);
+          }}
+          onInstall={handleInstall}
+          isInstalling={busyProject === selectedHitForDetails.projectId}
+          isInstalled={installed.some(
+            (m) =>
+              m.fileName.toLowerCase().includes(selectedHitForDetails.slug.toLowerCase()) ||
+              m.fileName.toLowerCase().includes(
+                selectedHitForDetails.title.toLowerCase().replace(/ /g, "-"),
+              ),
+          )}
+          gameVersion={profile?.minecraftVersion}
+          loader="fabric"
+        />
+      )}
     </div>
   );
 }
