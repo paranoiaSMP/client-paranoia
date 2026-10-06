@@ -119,6 +119,12 @@ public final class ParanoiaClient {
         MinecraftClient demarrage = MinecraftClient.getInstance();
         if (demarrage != null && demarrage.getTextureManager() != null) {
             Panorama.enregistreLesTextures(demarrage.getTextureManager());
+            LOGGER.info("[ACCUEIL] panoramas inscrits au demarrage");
+        } else {
+            // Et on le dit. Un silence ici laissait croire que l'inscription
+            // avait eu lieu, alors que c'est precisement la question.
+            LOGGER.info("[ACCUEIL] gestionnaire de textures absent au demarrage:"
+                + " les panoramas ne tourneront pas, la bande prendra le relais");
         }
 
         // Les reglages sont lus apres l'enregistrement: un module absent du

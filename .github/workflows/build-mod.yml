@@ -404,7 +404,8 @@ jobs:
               "net.minecraft.client.MinecraftClient:useKey|KeyBinding" \
               "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects" \
               "net.minecraft.client.gui.CubeMapRenderer:registerTextures|TextureManager|ResourceTexture|getTexture|Identifier" \
-              "net.minecraft.client.gui.screen.TitleScreen:registerTextures|TextureManager|CubeMap"
+              "net.minecraft.client.gui.screen.TitleScreen:registerTextures|TextureManager|CubeMap" \
+              "net.minecraft.client.texture.TextureManager:registerTexture|getTexture|reload|load"
             do
               corps_classe="${lecture%%:*}"
               corps_motif="${lecture#*:}"

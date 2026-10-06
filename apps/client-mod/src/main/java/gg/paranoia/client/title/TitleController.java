@@ -221,7 +221,7 @@ public final class TitleController {
      * lancement.
      */
     private void fond(DrawContext context, MinecraftClient client) {
-        if (panoramaDessine(context, client) || fondFixe(context)) {
+        if (panoramaDessine(context, client) || bandeQuiDefile(context)) {
             context.fill(0, 0, width, height, MenuTheme.BACKDROP);
             return;
         }
@@ -229,52 +229,54 @@ public final class TitleController {
     }
 
     /**
-     * La premiere face du panorama, immobile, quand le cubemap ne veut pas.
+     * Les quatre horizons, qui defilent, quand le cubemap ne veut pas.
      *
      * <p>Le cubemap est un chemin de rendu a lui tout seul: une texture d'un
      * type particulier, chargee a un moment precis, lue par du code qu'on ne
-     * controle pas. Une face prise seule n'est qu'une image, et c'est le meme
-     * chemin que le logo -- celui dont on sait qu'il marche. Mieux vaut le
-     * spawn immobile que pas de spawn du tout.
+     * controle pas. Il a refuse trois fois. Une face prise seule n'est qu'une
+     * image, et c'est le chemin du logo -- celui dont on sait qu'il marche.
      *
-     * <p>Dessinee en couverture: la face est carree, l'ecran ne l'est pas. On
-     * la dessine au plus grand des deux cotes, centree, et le jeu coupe ce qui
-     * depasse -- plutot que de l'etirer, ce qui se verrait.
+     * <p>Les quatre horizons sont donc poses cote a cote en une bande, et la
+     * bande defile. Ce n'est pas la rotation du jeu -- il n'y a pas de
+     * perspective, les faces glissent au lieu de pivoter -- mais le spawn
+     * tourne, sans dependre de rien d'incertain.
+     *
+     * <p>Chaque face est dessinee a la hauteur de l'ecran. Elles sont carrees:
+     * la bande fait donc quatre hauteurs de large, et un tour complet dure une
+     * minute, comme celui du jeu.
      */
-    private boolean fondFixe(DrawContext context) {
+    private boolean bandeQuiDefile(DrawContext context) {
         Panorama choisi = panoramaChoisi();
-        int cote = Math.max(width, height);
+        int cote = height;
+        int bande = cote * 4;
+        // Le temps absolu, et non un compteur d'images: le defilement garde la
+        // meme vitesse quel que soit le nombre d'images par seconde.
+        int decalage = (int) (System.currentTimeMillis() % 60_000L * bande / 60_000L);
+
         try {
-            Platforms.get().drawTexture(context, choisi.premiereFace(),
-                (width - cote) / 2, (height - cote) / 2, cote, cote,
-                choisi.face(), choisi.face(), BLANC);
+            for (int horizon = 0; horizon < 4; horizon++) {
+                int x = horizon * cote - decalage;
+                // Deux fois: une face qui sort par la gauche doit reparaitre
+                // par la droite sans trou au raccord.
+                poseFace(context, choisi, horizon, x, cote);
+                poseFace(context, choisi, horizon, x + bande, cote);
+            }
             return true;
         } catch (RuntimeException echec) {
-            signale("fond fixe pas encore pret", echec);
+            signale("horizons pas encore prets", echec);
             return false;
         }
     }
 
-    /**
-     * Dessine le panorama, ou dit qu'il n'a pas pu l'etre.
-     *
-     * <p>Le jeu pose son ecran-titre <em>avant</em> la fin du premier
-     * chargement des ressources, et le dessine derriere l'ecran de demarrage.
-     * A cet instant les six faces du cubemap n'ont pas encore de texture GPU,
-     * et le jeu levait « Texture view does not exist, can't get it before
-     * something initializes it » -- un plantage au premier lancement, et
-     * seulement au premier.
-     *
-     * <p>L'ecran-titre d'origine ne connait pas ce probleme: ses faces sont
-     * enregistrees par {@code TitleScreen.registerTextures} au demarrage du
-     * client, donc chargees depuis longtemps quand il les dessine. Les notres
-     * arrivent avec le pack de ressources du mod, au meme rechargement que
-     * celui qui est en cours.
-     *
-     * <p>On retente donc a chaque image plutot que d'abandonner: le
-     * chargement dure une seconde, apres quoi le panorama s'affiche
-     * normalement et plus rien ne passe par ici.
-     */
+    /** Une face, si elle tombe dans l'ecran. */
+    private void poseFace(DrawContext context, Panorama choisi, int horizon, int x, int cote) {
+        if (x + cote <= 0 || x >= width) {
+            return;
+        }
+        Platforms.get().drawTexture(context, choisi.face(horizon),
+            x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
+    }
+
     private boolean panoramaDessine(DrawContext context, MinecraftClient client) {
         try {
             RotatingCubeMapRenderer rendu = panorama(client);

@@ -52,20 +52,21 @@ public enum Panorama {
     }
 
     /** Cote d'une face, en texels: la premiere sert de fond de secours. */
-    public int face() {
+    public int tailleFace() {
         return face;
     }
 
     /**
-     * La premiere face, comme image seule.
+     * Une face, comme image seule.
      *
      * <p>Le cubemap est un chemin de rendu a lui tout seul, et il peut ne pas
      * aboutir. Les faces, elles, sont de simples images que
      * {@code drawTexture} sait dessiner -- c'est le meme chemin que le logo,
-     * et il marche. Mieux vaut un fond fixe que pas de fond du tout.
+     * et il marche. Les quatre premieres sont les horizons, dans l'ordre; les
+     * deux dernieres le zenith et le nadir.
      */
-    public Identifier premiereFace() {
-        return Identifier.of(cubeMap.getNamespace(), cubeMap.getPath() + "_0.png");
+    public Identifier face(int numero) {
+        return Identifier.of(cubeMap.getNamespace(), cubeMap.getPath() + "_" + numero + ".png");
     }
 
     /**
