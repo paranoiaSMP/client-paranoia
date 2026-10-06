@@ -21,7 +21,6 @@ import gg.paranoia.client.hud.elements.InfoHud;
 import gg.paranoia.client.hud.elements.ShieldHud;
 import gg.paranoia.client.hud.elements.TotemHud;
 import gg.paranoia.client.menu.MenuController;
-import gg.paranoia.client.title.Panorama;
 import gg.paranoia.client.title.TitleController;
 import gg.paranoia.client.module.KeySetting;
 import gg.paranoia.client.modules.BadgeModule;
@@ -110,40 +109,7 @@ public final class ParanoiaClient {
         REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
         REGISTRY.register(new MenuAccueilModule());
-
-        // Les panoramas de l'ecran d'accueil, inscrits ici et pas plus tard.
-        // Une texture rechargeable inscrite apres le rechargement des
-        // ressources n'est jamais chargee, et le point d'entree client est le
-        // seul moment ou l'on precede ce rechargement -- c'est exactement la
-        // que le jeu inscrit les siennes.
-        MinecraftClient demarrage = MinecraftClient.getInstance();
-        if (demarrage != null && demarrage.getTextureManager() != null) {
-            Panorama.enregistreLesTextures(demarrage.getTextureManager());
-            LOGGER.info("[ACCUEIL] panoramas inscrits au demarrage");
-        } else {
-            // Et on le dit. Un silence ici laissait croire que l'inscription
-            // avait eu lieu, alors que c'est precisement la question.
-            LOGGER.info("[ACCUEIL] gestionnaire de textures absent au demarrage:"
-                + " les panoramas ne tourneront pas, la bande prendra le relais");
-        }
-
-        // Les reglages sont lus apres l'enregistrement: un module absent du
-        // fichier garde ses defauts, un module absent du code est ignore.
-        REGISTRY.load();
-
-        platform.registerHudRenderer(REGISTRY::renderInGame);
-        ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
-        // En debut de tick: le budget doit etre reconduit avant les naissances
-        // de particules, pas apres.
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            // Avant les modules: la portee et le combo se lisent sur le
-            // compteur de recharge, qui doit etre releve avant que quoi que ce
-            // soit d'autre ne le consulte.
-            CombatTracker.tick();
-            ParticleBudgetModule.beginTick();
-            EntityCullingModule.beginTick();
-            BlockEntityCullingModule.beginTick();
-        });
+);
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande

@@ -6,9 +6,7 @@ import gg.paranoia.client.modules.MenuAccueilModule;
 import gg.paranoia.client.platform.Platforms;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.CubeMapRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.RotatingCubeMapRenderer;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
@@ -32,11 +30,11 @@ import java.util.Set;
  * du jeu, verifies identiques de 1.21.8 a 1.21.11 par la sonde de
  * {@code build-mod.yml}.
  *
- * <p>Le panorama est la seule exception, et elle n'en est pas une: la sonde
- * montre {@code CubeMapRenderer(Identifier)} et
- * {@code RotatingCubeMapRenderer.render(DrawContext, int, int, boolean)} avec
- * exactement la meme signature sur les versions ciblees. Le jour ou elle
- * changera, c'est la sonde qui le dira, pas un plantage chez un joueur.
+ * <p>Le fond ne passe pas par le cubemap du jeu, et c'est une decision prise
+ * apres trois echecs: sa texture est d'un type particulier, chargee a un
+ * moment precis du demarrage, et l'inscrire depuis un mod l'empeche d'etre
+ * chargee -- quand elle n'ecrase pas celle du jeu, ce qui faisait planter
+ * tous les ecrans qui s'en servent. Les faces, elles, sont de simples images.
  */
 public final class TitleController {
     /**
@@ -160,15 +158,8 @@ public final class TitleController {
     private int mouseX;
     private int mouseY;
 
-    // Le panorama en service, et le choix qui l'a produit. Reconstruit quand le
-    // second change, et pas a chaque image: un CubeMapRenderer tient un tampon
-    // GPU, en fabriquer un par image les accumulerait.
     /** Ce qui a deja ete signale, pour ne pas le redire a chaque image. */
     private final Set<String> signale = new HashSet<>();
-
-    private Panorama monte;
-    private CubeMapRenderer cube;
-    private RotatingCubeMapRenderer panorama;
 
     /** L'ecran hote, pour les ecrans du jeu qui veulent savoir d'ou l'on vient. */
     public void attache(Screen ecran) {
@@ -182,13 +173,15 @@ public final class TitleController {
     }
 
     /**
-     * Rend le tampon GPU du panorama.
+     * Appele quand l'ecran disparait.
      *
-     * <p>Appele quand l'ecran disparait. Sans cela, chaque retour au menu --
-     * apres une partie, apres les options -- en laisserait un derriere lui.
+     * <p>Plus rien a liberer depuis que le fond est fait d'images: elles
+     * appartiennent au gestionnaire de textures, qui les partage avec tout le
+     * reste du jeu. La methode reste parce que l'ecran de version l'appelle,
+     * et qu'elle redeviendra utile le jour ou il y aura quelque chose a y
+     * mettre.
      */
     public void onClosed() {
-        rendLeCube();
     }
 
     // ------------------------------------------------------------------ rendu
@@ -200,7 +193,7 @@ public final class TitleController {
         MinecraftClient client = MinecraftClient.getInstance();
         Teinte teinte = teinte();
 
-        fond(context, client);
+        fond(context);
         dispose();
         logo(context);
 
@@ -220,8 +213,8 @@ public final class TitleController {
      * n'est pas theorique: c'est par la que le jeu plantait au tout premier
      * lancement.
      */
-    private void fond(DrawContext context, MinecraftClient client) {
-        if (panoramaDessine(context, client) || bandeQuiDefile(context)) {
+    private void fond(DrawContext context) {
+        if (bandeQuiDefile(context)) {
             context.fill(0, 0, width, height, MenuTheme.BACKDROP);
             return;
         }
@@ -275,59 +268,6 @@ public final class TitleController {
         }
         Platforms.get().drawTexture(context, choisi.face(horizon),
             x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
-    }
-
-    private boolean panoramaDessine(DrawContext context, MinecraftClient client) {
-        try {
-            RotatingCubeMapRenderer rendu = panorama(client);
-            if (rendu == null) {
-                return false;
-            }
-            rendu.render(context, width, height, true);
-            return true;
-        } catch (RuntimeException echec) {
-            signale("panorama pas encore pret", echec);
-            return false;
-        }
-    }
-
-    /**
-     * Rend le tampon GPU du cubemap en cours, s'il y en a un.
-     *
-     * <p>Appele quand on change de panorama et a la fermeture de l'ecran. Un
-     * {@code CubeMapRenderer} tient un tampon GPU: en abandonner un par image
-     * les accumulerait.
-     */
-    private void rendLeCube() {
-        if (cube != null) {
-            cube.close();
-            cube = null;
-            panorama = null;
-            monte = null;
-        }
-    }
-
-    private RotatingCubeMapRenderer panorama(MinecraftClient client) {
-        Panorama choisi = panoramaChoisi();
-        if (panorama != null && choisi == monte) {
-            return panorama;
-        }
-
-        // Construit a cote, et seulement ensuite adopte: une construction qui
-        // echoue a mi-chemin laisserait sinon un cube sans son enveloppe, et
-        // l'image suivante le prendrait pour bon.
-        CubeMapRenderer neuf = new CubeMapRenderer(choisi.cubeMap());
-        neuf.registerTextures(client.getTextureManager());
-        RotatingCubeMapRenderer tournant = new RotatingCubeMapRenderer(neuf);
-        tournant.registerTextures(client.getTextureManager());
-
-        if (cube != null) {
-            cube.close();
-        }
-        cube = neuf;
-        panorama = tournant;
-        monte = choisi;
-        return panorama;
     }
 
     private void logo(DrawContext context) {

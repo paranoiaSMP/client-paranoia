@@ -1,9 +1,6 @@
 package gg.paranoia.client.title;
 
-import net.minecraft.client.gui.CubeMapRenderer;
-import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
-import org.slf4j.LoggerFactory;
 
 /**
  * Les fonds de l'ecran d'accueil.
@@ -69,37 +66,4 @@ public enum Panorama {
         return Identifier.of(cubeMap.getNamespace(), cubeMap.getPath() + "_" + numero + ".png");
     }
 
-    /**
-     * Inscrit les textures des trois panoramas, le plus tot possible.
-     *
-     * <p>C'est la correction du panorama qui restait noir, et elle vient du
-     * bytecode plutot que d'une supposition. {@code registerTextures} ne pose
-     * pas six faces: il construit une seule {@code CubemapTexture} et
-     * l'inscrit sous l'identifiant de base, et {@code draw} va la rechercher
-     * par ce meme identifiant. Or une texture rechargeable inscrite
-     * <em>apres</em> le rechargement des ressources n'est jamais chargee --
-     * son enveloppe GPU reste vide, et le dessin echoue a chaque image.
-     *
-     * <p>L'ecran-titre du jeu fait exactement cela au demarrage du client, par
-     * {@code TitleScreen.registerTextures}, donc avant le premier
-     * rechargement. On s'y prend au meme moment.
-     *
-     * <p>Le {@code CubeMapRenderer} construit ici ne sert qu'a l'inscription
-     * et rend son tampon aussitot: ce qui reste, c'est la texture, dans le
-     * gestionnaire.
-     *
-     * <p>Tout est sous reserve. Rien ici ne doit empecher le jeu de demarrer:
-     * au pire le panorama manque, et l'ecran garde son aplat.
-     */
-    public static void enregistreLesTextures(TextureManager textures) {
-        for (Panorama panorama : values()) {
-            try (CubeMapRenderer cube = new CubeMapRenderer(panorama.cubeMap())) {
-                cube.registerTextures(textures);
-            } catch (RuntimeException echec) {
-                LoggerFactory.getLogger("ParanoiaClient").info(
-                    "[ACCUEIL] panorama {} non inscrit: {}",
-                    panorama.label(), echec.getMessage());
-            }
-        }
-    }
 }
