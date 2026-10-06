@@ -49,7 +49,7 @@ public final class TitleController {
      * essais.
      */
     private static final String BOUTIQUE =
-        System.getProperty("paranoia.boutique", "https://paranoiastudio.fr/boutique").trim();
+        System.getProperty("paranoia.boutique", "https://paranoiastudio.fr/shop").trim();
 
     /** Ce qu'un bouton declenche. */
     public enum Action {
