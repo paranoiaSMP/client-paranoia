@@ -6,7 +6,9 @@ import net.minecraft.client.gui.screen.TitleScreen;
 import gg.paranoia.client.ParanoiaClient;
 import gg.paranoia.client.modules.MenuAccueilModule;
 import gg.paranoia.client.platform.Platforms;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -33,8 +35,24 @@ public abstract class MinecraftClientMixin {
      * modules soient enregistres -- il doit etre actif, et l'ecran doit etre
      * l'ecran-titre d'origine. La derniere garde contre le cas ou notre propre
      * ecran repasserait par ici.
+     *
+     * <p>{@code require = 0}, contre la regle du fichier de mixins, et c'est
+     * la seule exception du mod. Avec le reglage par defaut, une injection qui
+     * ne s'applique pas est fatale au demarrage -- ce qui est exactement ce
+     * qu'on veut pour un mixin dont depend le jeu. Celui-ci ne change qu'un
+     * ecran: empecher de jouer parce qu'un fond d'ecran n'a pas pu se poser
+     * serait hors de proportion. S'il ne s'applique pas, l'ecran-titre
+     * d'origine reste, et le journal ne dit rien -- c'est precisement ce que
+     * la ligne ci-dessous permet de distinguer.
+     *
+     * <p>Et c'est la seule chose que la CI ne peut pas verifier. Elle compile
+     * le mod et verifie que {@code setScreen} existe bien sur
+     * {@code MinecraftClient} -- {@code check-mixin-targets.mjs} le fait pour
+     * chaque version -- mais elle ne lance pas Minecraft. L'application reelle
+     * du mixin se constate au premier demarrage, et cette ligne est la pour
+     * qu'elle se constate en une seconde.
      */
-    @ModifyVariable(method = "setScreen", at = @At("HEAD"), argsOnly = true)
+    @ModifyVariable(method = "setScreen", at = @At("HEAD"), argsOnly = true, require = 0)
     private Screen paranoia$remplaceEcranTitre(Screen screen) {
         if (!(screen instanceof TitleScreen)) {
             return screen;
@@ -42,9 +60,34 @@ public abstract class MinecraftClientMixin {
 
         MenuAccueilModule reglages = MenuAccueilModule.instance();
         if (reglages == null || !reglages.enabled() || !Platforms.installed()) {
+            paranoia$annonce("ecran-titre d'origine garde"
+                + (reglages == null ? " (modules pas encore charges)"
+                    : !reglages.enabled() ? " (module desactive)"
+                    : " (plateforme pas encore installee)"));
             return screen;
         }
 
+        paranoia$annonce("ecran d'accueil Paranoia pose a la place de l'ecran-titre");
         return Platforms.get().createTitleScreen(ParanoiaClient.titleController());
+    }
+
+    /**
+     * Une seule ligne, au premier ecran-titre.
+     *
+     * <p>Sans garde, elle reviendrait a chaque retour au menu. Avec, le
+     * journal repond a la seule question qu'on se pose la: le mixin
+     * s'applique-t-il ? Son absence totale est une reponse autant que sa
+     * presence.
+     */
+    @Unique
+    private static boolean paranoia$annonceFaite;
+
+    @Unique
+    private static void paranoia$annonce(String message) {
+        if (paranoia$annonceFaite) {
+            return;
+        }
+        paranoia$annonceFaite = true;
+        LoggerFactory.getLogger("ParanoiaClient").info("[ACCUEIL] {}", message);
     }
 }

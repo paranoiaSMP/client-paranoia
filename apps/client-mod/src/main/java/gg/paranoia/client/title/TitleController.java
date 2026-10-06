@@ -16,9 +16,12 @@ import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.util.Identifier;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * L'ecran d'accueil Paranoia: tout ce qu'il affiche, et tout ce qu'il fait.
@@ -145,6 +148,9 @@ public final class TitleController {
     // Le panorama en service, et le choix qui l'a produit. Reconstruit quand le
     // second change, et pas a chaque image: un CubeMapRenderer tient un tampon
     // GPU, en fabriquer un par image les accumulerait.
+    /** Ce qui a deja ete signale, pour ne pas le redire a chaque image. */
+    private final Set<String> signale = new HashSet<>();
+
     private Panorama monte;
     private CubeMapRenderer cube;
     private RotatingCubeMapRenderer panorama;
@@ -196,13 +202,54 @@ public final class TitleController {
         pied(context);
     }
 
-    /** Le panorama, puis un voile: sans lui le texte clair passe sur un ciel clair. */
+    /**
+     * Le panorama, puis un voile: sans lui le texte clair passe sur un ciel
+     * clair.
+     *
+     * <p>Et un aplat quand le panorama n'est pas encore dessinable. Ce cas
+     * n'est pas theorique: c'est par la que le jeu plantait au tout premier
+     * lancement.
+     */
     private void fond(DrawContext context, MinecraftClient client) {
-        RotatingCubeMapRenderer rendu = panorama(client);
-        if (rendu != null) {
-            rendu.render(context, width, height, true);
+        if (!panoramaDessine(context, client)) {
+            context.fill(0, 0, width, height, MenuTheme.WINDOW);
+            return;
         }
         context.fill(0, 0, width, height, MenuTheme.BACKDROP);
+    }
+
+    /**
+     * Dessine le panorama, ou dit qu'il n'a pas pu l'etre.
+     *
+     * <p>Le jeu pose son ecran-titre <em>avant</em> la fin du premier
+     * chargement des ressources, et le dessine derriere l'ecran de demarrage.
+     * A cet instant les six faces du cubemap n'ont pas encore de texture GPU,
+     * et le jeu levait « Texture view does not exist, can't get it before
+     * something initializes it » -- un plantage au premier lancement, et
+     * seulement au premier.
+     *
+     * <p>L'ecran-titre d'origine ne connait pas ce probleme: ses faces sont
+     * enregistrees par {@code TitleScreen.registerTextures} au demarrage du
+     * client, donc chargees depuis longtemps quand il les dessine. Les notres
+     * arrivent avec le pack de ressources du mod, au meme rechargement que
+     * celui qui est en cours.
+     *
+     * <p>On retente donc a chaque image plutot que d'abandonner: le
+     * chargement dure une seconde, apres quoi le panorama s'affiche
+     * normalement et plus rien ne passe par ici.
+     */
+    private boolean panoramaDessine(DrawContext context, MinecraftClient client) {
+        try {
+            RotatingCubeMapRenderer rendu = panorama(client);
+            if (rendu == null) {
+                return false;
+            }
+            rendu.render(context, width, height, true);
+            return true;
+        } catch (RuntimeException echec) {
+            signale("panorama pas encore pret", echec);
+            return false;
+        }
     }
 
     private RotatingCubeMapRenderer panorama(MinecraftClient client) {
@@ -211,14 +258,19 @@ public final class TitleController {
             return panorama;
         }
 
+        // Construit a cote, et seulement ensuite adopte: une construction qui
+        // echoue a mi-chemin laisserait sinon un cube sans son enveloppe, et
+        // l'image suivante le prendrait pour bon.
+        CubeMapRenderer neuf = new CubeMapRenderer(choisi.cubeMap());
+        neuf.registerTextures(client.getTextureManager());
+        RotatingCubeMapRenderer tournant = new RotatingCubeMapRenderer(neuf);
+        tournant.registerTextures(client.getTextureManager());
+
         if (cube != null) {
             cube.close();
         }
-
-        cube = new CubeMapRenderer(choisi.cubeMap());
-        cube.registerTextures(client.getTextureManager());
-        panorama = new RotatingCubeMapRenderer(cube);
-        panorama.registerTextures(client.getTextureManager());
+        cube = neuf;
+        panorama = tournant;
         monte = choisi;
         return panorama;
     }
@@ -228,9 +280,17 @@ public final class TitleController {
         int centre = height / 2 - 76;
         int haut = Math.max(4, centre - LOGO_COTE / 2);
 
-        Platforms.get().drawTexture(context, LOGO,
-            (width - LOGO_COTE) / 2, haut, LOGO_COTE, LOGO_COTE,
-            LOGO_TEXTURE, LOGO_TEXTURE);
+        // Meme reserve que pour le panorama: la texture peut ne pas encore
+        // exister a la premiere image. Le nom reste, lui, toujours lisible.
+        try {
+            Platforms.get().drawTexture(context, LOGO,
+                (width - LOGO_COTE) / 2, haut, LOGO_COTE, LOGO_COTE,
+                LOGO_TEXTURE, LOGO_TEXTURE);
+        } catch (RuntimeException echec) {
+            signale("logo pas encore pret", echec);
+            MenuTheme.centered(context, font, "PARANOIA", 0, width,
+                haut + LOGO_COTE / 2, MenuTheme.TEXT);
+        }
 
         MenuAccueilModule reglages = MenuAccueilModule.instance();
         if (reglages == null || reglages.splash()) {
@@ -407,6 +467,21 @@ public final class TitleController {
      * l'ecran-titre, c'est-a-dire un jeu qui ne demarre plus du tout, et une
      * valeur par defaut coute une ligne.
      */
+
+    /**
+     * Dit une fois ce qui n'a pas pu etre dessine.
+     *
+     * <p>Une fois, et non a chaque image: ces echecs durent le temps d'un
+     * chargement de ressources, soit une soixantaine d'images, et les
+     * imprimer toutes noierait le journal au moment ou on le lit.
+     */
+    private void signale(String quoi, RuntimeException echec) {
+        if (!signale.add(quoi)) {
+            return;
+        }
+        LoggerFactory.getLogger("ParanoiaClient")
+            .info("[ACCUEIL] {}: {}", quoi, echec.getMessage());
+    }
 
     private Teinte teinte() {
         MenuAccueilModule reglages = MenuAccueilModule.instance();
