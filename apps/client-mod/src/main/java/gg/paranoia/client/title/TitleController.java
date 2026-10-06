@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +110,20 @@ public final class TitleController {
     private static final int VERT_BORD = 0xFF2A4A38;
     private static final int VERT = 0xFF5BD98A;
 
+    /**
+     * Le logo, pose sur un carre transparent de 512.
+     *
+     * <p>Le dessin lui-meme n'est pas carre -- il est une fois et demie plus
+     * large que haut -- mais la texture l'est: une puissance de deux evite
+     * toute surprise d'echantillonnage, et les marges transparentes ne coutent
+     * rien. On dessine donc le carre, et le logo occupe la bande du milieu.
+     */
+    private static final Identifier LOGO =
+        Identifier.of("paranoia_client", "textures/gui/title/logo.png");
+    private static final int LOGO_TEXTURE = 512;
+    /** Cote du carre a l'ecran; le dessin visible y fait 112 sur 75. */
+    private static final int LOGO_COTE = 112;
+
     private static final String[] PHRASES = {
         "Tourne plus vite que prevu",
         "Compte les images, pas les promesses",
@@ -171,7 +186,7 @@ public final class TitleController {
 
         fond(context, client);
         dispose();
-        logo(context, teinte);
+        logo(context);
 
         for (Bouton bouton : boutons) {
             dessine(context, bouton, teinte);
@@ -208,25 +223,23 @@ public final class TitleController {
         return panorama;
     }
 
-    private void logo(DrawContext context, Teinte teinte) {
-        int milieu = width / 2;
-        // Le modele centre son logo 76 au-dessus du milieu de l'ecran, soit
-        // 45 au-dessus de la premiere barre.
-        int haut = Math.max(12, height / 2 - 88);
+    private void logo(DrawContext context) {
+        // Le modele centre son logo 76 au-dessus du milieu de l'ecran.
+        int centre = height / 2 - 76;
+        int haut = Math.max(4, centre - LOGO_COTE / 2);
 
-        // Trois fois la taille du texte, autour du point ou il doit tomber: la
-        // police du jeu n'a qu'un corps, et c'est la seule facon d'avoir un
-        // titre qui en soit un.
-        String titre = "PARANOIA";
-        int largeur = font.getWidth(titre);
-        Platforms.get().pushScale(context, 3.0F, milieu - (largeur * 3) / 2, haut);
-        MenuTheme.text(context, font, titre, 0, 0, teinte.argb());
-        Platforms.get().popScale(context);
+        Platforms.get().drawTexture(context, LOGO,
+            (width - LOGO_COTE) / 2, haut, LOGO_COTE, LOGO_COTE,
+            LOGO_TEXTURE, LOGO_TEXTURE);
 
         MenuAccueilModule reglages = MenuAccueilModule.instance();
         if (reglages == null || reglages.splash()) {
             String phrase = PHRASES[(int) (System.currentTimeMillis() / 86_400_000L % PHRASES.length)];
-            MenuTheme.centered(context, font, phrase, 0, width, haut + 34, MenuTheme.TEXT_DIM);
+            // Sous le dessin visible, et non sous le carre: le quart bas de la
+            // texture est transparent, et s'en servir comme repere laisserait
+            // un trou de vingt pixels entre le logo et sa phrase.
+            MenuTheme.centered(context, font, phrase, 0, width,
+                haut + LOGO_COTE * 3 / 4 + 4, MenuTheme.TEXT_DIM);
         }
     }
 

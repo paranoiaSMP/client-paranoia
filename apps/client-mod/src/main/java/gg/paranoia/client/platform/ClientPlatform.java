@@ -55,6 +55,22 @@ public interface ClientPlatform {
     Screen createTitleScreen(TitleController controller);
 
     /**
+     * Dessine une texture entiere, mise a l'echelle, dans la boite donnee.
+     *
+     * <p>Premiere texture du projet: tout le reste est fait de rectangles et
+     * de texte, parce que {@code fill} et {@code drawText} sont les deux
+     * seules signatures qui n'ont pas bouge sur les versions ciblees. Le
+     * dessin d'une texture, lui, demande un pipeline de rendu depuis 1.21.5,
+     * et c'est exactement ce que la plateforme est la pour absorber.
+     *
+     * @param textureWidth taille reelle du fichier, en texels, et non la
+     *     taille a l'ecran: c'est elle qui dit quelle part echantillonner.
+     */
+    void drawTexture(
+        DrawContext context, Identifier texture,
+        int x, int y, int width, int height, int textureWidth, int textureHeight);
+
+    /**
      * Mise a l'echelle d'un HUD autour d'un point.
      *
      * <p>Isole ici parce que la pile de matrices est passee d'un MatrixStack 3D

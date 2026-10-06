@@ -445,7 +445,7 @@ jobs:
         working-directory: apps/client-mod
         run: |
           simples="TitleScreen CubeMapRenderer RotatingCubeMapRenderer PanoramaRenderer
-                   LogoDrawer SelectWorldScreen MultiplayerScreen OptionsScreen"
+                   LogoDrawer SelectWorldScreen MultiplayerScreen OptionsScreen RenderPipelines"
 
           for version in $(ls -1 versions | sort -V); do
             if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then

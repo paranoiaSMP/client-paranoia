@@ -8,6 +8,7 @@ import gg.paranoia.client.platform.ClientPlatform;
 import gg.paranoia.client.platform.HudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
@@ -40,6 +41,18 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public Screen createTitleScreen(TitleController controller) {
         return new ParanoiaTitleScreen(controller);
+    }
+
+    @Override
+    public void drawTexture(
+        DrawContext context, Identifier texture,
+        int x, int y, int width, int height, int textureWidth, int textureHeight) {
+        // La surcharge a douze arguments est la seule qui mette a l'echelle:
+        // les autres dessinent la region a sa taille de texels, ce qui donnerait
+        // un logo de 512 pixels de cote.
+        context.drawTexture(
+            RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0F, 0.0F,
+            width, height, textureWidth, textureHeight, textureWidth, textureHeight);
     }
 
     @Override
