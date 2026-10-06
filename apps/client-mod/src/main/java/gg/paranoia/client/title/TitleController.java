@@ -162,12 +162,25 @@ public final class TitleController {
     /** Largeur de la pastille de compte, relevee au dessin pour le clic. */
     private int largeurPastille;
 
+    /**
+     * La liste des comptes du launcher, depliee sous la pastille.
+     *
+     * <p>Fermee par defaut: l'ecran d'accueil n'est pas un gestionnaire de
+     * comptes, c'est un bouton Jouer. Elle s'ouvre quand on le demande.
+     */
+    private boolean comptesDeplies;
+
     /** Ce qui a deja ete signale, pour ne pas le redire a chaque image. */
     private final Set<String> signale = new HashSet<>();
 
     /** L'ecran hote, pour les ecrans du jeu qui veulent savoir d'ou l'on vient. */
     public void attache(Screen ecran) {
         this.ecran = ecran;
+        comptesDeplies = false;
+        // A l'ouverture de l'ecran, et pas a chaque image: le launcher est un
+        // processus voisin, pas une source a interroger soixante fois par
+        // seconde.
+        Comptes.rafraichit();
     }
 
     public void setViewport(int width, int height, TextRenderer font) {
@@ -375,6 +388,46 @@ public final class TitleController {
             MenuTheme.text(context, font, dit, 8, 30,
                 cliquable ? teinte.argb() : MenuTheme.TEXT_DIM);
         }
+
+        listeDesComptes(context, teinte, dit == null ? 30 : 42);
+    }
+
+    /**
+     * Les comptes enregistres par le launcher, sous la pastille.
+     *
+     * <p>Le jeu ne connait que celui avec lequel il a demarre; le launcher les
+     * connait tous. En designer un ici ne change rien a la partie en cours --
+     * la session de Minecraft est fixee au demarrage -- mais le launcher
+     * relira ce choix au lancement suivant, et c'est dit sous la liste.
+     */
+    private void listeDesComptes(DrawContext context, Teinte teinte, int haut) {
+        if (!comptesDeplies) {
+            return;
+        }
+
+        List<Comptes.Compte> comptes = Comptes.connus();
+        if (comptes.isEmpty()) {
+            MenuTheme.text(context, font, "Launcher injoignable", 8, haut, MenuTheme.TEXT_DIM);
+            return;
+        }
+
+        int largeur = 140;
+        int ligne = 16;
+        int y = haut;
+
+        for (Comptes.Compte compte : comptes) {
+            boolean survole = MenuTheme.inside(mouseX, mouseY, 8, y, largeur, ligne);
+            if (survole || compte.actif()) {
+                MenuTheme.panel(context, 8, y, largeur, ligne,
+                    compte.actif() ? teinte.voile() : MenuTheme.CARD_HOVER);
+            }
+            MenuTheme.text(context, font,
+                MenuTheme.fit(font, compte.pseudonyme(), largeur - 10),
+                13, y + 4, compte.actif() ? teinte.argb() : MenuTheme.TEXT);
+            y += ligne + 2;
+        }
+
+        MenuTheme.text(context, font, "Au prochain lancement", 8, y + 2, MenuTheme.TEXT_DIM);
     }
 
     private PresenceService.Etat etatPresence() {
@@ -467,16 +520,28 @@ public final class TitleController {
             return false;
         }
 
-        // La pastille de compte, qui n'est un bouton que lorsqu'il y a quelque
-        // chose a faire: reessayer la connexion au service. Elle est dessinee
-        // a part des autres -- elle porte un pseudonyme, pas un libelle -- donc
-        // son clic se traite a part.
-        if (etatPresence() == PresenceService.Etat.HORS_LIGNE
-            && MenuTheme.inside(mouseX, mouseY, 8, 8, largeurPastille, 18)) {
-            PresenceService presence = ParanoiaClient.presence();
-            if (presence != null) {
-                presence.reveille();
+        // La pastille de compte et sa liste sont dessinees a part des autres
+        // boutons -- elles portent des pseudonymes, pas des libelles -- donc
+        // leurs clics se traitent a part.
+        if (MenuTheme.inside(mouseX, mouseY, 8, 8, largeurPastille, 18)) {
+            // Un service injoignable: le clic sert d'abord a reessayer. C'est
+            // ce que le joueur veut a cet instant, et le libelle rouge le dit.
+            if (etatPresence() == PresenceService.Etat.HORS_LIGNE) {
+                PresenceService presence = ParanoiaClient.presence();
+                if (presence != null) {
+                    presence.reveille();
+                }
+                return true;
             }
+
+            comptesDeplies = !comptesDeplies;
+            if (comptesDeplies) {
+                Comptes.rafraichit();
+            }
+            return true;
+        }
+
+        if (comptesDeplies && compteClique()) {
             return true;
         }
 
@@ -485,6 +550,31 @@ public final class TitleController {
                 execute(bouton.action());
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Un clic dans la liste des comptes, s'il y en a un.
+     *
+     * <p>La liste est posee au dessin, et les memes mesures servent ici. Les
+     * recalculer serait les ecrire deux fois, et c'est ainsi qu'une zone
+     * cliquable finit ailleurs que son bouton.
+     */
+    private boolean compteClique() {
+        List<Comptes.Compte> comptes = Comptes.connus();
+        if (comptes.isEmpty()) {
+            return false;
+        }
+
+        int haut = libelleEtat() == null ? 30 : 42;
+        int y = haut;
+        for (Comptes.Compte compte : comptes) {
+            if (MenuTheme.inside(mouseX, mouseY, 8, y, 140, 16)) {
+                Comptes.choisit(compte.id());
+                return true;
+            }
+            y += 18;
         }
         return false;
     }
