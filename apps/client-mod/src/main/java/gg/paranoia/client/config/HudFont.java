@@ -31,7 +31,7 @@ public enum HudFont {
      *
      * <p>Embarquee dans le mod avec sa licence: elle est sous SIL Open Font
      * License, qui autorise la redistribution a condition de joindre le texte
-     * de la licence -- {@code assets/paranoia_client/font/silkscreen-OFL.txt}.
+     * de la licence -- {@code assets/paranoia_client/font/silkscreen-ofl.txt}.
      */
     SILKSCREEN("Silkscreen", Identifier.of("paranoia_client", "silkscreen"));
 
