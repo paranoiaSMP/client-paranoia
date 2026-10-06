@@ -1,6 +1,7 @@
 package gg.paranoia.client.platform;
 
 import gg.paranoia.client.menu.MenuController;
+import gg.paranoia.client.title.TitleController;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.PlayerListEntry;
@@ -44,6 +45,30 @@ public interface ClientPlatform {
      * logique commune.
      */
     Screen createMenuScreen(MenuController controller);
+
+    /**
+     * L'ecran d'accueil, qui remplace l'ecran-titre du jeu.
+     *
+     * <p>Comme le menu: tout est commun sauf la signature des entrees souris,
+     * qui a change en 1.21.9. Seule la coquille vit donc par version.
+     */
+    Screen createTitleScreen(TitleController controller);
+
+    /**
+     * Dessine une texture entiere, mise a l'echelle, dans la boite donnee.
+     *
+     * <p>Premiere texture du projet: tout le reste est fait de rectangles et
+     * de texte, parce que {@code fill} et {@code drawText} sont les deux
+     * seules signatures qui n'ont pas bouge sur les versions ciblees. Le
+     * dessin d'une texture, lui, demande un pipeline de rendu depuis 1.21.5,
+     * et c'est exactement ce que la plateforme est la pour absorber.
+     *
+     * @param textureWidth taille reelle du fichier, en texels, et non la
+     *     taille a l'ecran: c'est elle qui dit quelle part echantillonner.
+     */
+    void drawTexture(
+        DrawContext context, Identifier texture,
+        int x, int y, int width, int height, int textureWidth, int textureHeight);
 
     /**
      * Mise a l'echelle d'un HUD autour d'un point.
