@@ -109,7 +109,6 @@ public final class ParanoiaClient {
         REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
         REGISTRY.register(new MenuAccueilModule());
-);
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
