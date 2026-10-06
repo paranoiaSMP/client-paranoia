@@ -7,7 +7,12 @@ export type UpdateState =
   | { status: "available"; version: string; notes: string }
   | { status: "downloading"; percent: number }
   | { status: "ready" }
-  | { status: "error"; message: string };
+  | {
+      status: "error";
+      message: string;
+      downloadUrl?: string | undefined;
+      isPackageFormatError?: boolean | undefined;
+    };
 
 /**
  * Checks the release feed once at startup and exposes the update to the UI.
@@ -79,9 +84,17 @@ export function useUpdater() {
 
       await relaunch();
     } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const isFormatError = raw.toLowerCase().includes("invalid updater binary format");
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : String(err),
+        message: isFormatError
+          ? "Ce launcher est installe via un paquet systeme (.deb). Les mises a jour automatiques directes necessitent la version AppImage. Telechargez le nouveau paquet .deb ou lancez la version AppImage."
+          : raw,
+        downloadUrl: isFormatError
+          ? "https://github.com/paranoiaSMP/client-paranoia/releases/latest"
+          : undefined,
+        isPackageFormatError: isFormatError,
       });
     }
   }, [update]);
