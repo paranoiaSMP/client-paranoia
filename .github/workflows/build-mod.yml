@@ -402,7 +402,9 @@ jobs:
             for lecture in \
               "net.minecraft.client.MinecraftClient:itemUseCooldown" \
               "net.minecraft.client.MinecraftClient:useKey|KeyBinding" \
-              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects"
+              "net.minecraft.entity.LivingEntity:itemUseTimeLeft|isClient|consumeItem|clearActiveItem|areItemsEqual|areEqual|playSound|SoundEvent|ConsumptionEffects" \
+              "net.minecraft.client.gui.CubeMapRenderer:registerTextures|TextureManager|ResourceTexture|getTexture|Identifier" \
+              "net.minecraft.client.gui.screen.TitleScreen:registerTextures|TextureManager|CubeMap"
             do
               corps_classe="${lecture%%:*}"
               corps_motif="${lecture#*:}"
@@ -445,7 +447,8 @@ jobs:
         working-directory: apps/client-mod
         run: |
           simples="TitleScreen CubeMapRenderer RotatingCubeMapRenderer PanoramaRenderer
-                   LogoDrawer SelectWorldScreen MultiplayerScreen OptionsScreen RenderPipelines"
+                   LogoDrawer SelectWorldScreen MultiplayerScreen OptionsScreen RenderPipelines
+                   TextureManager ResourceTexture AbstractTexture"
 
           for version in $(ls -1 versions | sort -V); do
             if [ ! -f "versions/$version/build/compile-classpath.txt" ]; then

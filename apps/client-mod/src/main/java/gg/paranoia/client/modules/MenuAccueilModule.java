@@ -1,6 +1,5 @@
 package gg.paranoia.client.modules;
 
-import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.EnumSetting;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
@@ -23,8 +22,6 @@ public final class MenuAccueilModule extends Module {
     /** Le mixin de remplacement s'execute hors du menu: il lui faut un acces direct. */
     private static MenuAccueilModule instance;
 
-    private final BooleanSetting splash =
-        add(new BooleanSetting("splash", "Phrase du jour", true));
     private final EnumSetting<Panorama> panorama = add(new EnumSetting<>(
         "panorama", "Panorama", Panorama.SPAWN, Panorama.values(), Panorama::label));
     private final EnumSetting<Teinte> teinte = add(new EnumSetting<>(
@@ -39,10 +36,6 @@ public final class MenuAccueilModule extends Module {
     /** Null tant que les modules ne sont pas enregistres: le mixin le verifie. */
     public static MenuAccueilModule instance() {
         return instance;
-    }
-
-    public boolean splash() {
-        return splash.get();
     }
 
     public Panorama panorama() {
