@@ -178,9 +178,29 @@ export async function launchMinecraft(
 	cancelFlags.set(profileId, false);
 	activeProcesses.delete(profileId);
 
+	// Derniere ligne ecrite dans le journal, pour ne pas la repeter.
+	//
+	// L'etat est mis a jour a chaque ressource telechargee -- MCLC emet un
+	// evenement par fichier -- et chacune ecrivait sa ligne. Un lancement
+	// ordinaire produisait ainsi plusieurs centaines de
+	// « Telechargement des ressources (assets)... » identiques, a la meme
+	// seconde, qui repoussaient hors de portee tout ce qui s'etait passe
+	// avant. Un journal ne se lit que par la fin.
+	//
+	// L'etat lui-meme continue d'etre rafraichi a chaque evenement: c'est lui
+	// que l'interface interroge pour sa barre de progression, et c'est la
+	// seule chose dont la frequence a un interet.
+	let derniereLigne = "";
+
 	const updateStatus = (status: LaunchStatus) => {
 		launchStatuses.set(profileId, status);
-		addLog(`[Launcher] [${status.state.toUpperCase()}] ${status.text}`);
+
+		const ligne = `[Launcher] [${status.state.toUpperCase()}] ${status.text}`;
+		if (ligne === derniereLigne) {
+			return;
+		}
+		derniereLigne = ligne;
+		addLog(ligne);
 	};
 
 	updateStatus({
@@ -653,7 +673,10 @@ export async function launchMinecraft(
 		});
 
 		launcher.on("progress", (e) => {
-			console.log(`[MC Launcher Progress] ${e.type} - ${e.task} : ${e.total}`);
+			// Pas de `console.log` ici: un evenement par fichier telecharge,
+			// soit plusieurs centaines de lignes par lancement sur la sortie du
+			// sidecar, pour une information que la barre de progression porte
+			// deja. Les etapes, elles, restent journalisees par updateStatus.
 			const progress = e.total > 0 ? Math.round((e.task / e.total) * 100) : 0;
 			updateStatus({
 				state: "downloading_assets",
