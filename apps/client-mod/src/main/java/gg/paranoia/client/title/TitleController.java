@@ -3,6 +3,7 @@ package gg.paranoia.client.title;
 import gg.paranoia.client.ParanoiaClient;
 import gg.paranoia.client.menu.MenuTheme;
 import gg.paranoia.client.modules.MenuAccueilModule;
+import gg.paranoia.client.net.PresenceService;
 import gg.paranoia.client.platform.Platforms;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -157,6 +158,9 @@ public final class TitleController {
     private TextRenderer font;
     private int mouseX;
     private int mouseY;
+
+    /** Largeur de la pastille de compte, relevee au dessin pour le clic. */
+    private int largeurPastille;
 
     /** Ce qui a deja ete signale, pour ne pas le redire a chaque image. */
     private final Set<String> signale = new HashSet<>();
@@ -348,11 +352,56 @@ public final class TitleController {
     private void pastilleCompte(DrawContext context, MinecraftClient client, Teinte teinte) {
         String pseudo = client.getSession().getUsername();
         int largeur = Math.min(140, font.getWidth(pseudo) + 16);
-        MenuTheme.panel(context, 8, 8, largeur, 18, MenuTheme.CARD);
-        MenuTheme.outline(context, 8, 8, largeur, 18, MenuTheme.CARD_BORDER);
-        context.fill(13, 15, 17, 19, teinte.argb());
+        largeurPastille = largeur;
+        boolean cliquable = etatPresence() == PresenceService.Etat.HORS_LIGNE;
+        boolean survole = cliquable && MenuTheme.inside(mouseX, mouseY, 8, 8, largeur, 18);
+
+        MenuTheme.panel(context, 8, 8, largeur, 18,
+            survole ? MenuTheme.CARD_HOVER : MenuTheme.CARD);
+        MenuTheme.outline(context, 8, 8, largeur, 18,
+            survole ? teinte.argb() : MenuTheme.CARD_BORDER);
+
+        // Le carre disait la teinte choisie, c'est-a-dire rien. Il dit
+        // maintenant si le service Paranoia repond: vert quand la session est
+        // valide, rouge quand le dernier cycle a echoue, neutre tant que le
+        // premier n'est pas passe. C'est la seule chose qu'on puisse
+        // reellement savoir d'ici, et c'est ce qui manquait.
+        context.fill(13, 15, 17, 19, couleurEtat());
         MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
             21, 13, MenuTheme.TEXT);
+
+        String dit = libelleEtat();
+        if (dit != null) {
+            MenuTheme.text(context, font, dit, 8, 30,
+                cliquable ? teinte.argb() : MenuTheme.TEXT_DIM);
+        }
+    }
+
+    private PresenceService.Etat etatPresence() {
+        PresenceService presence = ParanoiaClient.presence();
+        return presence == null ? PresenceService.Etat.EN_COURS : presence.etat();
+    }
+
+    private int couleurEtat() {
+        return switch (etatPresence()) {
+            case CONNECTE -> VERT;
+            case HORS_LIGNE -> MenuTheme.STATE_OFF;
+            case EN_COURS -> MenuTheme.TEXT_DIM;
+        };
+    }
+
+    /**
+     * Ce qui est dit sous la pastille, et seulement quand il y a a dire.
+     *
+     * <p>Rien quand tout va bien: un « Connecte » permanent n'apprend rien et
+     * occupe un coin de l'ecran pour le plaisir.
+     */
+    private String libelleEtat() {
+        return switch (etatPresence()) {
+            case CONNECTE -> null;
+            case HORS_LIGNE -> "Service Paranoia injoignable";
+            case EN_COURS -> "Connexion...";
+        };
     }
 
     private void pied(DrawContext context) {
@@ -416,6 +465,19 @@ public final class TitleController {
     public boolean mouseClicked(int button) {
         if (button != 0) {
             return false;
+        }
+
+        // La pastille de compte, qui n'est un bouton que lorsqu'il y a quelque
+        // chose a faire: reessayer la connexion au service. Elle est dessinee
+        // a part des autres -- elle porte un pseudonyme, pas un libelle -- donc
+        // son clic se traite a part.
+        if (etatPresence() == PresenceService.Etat.HORS_LIGNE
+            && MenuTheme.inside(mouseX, mouseY, 8, 8, largeurPastille, 18)) {
+            PresenceService presence = ParanoiaClient.presence();
+            if (presence != null) {
+                presence.reveille();
+            }
+            return true;
         }
 
         for (Bouton bouton : boutons) {

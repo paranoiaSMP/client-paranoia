@@ -232,4 +232,9 @@ public final class ParanoiaClient {
     public static TitleController titleController() {
         return TITLE;
     }
+
+    /** Le service de presence, pour l'ecran d'accueil qui en montre l'etat. */
+    public static PresenceService presence() {
+        return PRESENCE;
+    }
 }
