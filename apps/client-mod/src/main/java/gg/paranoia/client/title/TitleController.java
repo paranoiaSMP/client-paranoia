@@ -2,7 +2,6 @@ package gg.paranoia.client.title;
 
 import gg.paranoia.client.ParanoiaClient;
 import gg.paranoia.client.menu.MenuTheme;
-import gg.paranoia.client.menu.ModuleIcons;
 import gg.paranoia.client.modules.MenuAccueilModule;
 import gg.paranoia.client.platform.Platforms;
 import net.minecraft.client.MinecraftClient;
@@ -123,18 +122,34 @@ public final class TitleController {
      */
     private static final Identifier LOGO =
         Identifier.of("paranoia_client", "textures/gui/title/logo.png");
-    private static final int LOGO_TEXTURE = 512;
-    /** Cote du carre a l'ecran; le dessin visible y fait 112 sur 75. */
-    private static final int LOGO_COTE = 112;
 
-    private static final String[] PHRASES = {
-        "Tourne plus vite que prevu",
-        "Compte les images, pas les promesses",
-        "Six mods, zero folklore",
-        "Le FPS n'est pas une opinion",
-        "Sans publicite, sans surprise",
-        "Fabrique a Paranoia Studio",
-    };
+    /*
+     * Le logo fait exactement le double de sa taille a l'ecran.
+     *
+     * <p>Minecraft echantillonne les textures d'interface au plus proche
+     * voisin. Le fichier faisait 512 de cote et tombait dans une boite de 112:
+     * un texel sur cinq etait garde, et chaque bord du trace devenait un
+     * escalier. A l'echelle d'interface 2 -- la plus courante -- deux texels
+     * valent desormais deux pixels, et le dessin reste net.
+     *
+     * <p>Il n'est plus carre non plus: ses marges transparentes servaient a
+     * faire une puissance de deux dont le rendu n'a pas besoin, et elles
+     * compliquaient le placement pour rien.
+     */
+    private static final int LOGO_TEXTURE_L = 176;
+    private static final int LOGO_TEXTURE_H = 122;
+    private static final int LOGO_L = LOGO_TEXTURE_L / 2;
+    private static final int LOGO_H = LOGO_TEXTURE_H / 2;
+
+    /** Les icones, un fichier par dessin, au double de leur taille a l'ecran. */
+    private static final int ICONE_TEXTURE = 32;
+    private static final int ICONE = ICONE_TEXTURE / 2;
+    private static final int BLANC = 0xFFFFFFFF;
+
+    private static Identifier icone(String nom) {
+        return Identifier.of("paranoia_client", "textures/gui/title/icone/" + nom + ".png");
+    }
+
 
     private final List<Bouton> boutons = new ArrayList<>();
 
@@ -173,12 +188,7 @@ public final class TitleController {
      * apres une partie, apres les options -- en laisserait un derriere lui.
      */
     public void onClosed() {
-        if (cube != null) {
-            cube.close();
-            cube = null;
-            panorama = null;
-            monte = null;
-        }
+        rendLeCube();
     }
 
     // ------------------------------------------------------------------ rendu
@@ -252,10 +262,46 @@ public final class TitleController {
         }
     }
 
+    /**
+     * Rend le tampon GPU du cubemap en cours, s'il y en a un.
+     *
+     * <p>Appele quand on change de panorama et a la fermeture de l'ecran. Un
+     * {@code CubeMapRenderer} tient un tampon GPU: en abandonner un par image
+     * les accumulerait.
+     */
+    private void rendLeCube() {
+        if (cube != null) {
+            cube.close();
+            cube = null;
+            panorama = null;
+            monte = null;
+        }
+    }
+
     private RotatingCubeMapRenderer panorama(MinecraftClient client) {
         Panorama choisi = panoramaChoisi();
         if (panorama != null && choisi == monte) {
             return panorama;
+        }
+
+        // Les six faces sont demandees au gestionnaire de textures avant
+        // d'etre dessinees, et c'est la correction du panorama qui ne
+        // s'affichait pas.
+        //
+        // `registerTextures` inscrit les faces, mais une texture inscrite
+        // apres le rechargement des ressources n'est jamais chargee: son
+        // enveloppe GPU reste vide, et `draw` echoue sur « Texture view does
+        // not exist ». L'ecran-titre d'origine n'a pas ce souci -- le jeu
+        // inscrit ses faces au demarrage du client, donc avant le premier
+        // rechargement.
+        //
+        // Le logo, lui, s'affichait: `drawTexture` passe par `getTexture`,
+        // qui charge a la demande. C'est ce chemin-la qu'on emprunte ici, pour
+        // les six faces, avant de laisser le cubemap les lire.
+        for (int face = 0; face < 6; face++) {
+            client.getTextureManager().getTexture(Identifier.of(
+                choisi.cubeMap().getNamespace(),
+                choisi.cubeMap().getPath() + "_" + face + ".png"));
         }
 
         // Construit a cote, et seulement ensuite adopte: une construction qui
@@ -277,29 +323,18 @@ public final class TitleController {
 
     private void logo(DrawContext context) {
         // Le modele centre son logo 76 au-dessus du milieu de l'ecran.
-        int centre = height / 2 - 76;
-        int haut = Math.max(4, centre - LOGO_COTE / 2);
+        int haut = Math.max(4, height / 2 - 76 - LOGO_H / 2);
 
         // Meme reserve que pour le panorama: la texture peut ne pas encore
         // exister a la premiere image. Le nom reste, lui, toujours lisible.
         try {
             Platforms.get().drawTexture(context, LOGO,
-                (width - LOGO_COTE) / 2, haut, LOGO_COTE, LOGO_COTE,
-                LOGO_TEXTURE, LOGO_TEXTURE);
+                (width - LOGO_L) / 2, haut, LOGO_L, LOGO_H,
+                LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
             signale("logo pas encore pret", echec);
             MenuTheme.centered(context, font, "PARANOIA", 0, width,
-                haut + LOGO_COTE / 2, MenuTheme.TEXT);
-        }
-
-        MenuAccueilModule reglages = MenuAccueilModule.instance();
-        if (reglages == null || reglages.splash()) {
-            String phrase = PHRASES[(int) (System.currentTimeMillis() / 86_400_000L % PHRASES.length)];
-            // Sous le dessin visible, et non sous le carre: le quart bas de la
-            // texture est transparent, et s'en servir comme repere laisserait
-            // un trou de vingt pixels entre le logo et sa phrase.
-            MenuTheme.centered(context, font, phrase, 0, width,
-                haut + LOGO_COTE * 3 / 4 + 4, MenuTheme.TEXT_DIM);
+                haut + LOGO_H / 2, MenuTheme.TEXT);
         }
     }
 
@@ -316,10 +351,9 @@ public final class TitleController {
                 MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
                     MenuTheme.ROW_HOVER);
             }
-            ModuleIcons.draw(context, bouton.icone(),
-                bouton.x() + (bouton.w() - ModuleIcons.size(1)) / 2,
-                bouton.y() + (bouton.h() - ModuleIcons.size(1)) / 2,
-                1,
+            dessineIcone(context, bouton.icone(),
+                bouton.x() + (bouton.w() - ICONE) / 2,
+                bouton.y() + (bouton.h() - ICONE) / 2,
                 survole ? teinte.argb() : MenuTheme.TEXT);
             return;
         }
@@ -337,13 +371,28 @@ public final class TitleController {
 
         // Icone et texte centres ensemble, et non le texte seul: c'est la
         // disposition du modele, ou le couple se lit comme un seul bloc.
-        int cote = ModuleIcons.size(1);
-        int bloc = cote + 4 + font.getWidth(bouton.label());
+        int bloc = ICONE + 4 + font.getWidth(bouton.label());
         int x = bouton.x() + (bouton.w() - bloc) / 2;
 
-        ModuleIcons.draw(context, bouton.icone(), x, bouton.y() + (bouton.h() - cote) / 2, 1, encre);
-        MenuTheme.text(context, font, bouton.label(), x + cote + 4,
+        dessineIcone(context, bouton.icone(), x, bouton.y() + (bouton.h() - ICONE) / 2, encre);
+        MenuTheme.text(context, font, bouton.label(), x + ICONE + 4,
             bouton.y() + (bouton.h() - font.fontHeight) / 2 + 1, encre);
+    }
+
+    /**
+     * Une icone, teintee.
+     *
+     * <p>Les fichiers sont blancs: c'est la teinte qui donne la couleur, ce
+     * qui evite un fichier par etat et garde le survol d'accord avec le reste
+     * de l'ecran.
+     */
+    private void dessineIcone(DrawContext context, String nom, int x, int y, int couleur) {
+        try {
+            Platforms.get().drawTexture(context, icone(nom), x, y, ICONE, ICONE,
+                ICONE_TEXTURE, ICONE_TEXTURE, couleur);
+        } catch (RuntimeException echec) {
+            signale("icones pas encore pretes", echec);
+        }
     }
 
     /** Qui est connecte, en haut a gauche, comme dans le launcher. */
@@ -406,7 +455,7 @@ public final class TitleController {
 
         int total = (carres.length - 1) * PAS_CARRE + CARRE;
         int x = (width - total) / 2;
-        int bas = height - 17 - (CARRE - ModuleIcons.size(1)) / 2;
+        int bas = height - 17 - (CARRE - ICONE) / 2;
         for (int i = 0; i < carres.length; i++) {
             boutons.add(new Bouton(carres[i], null, icones[i], x, bas, CARRE, CARRE, false));
             x += PAS_CARRE;
