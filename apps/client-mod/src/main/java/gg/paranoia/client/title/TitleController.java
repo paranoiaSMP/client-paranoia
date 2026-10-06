@@ -221,11 +221,38 @@ public final class TitleController {
      * lancement.
      */
     private void fond(DrawContext context, MinecraftClient client) {
-        if (!panoramaDessine(context, client)) {
-            context.fill(0, 0, width, height, MenuTheme.WINDOW);
+        if (panoramaDessine(context, client) || fondFixe(context)) {
+            context.fill(0, 0, width, height, MenuTheme.BACKDROP);
             return;
         }
-        context.fill(0, 0, width, height, MenuTheme.BACKDROP);
+        context.fill(0, 0, width, height, MenuTheme.WINDOW);
+    }
+
+    /**
+     * La premiere face du panorama, immobile, quand le cubemap ne veut pas.
+     *
+     * <p>Le cubemap est un chemin de rendu a lui tout seul: une texture d'un
+     * type particulier, chargee a un moment precis, lue par du code qu'on ne
+     * controle pas. Une face prise seule n'est qu'une image, et c'est le meme
+     * chemin que le logo -- celui dont on sait qu'il marche. Mieux vaut le
+     * spawn immobile que pas de spawn du tout.
+     *
+     * <p>Dessinee en couverture: la face est carree, l'ecran ne l'est pas. On
+     * la dessine au plus grand des deux cotes, centree, et le jeu coupe ce qui
+     * depasse -- plutot que de l'etirer, ce qui se verrait.
+     */
+    private boolean fondFixe(DrawContext context) {
+        Panorama choisi = panoramaChoisi();
+        int cote = Math.max(width, height);
+        try {
+            Platforms.get().drawTexture(context, choisi.premiereFace(),
+                (width - cote) / 2, (height - cote) / 2, cote, cote,
+                choisi.face(), choisi.face(), BLANC);
+            return true;
+        } catch (RuntimeException echec) {
+            signale("fond fixe pas encore pret", echec);
+            return false;
+        }
     }
 
     /**
@@ -282,26 +309,6 @@ public final class TitleController {
         Panorama choisi = panoramaChoisi();
         if (panorama != null && choisi == monte) {
             return panorama;
-        }
-
-        // Les six faces sont demandees au gestionnaire de textures avant
-        // d'etre dessinees, et c'est la correction du panorama qui ne
-        // s'affichait pas.
-        //
-        // `registerTextures` inscrit les faces, mais une texture inscrite
-        // apres le rechargement des ressources n'est jamais chargee: son
-        // enveloppe GPU reste vide, et `draw` echoue sur « Texture view does
-        // not exist ». L'ecran-titre d'origine n'a pas ce souci -- le jeu
-        // inscrit ses faces au demarrage du client, donc avant le premier
-        // rechargement.
-        //
-        // Le logo, lui, s'affichait: `drawTexture` passe par `getTexture`,
-        // qui charge a la demande. C'est ce chemin-la qu'on emprunte ici, pour
-        // les six faces, avant de laisser le cubemap les lire.
-        for (int face = 0; face < 6; face++) {
-            client.getTextureManager().getTexture(Identifier.of(
-                choisi.cubeMap().getNamespace(),
-                choisi.cubeMap().getPath() + "_" + face + ".png"));
         }
 
         // Construit a cote, et seulement ensuite adopte: une construction qui
@@ -432,16 +439,16 @@ public final class TitleController {
         // suivent, au pas de BARRE_H + ECART.
         int y = height / 2 - 31;
 
-        boutons.add(new Bouton(Action.SOLO, "Solo", "titre-solo",
+        boutons.add(new Bouton(Action.SOLO, "Solo", "solo",
             gauche, y, BARRE_L, BARRE_H, false));
         y += BARRE_H + ECART;
-        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "titre-multi",
+        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "multi",
             gauche, y, BARRE_L, BARRE_H, false));
         y += BARRE_H + ECART;
 
-        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "titre-paranoia",
+        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "paranoia",
             gauche, y, DEMI_L, BARRE_H, false));
-        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "titre-boutique",
+        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "boutique",
             gauche + DEMI_L + ECART, y, BARRE_L - DEMI_L - ECART, BARRE_H, true));
 
         // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
@@ -450,7 +457,7 @@ public final class TitleController {
             Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA, Action.QUITTER,
         };
         String[] icones = {
-            "titre-options", "titre-paranoia", "titre-teinte", "titre-panorama", "titre-quitter",
+            "options", "paranoia", "teinte", "panorama", "quitter",
         };
 
         int total = (carres.length - 1) * PAS_CARRE + CARRE;

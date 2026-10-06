@@ -1,6 +1,9 @@
 package gg.paranoia.client.title;
 
+import net.minecraft.client.gui.CubeMapRenderer;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
+import org.slf4j.LoggerFactory;
 
 /**
  * Les fonds de l'ecran d'accueil.
@@ -26,16 +29,18 @@ import net.minecraft.util.Identifier;
  * Minecraft arrivait sans les notres.
  */
 public enum Panorama {
-    SPAWN("Spawn", Identifier.of("paranoia_client", "textures/gui/title/spawn/panorama")),
-    NOCTURNE("Nocturne", Identifier.of("paranoia_client", "textures/gui/title/nocturne/panorama")),
-    VANILLA("Minecraft", Identifier.of("minecraft", "textures/gui/title/background/panorama"));
+    SPAWN("Spawn", Identifier.of("paranoia_client", "textures/gui/title/spawn/panorama"), 1024),
+    NOCTURNE("Nocturne", Identifier.of("paranoia_client", "textures/gui/title/nocturne/panorama"), 512),
+    VANILLA("Minecraft", Identifier.of("minecraft", "textures/gui/title/background/panorama"), 1024);
 
     private final String label;
     private final Identifier cubeMap;
+    private final int face;
 
-    Panorama(String label, Identifier cubeMap) {
+    Panorama(String label, Identifier cubeMap, int face) {
         this.label = label;
         this.cubeMap = cubeMap;
+        this.face = face;
     }
 
     public String label() {
@@ -44,5 +49,56 @@ public enum Panorama {
 
     public Identifier cubeMap() {
         return cubeMap;
+    }
+
+    /** Cote d'une face, en texels: la premiere sert de fond de secours. */
+    public int face() {
+        return face;
+    }
+
+    /**
+     * La premiere face, comme image seule.
+     *
+     * <p>Le cubemap est un chemin de rendu a lui tout seul, et il peut ne pas
+     * aboutir. Les faces, elles, sont de simples images que
+     * {@code drawTexture} sait dessiner -- c'est le meme chemin que le logo,
+     * et il marche. Mieux vaut un fond fixe que pas de fond du tout.
+     */
+    public Identifier premiereFace() {
+        return Identifier.of(cubeMap.getNamespace(), cubeMap.getPath() + "_0.png");
+    }
+
+    /**
+     * Inscrit les textures des trois panoramas, le plus tot possible.
+     *
+     * <p>C'est la correction du panorama qui restait noir, et elle vient du
+     * bytecode plutot que d'une supposition. {@code registerTextures} ne pose
+     * pas six faces: il construit une seule {@code CubemapTexture} et
+     * l'inscrit sous l'identifiant de base, et {@code draw} va la rechercher
+     * par ce meme identifiant. Or une texture rechargeable inscrite
+     * <em>apres</em> le rechargement des ressources n'est jamais chargee --
+     * son enveloppe GPU reste vide, et le dessin echoue a chaque image.
+     *
+     * <p>L'ecran-titre du jeu fait exactement cela au demarrage du client, par
+     * {@code TitleScreen.registerTextures}, donc avant le premier
+     * rechargement. On s'y prend au meme moment.
+     *
+     * <p>Le {@code CubeMapRenderer} construit ici ne sert qu'a l'inscription
+     * et rend son tampon aussitot: ce qui reste, c'est la texture, dans le
+     * gestionnaire.
+     *
+     * <p>Tout est sous reserve. Rien ici ne doit empecher le jeu de demarrer:
+     * au pire le panorama manque, et l'ecran garde son aplat.
+     */
+    public static void enregistreLesTextures(TextureManager textures) {
+        for (Panorama panorama : values()) {
+            try (CubeMapRenderer cube = new CubeMapRenderer(panorama.cubeMap())) {
+                cube.registerTextures(textures);
+            } catch (RuntimeException echec) {
+                LoggerFactory.getLogger("ParanoiaClient").info(
+                    "[ACCUEIL] panorama {} non inscrit: {}",
+                    panorama.label(), echec.getMessage());
+            }
+        }
     }
 }
