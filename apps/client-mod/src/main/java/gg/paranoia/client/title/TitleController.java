@@ -136,7 +136,7 @@ public final class TitleController {
      * compliquaient le placement pour rien.
      */
     private static final int LOGO_TEXTURE_L = 176;
-    private static final int LOGO_TEXTURE_H = 122;
+    private static final int LOGO_TEXTURE_H = 100;
     private static final int LOGO_L = LOGO_TEXTURE_L / 2;
     private static final int LOGO_H = LOGO_TEXTURE_H / 2;
 
