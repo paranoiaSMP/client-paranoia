@@ -11,6 +11,8 @@ import { markProfilePlayed } from "../profiles/profiles.store.js";
 import { detecteJava, sondeJava } from "./javaDetect.js";
 import { sessionDeLancement } from "../auth/auth.session.js";
 import { EchecRenouvellement } from "../auth/auth.microsoft.js";
+import { ensureJava } from "./javaDownloader.js";
+import { paranoiaDataDir } from "./paths.js";
 
 export const launcherRouter = Router();
 
@@ -90,6 +92,36 @@ launcherRouter.post("/java/verifier", async (req, res, next) => {
 			.object({ chemin: z.string().min(1).max(512) })
 			.parse(req.body);
 		return res.json(await sondeJava(chemin));
+	} catch (err) {
+		return next(err);
+	}
+});
+
+/**
+ * Telecharge et installe une version de Java dans le dossier du launcher (paranoiaDataDir).
+ */
+launcherRouter.post("/java/install", async (req, res, next) => {
+	try {
+		const { major } = z
+			.object({ major: z.number().int().min(7).max(30) })
+			.parse(req.body);
+		const install = await ensureJava(
+			major,
+			paranoiaDataDir(),
+			(_text, _percentage) => {},
+		);
+		const sonde = await sondeJava(install.java, "telecharge par Paranoia");
+		return res.json({
+			success: true,
+			java: sonde ?? {
+				chemin: install.java,
+				major,
+				version: `${major}`,
+				vendeur: "Eclipse Adoptium",
+				arch: process.arch,
+				origine: "telecharge par Paranoia",
+			},
+		});
 	} catch (err) {
 		return next(err);
 	}
