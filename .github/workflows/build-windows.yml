@@ -320,7 +320,7 @@ jobs:
           fail_on_unmatched_files: false
           files: |
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
-            apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
+            apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe.sig
             mod-jars/**/*.jar
 
       # Les jars du mod etaient attaches ici jusqu'au 25 septembre, et la ligne
@@ -372,7 +372,6 @@ jobs:
             throw "$($manquants.Count) jar(s) annonce(s) par le catalogue sont absents de la release"
           }
           Write-Host "les $($urls.Count) jars annonces par le catalogue sont bien publies"
-
       - name: Publish update manifest
         if: steps.release.outputs.tag != ''
         shell: pwsh
