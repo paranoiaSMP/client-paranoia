@@ -43,14 +43,14 @@
       "favorite": "Mettre en favori"
     },
     "settings": {
-      "title": "Sous le capot",
-      "subtitle": "Attention à ce que tu touches ici.",
+      "title": "Paramètres",
+      "subtitle": "Configuration du jeu, performances et comportement du launcher.",
       "import_title": "Importer un profil",
-      "import_desc": "Colle le code JSON qu'on t'a passé pour voler la configuration de quelqu'un d'autre.",
-      "import_validate": "Valider l'import",
-      "import_error": "JSON invalide : il manque des infos pour ce profil !",
-      "import_format_error": "Erreur d'import, le format est chelou.",
-      "language": "Langue"
+      "import_desc": "Collez le code de configuration JSON pour ajouter un profil à votre launcher.",
+      "import_validate": "Importer le profil",
+      "import_error": "Configuration JSON incomplète ou invalide pour ce profil.",
+      "import_format_error": "Erreur lors de l'import : le format JSON n'est pas reconnu.",
+      "language": "Langue d'affichage"
     },
     "wizard": {
       "title": "Fabriquer un profil",

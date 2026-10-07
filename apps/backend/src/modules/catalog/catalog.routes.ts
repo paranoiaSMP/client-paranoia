@@ -4,8 +4,12 @@ import type {
   InstallationManifest,
   RemoteConfiguration,
   FileArtifact,
+  ClientModArtifact,
 } from "@paranoia/contracts";
-import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { paranoiaDataDir } from "../launcher/paths.js";
 import { z } from "zod";
 import {
   latestSnapshotOrNull,
@@ -97,6 +101,62 @@ catalogRouter.get("/remote-config", async (_req, res, next) => {
   }
 });
 
+function resolveLocalClientModArtifact(minecraftVersion: string): ClientModArtifact | null {
+  const directory = path.join(paranoiaDataDir(), "runtime");
+  let targetJar: string | null = null;
+
+  try {
+    if (fs.existsSync(directory)) {
+      const files = fs.readdirSync(directory);
+      const match = files.find((f) =>
+        f.toLowerCase().startsWith("paranoia-client") &&
+        f.toLowerCase().endsWith(".jar") &&
+        !f.toLowerCase().endsWith("-sources.jar") &&
+        f.includes(`+${minecraftVersion}`)
+      );
+      if (match) targetJar = path.join(directory, match);
+    }
+  } catch {
+    // ignore
+  }
+
+  if (!targetJar) {
+    const candidate = path.resolve(process.cwd(), "apps/client-mod/versions", minecraftVersion, "build/libs");
+    try {
+      if (fs.existsSync(candidate)) {
+        const files = fs.readdirSync(candidate);
+        const match = files.find((f) =>
+          f.toLowerCase().startsWith("paranoia-client") &&
+          f.toLowerCase().endsWith(".jar") &&
+          !f.toLowerCase().endsWith("-sources.jar")
+        );
+        if (match) targetJar = path.join(candidate, match);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (targetJar && fs.existsSync(targetJar)) {
+    try {
+      const stats = fs.statSync(targetJar);
+      const hash = createHash("sha256").update(fs.readFileSync(targetJar)).digest("hex");
+      const fileName = path.basename(targetJar);
+      const port = process.env.PORT || 47820;
+      return {
+        fileName,
+        downloadUrl: `http://127.0.0.1:${port}/v1/catalog/client-mod/${fileName}`,
+        sha256: hash,
+        size: stats.size,
+      };
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
+}
+
 export function getManifest(
   minecraftVersion: string,
   profileTypeId: string,
@@ -109,20 +169,16 @@ export function getManifest(
       entry.graphicsModeId === graphicsModeId,
   );
 
-  // Le mod client ne depend que de la version de Minecraft: un jar est compile
-  // par version, pas par type de profil ni par mode graphique. Le chercher dans
-  // l'entree exacte le faisait donc disparaitre des qu'un profil portait une
-  // combinaison absente du catalogue -- le launcher recevait un manifeste sans
-  // mod, et le jeu demarrait sans lui, sans la moindre erreur.
-  const clientMod =
+  let clientMod =
     match?.clientMod
     ?? validatedCatalog.entries.find(
       (entry) => entry.minecraftVersion === minecraftVersion && entry.clientMod,
     )?.clientMod;
 
-  // Une combinaison absente du catalogue donne un manifeste vide, donc du
-  // Minecraft vanilla, au lieu d'une erreur. Le catalogue sert a proposer un
-  // pack pret a l'emploi, pas a autoriser une version.
+  if (!clientMod) {
+    clientMod = resolveLocalClientModArtifact(minecraftVersion) ?? undefined;
+  }
+
   return {
     id: randomUUID(),
     minecraftVersion,
@@ -134,9 +190,6 @@ export function getManifest(
       : {}),
     profileTypeId,
     graphicsModeId,
-    // Oubli qui rendait le mod client indetectable: le manifeste est reconstruit
-    // champ par champ, et celui-ci n'y figurait pas. manifest.clientMod valait
-    // donc toujours undefined, quelle que soit la version.
     ...(clientMod ? { clientMod } : {}),
     artifacts: (match?.artifacts ?? []) as FileArtifact[],
     generatedAt: new Date().toISOString(),
@@ -148,4 +201,21 @@ catalogRouter.post("/manifest", (req, res) => {
   res.json(
     getManifest(body.minecraftVersion, body.profileTypeId, body.graphicsModeId),
   );
+});
+
+catalogRouter.get("/client-mod/:fileName", (req, res) => {
+  const fileName = path.basename(req.params.fileName);
+  const runtimePath = path.join(paranoiaDataDir(), "runtime", fileName);
+  if (fs.existsSync(runtimePath)) {
+    return res.sendFile(runtimePath);
+  }
+  const match = fileName.match(/\+([^.]+)\.jar$/);
+  if (match && match[1]) {
+    const mcVersion = match[1];
+    const buildPath = path.resolve(process.cwd(), "apps/client-mod/versions", mcVersion, "build/libs", fileName);
+    if (fs.existsSync(buildPath)) {
+      return res.sendFile(buildPath);
+    }
+  }
+  res.status(404).json({ message: "Client mod introuvable" });
 });

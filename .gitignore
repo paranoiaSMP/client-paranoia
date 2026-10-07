@@ -80,3 +80,8 @@ apps/api/data/cosmetics.json
 # versionnes dans apps/api/data/templates/.
 apps/api/data/assets/*
 !apps/api/data/assets/.gitkeep
+
+# Directives d'agent local et charte de design
+DESIGN.md
+GEMINI.md
+apps/launcher/.prisma/

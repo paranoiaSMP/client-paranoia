@@ -29,11 +29,11 @@ export function ModsScreen({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
 			<ScreenHeader
-				title="Mods"
+				title="Contenu & Mods"
 				subtitle={
 					modCount === null
-						? "Recherche et installation depuis Modrinth."
-						: `${modCount} mod${modCount > 1 ? "s" : ""} installé${modCount > 1 ? "s" : ""} sur l'instance courante.`
+						? "Gérez vos mods, shaders, packs de ressources et datapacks."
+						: `${modCount} élément${modCount > 1 ? "s" : ""} installé${modCount > 1 ? "s" : ""} sur l'instance courante.`
 				}
 			/>
 

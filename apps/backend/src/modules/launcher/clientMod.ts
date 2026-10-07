@@ -24,58 +24,142 @@ export function runtimeDir(rootPath: string): string {
 }
 
 /**
+ * Cherche un jar local du client Paranoia dans runtime/ ou dans le build du projet.
+ */
+export async function findLocalClientMod(
+  rootPath: string,
+  minecraftVersion?: string,
+  preferredFileName?: string,
+): Promise<string | null> {
+  const directory = runtimeDir(rootPath);
+
+  // 1. Chercher dans le dossier runtime du launcher
+  try {
+    if (fs.existsSync(directory)) {
+      const runtimeFiles = await fs.promises.readdir(directory);
+      if (preferredFileName && runtimeFiles.includes(preferredFileName)) {
+        return path.join(directory, preferredFileName);
+      }
+      if (minecraftVersion) {
+        const match = runtimeFiles.find((f) =>
+          f.toLowerCase().startsWith("paranoia-client") &&
+          f.toLowerCase().endsWith(".jar") &&
+          !f.toLowerCase().endsWith("-sources.jar") &&
+          f.includes(`+${minecraftVersion}`)
+        );
+        if (match) return path.join(directory, match);
+      }
+      const anyJar = runtimeFiles.find((f) =>
+        f.toLowerCase().startsWith("paranoia-client") &&
+        f.toLowerCase().endsWith(".jar") &&
+        !f.toLowerCase().endsWith("-sources.jar")
+      );
+      if (anyJar) return path.join(directory, anyJar);
+    }
+  } catch {
+    // Erreur de lecture ignoree
+  }
+
+  // 2. Chercher dans les builds du depot local (cas dev / compilation locale)
+  const candidateDirs: string[] = [];
+  if (minecraftVersion) {
+    candidateDirs.push(
+      path.resolve(process.cwd(), "apps/client-mod/versions", minecraftVersion, "build/libs"),
+      path.resolve(process.cwd(), "versions", minecraftVersion, "build/libs"),
+    );
+  }
+  candidateDirs.push(
+    path.resolve(process.cwd(), "apps/client-mod/build/libs"),
+  );
+
+  for (const cDir of candidateDirs) {
+    try {
+      if (fs.existsSync(cDir)) {
+        const files = await fs.promises.readdir(cDir);
+        const jar = files.find((f) =>
+          f.toLowerCase().startsWith("paranoia-client") &&
+          f.toLowerCase().endsWith(".jar") &&
+          !f.toLowerCase().endsWith("-sources.jar") &&
+          (!minecraftVersion || f.includes(`+${minecraftVersion}`))
+        );
+        if (jar) {
+          const sourcePath = path.join(cDir, jar);
+          await fs.promises.mkdir(directory, { recursive: true });
+          const destPath = path.join(directory, jar);
+          await fs.promises.copyFile(sourcePath, destPath);
+          return destPath;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
+}
+
+/**
  * Telecharge le mod si besoin et rend son chemin absolu.
+ * Repli sur la copie locale si le manifeste n'en declare pas ou si le telechargement echoue.
  *
- * @returns le chemin du jar, ou null si le manifeste n'en declare pas.
+ * @returns le chemin du jar, ou null si introuvable.
  */
 export async function ensureClientMod(
   rootPath: string,
   clientMod: ClientModArtifact | undefined,
   onProgress: (text: string, percentage: number) => void,
+  minecraftVersion?: string,
 ): Promise<string | null> {
-  if (!clientMod) {
-    // Catalogue sans mod client (version non couverte, ou release ou le jar
-    // n'a pas ete publie): on lance sans, plutot que d'echouer.
-    return null;
-  }
-
   const directory = runtimeDir(rootPath);
   await fs.promises.mkdir(directory, { recursive: true });
 
-  // Le nom vient du manifeste: on ne garde que le nom de fichier pour qu'il ne
-  // puisse pas designer un autre dossier.
-  const target = path.join(directory, path.basename(clientMod.fileName));
-  const expected = clientMod.sha256.trim().toLowerCase();
+  if (clientMod) {
+    const target = path.join(directory, path.basename(clientMod.fileName));
+    const expected = clientMod.sha256.trim().toLowerCase();
 
-  if (fs.existsSync(target)) {
-    if ((await hashFile(target, "sha256")) === expected) {
-      return target;
+    if (fs.existsSync(target)) {
+      if ((await hashFile(target, "sha256")) === expected) {
+        return target;
+      }
     }
-    // Empreinte differente: version precedente, ou fichier altere. Dans les
-    // deux cas on le remplace.
-    await safeUnlink(target);
+
+    try {
+      onProgress(`Telechargement du client Paranoia...`, 0);
+      await downloadVerified(
+        clientMod.downloadUrl,
+        target,
+        { algorithm: "sha256", value: expected },
+        (percentage) => onProgress("Telechargement du client Paranoia...", percentage),
+      );
+
+      await removeOtherVersions(directory, path.basename(target), minecraftVersion);
+      return target;
+    } catch (err) {
+      console.warn(
+        `[Launcher] Echec du telechargement distant du client Paranoia (${clientMod.downloadUrl}):`,
+        err,
+      );
+    }
   }
 
-  onProgress(`Telechargement du client Paranoia...`, 0);
-  await downloadVerified(
-    clientMod.downloadUrl,
-    target,
-    { algorithm: "sha256", value: expected },
-    (percentage) => onProgress("Telechargement du client Paranoia...", percentage),
-  );
+  // Repli local si telechargement echoue ou si pas de mod dans le manifeste
+  const localJar = await findLocalClientMod(rootPath, minecraftVersion, clientMod?.fileName);
+  if (localJar) {
+    console.log(`[Launcher] Client Paranoia local retenu: ${path.basename(localJar)}`);
+    return localJar;
+  }
 
-  await removeOtherVersions(directory, path.basename(target));
-  return target;
+  return null;
 }
 
 /**
- * Supprime les jars laisses par les versions precedentes.
- *
- * <p>Pas pour eviter un conflit: `fabric.addMods` recoit un chemin precis, les
- * autres fichiers du dossier ne sont donc jamais charges. C'est pour ne pas
- * accumuler un jar mort par mise a jour, indefiniment, chez chaque joueur.
+ * Supprime les jars laisses par les versions precedentes pour la meme version de Minecraft.
  */
-async function removeOtherVersions(directory: string, keep: string): Promise<void> {
+async function removeOtherVersions(
+  directory: string,
+  keep: string,
+  minecraftVersion?: string,
+): Promise<void> {
   let entries: string[];
   try {
     entries = await fs.promises.readdir(directory);
@@ -85,7 +169,11 @@ async function removeOtherVersions(directory: string, keep: string): Promise<voi
 
   await Promise.all(
     entries
-      .filter((name) => name !== keep && /^paranoia-client.*\.jar$/i.test(name))
+      .filter((name) => {
+        if (name === keep || !/^paranoia-client.*\.jar$/i.test(name)) return false;
+        if (minecraftVersion && !name.includes(`+${minecraftVersion}`)) return false;
+        return true;
+      })
       .map((name) => safeUnlink(path.join(directory, name))),
   );
 }

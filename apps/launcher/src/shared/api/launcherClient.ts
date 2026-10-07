@@ -83,3 +83,18 @@ export type JavaTrouve = {
 export async function detecterJava(): Promise<JavaTrouve[]> {
 	return apiRequest<JavaTrouve[]>("/v1/launcher/java");
 }
+
+/**
+ * Telecharge et installe une version specifique de Java via Adoptium.
+ */
+export async function installerJava(
+	major: number,
+): Promise<{ success: boolean; java: JavaTrouve }> {
+	return apiRequest<{ success: boolean; java: JavaTrouve }>(
+		"/v1/launcher/java/install",
+		{
+			method: "POST",
+			body: JSON.stringify({ major }),
+		},
+	);
+}
