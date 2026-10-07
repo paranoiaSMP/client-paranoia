@@ -89,7 +89,11 @@
       "ready": "Update installed, restarting...",
       "failed": "Update failed:",
       "install": "Update now",
-      "later": "Later"
+      "later": "Later",
+      "ignore": "Ignore",
+      "close": "Close",
+      "download_manual": "Download update",
+      "description_fallback": "New version available."
     }
   }
 }

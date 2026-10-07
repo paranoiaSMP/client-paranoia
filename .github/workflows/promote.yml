@@ -138,9 +138,11 @@ jobs:
           # la boucle, et le jour ou l'un de ces programmes lira une ligne, la
           # boucle sautera une plateforme sans rien dire.
           plateformes=(
-            "windows-x86_64 -setup\.nsis\.zip$"
+            "windows-x86_64 -setup\.(exe|nsis\.zip)$"
             "darwin-aarch64 \.app\.tar\.gz$"
-            "linux-x86_64 \.AppImage\.tar\.gz$"
+            "linux-x86_64 \.AppImage(\.tar\.gz)?$"
+            "linux-x86_64-appimage \.AppImage(\.tar\.gz)?$"
+            "linux-x86_64-deb \.deb$"
           )
           posees=""
 
@@ -155,6 +157,10 @@ jobs:
             fi
             sig="sigs/$actif.sig"
             if [ ! -f "$sig" ]; then
+              if [ "$plateforme" = "linux-x86_64-deb" ]; then
+                echo "$plateforme: $actif present mais signature absente, ignoree"
+                continue
+              fi
               echo "::error::$plateforme: $actif present mais sa signature manque"
               exit 1
             fi
