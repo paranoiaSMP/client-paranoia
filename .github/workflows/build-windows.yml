@@ -317,11 +317,9 @@ jobs:
           name: Paranoia Client ${{ steps.release.outputs.tag }}
           generate_release_notes: true
           prerelease: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           files: |
             apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.exe
-            apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.nsis.zip
-            apps/launcher/src-tauri/target/release/bundle/nsis/*-setup.nsis.zip.sig
             apps/launcher/src-tauri/target/release/bundle/nsis/*.sig
             mod-jars/**/*.jar
 
@@ -382,8 +380,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $nsis = "apps/launcher/src-tauri/target/release/bundle/nsis"
-          $archive = Get-ChildItem "$nsis/*-setup.nsis.zip" | Select-Object -First 1
-          if (-not $archive) { throw "archive .nsis.zip introuvable" }
+          $archive = Get-ChildItem "$nsis/*-setup.exe" | Select-Object -First 1
+          if (-not $archive) { throw "installeur NSIS introuvable" }
           $name = $archive.Name.Replace(' ', '.')
           $base = "https://github.com/${{ github.repository }}/releases/download"
 

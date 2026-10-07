@@ -65,10 +65,14 @@ public interface ClientPlatform {
      *
      * @param textureWidth taille reelle du fichier, en texels, et non la
      *     taille a l'ecran: c'est elle qui dit quelle part echantillonner.
+     * @param tint couleur appliquee au dessin, {@code 0xFFFFFFFF} pour le
+     *     laisser tel quel. C'est ce qui permet a une icone blanche de prendre
+     *     la teinte du survol sans avoir deux fichiers.
      */
     void drawTexture(
         DrawContext context, Identifier texture,
-        int x, int y, int width, int height, int textureWidth, int textureHeight);
+        int x, int y, int width, int height,
+        int textureWidth, int textureHeight, int tint);
 
     /**
      * Mise a l'echelle d'un HUD autour d'un point.

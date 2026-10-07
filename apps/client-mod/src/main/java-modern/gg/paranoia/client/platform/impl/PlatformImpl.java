@@ -71,13 +71,15 @@ public final class PlatformImpl implements ClientPlatform {
     @Override
     public void drawTexture(
         DrawContext context, Identifier texture,
-        int x, int y, int width, int height, int textureWidth, int textureHeight) {
-        // La surcharge a douze arguments est la seule qui mette a l'echelle:
-        // les autres dessinent la region a sa taille de texels, ce qui donnerait
-        // un logo de 512 pixels de cote.
+        int x, int y, int width, int height,
+        int textureWidth, int textureHeight, int tint) {
+        // La surcharge a treize arguments: les douze premiers mettent a
+        // l'echelle, le dernier teinte. Les surcharges plus courtes dessinent
+        // la region a sa taille de texels, ce qui donnerait un logo de la
+        // taille du fichier.
         context.drawTexture(
             RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0F, 0.0F,
-            width, height, textureWidth, textureHeight, textureWidth, textureHeight);
+            width, height, textureWidth, textureHeight, textureWidth, textureHeight, tint);
     }
 
     @Override

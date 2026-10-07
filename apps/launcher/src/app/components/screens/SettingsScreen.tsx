@@ -69,8 +69,8 @@ export function SettingsScreen({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6">
 			<ScreenHeader
-				title="Paramètres"
-				subtitle="Java, mémoire et fenêtre de jeu."
+				title={t("settings.title")}
+				subtitle={t("settings.subtitle")}
 			>
 				<button
 					type="button"

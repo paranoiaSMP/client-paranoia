@@ -43,14 +43,14 @@
       "favorite": "Favorite"
     },
     "settings": {
-      "title": "Under the Hood",
-      "subtitle": "Be careful what you touch here.",
+      "title": "Settings",
+      "subtitle": "Game configuration, performance, and launcher behavior.",
       "import_title": "Import Profile",
-      "import_desc": "Paste the JSON code you received to steal someone else's config.",
-      "import_validate": "Confirm Import",
-      "import_error": "Invalid JSON: missing info for this profile!",
-      "import_format_error": "Import error, weird format.",
-      "language": "Language"
+      "import_desc": "Paste the JSON configuration code to import an existing game profile.",
+      "import_validate": "Import Profile",
+      "import_error": "Incomplete or invalid JSON configuration for this profile.",
+      "import_format_error": "Import error: unrecognized JSON profile format.",
+      "language": "Display Language"
     },
     "wizard": {
       "title": "Craft a Profile",
@@ -89,7 +89,11 @@
       "ready": "Update installed, restarting...",
       "failed": "Update failed:",
       "install": "Update now",
-      "later": "Later"
+      "later": "Later",
+      "ignore": "Ignore",
+      "close": "Close",
+      "download_manual": "Download update",
+      "description_fallback": "New version available."
     }
   }
 }

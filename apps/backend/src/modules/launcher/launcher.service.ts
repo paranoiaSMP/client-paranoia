@@ -456,6 +456,7 @@ export async function launchMinecraft(
 						text,
 					});
 				},
+				manifest.minecraftVersion,
 			);
 		} catch (err) {
 			clientModError = err instanceof Error ? err.message : String(err);

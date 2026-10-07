@@ -232,6 +232,15 @@ jobs:
           version="${RELEASE_TAG#v}"
           pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+          deb_archive=$(find apps/launcher/src-tauri/target/release/bundle/deb -name "*.deb" ! -name "*.sig" | head -n 1)
+          deb_name=""
+          deb_sig_content=""
+          if [ -n "$deb_archive" ] && [ -f "${deb_archive}.sig" ]; then
+            deb_name=$(basename "$deb_archive")
+            deb_name="${deb_name// /.}"
+            deb_sig_content=$(tr -d '\r\n' < "${deb_archive}.sig")
+          fi
+
           gh release download "$RELEASE_TAG" -p "latest.json" -D apps/launcher/src-tauri/target/release/bundle/appimage || true
 
           node -e "
@@ -253,6 +262,16 @@ jobs:
               signature: '$signature',
               url: \`https://github.com/\${process.env.REPO}/releases/download/\${process.env.RELEASE_TAG}/$archive_name\`
             };
+            manifest.platforms['linux-x86_64-appimage'] = {
+              signature: '$signature',
+              url: \`https://github.com/\${process.env.REPO}/releases/download/\${process.env.RELEASE_TAG}/$archive_name\`
+            };
+            if ('$deb_sig_content' && '$deb_name') {
+              manifest.platforms['linux-x86_64-deb'] = {
+                signature: '$deb_sig_content',
+                url: \`https://github.com/\${process.env.REPO}/releases/download/\${process.env.RELEASE_TAG}/$deb_name\`
+              };
+            }
             fs.writeFileSync('apps/launcher/src-tauri/target/release/bundle/appimage/latest.json', JSON.stringify(manifest, null, 2) + '\n');
           "
 
@@ -264,9 +283,10 @@ jobs:
           name: Paranoia Client ${{ steps.release.outputs.tag }}
           generate_release_notes: true
           prerelease: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           files: |
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.sig
             apps/launcher/src-tauri/target/release/bundle/deb/*.deb
+            apps/launcher/src-tauri/target/release/bundle/deb/*.deb.sig
             apps/launcher/src-tauri/target/release/bundle/appimage/latest.json
