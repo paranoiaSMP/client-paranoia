@@ -210,10 +210,31 @@ function complet(publie, version, attendues) {
   return attendues.every((nom) => presentes.includes(nom));
 }
 
+function verifierUrlUpdater(platform, url) {
+  if (platform !== 'linux-x86_64' && platform !== 'linux-x86_64-appimage') {
+    return;
+  }
+
+  let pathname;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    throw new Error(`URL invalide pour ${platform}: ${url}`);
+  }
+
+  if (!pathname.endsWith('.AppImage.tar.gz')) {
+    throw new Error(
+      `${platform} doit pointer vers une archive .AppImage.tar.gz, pas ${pathname}`,
+    );
+  }
+}
+
 async function principal() {
   const options = args();
   const depot = environnement('GITHUB_REPOSITORY');
   const version = options.tag.replace(/^v/, '');
+
+  verifierUrlUpdater(options.platform, options.url);
 
   const signature = readFileSync(options.signature, 'utf8').trim();
   if (!signature) {
