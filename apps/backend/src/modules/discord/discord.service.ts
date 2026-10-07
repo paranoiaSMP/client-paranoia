@@ -9,7 +9,7 @@ let isConnected = false;
 
 export function setIdlePresence() {
   if (!rpc || !isConnected) return;
-  
+
   rpc.setActivity({
     details: 'Dans le launcher',
     state: 'Prêt à jouer',
@@ -26,9 +26,6 @@ export function setPlayingPresence(version: string, username: string) {
     details: 'Joue sur Paranoia SMP',
     state: `Pseudo: ${username}`,
     largeImageKey: 'logo',
-    // La version arrivait jusqu'ici depuis le lancement, puis etait jetee: le
-    // parametre existait, personne ne le lisait. L'infobulle repetait
-    // « Paranoia SMP », deja affiche juste au-dessus.
     largeImageText: `Paranoia SMP — Minecraft ${version}`,
     startTimestamp: new Date(),
     instance: false,
@@ -37,11 +34,11 @@ export function setPlayingPresence(version: string, username: string) {
 
 export async function initDiscordRPC() {
   rpc = new Client({ transport: 'ipc' });
-  
+
   rpc.on('ready', () => {
     logger.info('Discord RPC connecté avec succès !');
     isConnected = true;
-    setIdlePresence(); // Maintenant rpc n'est plus nul quand ça s'exécute !
+    setIdlePresence();
   });
 
   try {
