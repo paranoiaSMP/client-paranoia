@@ -12,6 +12,7 @@ import {
   forgetAccount,
   type Renouvellement,
 } from "../../shared/api/authClient";
+import { choisitCompteActif, compteActif } from "../../shared/api/compteActif";
 
 const REDIRECT_URI = "https://login.live.com/oauth20_desktop.srf";
 
@@ -98,7 +99,7 @@ export function useAuth(setError: (err: string | null) => void) {
 
         setAccounts(saved);
 
-        const savedActiveId = localStorage.getItem("paranoia_active_account_id");
+        const savedActiveId = await compteActif();
         const activeTarget = saved.find((a) => a.id === savedActiveId) ?? saved[0];
         if (!activeTarget) {
           return;
@@ -112,7 +113,7 @@ export function useAuth(setError: (err: string | null) => void) {
         if (resultat.etat === "ok") {
           const usable = resultat.compte;
           setAccount(usable);
-          localStorage.setItem("paranoia_active_account_id", usable.id);
+          choisitCompteActif(usable.id);
           setAccounts((prev) =>
             prev.map((a) => (a.id === usable.id ? usable : a)),
           );
@@ -121,7 +122,7 @@ export function useAuth(setError: (err: string | null) => void) {
           // Microsoft a refuse le jeton: le compte n'existe plus, ici comme
           // cote backend.
           setAccounts((prev) => prev.filter((a) => a.id !== activeTarget.id));
-          localStorage.removeItem("paranoia_active_account_id");
+          choisitCompteActif(null);
         } else {
           // Panne passagere. Le compte reste, et le joueur avec: le
           // renouvellement sera retente au lancement, cote backend, ou au
@@ -175,7 +176,7 @@ export function useAuth(setError: (err: string | null) => void) {
             redirectUri: REDIRECT_URI,
           });
           setAccount(authAccount);
-          localStorage.setItem("paranoia_active_account_id", authAccount.id);
+          choisitCompteActif(authAccount.id);
           setAccounts((prev) => {
             const normUuid = authAccount.minecraftUuid.replace(/-/g, "").toLowerCase();
             const normUser = authAccount.minecraftUsername.toLowerCase();
@@ -283,13 +284,13 @@ export function useAuth(setError: (err: string | null) => void) {
   async function handleSwitchAccount(target: MicrosoftAccount) {
     setAccount(target);
     setConnected(true);
-    localStorage.setItem("paranoia_active_account_id", target.id);
+    choisitCompteActif(target.id);
 
     const resultat = await refreshAccount(target.id);
     if (resultat.etat === "ok") {
       const usable = resultat.compte;
       setAccount(usable);
-      localStorage.setItem("paranoia_active_account_id", usable.id);
+      choisitCompteActif(usable.id);
       setAccounts((prev) => prev.map((a) => (a.id === usable.id ? usable : a)));
       return;
     }
@@ -303,7 +304,7 @@ export function useAuth(setError: (err: string | null) => void) {
     }
 
     setAccounts((prev) => prev.filter((a) => a.id !== target.id));
-    localStorage.removeItem("paranoia_active_account_id");
+    choisitCompteActif(null);
     setAccount(null);
     setConnected(false);
     setError(t("topbar.auth_error"));
@@ -319,9 +320,9 @@ export function useAuth(setError: (err: string | null) => void) {
     setAccount(next);
     setConnected(next !== null);
     if (next) {
-      localStorage.setItem("paranoia_active_account_id", next.id);
+      choisitCompteActif(next.id);
     } else {
-      localStorage.removeItem("paranoia_active_account_id");
+      choisitCompteActif(null);
     }
 
     if (current && current.id !== "local-dev") {
@@ -343,9 +344,9 @@ export function useAuth(setError: (err: string | null) => void) {
       setAccount(next);
       setConnected(next !== null);
       if (next) {
-        localStorage.setItem("paranoia_active_account_id", next.id);
+        choisitCompteActif(next.id);
       } else {
-        localStorage.removeItem("paranoia_active_account_id");
+        choisitCompteActif(null);
       }
     }
   }

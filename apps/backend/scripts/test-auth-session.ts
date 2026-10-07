@@ -420,6 +420,52 @@ async function principal() {
     faux.ferme();
   }
 
+  console.log("\n--- le compte choisi: un fichier, et aucun secret");
+  {
+    const faux = await sers({});
+    const donnees = dossierJetable();
+    const { magasin } = await charge(faux.base, donnees);
+
+    const premier = enregistreNomme(magasin, "uuid-un", "Joueur");
+    const second = enregistreNomme(magasin, "uuid-deux", "Amie");
+
+    verifie(magasin.activeAccountId() === null, "aucun choix au depart");
+    verifie(
+      magasin.setActiveAccountId(second.id) === true,
+      "un compte existant peut etre choisi",
+    );
+    verifie(magasin.activeAccountId() === second.id, "et le choix est rendu");
+
+    verifie(
+      magasin.setActiveAccountId("compte-qui-nexiste-pas") === false,
+      "un identifiant inconnu est refuse",
+    );
+    verifie(
+      magasin.activeAccountId() === second.id,
+      "et le choix precedent n'a pas bouge",
+    );
+
+    // Le point qui compte: supprimer le compte choisi ne doit pas laisser le
+    // launcher pointer vers du vide au prochain demarrage.
+    magasin.deleteAccount(second.id);
+    verifie(
+      magasin.activeAccountId() === null,
+      "supprimer le compte choisi efface le choix",
+    );
+
+    magasin.setActiveAccountId(premier.id);
+    compteur++;
+    process.env.XDG_DATA_HOME = donnees;
+    const relu = await import(
+      `../src/modules/auth/accounts.store.js?essai=${compteur}`
+    );
+    verifie(
+      relu.activeAccountId() === premier.id,
+      "le choix survit a un redemarrage",
+    );
+    faux.ferme();
+  }
+
   console.log(
     echecs === 0
       ? "\nTous les scenarios sont verts"

@@ -144,6 +144,50 @@ export function deleteAccount(id: string): boolean {
   }
 
   writeAll(next);
+  if (activeAccountId() === id) {
+    // Un compte actif qui n'existe plus laisserait le launcher pointer vers
+    // du vide au prochain demarrage.
+    setActiveAccountId(null);
+  }
+  return true;
+}
+
+/**
+ * Le compte choisi, dans un fichier a lui.
+ *
+ * <p>L'interface du launcher gardait ce choix dans son `localStorage`, ou
+ * personne d'autre ne peut le lire -- ni le mod en jeu, qui veut l'afficher,
+ * ni le launcher lui-meme depuis une autre machine ou apres un nettoyage du
+ * navigateur embarque. Dans un fichier, il appartient au client entier.
+ *
+ * <p>A cote de `accounts.json` plutot que dedans: celui-ci est une liste, et y
+ * loger un champ unique demanderait de changer sa forme -- donc de lire
+ * l'ancienne au premier demarrage apres la mise a jour, pour un gain nul.
+ */
+const ACTIVE_PATH = () => join(paranoiaDataDir(), "active-account.json");
+
+export function activeAccountId(): string | null {
+  try {
+    const parsed = JSON.parse(readFileSync(ACTIVE_PATH(), "utf-8"));
+    const id = (parsed as { id?: unknown }).id;
+    return typeof id === "string" && id.length > 0 ? id : null;
+  } catch {
+    // Fichier absent au premier lancement, ou illisible: pas de choix connu.
+    return null;
+  }
+}
+
+/** @returns false si l'identifiant ne correspond a aucun compte enregistre. */
+export function setActiveAccountId(id: string | null): boolean {
+  if (id !== null && !readAll().some((account) => account.id === id)) {
+    return false;
+  }
+
+  ensureStore();
+  writeFileSync(ACTIVE_PATH(), JSON.stringify({ id }, null, 2), {
+    encoding: "utf-8",
+    mode: 0o600,
+  });
   return true;
 }
 

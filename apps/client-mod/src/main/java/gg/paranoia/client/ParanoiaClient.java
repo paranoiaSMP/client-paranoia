@@ -109,24 +109,6 @@ public final class ParanoiaClient {
         REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
         REGISTRY.register(new MenuAccueilModule());
-
-        // Les reglages sont lus apres l'enregistrement: un module absent du
-        // fichier garde ses defauts, un module absent du code est ignore.
-        REGISTRY.load();
-
-        platform.registerHudRenderer(REGISTRY::renderInGame);
-        ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
-        // En debut de tick: le budget doit etre reconduit avant les naissances
-        // de particules, pas apres.
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            // Avant les modules: la portee et le combo se lisent sur le
-            // compteur de recharge, qui doit etre releve avant que quoi que ce
-            // soit d'autre ne le consulte.
-            CombatTracker.tick();
-            ParticleBudgetModule.beginTick();
-            EntityCullingModule.beginTick();
-            BlockEntityCullingModule.beginTick();
-        });
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
@@ -249,5 +231,10 @@ public final class ParanoiaClient {
     /** L'ecran d'accueil, pour le mixin qui le pose a la place de l'ecran-titre. */
     public static TitleController titleController() {
         return TITLE;
+    }
+
+    /** Le service de presence, pour l'ecran d'accueil qui en montre l'etat. */
+    public static PresenceService presence() {
+        return PRESENCE;
     }
 }

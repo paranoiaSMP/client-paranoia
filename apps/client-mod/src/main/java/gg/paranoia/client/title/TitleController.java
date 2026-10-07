@@ -3,12 +3,11 @@ package gg.paranoia.client.title;
 import gg.paranoia.client.ParanoiaClient;
 import gg.paranoia.client.menu.MenuTheme;
 import gg.paranoia.client.modules.MenuAccueilModule;
+import gg.paranoia.client.net.PresenceService;
 import gg.paranoia.client.platform.Platforms;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.CubeMapRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.RotatingCubeMapRenderer;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
@@ -32,11 +31,11 @@ import java.util.Set;
  * du jeu, verifies identiques de 1.21.8 a 1.21.11 par la sonde de
  * {@code build-mod.yml}.
  *
- * <p>Le panorama est la seule exception, et elle n'en est pas une: la sonde
- * montre {@code CubeMapRenderer(Identifier)} et
- * {@code RotatingCubeMapRenderer.render(DrawContext, int, int, boolean)} avec
- * exactement la meme signature sur les versions ciblees. Le jour ou elle
- * changera, c'est la sonde qui le dira, pas un plantage chez un joueur.
+ * <p>Le fond ne passe pas par le cubemap du jeu, et c'est une decision prise
+ * apres trois echecs: sa texture est d'un type particulier, chargee a un
+ * moment precis du demarrage, et l'inscrire depuis un mod l'empeche d'etre
+ * chargee -- quand elle n'ecrase pas celle du jeu, ce qui faisait planter
+ * tous les ecrans qui s'en servent. Les faces, elles, sont de simples images.
  */
 public final class TitleController {
     /**
@@ -51,7 +50,7 @@ public final class TitleController {
      * essais.
      */
     private static final String BOUTIQUE =
-        System.getProperty("paranoia.boutique", "https://paranoiastudio.fr/boutique").trim();
+        System.getProperty("paranoia.boutique", "https://paranoiastudio.fr/shop").trim();
 
     /** Ce qu'un bouton declenche. */
     public enum Action {
@@ -137,7 +136,7 @@ public final class TitleController {
      * compliquaient le placement pour rien.
      */
     private static final int LOGO_TEXTURE_L = 176;
-    private static final int LOGO_TEXTURE_H = 122;
+    private static final int LOGO_TEXTURE_H = 100;
     private static final int LOGO_L = LOGO_TEXTURE_L / 2;
     private static final int LOGO_H = LOGO_TEXTURE_H / 2;
 
@@ -160,19 +159,28 @@ public final class TitleController {
     private int mouseX;
     private int mouseY;
 
-    // Le panorama en service, et le choix qui l'a produit. Reconstruit quand le
-    // second change, et pas a chaque image: un CubeMapRenderer tient un tampon
-    // GPU, en fabriquer un par image les accumulerait.
+    /** Largeur de la pastille de compte, relevee au dessin pour le clic. */
+    private int largeurPastille;
+
+    /**
+     * La liste des comptes du launcher, depliee sous la pastille.
+     *
+     * <p>Fermee par defaut: l'ecran d'accueil n'est pas un gestionnaire de
+     * comptes, c'est un bouton Jouer. Elle s'ouvre quand on le demande.
+     */
+    private boolean comptesDeplies;
+
     /** Ce qui a deja ete signale, pour ne pas le redire a chaque image. */
     private final Set<String> signale = new HashSet<>();
-
-    private Panorama monte;
-    private CubeMapRenderer cube;
-    private RotatingCubeMapRenderer panorama;
 
     /** L'ecran hote, pour les ecrans du jeu qui veulent savoir d'ou l'on vient. */
     public void attache(Screen ecran) {
         this.ecran = ecran;
+        comptesDeplies = false;
+        // A l'ouverture de l'ecran, et pas a chaque image: le launcher est un
+        // processus voisin, pas une source a interroger soixante fois par
+        // seconde.
+        Comptes.rafraichit();
     }
 
     public void setViewport(int width, int height, TextRenderer font) {
@@ -182,13 +190,15 @@ public final class TitleController {
     }
 
     /**
-     * Rend le tampon GPU du panorama.
+     * Appele quand l'ecran disparait.
      *
-     * <p>Appele quand l'ecran disparait. Sans cela, chaque retour au menu --
-     * apres une partie, apres les options -- en laisserait un derriere lui.
+     * <p>Plus rien a liberer depuis que le fond est fait d'images: elles
+     * appartiennent au gestionnaire de textures, qui les partage avec tout le
+     * reste du jeu. La methode reste parce que l'ecran de version l'appelle,
+     * et qu'elle redeviendra utile le jour ou il y aura quelque chose a y
+     * mettre.
      */
     public void onClosed() {
-        rendLeCube();
     }
 
     // ------------------------------------------------------------------ rendu
@@ -200,7 +210,7 @@ public final class TitleController {
         MinecraftClient client = MinecraftClient.getInstance();
         Teinte teinte = teinte();
 
-        fond(context, client);
+        fond(context);
         dispose();
         logo(context);
 
@@ -220,105 +230,61 @@ public final class TitleController {
      * n'est pas theorique: c'est par la que le jeu plantait au tout premier
      * lancement.
      */
-    private void fond(DrawContext context, MinecraftClient client) {
-        if (!panoramaDessine(context, client)) {
-            context.fill(0, 0, width, height, MenuTheme.WINDOW);
+    private void fond(DrawContext context) {
+        if (bandeQuiDefile(context)) {
+            context.fill(0, 0, width, height, MenuTheme.BACKDROP);
             return;
         }
-        context.fill(0, 0, width, height, MenuTheme.BACKDROP);
+        context.fill(0, 0, width, height, MenuTheme.WINDOW);
     }
 
     /**
-     * Dessine le panorama, ou dit qu'il n'a pas pu l'etre.
+     * Les quatre horizons, qui defilent, quand le cubemap ne veut pas.
      *
-     * <p>Le jeu pose son ecran-titre <em>avant</em> la fin du premier
-     * chargement des ressources, et le dessine derriere l'ecran de demarrage.
-     * A cet instant les six faces du cubemap n'ont pas encore de texture GPU,
-     * et le jeu levait « Texture view does not exist, can't get it before
-     * something initializes it » -- un plantage au premier lancement, et
-     * seulement au premier.
+     * <p>Le cubemap est un chemin de rendu a lui tout seul: une texture d'un
+     * type particulier, chargee a un moment precis, lue par du code qu'on ne
+     * controle pas. Il a refuse trois fois. Une face prise seule n'est qu'une
+     * image, et c'est le chemin du logo -- celui dont on sait qu'il marche.
      *
-     * <p>L'ecran-titre d'origine ne connait pas ce probleme: ses faces sont
-     * enregistrees par {@code TitleScreen.registerTextures} au demarrage du
-     * client, donc chargees depuis longtemps quand il les dessine. Les notres
-     * arrivent avec le pack de ressources du mod, au meme rechargement que
-     * celui qui est en cours.
+     * <p>Les quatre horizons sont donc poses cote a cote en une bande, et la
+     * bande defile. Ce n'est pas la rotation du jeu -- il n'y a pas de
+     * perspective, les faces glissent au lieu de pivoter -- mais le spawn
+     * tourne, sans dependre de rien d'incertain.
      *
-     * <p>On retente donc a chaque image plutot que d'abandonner: le
-     * chargement dure une seconde, apres quoi le panorama s'affiche
-     * normalement et plus rien ne passe par ici.
+     * <p>Chaque face est dessinee a la hauteur de l'ecran. Elles sont carrees:
+     * la bande fait donc quatre hauteurs de large, et un tour complet dure une
+     * minute, comme celui du jeu.
      */
-    private boolean panoramaDessine(DrawContext context, MinecraftClient client) {
+    private boolean bandeQuiDefile(DrawContext context) {
+        Panorama choisi = panoramaChoisi();
+        int cote = height;
+        int bande = cote * 4;
+        // Le temps absolu, et non un compteur d'images: le defilement garde la
+        // meme vitesse quel que soit le nombre d'images par seconde.
+        int decalage = (int) (System.currentTimeMillis() % 60_000L * bande / 60_000L);
+
         try {
-            RotatingCubeMapRenderer rendu = panorama(client);
-            if (rendu == null) {
-                return false;
+            for (int horizon = 0; horizon < 4; horizon++) {
+                int x = horizon * cote - decalage;
+                // Deux fois: une face qui sort par la gauche doit reparaitre
+                // par la droite sans trou au raccord.
+                poseFace(context, choisi, horizon, x, cote);
+                poseFace(context, choisi, horizon, x + bande, cote);
             }
-            rendu.render(context, width, height, true);
             return true;
         } catch (RuntimeException echec) {
-            signale("panorama pas encore pret", echec);
+            signale("horizons pas encore prets", echec);
             return false;
         }
     }
 
-    /**
-     * Rend le tampon GPU du cubemap en cours, s'il y en a un.
-     *
-     * <p>Appele quand on change de panorama et a la fermeture de l'ecran. Un
-     * {@code CubeMapRenderer} tient un tampon GPU: en abandonner un par image
-     * les accumulerait.
-     */
-    private void rendLeCube() {
-        if (cube != null) {
-            cube.close();
-            cube = null;
-            panorama = null;
-            monte = null;
+    /** Une face, si elle tombe dans l'ecran. */
+    private void poseFace(DrawContext context, Panorama choisi, int horizon, int x, int cote) {
+        if (x + cote <= 0 || x >= width) {
+            return;
         }
-    }
-
-    private RotatingCubeMapRenderer panorama(MinecraftClient client) {
-        Panorama choisi = panoramaChoisi();
-        if (panorama != null && choisi == monte) {
-            return panorama;
-        }
-
-        // Les six faces sont demandees au gestionnaire de textures avant
-        // d'etre dessinees, et c'est la correction du panorama qui ne
-        // s'affichait pas.
-        //
-        // `registerTextures` inscrit les faces, mais une texture inscrite
-        // apres le rechargement des ressources n'est jamais chargee: son
-        // enveloppe GPU reste vide, et `draw` echoue sur « Texture view does
-        // not exist ». L'ecran-titre d'origine n'a pas ce souci -- le jeu
-        // inscrit ses faces au demarrage du client, donc avant le premier
-        // rechargement.
-        //
-        // Le logo, lui, s'affichait: `drawTexture` passe par `getTexture`,
-        // qui charge a la demande. C'est ce chemin-la qu'on emprunte ici, pour
-        // les six faces, avant de laisser le cubemap les lire.
-        for (int face = 0; face < 6; face++) {
-            client.getTextureManager().getTexture(Identifier.of(
-                choisi.cubeMap().getNamespace(),
-                choisi.cubeMap().getPath() + "_" + face + ".png"));
-        }
-
-        // Construit a cote, et seulement ensuite adopte: une construction qui
-        // echoue a mi-chemin laisserait sinon un cube sans son enveloppe, et
-        // l'image suivante le prendrait pour bon.
-        CubeMapRenderer neuf = new CubeMapRenderer(choisi.cubeMap());
-        neuf.registerTextures(client.getTextureManager());
-        RotatingCubeMapRenderer tournant = new RotatingCubeMapRenderer(neuf);
-        tournant.registerTextures(client.getTextureManager());
-
-        if (cube != null) {
-            cube.close();
-        }
-        cube = neuf;
-        panorama = tournant;
-        monte = choisi;
-        return panorama;
+        Platforms.get().drawTexture(context, choisi.face(horizon),
+            x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
     }
 
     private void logo(DrawContext context) {
@@ -399,11 +365,96 @@ public final class TitleController {
     private void pastilleCompte(DrawContext context, MinecraftClient client, Teinte teinte) {
         String pseudo = client.getSession().getUsername();
         int largeur = Math.min(140, font.getWidth(pseudo) + 16);
-        MenuTheme.panel(context, 8, 8, largeur, 18, MenuTheme.CARD);
-        MenuTheme.outline(context, 8, 8, largeur, 18, MenuTheme.CARD_BORDER);
-        context.fill(13, 15, 17, 19, teinte.argb());
+        largeurPastille = largeur;
+        boolean cliquable = etatPresence() == PresenceService.Etat.HORS_LIGNE;
+        boolean survole = cliquable && MenuTheme.inside(mouseX, mouseY, 8, 8, largeur, 18);
+
+        MenuTheme.panel(context, 8, 8, largeur, 18,
+            survole ? MenuTheme.CARD_HOVER : MenuTheme.CARD);
+        MenuTheme.outline(context, 8, 8, largeur, 18,
+            survole ? teinte.argb() : MenuTheme.CARD_BORDER);
+
+        // Le carre disait la teinte choisie, c'est-a-dire rien. Il dit
+        // maintenant si le service Paranoia repond: vert quand la session est
+        // valide, rouge quand le dernier cycle a echoue, neutre tant que le
+        // premier n'est pas passe. C'est la seule chose qu'on puisse
+        // reellement savoir d'ici, et c'est ce qui manquait.
+        context.fill(13, 15, 17, 19, couleurEtat());
         MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
             21, 13, MenuTheme.TEXT);
+
+        String dit = libelleEtat();
+        if (dit != null) {
+            MenuTheme.text(context, font, dit, 8, 30,
+                cliquable ? teinte.argb() : MenuTheme.TEXT_DIM);
+        }
+
+        listeDesComptes(context, teinte, dit == null ? 30 : 42);
+    }
+
+    /**
+     * Les comptes enregistres par le launcher, sous la pastille.
+     *
+     * <p>Le jeu ne connait que celui avec lequel il a demarre; le launcher les
+     * connait tous. En designer un ici ne change rien a la partie en cours --
+     * la session de Minecraft est fixee au demarrage -- mais le launcher
+     * relira ce choix au lancement suivant, et c'est dit sous la liste.
+     */
+    private void listeDesComptes(DrawContext context, Teinte teinte, int haut) {
+        if (!comptesDeplies) {
+            return;
+        }
+
+        List<Comptes.Compte> comptes = Comptes.connus();
+        if (comptes.isEmpty()) {
+            MenuTheme.text(context, font, "Launcher injoignable", 8, haut, MenuTheme.TEXT_DIM);
+            return;
+        }
+
+        int largeur = 140;
+        int ligne = 16;
+        int y = haut;
+
+        for (Comptes.Compte compte : comptes) {
+            boolean survole = MenuTheme.inside(mouseX, mouseY, 8, y, largeur, ligne);
+            if (survole || compte.actif()) {
+                MenuTheme.panel(context, 8, y, largeur, ligne,
+                    compte.actif() ? teinte.voile() : MenuTheme.CARD_HOVER);
+            }
+            MenuTheme.text(context, font,
+                MenuTheme.fit(font, compte.pseudonyme(), largeur - 10),
+                13, y + 4, compte.actif() ? teinte.argb() : MenuTheme.TEXT);
+            y += ligne + 2;
+        }
+
+        MenuTheme.text(context, font, "Au prochain lancement", 8, y + 2, MenuTheme.TEXT_DIM);
+    }
+
+    private PresenceService.Etat etatPresence() {
+        PresenceService presence = ParanoiaClient.presence();
+        return presence == null ? PresenceService.Etat.EN_COURS : presence.etat();
+    }
+
+    private int couleurEtat() {
+        return switch (etatPresence()) {
+            case CONNECTE -> VERT;
+            case HORS_LIGNE -> MenuTheme.STATE_OFF;
+            case EN_COURS -> MenuTheme.TEXT_DIM;
+        };
+    }
+
+    /**
+     * Ce qui est dit sous la pastille, et seulement quand il y a a dire.
+     *
+     * <p>Rien quand tout va bien: un « Connecte » permanent n'apprend rien et
+     * occupe un coin de l'ecran pour le plaisir.
+     */
+    private String libelleEtat() {
+        return switch (etatPresence()) {
+            case CONNECTE -> null;
+            case HORS_LIGNE -> "Service Paranoia injoignable";
+            case EN_COURS -> "Connexion...";
+        };
     }
 
     private void pied(DrawContext context) {
@@ -432,16 +483,16 @@ public final class TitleController {
         // suivent, au pas de BARRE_H + ECART.
         int y = height / 2 - 31;
 
-        boutons.add(new Bouton(Action.SOLO, "Solo", "titre-solo",
+        boutons.add(new Bouton(Action.SOLO, "Solo", "solo",
             gauche, y, BARRE_L, BARRE_H, false));
         y += BARRE_H + ECART;
-        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "titre-multi",
+        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "multi",
             gauche, y, BARRE_L, BARRE_H, false));
         y += BARRE_H + ECART;
 
-        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "titre-paranoia",
+        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "paranoia",
             gauche, y, DEMI_L, BARRE_H, false));
-        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "titre-boutique",
+        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "boutique",
             gauche + DEMI_L + ECART, y, BARRE_L - DEMI_L - ECART, BARRE_H, true));
 
         // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
@@ -450,7 +501,7 @@ public final class TitleController {
             Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA, Action.QUITTER,
         };
         String[] icones = {
-            "titre-options", "titre-paranoia", "titre-teinte", "titre-panorama", "titre-quitter",
+            "options", "paranoia", "teinte", "panorama", "quitter",
         };
 
         int total = (carres.length - 1) * PAS_CARRE + CARRE;
@@ -469,11 +520,61 @@ public final class TitleController {
             return false;
         }
 
+        // La pastille de compte et sa liste sont dessinees a part des autres
+        // boutons -- elles portent des pseudonymes, pas des libelles -- donc
+        // leurs clics se traitent a part.
+        if (MenuTheme.inside(mouseX, mouseY, 8, 8, largeurPastille, 18)) {
+            // Un service injoignable: le clic sert d'abord a reessayer. C'est
+            // ce que le joueur veut a cet instant, et le libelle rouge le dit.
+            if (etatPresence() == PresenceService.Etat.HORS_LIGNE) {
+                PresenceService presence = ParanoiaClient.presence();
+                if (presence != null) {
+                    presence.reveille();
+                }
+                return true;
+            }
+
+            comptesDeplies = !comptesDeplies;
+            if (comptesDeplies) {
+                Comptes.rafraichit();
+            }
+            return true;
+        }
+
+        if (comptesDeplies && compteClique()) {
+            return true;
+        }
+
         for (Bouton bouton : boutons) {
             if (MenuTheme.inside(mouseX, mouseY, bouton.x(), bouton.y(), bouton.w(), bouton.h())) {
                 execute(bouton.action());
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * Un clic dans la liste des comptes, s'il y en a un.
+     *
+     * <p>La liste est posee au dessin, et les memes mesures servent ici. Les
+     * recalculer serait les ecrire deux fois, et c'est ainsi qu'une zone
+     * cliquable finit ailleurs que son bouton.
+     */
+    private boolean compteClique() {
+        List<Comptes.Compte> comptes = Comptes.connus();
+        if (comptes.isEmpty()) {
+            return false;
+        }
+
+        int haut = libelleEtat() == null ? 30 : 42;
+        int y = haut;
+        for (Comptes.Compte compte : comptes) {
+            if (MenuTheme.inside(mouseX, mouseY, 8, y, 140, 16)) {
+                Comptes.choisit(compte.id());
+                return true;
+            }
+            y += 18;
         }
         return false;
     }
