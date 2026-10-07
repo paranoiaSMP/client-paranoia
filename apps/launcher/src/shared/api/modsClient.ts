@@ -1,6 +1,6 @@
 import { apiRequest } from "./http";
 
-export type ContentType = "mod" | "shader" | "resourcepack";
+export type ContentType = "mod" | "shader" | "resourcepack" | "datapack";
 
 export type ModSearchHit = {
   projectId: string;
@@ -33,6 +33,7 @@ export type InstalledMod = {
   size: number;
   installedAt: string;
   enabled: boolean;
+  projectId?: string | null;
 };
 
 export async function searchMods(opts: {

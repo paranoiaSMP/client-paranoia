@@ -52,6 +52,7 @@ export interface InstalledMod {
   size: number;
   installedAt: string;
   enabled: boolean;
+  projectId?: string | null;
 }
 
 export interface InstallResult {
@@ -110,7 +111,7 @@ async function modrinthGet<T>(
  * Search mods, restricted to the loader and game version of the profile so the
  * player cannot install something that will not load.
  */
-export type ModContentType = "mod" | "shader" | "resourcepack";
+export type ModContentType = "mod" | "shader" | "resourcepack" | "datapack";
 
 export async function searchMods(opts: {
   query: string;
@@ -215,6 +216,8 @@ function contentDir(profileId: string, type: ModContentType = "mod"): string {
       return path.join(instanceDir(profileId), "shaderpacks");
     case "resourcepack":
       return path.join(instanceDir(profileId), "resourcepacks");
+    case "datapack":
+      return path.join(instanceDir(profileId), "datapacks");
     default:
       return path.join(instanceDir(profileId), "mods");
   }
@@ -254,12 +257,55 @@ async function resolveDependencyVersion(
     return null;
   }
 
-  const versions = await listProjectVersions(dependency.projectId, context);
   if (dependency.versionId) {
-    const pinned = versions.find((v) => v.versionId === dependency.versionId);
-    if (pinned) {
-      return pinned;
-    }
+    try {
+      const raw = await modrinthGet<any>(
+        `/version/${encodeURIComponent(dependency.versionId)}`,
+        {},
+      );
+      if (raw && raw.id) {
+        const files = raw.files ?? [];
+        const file = files.find((f: any) => f.primary) ?? files[0];
+        if (file?.hashes?.sha512) {
+          return {
+            versionId: raw.id,
+            name: raw.name,
+            versionNumber: raw.version_number,
+            gameVersions: raw.game_versions ?? [],
+            loaders: raw.loaders ?? [],
+            fileName: file.filename,
+            downloadUrl: file.url,
+            size: file.size ?? 0,
+            sha512: file.hashes.sha512,
+            datePublished: raw.date_published,
+            dependencies: (raw.dependencies ?? []).map((dep: any) => ({
+              projectId: dep.project_id ?? null,
+              versionId: dep.version_id ?? null,
+              required: dep.dependency_type === "required",
+            })),
+          };
+        }
+      }
+    } catch {}
+  }
+
+  // 1. Try with exact context (gameVersion + loader)
+  let versions = await listProjectVersions(dependency.projectId, context).catch(
+    () => [],
+  );
+
+  // 2. Fallback without gameVersion restriction
+  if (versions.length === 0 && context.loader) {
+    versions = await listProjectVersions(dependency.projectId, {
+      loader: context.loader,
+    }).catch(() => []);
+  }
+
+  // 3. Fallback to latest global version
+  if (versions.length === 0) {
+    versions = await listProjectVersions(dependency.projectId, {}).catch(
+      () => [],
+    );
   }
 
   return versions[0] ?? null;
@@ -268,6 +314,7 @@ async function resolveDependencyVersion(
 type ModMetadata = {
   name?: string | undefined;
   iconUrl?: string | undefined;
+  projectId?: string | undefined;
 };
 
 function metaFilePath(profileId: string, type: ModContentType = "mod"): string {
@@ -366,10 +413,47 @@ export async function installMod(opts: {
   projectType?: ModContentType | undefined;
 }): Promise<InstallResult> {
   const type = opts.projectType ?? "mod";
-  const versions = await listProjectVersions(opts.projectId, {});
-  const version = versions.find((v) => v.versionId === opts.versionId);
+  let version: ModVersion | null = null;
+
+  // Direct fetch by version ID from Modrinth
+  try {
+    const raw = await modrinthGet<any>(
+      `/version/${encodeURIComponent(opts.versionId)}`,
+      {},
+    );
+    if (raw && raw.id) {
+      const files = raw.files ?? [];
+      const file = files.find((f: any) => f.primary) ?? files[0];
+      if (file?.hashes?.sha512) {
+        version = {
+          versionId: raw.id,
+          name: raw.name,
+          versionNumber: raw.version_number,
+          gameVersions: raw.game_versions ?? [],
+          loaders: raw.loaders ?? [],
+          fileName: file.filename,
+          downloadUrl: file.url,
+          size: file.size ?? 0,
+          sha512: file.hashes.sha512,
+          datePublished: raw.date_published,
+          dependencies: (raw.dependencies ?? []).map((dep: any) => ({
+            projectId: dep.project_id ?? null,
+            versionId: dep.version_id ?? null,
+            required: dep.dependency_type === "required",
+          })),
+        };
+      }
+    }
+  } catch {}
+
+  // Fallback to project version list if direct fetch failed
   if (!version) {
-    throw new Error("Version introuvable");
+    const versions = await listProjectVersions(opts.projectId, {});
+    version = versions.find((v) => v.versionId === opts.versionId) ?? null;
+  }
+
+  if (!version) {
+    throw new Error("Version introuvable sur Modrinth");
   }
 
   const context = { gameVersion: opts.gameVersion, loader: opts.loader };
@@ -382,12 +466,15 @@ export async function installMod(opts: {
   ).catch(() => null);
 
   if (project) {
-    const entry: ModMetadata = {};
-    if (project.title) entry.name = project.title;
-    if (project.icon_url) entry.iconUrl = project.icon_url;
+    const entry: ModMetadata = {
+      name: project.title,
+      iconUrl: project.icon_url,
+      projectId: opts.projectId,
+    };
     metadata[mod.fileName] = entry;
     mod.name = project.title ?? null;
     mod.iconUrl = project.icon_url ?? null;
+    mod.projectId = opts.projectId;
   }
 
   const installed: InstalledMod[] = [];
@@ -414,12 +501,15 @@ export async function installMod(opts: {
             {},
           ).catch(() => null);
           if (depProj) {
-            const entry: ModMetadata = {};
-            if (depProj.title) entry.name = depProj.title;
-            if (depProj.icon_url) entry.iconUrl = depProj.icon_url;
+            const entry: ModMetadata = {
+              name: depProj.title,
+              iconUrl: depProj.icon_url,
+              projectId: dependency.projectId,
+            };
             metadata[installedDep.fileName] = entry;
             installedDep.name = depProj.title ?? null;
             installedDep.iconUrl = depProj.icon_url ?? null;
+            installedDep.projectId = dependency.projectId;
           }
         }
 
@@ -470,7 +560,8 @@ export async function listInstalledMods(
     }
     const fullPath = path.join(dir, entry.name);
     const stats = await fs.promises.stat(fullPath);
-    const meta = metadata[entry.name] ?? getJarMetadata(fullPath, stats.mtimeMs);
+    const baseName = entry.name.replace(/\.disabled$/, "");
+    const meta = metadata[entry.name] ?? metadata[baseName] ?? getJarMetadata(fullPath, stats.mtimeMs);
 
     mods.push({
       fileName: entry.name,
@@ -479,6 +570,7 @@ export async function listInstalledMods(
       size: stats.size,
       installedAt: stats.mtime.toISOString(),
       enabled: !entry.name.endsWith(".disabled"),
+      projectId: meta?.projectId ?? null,
     });
   }
 
