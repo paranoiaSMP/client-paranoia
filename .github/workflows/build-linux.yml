@@ -204,7 +204,7 @@ jobs:
           if-no-files-found: error
           path: |
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
-            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz*
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage*
             apps/launcher/src-tauri/target/release/bundle/deb/*.deb
 
       - name: Generate update manifest
@@ -215,9 +215,9 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage.tar.gz" ! -name "*.sig" | head -n 1)
+          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage" ! -name "*.sig" | head -n 1)
           if [ -z "$archive" ]; then
-            echo "::error::Archive .AppImage.tar.gz absente"
+            echo "::error::AppImage absente"
             exit 1
           fi
 
@@ -228,7 +228,6 @@ jobs:
           fi
 
           archive_name=$(basename "$archive")
-          archive_name="${archive_name// /.}"
           signature=$(tr -d '\r\n' < "$sig")
           version="${RELEASE_TAG#v}"
           pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -268,8 +267,6 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
-            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
-            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage.sig
             apps/launcher/src-tauri/target/release/bundle/deb/*.deb
             apps/launcher/src-tauri/target/release/bundle/appimage/latest.json
