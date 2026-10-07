@@ -140,9 +140,7 @@ jobs:
           plateformes=(
             "windows-x86_64 -setup\.(exe|nsis\.zip)$"
             "darwin-aarch64 \.app\.tar\.gz$"
-            "linux-x86_64 \.AppImage(\.tar\.gz)?$"
-            "linux-x86_64-appimage \.AppImage(\.tar\.gz)?$"
-            "linux-x86_64-deb \.deb$"
+            "linux-x86_64 \.AppImage$"
           )
           posees=""
 

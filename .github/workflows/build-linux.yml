@@ -203,8 +203,9 @@ jobs:
           name: paranoia-client-linux
           if-no-files-found: error
           path: |
+            apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage
             apps/launcher/src-tauri/target/release/bundle/appimage/*.AppImage*
-            apps/launcher/src-tauri/target/release/bundle/deb/*.deb*
+            apps/launcher/src-tauri/target/release/bundle/deb/*.deb
 
       - name: Generate update manifest
         if: steps.release.outputs.tag != ''
@@ -214,9 +215,9 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage \( -name "*.AppImage" -o -name "*.AppImage.tar.gz" \) ! -name "*.sig" | head -n 1)
+          archive=$(find apps/launcher/src-tauri/target/release/bundle/appimage -name "*.AppImage" ! -name "*.sig" | head -n 1)
           if [ -z "$archive" ]; then
-            echo "::error::Archive AppImage absente"
+            echo "::error::AppImage absente"
             exit 1
           fi
 
@@ -227,7 +228,6 @@ jobs:
           fi
 
           archive_name=$(basename "$archive")
-          archive_name="${archive_name// /.}"
           signature=$(tr -d '\r\n' < "$sig")
           version="${RELEASE_TAG#v}"
           pub_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
