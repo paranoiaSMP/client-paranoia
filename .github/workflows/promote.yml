@@ -104,6 +104,40 @@ jobs:
               exit 1 ;;
           esac
 
+      # Le controle qui manquait, et son absence a coute la 0.7.33.
+      #
+      # Le catalogue embarque dans le sidecar pointe vers
+      # `releases/download/<tag>/<jar>`. Si les jars ne sont pas attaches a la
+      # release, chacune de ces URL repond 404 et le mod ne s'installe chez
+      # personne -- sans que rien n'echoue nulle part, puisque le launcher est
+      # ecrit pour laisser jouer quand le mod manque.
+      #
+      # Le build refuse desormais de publier une release qui les oublie. La
+      # promotion, elle, ne verifiait rien: c'est ce chemin-la qu'a pris la
+      # 0.7.33, construite avant ce garde-fou puis promue a tout le monde.
+      #
+      # Un avertissement ne suffirait pas: promouvoir, c'est pousser la mise a
+      # jour a tous les joueurs d'un coup, et personne ne relit les journaux
+      # d'un workflow vert.
+      - name: Refuse to promote a version whose mod is missing
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.promote.outputs.tag }}
+        run: |
+          set -euo pipefail
+          jars=$(gh release view "$TAG" --json assets \
+            -q '[.assets[].name | select(startswith("paranoia-client") and endswith(".jar"))] | length')
+
+          if [ "$jars" -eq 0 ]; then
+            echo "::error::$TAG ne porte aucun jar du mod: son catalogue pointe vers des URL en 404."
+            echo "::error::Le mod ne s'installerait chez aucun joueur. Rattache-les d'abord avec"
+            echo "::error::le workflow restore-mod-assets, puis relance cette promotion."
+            exit 1
+          fi
+
+          echo "$jars jar(s) du mod presents sur $TAG"
+
       # Les signatures et les noms d'actifs reels, lus sur la release plutot que
       # reconstruits: c'est ce que les admins ont installe qui doit etre annonce.
       - name: Download signatures

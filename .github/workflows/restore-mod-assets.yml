@@ -1,0 +1,120 @@
+name: restore-mod-assets
+
+# Rattache les jars du mod a une release qui les a perdus.
+#
+# Le besoin vient d'un trou reel. Le 25 septembre, « retrait du mod des
+# releases » a supprime le televersement des jars sans toucher au catalogue, qui
+# continuait de pointer vers `releases/download/<tag>/<jar>`. La v0.7.33 est donc
+# sortie avec un catalogue dont chaque URL de mod repond 404, et elle a ete
+# promue: le mod a disparu du jeu de tous ceux qui ne l'avaient pas deja sur leur
+# disque. Le correctif est arrive quarante minutes trop tard, dans la v0.7.35,
+# restee en preversion.
+#
+# Reconstruire les jars ne reparerait rien: le catalogue embarque dans le
+# sidecar deja installe porte l'empreinte SHA-256 des jars d'origine, et un
+# nouveau build en donnerait d'autres -- `downloadVerified` les refuserait. Les
+# seuls jars qui conviennent sont ceux que la CI a produits ce jour-la, et
+# l'artefact du build les garde quatre-vingt-dix jours.
+#
+# On les reprend donc tels quels et on les attache a la release. Aucune
+# reconstruction, aucune nouvelle version, aucune mise a jour poussee a
+# personne: une URL qui repondait 404 repond 200, et le mod revient au prochain
+# lancement.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release a reparer, par exemple v0.7.33"
+        required: true
+      run_id:
+        description: >-
+          Run GitHub Actions qui a CREE cette release. Son artefact
+          paranoia-client-mod contient les jars dont le catalogue embarque
+          porte l'empreinte.
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Le run est fourni, jamais devine, et c'est un choix.
+      #
+      # Pour la v0.7.33 il y avait deux runs sur la meme branche et le meme
+      # commit: celui de la pull request, ou l'injection a ete sautee faute de
+      # tag, et celui du push, ou elle a reussi et ou la release a ete creee.
+      # Seul le second a produit les jars dont le catalogue publie porte
+      # l'empreinte.
+      #
+      # Une heuristique sur les dates ne les separe pas: l'artefact du mod est
+      # ecrit plusieurs minutes APRES l'enregistrement de la release, et les
+      # deux runs se chevauchent a la seconde pres. Se tromper de run donnerait
+      # des jars au SHA-256 different, que `downloadVerified` refuserait chez le
+      # joueur -- soit exactement la panne qu'on repare, en plus silencieuse.
+      #
+      # Pour le retrouver: la page Actions, filtrer sur la branche de la
+      # release, et prendre le run dont le job `build` montre
+      # « Create GitHub Release » en succes.
+
+      - name: Download the jars that were injected
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -euo pipefail
+          gh run download "$RUN_ID" -n paranoia-client-mod -D mod-jars
+          find mod-jars -name '*.jar' -printf '%p  %s octets\n'
+
+          # Les empreintes au journal: ce sont elles que le catalogue embarque
+          # chez le joueur attend, et les relire est le seul moyen de verifier
+          # apres coup qu'on a bien pris le bon run.
+          echo "--- SHA-256 des jars televerses"
+          find mod-jars -name '*.jar' -not -name '*-sources.jar' -exec sha256sum {} +
+
+          if [ -z "$(find mod-jars -name '*.jar' -not -name '*-sources.jar' -print -quit)" ]; then
+            echo "::error::l'artefact ne contient aucun jar"
+            exit 1
+          fi
+
+      # --clobber: rejouer la reparation ne doit pas echouer sur « asset deja
+      # present ». Le contenu est identique de toute facon, c'est le meme
+      # artefact.
+      - name: Attach them to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mapfile -t jars < <(find mod-jars -name '*.jar' -not -name '*-sources.jar')
+          printf 'a attacher: %s\n' "${jars[@]}"
+          gh release upload "$TAG" "${jars[@]}" --clobber
+
+      # Ce que le joueur fera vraiment: demander l'URL que son catalogue porte.
+      # Tant que cette etape n'est pas verte, la reparation n'a rien repare.
+      - name: Verify every jar now resolves
+        env:
+          TAG: ${{ inputs.tag }}
+          DEPOT: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echec=0
+          for jar in $(find mod-jars -name '*.jar' -not -name '*-sources.jar' -printf '%f\n'); do
+            url="https://github.com/$DEPOT/releases/download/$TAG/$jar"
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -L "$url")
+            if [ "$code" = "200" ]; then
+              echo "  OK    $jar"
+            else
+              echo "  ECHEC $jar -> HTTP $code"
+              echec=1
+            fi
+          done
+          [ "$echec" -eq 0 ] || { echo "::error::des URL de mod repondent encore en erreur"; exit 1; }
+          echo "Le mod est de nouveau telechargeable pour $TAG."
