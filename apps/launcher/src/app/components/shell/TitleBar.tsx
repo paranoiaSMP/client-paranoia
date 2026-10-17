@@ -3,6 +3,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
 
 import { useAppVersion } from "../../hooks/useAppVersion";
+import { useSeason } from "../../season";
+import { Pumpkin } from "../season/Halloween";
 
 /**
  * La barre de titre, dessinee par l'application.
@@ -25,6 +27,8 @@ import { useAppVersion } from "../../hooks/useAppVersion";
  */
 export function TitleBar() {
 	const version = useAppVersion();
+	const { season, available, toggle } = useSeason();
+	const halloween = season === "halloween";
 	const [maximized, setMaximized] = useState(false);
 
 	// L'icone du bouton central doit dire ce qui va se passer, pas ce qui s'est
@@ -79,6 +83,24 @@ export function TitleBar() {
 			</div>
 
 			<div className="flex shrink-0 items-center gap-1.5 text-neutral-300">
+				{/* L'habillage se coupe d'un clic: tout le monde n'aime pas les
+				    citrouilles, et un theme impose pendant trois semaines finirait
+				    par agacer ceux qu'il devait amuser. */}
+				{available && (
+					<button
+						type="button"
+						onClick={toggle}
+						aria-pressed={halloween}
+						title={halloween ? "Désactiver le thème Halloween" : "Activer le thème Halloween"}
+						className={`mr-1.5 grid size-7 place-items-center rounded-sm transition-[color,background-color,filter] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+							halloween
+								? "text-accent hover:bg-well"
+								: "text-neutral-500 grayscale hover:bg-well hover:text-neutral-300"
+						}`}
+					>
+						<Pumpkin className="size-[18px]" />
+					</button>
+				)}
 				<WindowButton
 					label="Réduire"
 					onClick={() => void getCurrentWindow().minimize()}

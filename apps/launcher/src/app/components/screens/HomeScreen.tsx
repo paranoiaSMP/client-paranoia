@@ -6,6 +6,8 @@ import type {
 	NewsItem,
 } from "@paranoia/contracts";
 import { ExpandableNews } from "../ExpandableNews";
+import { useSeason } from "../../season";
+import { HalloweenCountdown, HalloweenSky } from "../season/Halloween";
 
 import { SkinViewer3D } from "../../../components/SkinViewer3D";
 import type { LaunchStatusResponse } from "../../../shared/api/launcherClient";
@@ -64,6 +66,8 @@ export function HomeScreen({
 	onGoCosmetics,
 	onReportBug,
 }: HomeScreenProps) {
+	const { season } = useSeason();
+	const halloween = season === "halloween";
 	const [newsExpanded, setNewsExpanded] = useState(true);
 	const [isFullNewsOpen, setIsFullNewsOpen] = useState(false);
 	// La progression arrive de 0 a 100. L'ancien accueil la multipliait encore
@@ -76,9 +80,12 @@ export function HomeScreen({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col overflow-auto">
 			<section className="relative flex shrink-0 flex-wrap items-start justify-between gap-6 border-b border-divider bg-gradient-to-b from-surface to-ground p-6">
-				<div className="flex min-w-[300px] max-w-[620px] flex-1 flex-col gap-4">
-					<span className="text-xs uppercase tracking-[0.16em] text-accent-300">
+				{halloween && <HalloweenSky />}
+
+				<div className="relative flex min-w-[300px] max-w-[620px] flex-1 flex-col gap-4">
+					<span className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.16em] text-accent-300">
 						Profil
+						{halloween && <HalloweenCountdown />}
 					</span>
 
 					<div className="flex flex-col gap-1.5">
@@ -106,7 +113,7 @@ export function HomeScreen({
 							className={`flex items-center gap-2 whitespace-nowrap rounded-md border-2 px-7 py-3.5 text-base font-semibold tracking-[0.04em] transition-[filter,background-color] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
 								running
 									? "border-danger text-danger focus-visible:outline-danger"
-									: "border-accent text-accent shadow-[0_0_14px_-4px_var(--color-accent),inset_0_0_0_1px_var(--color-accent-700)] focus-visible:outline-accent"
+									: `border-accent text-accent shadow-[0_0_14px_-4px_var(--color-accent),inset_0_0_0_1px_var(--color-accent-700)] focus-visible:outline-accent ${halloween && profile ? "hw-candle" : ""}`
 							}`}
 						>
 							{running ? (
@@ -175,7 +182,7 @@ export function HomeScreen({
 					</div>
 				</div>
 
-				<div className="elev-md flex w-[248px] shrink-0 flex-col gap-3 rounded-lg bg-surface p-4">
+				<div className="elev-md relative flex w-[248px] shrink-0 flex-col gap-3 rounded-lg bg-surface p-4">
 					<div className="flex items-center justify-between gap-2 text-xs font-medium uppercase tracking-[0.12em] text-neutral-400">
 						<span>Skin</span>
 						<span className="truncate normal-case tracking-normal text-accent-300">
@@ -199,7 +206,7 @@ export function HomeScreen({
 							aria-hidden
 							draggable={false}
 							src="/assets/paranoia-emblem.png"
-							className="pointer-events-none absolute left-0 top-1/2 w-[300px] max-w-none -translate-x-[62%] -translate-y-[54%] opacity-25 mix-blend-lighten blur-[7px]"
+							className={`pointer-events-none absolute left-0 top-1/2 w-[300px] max-w-none -translate-x-[62%] -translate-y-[54%] opacity-25 mix-blend-lighten blur-[7px] ${halloween ? "hidden" : ""}`}
 						/>
 						<div className="absolute inset-0 overflow-hidden rounded-md">
 							<SkinViewer3D

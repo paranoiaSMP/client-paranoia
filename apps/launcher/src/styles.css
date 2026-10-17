@@ -169,3 +169,177 @@ h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-neutral-700);
 }
+
+/*
+ * Habillage d'Halloween.
+ *
+ * Le meme escalier de clarte que Nocturne, peint autrement: les neutres virent
+ * a la prune, l'accent a la citrouille. Chaque cran garde la clarte du cran
+ * qu'il remplace (calcule en OKLCH), donc aucune mise en page ne bouge et les
+ * contrastes restent ceux qui ont deja ete verifies.
+ *
+ * Le rouge d'arret ne change pas. Il fallait que l'orange reste loin de lui:
+ * « jouer » et « arreter » ne doivent pas se confondre, meme un soir d'event.
+ */
+:root[data-season="halloween"] {
+  --color-ground: #160d15;
+  --color-surface: #221821;
+  --color-well: #33272f;
+  --color-ink: #f1eae1;
+  --color-accent: #fc8731;
+  --color-divider: color-mix(in srgb, #f1eae1 14%, transparent);
+
+  --color-neutral-100: #fff1f9;
+  --color-neutral-200: #f1e3ec;
+  --color-neutral-300: #ddd0d8;
+  --color-neutral-400: #c1b2bc;
+  --color-neutral-500: #a2939c;
+  --color-neutral-600: #84757e;
+  --color-neutral-700: #675962;
+  --color-neutral-800: #4b3e46;
+  --color-neutral-900: #33272f;
+
+  --color-accent-100: #fff3ec;
+  --color-accent-200: #ffe1d0;
+  --color-accent-300: #ffc6a5;
+  --color-accent-400: #fd9c5d;
+  --color-accent-500: #e77311;
+  --color-accent-600: #bc5b00;
+  --color-accent-700: #924500;
+  --color-accent-800: #683104;
+  --color-accent-900: #42220b;
+
+  /* Propres a l'habillage: la lueur d'une bougie et la tige. */
+  --color-hw-glow: #ffd27a;
+  --color-hw-stem: #6b8f3a;
+  --color-hw-moon: #f3e3c3;
+}
+
+/* Une lueur basse, comme un feu de camp hors champ, et le froid de la lune en haut. */
+:root[data-season="halloween"] body {
+  background:
+    radial-gradient(900px 420px at 12% 108%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 70%),
+    var(--color-ground);
+}
+
+/* Une lune de recolte, basse et ambree, posee derriere la carte du skin. */
+.hw-moon {
+  background:
+    radial-gradient(circle at 30% 62%, rgba(0, 0, 0, 0.16) 0 9%, transparent 10%),
+    radial-gradient(circle at 64% 30%, rgba(0, 0, 0, 0.12) 0 6%, transparent 7%),
+    radial-gradient(circle at 58% 70%, rgba(0, 0, 0, 0.1) 0 4%, transparent 5%),
+    radial-gradient(circle at 36% 34%, var(--color-hw-moon), color-mix(in srgb, var(--color-hw-moon) 55%, var(--color-accent-600)) 78%);
+  opacity: 0.22;
+  box-shadow: 0 0 90px 30px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+/* Le logo suit la citrouille: son violet tourne a l'orange, sa forme ne bouge pas. */
+:root[data-season="halloween"] img[src$="paranoia-wordmark.png"],
+:root[data-season="halloween"] img[src$="paranoia-emblem.png"] {
+  filter: hue-rotate(135deg) saturate(1.4);
+}
+
+.hw-bat {
+  position: absolute;
+  left: 0;
+  color: #0b060a;
+  filter: drop-shadow(0 0 1px color-mix(in srgb, var(--color-hw-moon) 45%, transparent));
+}
+
+.hw-bat-body {
+  display: block;
+  width: 100%;
+  animation: hw-flap 0.32s ease-in-out infinite alternate;
+  transform-origin: 50% 40%;
+}
+
+.hw-bat-a { width: 44px; top: 34px; animation: hw-fly 26s linear infinite; }
+.hw-bat-b { width: 30px; top: 92px; animation: hw-fly 34s linear -11s infinite; opacity: 0.75; }
+.hw-bat-c { width: 22px; top: 14px; animation: hw-fly 41s linear -24s infinite; opacity: 0.55; }
+.hw-bat-b .hw-bat-body { animation-duration: 0.27s; }
+.hw-bat-c .hw-bat-body { animation-duration: 0.22s; }
+
+@keyframes hw-flap {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.35) translateY(4px); }
+}
+
+/* De droite a gauche, en ondulant: une trajectoire droite ressemble a un sprite. */
+@keyframes hw-fly {
+  0% { transform: translate(110vw, 0); }
+  25% { transform: translate(75vw, 18px); }
+  50% { transform: translate(45vw, -6px); }
+  75% { transform: translate(15vw, 14px); }
+  100% { transform: translate(-80px, 0); }
+}
+
+.hw-fog {
+  position: absolute;
+  bottom: -40px;
+  left: -20%;
+  width: 140%;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--color-neutral-300) 13%, transparent), transparent 70%);
+  filter: blur(14px);
+}
+
+.hw-fog-a { animation: hw-drift 22s ease-in-out infinite alternate; }
+.hw-fog-b { bottom: -60px; opacity: 0.7; animation: hw-drift 31s ease-in-out -9s infinite alternate-reverse; }
+
+@keyframes hw-drift {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(8%); }
+}
+
+/* Le bouton Jouer tremble comme une bougie. Rien ne bouge, seule la lueur respire. */
+.hw-candle {
+  animation: hw-flicker 3.2s ease-in-out infinite;
+}
+
+@keyframes hw-flicker {
+  0%, 100% { box-shadow: 0 0 16px -4px var(--color-accent), inset 0 0 0 1px var(--color-accent-700); }
+  18% { box-shadow: 0 0 22px -2px var(--color-accent), inset 0 0 0 1px var(--color-accent-700); }
+  22% { box-shadow: 0 0 12px -5px var(--color-accent), inset 0 0 0 1px var(--color-accent-700); }
+  55% { box-shadow: 0 0 20px -3px var(--color-accent), inset 0 0 0 1px var(--color-accent-700); }
+  60% { box-shadow: 0 0 14px -4px var(--color-accent), inset 0 0 0 1px var(--color-accent-700); }
+}
+
+.hw-face {
+  filter: drop-shadow(0 0 1.5px var(--color-hw-glow));
+  animation: hw-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes hw-glow {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.78; }
+  46% { opacity: 0.95; }
+}
+
+.hw-spider {
+  animation: hw-dangle 5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes hw-dangle {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(8px) rotate(3deg); }
+}
+
+:root[data-season="halloween"] ::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-800);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-bat,
+  .hw-bat-body,
+  .hw-fog,
+  .hw-candle,
+  .hw-face,
+  .hw-spider {
+    animation: none;
+  }
+
+  /* Immobiles, les chauves-souris resteraient empilees hors champ. */
+  .hw-bat { display: none; }
+}

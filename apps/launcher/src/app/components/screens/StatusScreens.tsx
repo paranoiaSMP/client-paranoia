@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
 import { TitleBar } from "../shell/TitleBar";
+import { useSeason } from "../../season";
+import { Pumpkin } from "../season/Halloween";
 
 /*
  * Les trois ecrans que l'application montre a la place d'elle-meme: l'echec du
@@ -63,14 +65,19 @@ export function BootstrapErrorScreen({
 /** Le temps que le service local ecoute et que le catalogue arrive. */
 export function LoadingScreen() {
 	const { t } = useTranslation();
+	const { season } = useSeason();
 
 	return (
 		<Frame>
 			<div className="flex flex-col items-center gap-4">
-				<Pickaxe
-					className="size-16 animate-bounce text-accent-600"
-					strokeWidth={2.5}
-				/>
+				{season === "halloween" ? (
+					<Pumpkin className="size-16 animate-bounce text-accent" />
+				) : (
+					<Pickaxe
+						className="size-16 animate-bounce text-accent-600"
+						strokeWidth={2.5}
+					/>
+				)}
 				<span className="font-display text-sm uppercase tracking-widest text-neutral-400">
 					{t("app.loading")}
 				</span>

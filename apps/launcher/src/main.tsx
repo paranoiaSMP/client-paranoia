@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./app/App";
+import { applySeasonAtBoot } from "./app/season";
 
 // Les deux polices etaient declarees dans styles.css et installees dans
 // package.json, mais importees nulle part: le launcher s'affichait depuis le
@@ -12,6 +13,8 @@ import "@fontsource-variable/space-grotesk";
 
 import "./styles.css";
 import "./i18n";
+
+applySeasonAtBoot();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

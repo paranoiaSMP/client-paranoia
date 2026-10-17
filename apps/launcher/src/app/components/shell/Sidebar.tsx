@@ -3,6 +3,8 @@ import { Check, ChevronsUpDown, Plus, Users } from "lucide-react";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
 import { PRIMARY_NAV, SECONDARY_NAV } from "../../navigation";
+import { useSeason } from "../../season";
+import { Cobweb } from "../season/Halloween";
 import type { NavItem, Screen } from "../../navigation";
 
 type SidebarProps = {
@@ -24,6 +26,7 @@ export function Sidebar({
 	onSwitchAccount,
 	onAddAccount,
 }: SidebarProps) {
+	const { season } = useSeason();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
@@ -41,8 +44,9 @@ export function Sidebar({
 	return (
 		<nav
 			aria-label="Navigation principale"
-			className="flex w-[252px] shrink-0 flex-col justify-between gap-4 border-r border-divider bg-surface px-3 py-4"
+			className="relative flex w-[252px] shrink-0 flex-col justify-between gap-4 border-r border-divider bg-surface px-3 py-4"
 		>
+			{season === "halloween" && <Cobweb />}
 			<div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
 				<div className="px-2 pb-1 text-[11px] uppercase tracking-[0.14em] text-neutral-400">
 					Client
