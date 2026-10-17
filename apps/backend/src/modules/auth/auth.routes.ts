@@ -8,9 +8,11 @@ import {
 import { sessionUtilisable } from "./auth.session.js";
 import { createAuthState, consumeAuthState, safeEquals } from "./auth.state.js";
 import {
+  activeAccountId,
   deleteAccount,
   listAccounts,
   saveAccount,
+  setActiveAccountId,
 } from "./accounts.store.js";
 
 export const authRouter = Router();
@@ -75,6 +77,48 @@ authRouter.post("/microsoft/callback", async (req, res, next) => {
 /** Comptes deja connectes, restaures au demarrage du launcher. */
 authRouter.get("/accounts", (_req, res) => {
   return res.json(listAccounts());
+});
+
+/**
+ * Les memes comptes, sans un seul secret.
+ *
+ * <p>La route ci-dessus rend les jetons: celui de Minecraft, vivant, et celui
+ * de renouvellement Microsoft, qui vaut un compte entier. C'est ce qu'il faut
+ * a l'interface du launcher, qui lance le jeu avec. Ce n'est pas ce qu'il faut
+ * au mod en jeu, qui ne veut qu'afficher des pseudonymes -- et qui tourne dans
+ * un processus partage avec tous les mods que le joueur a installes.
+ *
+ * <p>Deux routes plutot qu'une, donc, et celle-ci ne porte rien qu'on
+ * regretterait de voir passer.
+ */
+authRouter.get("/accounts/summary", (_req, res) => {
+  const actif = activeAccountId();
+  return res.json(
+    listAccounts().map((compte) => ({
+      id: compte.id,
+      minecraftUsername: compte.minecraftUsername,
+      minecraftUuid: compte.minecraftUuid,
+      active: compte.id === actif,
+    })),
+  );
+});
+
+/**
+ * Le compte a utiliser au prochain lancement.
+ *
+ * <p>Ne change rien a la partie en cours: la session de Minecraft est fixee au
+ * demarrage du jeu. C'est un choix enregistre, que le launcher relira.
+ */
+authRouter.put("/accounts/:id/active", (req, res) => {
+  if (!setActiveAccountId(req.params.id)) {
+    return res.status(404).json({ message: "account not found" });
+  }
+  return res.status(204).send();
+});
+
+/** Le compte choisi, ou null si aucun ne l'a encore ete. */
+authRouter.get("/accounts/active", (_req, res) => {
+  return res.json({ id: activeAccountId() });
 });
 
 authRouter.delete("/accounts/:id", (req, res) => {

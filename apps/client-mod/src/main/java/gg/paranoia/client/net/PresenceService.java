@@ -81,6 +81,23 @@ public final class PresenceService {
     /** Compteur d'echantillonnage, lu et ecrit par le seul fil du jeu. */
     private int ticks;
 
+    /**
+     * Ce que l'ecran d'accueil affiche a cote du pseudonyme.
+     *
+     * <p>Ecrit par le fil reseau a chaque cycle, lu par le fil du jeu a chaque
+     * image: volatile, donc, comme tout ce qui traverse cette frontiere ici.
+     */
+    public enum Etat {
+        /** Premier cycle pas encore passe: on ne sait pas encore. */
+        EN_COURS,
+        /** Le service repond et la session est valide. */
+        CONNECTE,
+        /** Le dernier cycle a echoue. */
+        HORS_LIGNE,
+    }
+
+    private volatile Etat etat = Etat.EN_COURS;
+
     /** Etat du fil reseau, jamais touche par le fil du jeu. */
     private String token;
     private int interval = 30;
@@ -101,6 +118,31 @@ public final class PresenceService {
             thread.setDaemon(true);
             return thread;
         });
+    }
+
+    /** L'etat du service, pour qui veut l'afficher. */
+    public Etat etat() {
+        return etat;
+    }
+
+    /**
+     * Relance un cycle tout de suite, sans attendre le prochain battement.
+     *
+     * <p>Pour le joueur qui voit « injoignable » et qui sait, lui, que sa
+     * connexion est revenue. Sans cela il attendrait le delai de repli, qui
+     * grandit a chaque echec et atteint vite plusieurs minutes.
+     *
+     * <p>Appele depuis le fil du jeu: on ne touche a rien de l'etat du fil
+     * reseau, on se contente de lui donner du travail. Un cycle de plus n'est
+     * qu'un battement de plus.
+     */
+    public void reveille() {
+        etat = Etat.EN_COURS;
+        try {
+            worker.schedule(this::cycle, 0, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.RejectedExecutionException ignored) {
+            // Le jeu se ferme.
+        }
     }
 
     public void start() {
@@ -167,11 +209,13 @@ public final class PresenceService {
         try {
             nextDelay = runOnce();
             consecutiveFailures = 0;
+            etat = Etat.CONNECTE;
         } catch (InterruptedException err) {
             Thread.currentThread().interrupt();
             return;
         } catch (Exception err) {
             nextDelay = backoff(err);
+            etat = Etat.HORS_LIGNE;
         }
 
         // Hors du bloc precedent, et sans condition: c'est le seul battement
