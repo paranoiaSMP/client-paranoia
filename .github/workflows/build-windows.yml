@@ -47,6 +47,9 @@ jobs:
       - name: Test the update manifest composer
         run: node scripts/test-update-manifest.mjs
 
+      - name: Test the seasonal theme switch
+        run: pnpm --filter @paranoia/launcher test:season
+
       - name: Test the graphics preset
         run: pnpm --filter @paranoia/backend test:preset
 

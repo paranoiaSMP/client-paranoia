@@ -9,6 +9,7 @@
     "preview": "pnpm exec vite preview",
     "tauri": "pnpm exec tauri",
     "typecheck": "tsc --noEmit",
+    "test:season": "pnpm exec tsx scripts/test-season.ts",
     "lint": "echo \"no lint configured\"",
     "format": "echo \"no format configured\""
   },
@@ -40,6 +41,7 @@
     "autoprefixer": "^10.6.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^8.3.2"
   }
