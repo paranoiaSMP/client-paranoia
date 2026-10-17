@@ -169,3 +169,103 @@ h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-neutral-700);
 }
+
+/*
+ * Halloween.
+ *
+ * Un thème saisonnier n'est pas une seconde interface: c'est la même, avec
+ * d'autres jetons. Seuls les fonds et la gamme accentuée changent ici. Les
+ * neutres — donc tout le texte — ne bougent pas, et c'est voulu: ils portent la
+ * lisibilité, et la retoucher pour une décoration serait payer en confort ce
+ * qu'on gagne en ambiance.
+ *
+ * La règle de Nocturne tient, et c'est la seule contrainte qui comptait: chaque
+ * cran orange est posé sur EXACTEMENT la clarté OKLCh de son équivalent violet
+ * (0.9711, 0.9310, 0.8699, 0.7798, 0.6791, 0.5802, 0.4801, 0.3802, 0.2898).
+ * Un `bg-accent-900` remplace donc un `bg-neutral-900` sans que rien ne bouge,
+ * ici comme là-bas. Seule la teinte change — 289° pour le violet, 58° pour
+ * l'orange — avec la chroma relevée d'un cinquième, l'orange étant moins saturé
+ * que le violet à clarté égale et paraissant terne sans cela.
+ *
+ * Les fonds sont les mêmes clartés que Nocturne, réchauffées à 52°: l'escalier
+ * ground/surface/well garde ses trois marches et l'élévation reste juste.
+ *
+ * Contraste mesuré (WCAG 2.1), par rapport au Nocturne qu'il remplace:
+ *   accent sur surface      5,87:1  (Nocturne: 4,71:1)
+ *   accent-300 sur surface 10,10:1  (Nocturne: 10,12:1)
+ *   ink sur ground         14,57:1
+ *   danger sur surface      4,41:1  (identique à Nocturne)
+ */
+:root[data-theme="halloween"] {
+  --color-ground: #221610;
+  --color-surface: #2f231c;
+  --color-well: #342821;
+
+  --color-accent: #ed8725;
+
+  --color-accent-100: #fff3ea;
+  --color-accent-200: #fee2ce;
+  --color-accent-300: #fcc8a2;
+  --color-accent-400: #f8a057;
+  --color-accent-500: #db7d23;
+  --color-accent-600: #b56100;
+  --color-accent-700: #8c4a00;
+  --color-accent-800: #653400;
+  --color-accent-900: #40230b;
+
+  /* Le rouge d'arrêt vire au rose plutôt que de rester orangé: à teinte voisine
+     de l'accent, « ARRÊTER » et « JOUER » se seraient ressemblés de loin, et ces
+     deux boutons occupent la même place à l'écran. Même clarté, donc même
+     contraste qu'avant — 4,41:1 dans les deux thèmes. */
+  --color-danger: #df6076;
+  --color-danger-dim: #792f3c;
+}
+
+/*
+ * Les décorations de saison.
+ *
+ * Elles restent dans le DOM et c'est l'attribut de thème qui les montre: aucun
+ * composant n'a besoin de connaître le thème, donc aucune prop à faire
+ * descendre dans trois niveaux de coquille pour une toile d'araignée. Elles
+ * sont inertes — `aria-hidden` et sans événements — parce qu'un lecteur d'écran
+ * n'a rien à dire d'une citrouille.
+ */
+.decor-saison {
+  display: none;
+}
+
+:root[data-theme="halloween"] .decor-saison {
+  display: block;
+}
+
+/*
+ * La dérive des chauves-souris.
+ *
+ * Uniquement `translate` et `rotate`, jamais une position: l'animation reste
+ * sur le fil de composition et ne redéclenche aucune mise en page. Vingt
+ * secondes pour une amplitude de quelques pixels — il s'agit de donner vie à
+ * un décor, pas d'attirer l'oeil pendant qu'on lit l'état d'un lancement.
+ */
+@keyframes derive-chauve-souris {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: -1.5deg;
+  }
+  50% {
+    translate: -6px 4px;
+    rotate: 1.5deg;
+  }
+}
+
+.chauve-souris {
+  animation: derive-chauve-souris 20s ease-in-out infinite;
+}
+
+/* Décor immobile plutôt qu'animation accélérée ou supprimée au forceps: le
+   dessin garde tout son sens sans le mouvement, qui n'y portait rien. */
+@media (prefers-reduced-motion: reduce) {
+  .chauve-souris {
+    animation: none;
+  }
+}

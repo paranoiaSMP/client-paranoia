@@ -12,6 +12,7 @@ import {
   Layers,
   Loader2,
   Monitor,
+  Palette,
   RotateCcw,
   Search,
   Sliders,
@@ -23,6 +24,7 @@ import {
   saveSettings,
   type LauncherSettings,
 } from "../../../shared/api/settingsClient";
+import { resoudreTheme, type ThemePreference } from "../../theme/season";
 import {
   detecterJava as demandeLesJava,
   installerJava,
@@ -39,6 +41,7 @@ type ParametresTabProps = {
 };
 
 type SettingsSection =
+  | "appearance"
   | "java"
   | "ram"
   | "window"
@@ -65,6 +68,16 @@ const RESOLUTION_PRESETS = [
   { label: "720p HD", width: 1280, height: 720 },
   { label: "900p HD+", width: 1600, height: 900 },
   { label: "1080p FHD", width: 1920, height: 1080 },
+];
+
+const THEME_CHOIX: { id: ThemePreference; label: string; detail: string }[] = [
+  {
+    id: "auto",
+    label: "Automatique",
+    detail: "Suit le calendrier : Halloween pendant tout octobre, Nocturne le reste de l'année.",
+  },
+  { id: "nocturne", label: "Nocturne", detail: "Le thème violet, en toute saison." },
+  { id: "halloween", label: "Halloween", detail: "Le thème orange, en toute saison." },
 ];
 
 type ManagedJavaTarget = {
@@ -180,6 +193,7 @@ export function ParametresTab({
   const [autoConnect, setAutoConnect] = useState(true);
   const [keepOpen, setKeepOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState<"fr" | "en">("fr");
+  const [theme, setTheme] = useState<ThemePreference>("auto");
 
   // Téléchargement des Java
   const [installingJava, setInstallingJava] = useState<Record<number, boolean>>({});
@@ -212,6 +226,7 @@ export function ParametresTab({
         setAutoConnect(s.autoConnect);
         const resolvedLang = s.language === "en" ? "en" : "fr";
         setSelectedLang(resolvedLang);
+        setTheme(s.theme ?? "auto");
       })
       .catch(() => {
         // En cas d'erreur de chargement initial, les valeurs par défaut restent en place
@@ -310,6 +325,24 @@ export function ParametresTab({
     );
   }
 
+  /**
+   * Le thème s'applique au clic, pas à l'enregistrement.
+   *
+   * <p>Même choix que pour la langue, et pour la même raison: un réglage dont
+   * on ne voit l'effet qu'après avoir trouvé le bouton « Enregistrer » se
+   * choisit à l'aveugle. L'enregistrement, lui, le rend durable.
+   *
+   * <p>On écrit directement dans l'attribut du document plutôt que d'attendre
+   * que les réglages fassent le tour par le sidecar: {@code useTheme} y écrira
+   * la même valeur après la sauvegarde, et les deux ne peuvent pas diverger
+   * puisque c'est la seule source de vérité du CSS.
+   */
+  function handleThemeChange(next: ThemePreference) {
+    setTheme(next);
+    document.documentElement.dataset.theme =
+      next === "auto" ? resoudreTheme("auto") : next;
+  }
+
   function handleLanguageChange(newLang: "fr" | "en") {
     setSelectedLang(newLang);
     void i18n.changeLanguage(newLang);
@@ -326,7 +359,8 @@ export function ParametresTab({
       fullscreen !== initialSettings.fullscreen ||
       keepOpen !== initialSettings.keepLauncherOpen ||
       autoConnect !== initialSettings.autoConnect ||
-      selectedLang !== (initialSettings.language === "en" ? "en" : "fr"));
+      selectedLang !== (initialSettings.language === "en" ? "en" : "fr") ||
+      theme !== (initialSettings.theme ?? "auto"));
 
   function handleReset() {
     if (!initialSettings) return;
@@ -341,6 +375,7 @@ export function ParametresTab({
     const initialLang = initialSettings.language === "en" ? "en" : "fr";
     setSelectedLang(initialLang);
     void i18n.changeLanguage(initialLang);
+    handleThemeChange(initialSettings.theme ?? "auto");
   }
 
   async function handleSave() {
@@ -358,6 +393,7 @@ export function ParametresTab({
       keepLauncherOpen: keepOpen,
       autoConnect,
       language: selectedLang,
+      theme,
     };
 
     try {
@@ -386,6 +422,19 @@ export function ParametresTab({
             Affichage & Système
           </span>
           <div className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setActiveSection("appearance")}
+              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                activeSection === "appearance"
+                  ? "bg-accent/15 text-accent-200 border-l-2 border-accent font-semibold"
+                  : "text-neutral-300 hover:text-ink hover:bg-well/60"
+              }`}
+            >
+              <Palette className="w-4 h-4 shrink-0 text-accent" />
+              <span>Apparence</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveSection("window")}
@@ -979,6 +1028,69 @@ export function ParametresTab({
                 label="Connexion automatique au démarrage"
                 description="Restaure automatiquement votre session de jeu à l'ouverture de l'application."
               />
+            </div>
+          </section>
+        )}
+
+        {/* SECTION : APPARENCE */}
+        {(activeSection === "appearance" || activeSection === "all") && (
+          <section className="bg-surface border border-divider rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-well flex items-center justify-center text-accent">
+                <Palette className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-ink">Apparence</h2>
+                <p className="text-xs text-neutral-400">
+                  Les couleurs du launcher et les décorations de saison.
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="pt-3 border-t border-divider grid gap-2 sm:grid-cols-3"
+              role="radiogroup"
+              aria-label="Thème du launcher"
+            >
+              {THEME_CHOIX.map((choix) => {
+                const actif = theme === choix.id;
+                return (
+                  <button
+                    key={choix.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={actif}
+                    /* Sans cela, le nom accessible est le libellé collé à sa
+                       description — « Automatique » s'annonce alors comme
+                       « AutomatiqueSuit le calendrier : Halloween pendant tout
+                       octobre, Nocturne le reste de l'année. », et les trois
+                       choix deviennent indiscernables au nom. */
+                    aria-label={choix.label}
+                    aria-describedby={`theme-detail-${choix.id}`}
+                    onClick={() => handleThemeChange(choix.id)}
+                    className={`flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      actif
+                        ? "border-accent bg-accent/15"
+                        : "border-divider bg-well hover:border-accent-700"
+                    }`}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-xs font-semibold ${actif ? "text-accent-100" : "text-ink"}`}
+                      >
+                        {choix.label}
+                      </span>
+                      {actif && <Check className="w-3.5 h-3.5 shrink-0 text-accent" />}
+                    </span>
+                    <span
+                      id={`theme-detail-${choix.id}`}
+                      className="text-[11px] leading-snug text-neutral-400"
+                    >
+                      {choix.detail}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}

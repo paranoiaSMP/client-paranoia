@@ -3,6 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, Minus, Square, X } from "lucide-react";
 
 import { useAppVersion } from "../../hooks/useAppVersion";
+import { Citrouille } from "./SeasonDecor";
 
 /**
  * La barre de titre, dessinee par l'application.
@@ -79,6 +80,9 @@ export function TitleBar() {
 			</div>
 
 			<div className="flex shrink-0 items-center gap-1.5 text-neutral-300">
+				{/* Elle précède les boutons de fenêtre et garde ses distances: collée
+				    au « réduire », on la viserait en voulant le cliquer. */}
+				<Citrouille className="mr-1.5 size-[21px]" />
 				<WindowButton
 					label="Réduire"
 					onClick={() => void getCurrentWindow().minimize()}

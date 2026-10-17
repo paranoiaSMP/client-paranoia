@@ -21,6 +21,7 @@ import {
 	LoginScreen,
 } from "./components/screens/StatusScreens";
 import type { Overlay, Screen } from "./navigation";
+import { bandeauSaison } from "./theme/season";
 
 import { useAppVersion } from "./hooks/useAppVersion";
 import { useAuth } from "./hooks/useAuth";
@@ -32,6 +33,7 @@ import { useModCount } from "./hooks/useModCount";
 import { useProfileCreation } from "./hooks/useProfileCreation";
 import { useProfiles } from "./hooks/useProfiles";
 import { useSettings } from "./hooks/useSettings";
+import { useTheme } from "./hooks/useTheme";
 import { useUpdater } from "./hooks/useUpdater";
 
 /**
@@ -94,6 +96,13 @@ export function App() {
 	});
 
 	const { settings, reload: reloadSettings } = useSettings();
+
+	// Le thème avant tout le reste: il ne dépend que des réglages, et le reste
+	// de l'application n'a pas à l'attendre. Tant que les réglages ne sont pas
+	// lus, « auto » s'applique — c'est le défaut, et c'est ce que verra de toute
+	// façon l'immense majorité des joueurs.
+	const theme = useTheme(settings?.theme ?? "auto");
+	const saison = bandeauSaison(theme);
 	const { isDragging, isProcessing } = useFileDrop(refreshProfiles);
 
 	// Le profil courant: celui qui est choisi, ou le premier a defaut. Le bouton
@@ -182,6 +191,7 @@ export function App() {
 							modCount={modCount}
 							account={account}
 							lobbyCape={lobbyCape}
+							saison={saison}
 							running={running}
 							status={status}
 							news={news}

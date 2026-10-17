@@ -69,6 +69,19 @@ export const settingsSchema = z.object({
   keepLauncherOpen: z.boolean().default(false),
   autoConnect: z.boolean().default(true),
   language: z.enum(["fr", "en"]).default("fr"),
+  /**
+   * Habillage du launcher.
+   *
+   * <p>« auto » laisse la date décider -- c'est le défaut, et il suffit à qui
+   * ne va jamais dans ces réglages. Les deux autres valeurs forcent un thème,
+   * dans un sens comme dans l'autre: celui que la décoration dérange la coupe,
+   * celui qui la veut en mars la garde.
+   *
+   * <p>Le réglage vit ici plutôt que dans le navigateur parce que c'est ici que
+   * vivent déjà la langue et le reste: un seul fichier à sauvegarder, et le
+   * choix survit à une réinstallation.
+   */
+  theme: z.enum(["auto", "nocturne", "halloween"]).default("auto"),
 });
 
 export type LauncherSettings = z.infer<typeof settingsSchema>;

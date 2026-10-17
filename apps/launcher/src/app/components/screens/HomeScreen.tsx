@@ -6,6 +6,7 @@ import type {
 	NewsItem,
 } from "@paranoia/contracts";
 import { ExpandableNews } from "../ExpandableNews";
+import { Citrouille, LuneEtChauvesSouris } from "../shell/SeasonDecor";
 
 import { SkinViewer3D } from "../../../components/SkinViewer3D";
 import type { LaunchStatusResponse } from "../../../shared/api/launcherClient";
@@ -15,6 +16,8 @@ type HomeScreenProps = {
 	modCount: number | null;
 	account: MicrosoftAccount | null;
 	lobbyCape: string | undefined;
+	/** Ce que la saison en cours annonce, ou null hors saison. */
+	saison: { libelle: string; compte: string | null } | null;
 	running: boolean;
 	status: LaunchStatusResponse;
 	news: NewsItem[];
@@ -55,6 +58,7 @@ export function HomeScreen({
 	modCount,
 	account,
 	lobbyCape,
+	saison,
 	running,
 	status,
 	news,
@@ -76,10 +80,26 @@ export function HomeScreen({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col overflow-auto">
 			<section className="relative flex shrink-0 flex-wrap items-start justify-between gap-6 border-b border-divider bg-gradient-to-b from-surface to-ground p-6">
-				<div className="flex min-w-[300px] max-w-[620px] flex-1 flex-col gap-4">
-					<span className="text-xs uppercase tracking-[0.16em] text-accent-300">
-						Profil
-					</span>
+				{/* Premier dans le DOM, et les deux blocs qui suivent sont `relative`:
+				    un élément positionné se peint au-dessus de ce qui ne l'est pas, et
+				    sans cela la lune serait passée devant le titre. */}
+				<LuneEtChauvesSouris />
+
+				<div className="relative flex min-w-[300px] max-w-[620px] flex-1 flex-col gap-4">
+					<div className="flex flex-wrap items-center gap-2.5">
+						<span className="text-xs uppercase tracking-[0.16em] text-accent-300">
+							Profil
+						</span>
+						{saison && (
+							<span className="flex items-center gap-1.5 rounded-sm border border-accent-700 bg-accent-900 px-2 py-0.5 text-[11px] font-medium text-accent-200">
+								<Citrouille className="size-[15px]" />
+								{saison.libelle}
+								{saison.compte && (
+									<span className="text-accent-300/80">· {saison.compte}</span>
+								)}
+							</span>
+						)}
+					</div>
 
 					<div className="flex flex-col gap-1.5">
 						<h1 className="m-0 text-[42px] font-semibold leading-[1.05] tracking-[-0.03em]">
@@ -175,7 +195,7 @@ export function HomeScreen({
 					</div>
 				</div>
 
-				<div className="elev-md flex w-[248px] shrink-0 flex-col gap-3 rounded-lg bg-surface p-4">
+				<div className="elev-md relative flex w-[248px] shrink-0 flex-col gap-3 rounded-lg bg-surface p-4">
 					<div className="flex items-center justify-between gap-2 text-xs font-medium uppercase tracking-[0.12em] text-neutral-400">
 						<span>Skin</span>
 						<span className="truncate normal-case tracking-normal text-accent-300">

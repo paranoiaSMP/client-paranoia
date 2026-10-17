@@ -1,4 +1,5 @@
 import { apiRequest } from "./http";
+import type { ThemePreference } from "../../app/theme/season";
 
 export type LauncherSettings = {
   ramMinMb: number;
@@ -11,6 +12,7 @@ export type LauncherSettings = {
   keepLauncherOpen: boolean;
   autoConnect: boolean;
   language: "fr" | "en";
+  theme: ThemePreference;
 };
 
 export async function fetchSettings(): Promise<LauncherSettings> {
