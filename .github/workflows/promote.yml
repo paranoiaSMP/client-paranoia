@@ -274,6 +274,25 @@ jobs:
           # joueurs sans mise a jour, et c'est precisement le bug de la 0.7.18.
           attendues=$(printf '%s' "$PLATEFORMES" | tr ',' '\n' | sort | paste -sd, -)
 
+          # On exige que les plateformes attendues soient PRESENTES, pas
+          # qu'elles soient les seules.
+          #
+          # L'egalite stricte etait fausse, et la promotion de la 0.7.35 l'a
+          # montre: tout avait reussi -- release publique, manifeste ecrit,
+          # pointeur a jour -- et cette derniere etape a passe le job au rouge
+          # sur un manifeste parfaitement bon. De quoi croire la promotion
+          # ratee et la relancer, ou pire, la defaire.
+          #
+          # La cause est dans update-manifest.mjs, et elle est voulue:
+          # `plateformesConservees` garde les entrees deja publiees pour la
+          # meme version, afin qu'un job qui publie ne fasse pas disparaitre la
+          # plateforme d'un autre. Le build Linux ayant depuis ajoute
+          # linux-x86_64-appimage et linux-x86_64-deb, le manifeste en porte
+          # cinq quand la promotion n'en pose que trois.
+          #
+          # Le script lui-meme verifie par inclusion -- `complet()` fait
+          # `attendues.every(nom => presentes.includes(nom))`. C'est cette
+          # etape-ci qui s'en etait ecartee.
           for essai in 1 2 3 4 5; do
             vu=$(curl -sSL --max-time 30 "$url" | node -e '
               let t = "";
@@ -286,12 +305,28 @@ jobs:
                   console.log("illisible");
                 }
               });' || true)
-            echo "essai $essai: $vu (attendu: $attendu $attendues)"
-            if [ "$vu" = "$attendu $attendues" ]; then
-              echo "le manifeste public annonce $attendu pour $attendues"
-              exit 0
+
+            version_vue="${vu%% *}"
+            vues="${vu#* }"
+            echo "essai $essai: $vu (attendu: $attendu, au moins $attendues)"
+
+            if [ "$version_vue" = "$attendu" ]; then
+              manquantes=""
+              for plateforme in $(printf '%s' "$attendues" | tr ',' ' '); do
+                case ",$vues," in
+                  *",$plateforme,"*) ;;
+                  *) manquantes="${manquantes:+$manquantes,}$plateforme" ;;
+                esac
+              done
+
+              if [ -z "$manquantes" ]; then
+                echo "le manifeste public annonce $attendu pour $vues"
+                exit 0
+              fi
+              echo "  plateformes encore absentes: $manquantes"
             fi
+
             sleep 15
           done
-          echo "::error::le manifeste public n'annonce pas $attendu pour $attendues"
+          echo "::error::le manifeste public n'annonce pas $attendu pour au moins $attendues"
           exit 1
