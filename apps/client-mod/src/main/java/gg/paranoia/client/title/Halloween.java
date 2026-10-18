@@ -113,18 +113,17 @@ public final class Halloween {
     }
 
     /**
-     * Ce qui se pose par-dessus: la toile du coin et son araignee, puis les
-     * deux citrouilles qui encadrent la rangee d'icones du bas.
-     *
-     * @param barreX bord gauche de la rangee d'icones
-     * @param barreL largeur de la rangee
+     * Ce qui se pose par-dessus: la toile du coin haut gauche et son
+     * araignee, puis deux citrouilles en bas a droite, au-dessus du pied de
+     * page. Le coin haut droit est pris par le cartouche du joueur, et le bas
+     * gauche par les raccourcis.
      */
-    static void premierPlan(DrawContext context, int width, int height,
-                            int barreX, int barreL, long ms) {
-        toile(context, width, ms);
-        int y = height - 17;
-        citrouille(context, barreX - 26, y, ms, 0);
-        citrouille(context, barreX + barreL + 10, y, ms, 700);
+    static void premierPlan(DrawContext context, int width, int height, long ms) {
+        toile(context, ms);
+        // Au double, comme la lune: a seize points elles se perdaient dans
+        // le coin, a cote d'un pied de page plus large qu'elles.
+        citrouille(context, width - 84, height - 50, 32, ms, 0);
+        citrouille(context, width - 48, height - 46, 32, ms, 700);
     }
 
     /**
@@ -176,7 +175,8 @@ public final class Halloween {
      * blocs de Minecraft plutot que celle de l'interface.
      */
     private static void lune(DrawContext context, int width) {
-        dessine(context, LUNE, width / 2 - 250, 26, 64, 64, 32, 32, 0xC8FFFFFF);
+        // A droite: la gauche de l'ecran est au menu, et assombrie pour lui.
+        dessine(context, LUNE, width - 190, 40, 64, 64, 32, 32, 0xC8FFFFFF);
     }
 
     /**
@@ -202,13 +202,13 @@ public final class Halloween {
         }
     }
 
-    /** La toile dans le coin haut droit, et l'araignee qui monte et descend. */
-    private static void toile(DrawContext context, int width, long ms) {
+    /** La toile dans le coin haut gauche, et l'araignee qui monte et descend. */
+    private static void toile(DrawContext context, long ms) {
         // 32 texels dessines a 64, comme la lune.
-        dessine(context, TOILE, width - 64, 0, 64, 64, 32, 32, 0xFFFFFFFF);
+        dessine(context, TOILE, 0, 0, 64, 64, 32, 32, 0xFFFFFFFF);
 
         int fil = 26 + (int) Math.round((Math.sin(ms / 1400.0) + 1) * 9);
-        int x = width - 26;
+        int x = 25;
         context.fill(x, 0, x + 1, fil, 0x99CDC4CA);
         dessine(context, ARAIGNEE, x - 8, fil, 16, 16, 8, 8, 0xFFFFFFFF);
     }
@@ -219,19 +219,19 @@ public final class Halloween {
      * <p>La lueur est une texture a part, posee par-dessus avec une opacite
      * qui vacille: le corps ne bouge pas, seule la flamme vit.
      */
-    static void citrouille(DrawContext context, int x, int y, long ms, int phase) {
-        dessine(context, CITROUILLE_TEX, x, y, 16, 16, 16, 16, 0xFFFFFFFF);
+    static void citrouille(DrawContext context, int x, int y, int taille, long ms, int phase) {
+        dessine(context, CITROUILLE_TEX, x, y, taille, taille, 16, 16, 0xFFFFFFFF);
         double t = (ms + phase) / 1000.0;
         double flamme = 0.78 + 0.14 * Math.sin(t * 7.3) + 0.08 * Math.sin(t * 17.9);
         int alpha = (int) Math.max(0x60, Math.min(0xFF, flamme * 0xFF));
-        dessine(context, LUEUR, x, y, 16, 16, 16, 16, (alpha << 24) | 0xFFFFFF);
+        dessine(context, LUEUR, x, y, taille, taille, 16, 16, (alpha << 24) | 0xFFFFFF);
     }
 
-    /** Le compte a rebours, sous la derniere rangee de boutons. */
-    static void compte(DrawContext context, TextRenderer font, int width, int y) {
+    /** Le compte a rebours, aligne a droite sous le cartouche du joueur. */
+    static void compte(DrawContext context, TextRenderer font, int droite, int y) {
         String texte = compteARebours();
         if (texte != null) {
-            MenuTheme.centered(context, font, texte, 0, width, y, CITROUILLE);
+            MenuTheme.right(context, font, texte, 0, droite, y, CITROUILLE);
         }
     }
 

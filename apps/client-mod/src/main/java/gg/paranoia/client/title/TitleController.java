@@ -14,6 +14,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.LoggerFactory;
 
@@ -67,77 +69,67 @@ public final class TitleController {
         HALLOWEEN,
     }
 
+    /** Ce qu'une entree dessine: une ligne du menu, ou un raccourci du bas. */
+    private enum Genre {
+        MENU,
+        RACCOURCI,
+    }
+
     /**
-     * Un bouton pose: sa place, ce qu'il montre, et ce qu'il fait.
+     * Une entree posee: sa place, ce qu'elle montre, et ce qu'elle fait.
      *
-     * <p>Une barre porte une icone <em>et</em> un texte, centres ensemble --
-     * c'est la disposition du modele. Un carre du bas ne porte qu'une icone,
-     * et son {@code label} est nul.
+     * <p>Une ligne du menu porte un texte en grosses lettres, a l'echelle
+     * {@code echelle}. Un raccourci porte un texte a taille normale suivi de
+     * son icone dans une case, a la facon d'une touche de manette.
      */
     private record Bouton(
-        Action action, String label, String icone,
-        int x, int y, int w, int h, boolean boutique) {
+        Action action, Genre genre, String label, Identifier icone,
+        int x, int y, int w, int h, int echelle) {
     }
 
     /*
-     * Les mesures, relevees sur le modele plutot qu'approchees a l'oeil.
+     * La disposition, inspiree des menus de jeux de console: le menu est une
+     * colonne de mots, alignee a gauche et tenue par un trait vertical, et
+     * non une pile de boutons centres. Le panorama occupe tout le reste de
+     * l'ecran au lieu d'etre masque par un bloc au milieu.
      *
-     * <p>La capture fait 1917 de large pour une interface a l'echelle 2: tout
-     * ce qui suit est donc la moitie de ce qu'on y mesure. La barre y fait 398
-     * sur 40 avec 8 d'ecart, soit 200 sur 20 avec 4 -- exactement les
-     * dimensions d'un bouton de Minecraft. Le modele ne les a pas inventees,
-     * il les a rhabillees, et il n'y a aucune raison de s'en ecarter.
+     * Les tailles sont des multiples entiers de la police: elle est une image,
+     * et un facteur fractionnaire en brouillerait les pixels.
      */
 
-    /** Barre pleine largeur: Solo, Multijoueur. */
-    private static final int BARRE_L = 200;
-    private static final int BARRE_H = 20;
-    /** Ecart vertical entre deux barres, et horizontal entre les deux demies. */
-    private static final int ECART = 4;
-    /** Demi-barre: la rangee du bas en porte deux. */
-    private static final int DEMI_L = (BARRE_L - ECART) / 2;
-    /** Cote de la zone cliquable d'un carre du bas, et pas entre deux centres. */
-    private static final int CARRE = 20;
-    private static final int PAS_CARRE = 23;
+    /** Marge gauche du texte du menu. Le trait vertical se tient a 12 devant. */
+    private static final int MARGE = 34;
+    private static final int TRAIT_X = MARGE - 12;
+    /** Hauteur d'une lettre de la police, avant agrandissement. */
+    private static final int LETTRE = 8;
+    /** L'entree principale est plus grosse que les autres: c'est elle qu'on cherche. */
+    private static final int ECHELLE_PRINCIPALE = 3;
+    private static final int ECHELLE = 2;
+    /** Ecart vertical entre deux lignes du menu. */
+    private static final int INTERLIGNE = 7;
+    /** Distance entre le bas du menu et le bas de l'ecran: les raccourcis vivent dessous. */
+    private static final int BAS_MENU = 56;
+    /** Cote de la case d'un raccourci, et pas entre deux raccourcis. */
+    private static final int CASE = 18;
+    private static final int PAS_RACCOURCI = 12;
 
-    /*
-     * Les couleurs, relevees elles aussi. Le fond d'une barre rend (19, 21, 27)
-     * au-dessus d'un panorama clair comme au-dessus d'un panorama sombre: il
-     * est donc opaque, et non un noir translucide comme on pourrait le croire.
-     */
-    private static final int BARRE = 0xFF13151B;
-    private static final int BARRE_SURVOL = 0xFF1E2129;
-    private static final int BARRE_BORD = 0x1FE9E9ED;
+    /** Le texte du menu au repos, legerement en retrait du blanc pur. */
+    private static final int MENU_TEXTE = 0xFFE9E9ED;
+    private static final int TRAIT = 0x66E9E9ED;
     /** La boutique garde sa couleur propre: c'est ce qui la distingue. */
-    private static final int VERT_FOND = 0xFF101E12;
-    private static final int VERT_FOND_SURVOL = 0xFF17301C;
-    private static final int VERT_BORD = 0xFF2A4A38;
     private static final int VERT = 0xFF5BD98A;
+    private static final int CASE_FOND = 0xCC13151B;
+    private static final int CASE_BORD = 0x55E9E9ED;
+
+    /** La police a pixels du mod, pour les mots du menu. */
+    private static final Identifier POLICE = Identifier.of("paranoia_client", "silkscreen");
 
     /**
-     * Le logo, pose sur un carre transparent de 512.
-     *
-     * <p>Le dessin lui-meme n'est pas carre -- il est une fois et demie plus
-     * large que haut -- mais la texture l'est: une puissance de deux evite
-     * toute surprise d'echantillonnage, et les marges transparentes ne coutent
-     * rien. On dessine donc le carre, et le logo occupe la bande du milieu.
+     * Le logo, a sa taille de texture divisee par deux: deux texels par point,
+     * donc net au plus proche voisin a l'echelle d'interface 2.
      */
     private static final Identifier LOGO =
         Identifier.of("paranoia_client", "textures/gui/title/logo.png");
-
-    /*
-     * Le logo fait exactement le double de sa taille a l'ecran.
-     *
-     * <p>Minecraft echantillonne les textures d'interface au plus proche
-     * voisin. Le fichier faisait 512 de cote et tombait dans une boite de 112:
-     * un texel sur cinq etait garde, et chaque bord du trace devenait un
-     * escalier. A l'echelle d'interface 2 -- la plus courante -- deux texels
-     * valent desormais deux pixels, et le dessin reste net.
-     *
-     * <p>Il n'est plus carre non plus: ses marges transparentes servaient a
-     * faire une puissance de deux dont le rendu n'a pas besoin, et elles
-     * compliquaient le placement pour rien.
-     */
     private static final int LOGO_TEXTURE_L = 176;
     private static final int LOGO_TEXTURE_H = 122;
     private static final int LOGO_L = LOGO_TEXTURE_L / 2;
@@ -170,9 +162,6 @@ public final class TitleController {
 
     private Panorama monte;
 
-    /** La rangee d'icones du bas, pour que les citrouilles l'encadrent. */
-    private int barreX;
-    private int barreL;
     private CubeMapRenderer cube;
     private RotatingCubeMapRenderer panorama;
 
@@ -206,28 +195,29 @@ public final class TitleController {
         MinecraftClient client = MinecraftClient.getInstance();
         boolean halloween = Halloween.actif();
         // Pendant Halloween l'accent est la citrouille, quelle que soit la
-        // teinte choisie: c'est elle qui fait l'habillage. Le choix du joueur
-        // n'est pas touche, il revient tel quel le 3 novembre.
+        // teinte choisie. Le choix du joueur n'est pas touche, il revient tel
+        // quel le 3 novembre.
         int accent = halloween ? Halloween.CITROUILLE : teinte().argb();
         long ms = System.nanoTime() / 1_000_000L;
 
         fond(context, client, halloween);
+        ombreGauche(context, halloween);
         dispose();
         if (halloween) {
             Halloween.arrierePlan(context, width, height, ms);
         }
-        logo(context, halloween);
 
+        logo(context, halloween);
+        trait(context, halloween);
         for (Bouton bouton : boutons) {
             dessine(context, bouton, accent, halloween);
         }
 
+        int basCarte = carteCompte(context, client, accent, halloween);
         if (halloween) {
-            Halloween.compte(context, font, width, height / 2 + 45);
-            Halloween.premierPlan(context, width, height, barreX, barreL, ms);
+            Halloween.compte(context, font, width - 8, basCarte + 6);
+            Halloween.premierPlan(context, width, height, ms);
         }
-
-        pastilleCompte(context, client, accent, halloween);
         pied(context, halloween);
     }
 
@@ -340,73 +330,133 @@ public final class TitleController {
         return panorama;
     }
 
-    private void logo(DrawContext context, boolean halloween) {
-        // Le modele centre son logo 76 au-dessus du milieu de l'ecran.
-        int haut = Math.max(4, height / 2 - 76 - LOGO_H / 2);
+    /**
+     * Assombrit le tiers gauche, la ou se tient le menu.
+     *
+     * <p>Le voile general ne suffit plus: le texte n'a plus de fond de bouton
+     * derriere lui, et un panorama clair le rendrait illisible. L'ombre
+     * s'efface vers la droite en paliers, pour laisser le paysage intact
+     * ailleurs. En paliers et non en degrade, pour la meme raison que la
+     * brume d'Halloween: {@code fillGradient} n'est pas dans la liste des API
+     * verifiees.
+     */
+    private void ombreGauche(DrawContext context, boolean halloween) {
+        int base = halloween ? 0x0B060A : 0x0B0C14;
+        int largeur = Math.max(160, width * 2 / 5);
+        int paliers = 24;
+        for (int i = 0; i < paliers; i++) {
+            int alpha = 0x90 * (paliers - i) / paliers;
+            int x1 = largeur * i / paliers;
+            int x2 = largeur * (i + 1) / paliers;
+            context.fill(x1, 0, x2, height, (alpha << 24) | base);
+        }
+    }
 
-        // Meme reserve que pour le panorama: la texture peut ne pas encore
-        // exister a la premiere image. Le nom reste, lui, toujours lisible.
+    /** Le haut du menu, recalcule a chaque image par {@link #dispose}. */
+    private int hautMenu;
+    private int basMenu;
+
+    /**
+     * Le logo, au-dessus du menu et aligne sur lui. Il s'efface quand la
+     * fenetre est trop basse pour lui laisser la place: le menu passe avant.
+     */
+    private void logo(DrawContext context, boolean halloween) {
+        int haut = hautMenu - LOGO_H - 14;
+        if (haut < 30) {
+            return;
+        }
         try {
             // Le logo d'Halloween est un fichier a part et non le meme teinte:
             // une teinte multiplie, et le violet du C serait devenu brun.
             Platforms.get().drawTexture(context, halloween ? Halloween.LOGO : LOGO,
-                (width - LOGO_L) / 2, haut, LOGO_L, LOGO_H,
+                MARGE - 4, haut, LOGO_L, LOGO_H,
                 LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
             signale("logo pas encore pret", echec);
-            MenuTheme.centered(context, font, "PARANOIA", 0, width,
-                haut + LOGO_H / 2, MenuTheme.TEXT);
         }
+    }
+
+    /**
+     * Le trait vertical qui tient le menu, termine en bas par un petit carre
+     * creux: il dit ou la colonne s'arrete, et relie le menu aux raccourcis.
+     */
+    private void trait(DrawContext context, boolean halloween) {
+        int couleur = halloween ? 0x80FC8731 : TRAIT;
+        int haut = hautMenu - 6;
+        int bas = basMenu + 12;
+        context.fill(TRAIT_X, haut, TRAIT_X + 1, bas, couleur);
+        MenuTheme.outline(context, TRAIT_X - 2, bas, 5, 5, couleur);
+        context.fill(TRAIT_X + 3, bas + 2, TRAIT_X + 12, bas + 3, couleur);
+    }
+
+    /** Le texte dans la police du menu, ou celle du jeu si la version ne sait pas en designer. */
+    private Text mot(String texte) {
+        Style style = Platforms.get().fontStyle(POLICE);
+        return style == Style.EMPTY ? Text.literal(texte) : Text.literal(texte).setStyle(style);
     }
 
     private void dessine(DrawContext context, Bouton bouton, int accent, boolean halloween) {
         boolean survole = MenuTheme.inside(
             mouseX, mouseY, bouton.x(), bouton.y(), bouton.w(), bouton.h());
 
-        // Un carre du bas n'a pas de fond au repos: sur le modele, seules les
-        // icones flottent au-dessus du panorama. Le fond n'apparait qu'au
-        // survol, et c'est lui qui dit que la zone cliquable est plus large
-        // que l'icone.
-        if (bouton.label() == null) {
-            if (survole) {
-                MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
-                    MenuTheme.ROW_HOVER);
-            }
-            int x = bouton.x() + (bouton.w() - ICONE) / 2;
-            int y = bouton.y() + (bouton.h() - ICONE) / 2;
-            if (bouton.action() == Action.HALLOWEEN) {
-                // Citrouille orange quand l'habillage est allume, grise sinon:
-                // l'icone dit l'etat, comme un interrupteur.
-                dessineTexture(context, Halloween.ICONE, x, y,
-                    halloween ? accent : (survole ? MenuTheme.TEXT : MenuTheme.TEXT_DIM));
-                return;
-            }
-            dessineIcone(context, bouton.icone(), x, y,
-                survole ? accent : (halloween ? Halloween.ENCRE : MenuTheme.TEXT));
-            return;
+        if (bouton.genre() == Genre.MENU) {
+            dessineMot(context, bouton, survole, accent, halloween);
+        } else {
+            dessineRaccourci(context, bouton, survole, accent, halloween);
+        }
+    }
+
+    /**
+     * Une ligne du menu.
+     *
+     * <p>Au survol elle prend l'accent, glisse de quatre points vers la droite
+     * et gagne un repere sur le trait: trois signaux pour un seul etat, parce
+     * qu'un mot sans cadre n'a pas de fond qui puisse s'eclairer.
+     */
+    private void dessineMot(DrawContext context, Bouton bouton, boolean survole,
+                            int accent, boolean halloween) {
+        int repos = bouton.action() == Action.BOUTIQUE
+            ? VERT
+            : (halloween ? Halloween.ENCRE : MENU_TEXTE);
+        int couleur = survole ? (bouton.action() == Action.BOUTIQUE ? VERT : accent) : repos;
+        int x = MARGE + (survole ? 4 : 0);
+
+        if (survole) {
+            int milieu = bouton.y() + bouton.h() / 2;
+            context.fill(TRAIT_X - 1, milieu - 3, TRAIT_X + 2, milieu + 3, couleur);
         }
 
-        int fond = bouton.boutique()
-            ? (survole ? VERT_FOND_SURVOL : VERT_FOND)
-            : halloween
-                ? (survole ? Halloween.BARRE_SURVOL : Halloween.BARRE)
-                : (survole ? BARRE_SURVOL : BARRE);
-        int bord = bouton.boutique()
-            ? VERT_BORD
-            : (survole ? accent : (halloween ? Halloween.BARRE_BORD : BARRE_BORD));
-        int encre = bouton.boutique() ? VERT : (halloween ? Halloween.ENCRE : MenuTheme.TEXT);
+        int echelle = bouton.echelle();
+        Platforms.get().pushScale(context, echelle, x, bouton.y());
+        context.drawText(font, mot(bouton.label()), 0, 0, couleur, true);
+        Platforms.get().popScale(context);
+    }
 
-        MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), fond);
-        MenuTheme.outline(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), bord);
+    /** Un raccourci: son nom, puis son icone dans une case, comme une touche. */
+    private void dessineRaccourci(DrawContext context, Bouton bouton, boolean survole,
+                                  int accent, boolean halloween) {
+        int encre = halloween ? Halloween.ENCRE : MenuTheme.TEXT;
+        int texte = survole ? accent : encre;
+        int largeurTexte = font.getWidth(bouton.label());
 
-        // Icone et texte centres ensemble, et non le texte seul: c'est la
-        // disposition du modele, ou le couple se lit comme un seul bloc.
-        int bloc = ICONE + 4 + font.getWidth(bouton.label());
-        int x = bouton.x() + (bouton.w() - bloc) / 2;
+        context.drawText(font, bouton.label(), bouton.x(),
+            bouton.y() + (CASE - font.fontHeight) / 2 + 1, texte, true);
 
-        dessineIcone(context, bouton.icone(), x, bouton.y() + (bouton.h() - ICONE) / 2, encre);
-        MenuTheme.text(context, font, bouton.label(), x + ICONE + 4,
-            bouton.y() + (bouton.h() - font.fontHeight) / 2 + 1, encre);
+        int cx = bouton.x() + largeurTexte + 5;
+        MenuTheme.panel(context, cx, bouton.y(), CASE, CASE,
+            halloween ? Halloween.BARRE : CASE_FOND);
+        MenuTheme.outline(context, cx, bouton.y(), CASE, CASE,
+            survole ? accent : (halloween ? Halloween.BARRE_BORD : CASE_BORD));
+
+        int teinte;
+        if (bouton.action() == Action.HALLOWEEN) {
+            // Citrouille orange quand l'habillage est allume, grise sinon:
+            // l'icone dit l'etat, comme un interrupteur.
+            teinte = halloween ? accent : MenuTheme.TEXT_DIM;
+        } else {
+            teinte = survole ? accent : encre;
+        }
+        dessineTexture(context, bouton.icone(), cx + 1, bouton.y() + 1, teinte);
     }
 
     /**
@@ -416,10 +466,6 @@ public final class TitleController {
      * qui evite un fichier par etat et garde le survol d'accord avec le reste
      * de l'ecran.
      */
-    private void dessineIcone(DrawContext context, String nom, int x, int y, int couleur) {
-        dessineTexture(context, icone(nom), x, y, couleur);
-    }
-
     private void dessineTexture(DrawContext context, Identifier texture, int x, int y, int couleur) {
         try {
             Platforms.get().drawTexture(context, texture, x, y, ICONE, ICONE,
@@ -429,90 +475,100 @@ public final class TitleController {
         }
     }
 
-    /** Qui est connecte, en haut a gauche, comme dans le launcher. */
-    private void pastilleCompte(DrawContext context, MinecraftClient client, int accent, boolean halloween) {
-        String pseudo = client.getSession().getUsername();
-        int largeur = Math.min(140, font.getWidth(pseudo) + 16);
-        MenuTheme.panel(context, 8, 8, largeur, 18, halloween ? Halloween.BARRE : MenuTheme.CARD);
-        MenuTheme.outline(context, 8, 8, largeur, 18,
-            halloween ? Halloween.BARRE_BORD : MenuTheme.CARD_BORDER);
-        context.fill(13, 15, 17, 19, accent);
-        MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
-            21, 13, halloween ? Halloween.ENCRE : MenuTheme.TEXT);
+    /**
+     * Le joueur connecte, en haut a droite, dans un cartouche borde de
+     * l'accent. Rend le bas du cartouche, pour poser ce qui vient dessous.
+     */
+    private int carteCompte(DrawContext context, MinecraftClient client, int accent, boolean halloween) {
+        String pseudo = MenuTheme.fit(font, client.getSession().getUsername(), 140);
+        int largeur = font.getWidth(pseudo) + 22;
+        int hauteur = 18;
+        int x = width - 8 - largeur;
+        int y = 8;
+
+        MenuTheme.panel(context, x, y, largeur, hauteur, halloween ? Halloween.BARRE : CASE_FOND);
+        MenuTheme.outline(context, x, y, largeur, hauteur, accent);
+        // Un losange de l'accent, ligne par ligne: 1, 3, 5, 3, 1 points.
+        int lx = x + 8;
+        int ly = y + hauteur / 2 - 2;
+        for (int i = 0; i < 5; i++) {
+            int demi = 2 - Math.abs(2 - i);
+            context.fill(lx - demi, ly + i, lx + demi + 1, ly + i + 1, accent);
+        }
+        context.drawText(font, pseudo, x + 15, y + (hauteur - font.fontHeight) / 2 + 1,
+            halloween ? Halloween.ENCRE : MenuTheme.TEXT, false);
+        return y + hauteur;
     }
 
     private void pied(DrawContext context, boolean halloween) {
-        if (halloween) {
-            // Le gris bleute de Nocturne, vire a la prune avec le reste.
-            MenuTheme.text(context, font,
-                "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
-                8, height - 10, 0xFFA2939C);
-            MenuTheme.right(context, font, "Non affilie a Mojang",
-                0, width - 8, height - 10, 0xFFA2939C);
-            return;
-        }
-        MenuTheme.text(context, font,
-            "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
-            8, height - 10, MenuTheme.TEXT_DIM);
-        MenuTheme.right(context, font, "Non affilie a Mojang",
-            0, width - 8, height - 10, MenuTheme.TEXT_DIM);
+        int gris = halloween ? 0xFFA2939C : MenuTheme.TEXT_DIM;
+        MenuTheme.right(context, font,
+            "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion()
+                + " - Non affilie a Mojang",
+            0, width - 8, height - 10, gris);
     }
 
     // --------------------------------------------------------------- position
 
     /**
-     * Repose les boutons pour la taille courante.
+     * Repose les entrees pour la taille courante.
      *
      * <p>A chaque image, et non une fois: la fenetre se redimensionne, et une
      * disposition calculee une seule fois laisserait les zones cliquables la ou
-     * les boutons ne sont plus.
+     * les mots ne sont plus.
      */
     private void dispose() {
         boutons.clear();
 
-        int gauche = (width - BARRE_L) / 2;
-        // La premiere barre tombe 31 au-dessus du milieu de l'ecran sur le
-        // modele (236 contre 266 en coordonnees d'interface). Trois rangees
-        // suivent, au pas de BARRE_H + ECART.
-        int y = height / 2 - 31;
+        Object[][] menu = {
+            {Action.SOLO, "Jouer", ECHELLE_PRINCIPALE},
+            {Action.MULTI, "Multijoueur", ECHELLE},
+            {Action.PARANOIA, "Paranoia", ECHELLE},
+            {Action.BOUTIQUE, "Boutique", ECHELLE},
+            {Action.QUITTER, "Quitter", ECHELLE},
+        };
 
-        boutons.add(new Bouton(Action.SOLO, "Solo", "titre-solo",
-            gauche, y, BARRE_L, BARRE_H, false));
-        y += BARRE_H + ECART;
-        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "titre-multi",
-            gauche, y, BARRE_L, BARRE_H, false));
-        y += BARRE_H + ECART;
-
-        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "titre-paranoia",
-            gauche, y, DEMI_L, BARRE_H, false));
-        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "titre-boutique",
-            gauche + DEMI_L + ECART, y, BARRE_L - DEMI_L - ECART, BARRE_H, true));
-
-        // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
-        // y commence a 17 du bord, et deux centres voisins sont distants de 23.
-        // La citrouille ne s'ajoute que pendant la periode: hors d'elle, il n'y
-        // a rien a allumer, et un bouton qui ne fait rien n'a pas sa place.
-        boolean periode = Halloween.enPeriode();
-        Action[] carres = periode
-            ? new Action[] {Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA,
-                Action.HALLOWEEN, Action.QUITTER}
-            : new Action[] {Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA,
-                Action.QUITTER};
-        String[] icones = periode
-            ? new String[] {"titre-options", "titre-paranoia", "titre-teinte", "titre-panorama",
-                null, "titre-quitter"}
-            : new String[] {"titre-options", "titre-paranoia", "titre-teinte", "titre-panorama",
-                "titre-quitter"};
-
-        int total = (carres.length - 1) * PAS_CARRE + CARRE;
-        int x = (width - total) / 2;
-        barreX = x;
-        barreL = total;
-        int bas = height - 17 - (CARRE - ICONE) / 2;
-        for (int i = 0; i < carres.length; i++) {
-            boutons.add(new Bouton(carres[i], null, icones[i], x, bas, CARRE, CARRE, false));
-            x += PAS_CARRE;
+        int total = 0;
+        for (Object[] ligne : menu) {
+            total += LETTRE * (int) ligne[2] + INTERLIGNE;
         }
+        total -= INTERLIGNE;
+
+        // Ancre en bas et non centre: les raccourcis tiennent sous le menu, et
+        // c'est le logo qui cede quand la fenetre est basse, jamais le menu.
+        int y = Math.max(8, height - BAS_MENU - total);
+        hautMenu = y;
+        for (Object[] ligne : menu) {
+            Action action = (Action) ligne[0];
+            String texte = ((String) ligne[1]).toUpperCase(java.util.Locale.ROOT);
+            int echelle = (int) ligne[2];
+            int h = LETTRE * echelle;
+            // La zone cliquable deborde de quelques points autour du mot: on
+            // vise un mot plus mal qu'un bouton.
+            int w = font.getWidth(mot(texte)) * echelle + 10;
+            boutons.add(new Bouton(action, Genre.MENU, texte, null,
+                MARGE - 4, y - 2, w + 4, h + 4, echelle));
+            y += h + INTERLIGNE;
+        }
+        basMenu = y - INTERLIGNE;
+
+        // Les raccourcis, sous le trait. La citrouille ne s'ajoute que pendant
+        // la periode: hors d'elle, il n'y a rien a allumer.
+        int x = MARGE;
+        int yr = height - 30;
+        x = raccourci(Action.OPTIONS, "Options", icone("titre-options"), x, yr);
+        x = raccourci(Action.TEINTE, "Teinte", icone("titre-teinte"), x, yr);
+        x = raccourci(Action.PANORAMA, "Panorama", icone("titre-panorama"), x, yr);
+        if (Halloween.enPeriode()) {
+            raccourci(Action.HALLOWEEN, "Halloween", Halloween.ICONE, x, yr);
+        }
+    }
+
+    /** Pose un raccourci et rend l'abscisse du suivant. */
+    private int raccourci(Action action, String label, Identifier icone, int x, int y) {
+        int w = font.getWidth(label) + 5 + CASE;
+        boutons.add(new Bouton(action, Genre.RACCOURCI, label, icone, x, y, w, CASE, 1));
+        return x + w + PAS_RACCOURCI;
     }
 
     // ----------------------------------------------------------------- souris
