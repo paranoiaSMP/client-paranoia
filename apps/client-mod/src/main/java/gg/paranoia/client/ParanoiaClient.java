@@ -109,6 +109,28 @@ public final class ParanoiaClient {
         REGISTRY.register(new BlockEntityCullingModule());
         REGISTRY.register(new MenuKeyModule());
         REGISTRY.register(new MenuAccueilModule());
+
+        // Les reglages sont lus apres l'enregistrement: un module absent du
+        // fichier garde ses defauts, un module absent du code est ignore.
+        REGISTRY.load();
+
+        // Le seul endroit d'ou l'ATH est dessine. Sans cette ligne, les
+        // elements s'enregistrent, s'affichent en mode edition dans le menu, se
+        // sauvegardent -- et ne paraissent jamais en jeu.
+        platform.registerHudRenderer(REGISTRY::renderInGame);
+
+        ClientTickEvents.END_CLIENT_TICK.register(ParanoiaClient::pollMenuKey);
+        // En debut de tick: le budget doit etre reconduit avant les naissances
+        // de particules, pas apres.
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            // Avant les modules: la portee et le combo se lisent sur le
+            // compteur de recharge, qui doit etre releve avant que quoi que ce
+            // soit d'autre ne le consulte.
+            CombatTracker.tick();
+            ParticleBudgetModule.beginTick();
+            EntityCullingModule.beginTick();
+            BlockEntityCullingModule.beginTick();
+        });
         registerPolicyChannel();
 
         // Source principale des badges et des cosmetiques. Elle ne demande
