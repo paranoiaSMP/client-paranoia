@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_apps_client_mod_versions_1_21_8_build_gradle", "label": "build.gradle", "file_type": "code", "source_file": "apps/client-mod/versions/1.21.8/build.gradle", "source_location": "L1"}], "edges": [], "raw_calls": [], "parse_errors": {"first_error_line": 9, "multiline_error": false}}

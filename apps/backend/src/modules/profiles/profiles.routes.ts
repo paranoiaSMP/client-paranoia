@@ -3,8 +3,10 @@ import { z } from "zod";
 import { ensureInstanceLayout, instanceDir } from "../launcher/paths.js";
 import { ensureFabricApi } from "../launcher/fabricApi.js";
 import { importProfilesFromPaths } from "./profiles.import.js";
-import { importMrPack } from "./mrpack.service.js";
-import { dirname } from "node:path";
+import { importArchive, UnknownArchiveError } from "./archive.importer.js";
+import { describeSource, inspectSourceInstance } from "./sourceInstance.js";
+import { importKeybinds, KeybindImportError } from "./keybinds.service.js";
+import { basename, dirname, join } from "node:path";
 import { cpSync, existsSync } from "node:fs";
 import { ensurePerformanceMods } from "../launcher/performanceMods.js";
 import {
@@ -71,13 +73,14 @@ profilesRouter.post("/import-paths", async (req, res) => {
  * injoignable. Le lancement le refait de toute facon, cette fois en bloquant,
  * avec la barre de progression et un message clair en cas d'echec.
  */
-async function prepareInstance(profile: {
-	id: string;
-	minecraftVersion: string;
-}): Promise<void> {
+async function prepareInstance(
+	profile: { id: string; minecraftVersion: string },
+	options: { fabricApi?: boolean; performanceMods?: boolean } = {},
+): Promise<void> {
+	const { fabricApi = true, performanceMods = true } = options;
 	await ensureInstanceLayout(profile.id);
 
-	void ensureFabricApi(
+	if (fabricApi) void ensureFabricApi(
 		instanceDir(profile.id),
 		profile.minecraftVersion,
 		() => {},
@@ -101,7 +104,7 @@ async function prepareInstance(profile: {
 	// fond, jamais bloquants. Ils sont un confort, pas une condition -- un profil
 	// sans Sodium reste un profil qui se lance, et le joueur peut les retirer
 	// depuis l'onglet Mods sans qu'on les lui remette.
-	void ensurePerformanceMods(
+	if (performanceMods) void ensurePerformanceMods(
 		profile.id,
 		instanceDir(profile.id),
 		profile.minecraftVersion,
@@ -208,9 +211,74 @@ profilesRouter.post("/import-archive", async (req, res, next) => {
 		if (!archivePath) {
 			return res.status(400).json({ message: "archivePath is required" });
 		}
-		const profile = await importMrPack(archivePath);
-		return res.status(201).json(profile);
+		const { profile, warnings } = await importArchive(archivePath);
+		return res.status(201).json({ ...profile, warnings });
 	} catch (err) {
+		if (err instanceof UnknownArchiveError) {
+			return res.status(422).json({ message: err.message });
+		}
+		return next(err);
+	}
+});
+
+
+/**
+ * Decrit des instances d'autres launchers avant de les importer.
+ *
+ * <p>Les chemins viennent du launcher, qui les a detectes sur la machine.
+ * On n'accepte pourtant que des fichiers nommes options.txt: une route qui
+ * lirait n'importe quel chemin servirait a explorer le disque.
+ */
+profilesRouter.post("/inspect-sources", (req, res, next) => {
+	try {
+		const { paths } = z
+			.object({ paths: z.array(z.string().max(1024)).max(300) })
+			.parse(req.body);
+
+		res.json(
+			paths
+				.filter((p) => basename(p) === "options.txt" && existsSync(p))
+				.map((p) => describeSource(p)),
+		);
+	} catch (err) {
+		next(err);
+	}
+});
+
+const keybindsSchema = z
+	.object({
+		sourceProfileId: z.string().optional(),
+		sourceOptionsPath: z.string().optional(),
+	})
+	.refine((v) => v.sourceProfileId || v.sourceOptionsPath, {
+		message: "sourceProfileId ou sourceOptionsPath requis",
+	});
+
+/**
+ * Reprend les touches d'une autre instance.
+ *
+ * <p>La source est soit une instance du launcher, soit l'options.txt d'un
+ * autre launcher detecte: c'est ce qui permet de retrouver ses touches apres
+ * avoir quitte Lunar ou Prism.
+ */
+profilesRouter.post("/:id/import-keybinds", (req, res, next) => {
+	try {
+		const profile = exportProfile(req.params.id);
+		if (!profile) {
+			return res.status(404).json({ message: "Profil introuvable" });
+		}
+
+		const input = keybindsSchema.parse(req.body);
+		const sourceOptions = input.sourceProfileId
+			? join(instanceDir(input.sourceProfileId), "options.txt")
+			: (input.sourceOptionsPath as string);
+
+		const result = importKeybinds(instanceDir(profile.id), sourceOptions);
+		return res.json(result);
+	} catch (err) {
+		if (err instanceof KeybindImportError) {
+			return res.status(422).json({ message: err.message });
+		}
 		return next(err);
 	}
 });
@@ -225,8 +293,16 @@ profilesRouter.post("/migrate", async (req, res, next) => {
 				.json({ message: "optionsTxtPath is required for migration" });
 		}
 
-		// Create profile
-		const profile = createProfile(input);
+		// La version et le loader viennent de l'instance source quand on sait les
+		// lire: l'interface n'envoie qu'une valeur par defaut, et la garder
+		// ouvrirait une instance 1.20.1 en 1.21.1.
+		const detected = inspectSourceInstance(optionsPath);
+		const profile = createProfile({
+			...input,
+			name: detected.name ?? input.name,
+			minecraftVersion: detected.minecraftVersion ?? input.minecraftVersion,
+			profileTypeId: detected.profileTypeId ?? input.profileTypeId,
+		});
 		await ensureInstanceLayout(profile.id);
 		const instDir = instanceDir(profile.id);
 
@@ -238,8 +314,17 @@ profilesRouter.post("/migrate", async (req, res, next) => {
 			console.error("Failed to copy instance data", e);
 		}
 
-		await prepareInstance(profile);
-		return res.status(201).json(profile);
+		// Une instance reprise garde les mods que le joueur a choisis: on n'y
+		// ajoute pas ceux d'optimisation, et Fabric API seulement si c'est une
+		// instance Fabric -- le poser dans une instance Forge n'y servirait a rien.
+		await prepareInstance(profile, {
+			fabricApi: profile.profileTypeId === "fabric",
+			performanceMods: false,
+		});
+		const warnings = detected.unsupportedLoader
+			? [`Le loader ${detected.unsupportedLoader} n'est pas gere: les mods de cette instance ne chargeront pas.`]
+			: [];
+		return res.status(201).json({ ...profile, warnings });
 	} catch (err) {
 		return next(err);
 	}

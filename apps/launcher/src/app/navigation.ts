@@ -22,6 +22,8 @@ import type { LucideIcon } from "lucide-react";
 export type Screen =
 	| "home"
 	| "versions"
+	| "profile"
+	| "import"
 	| "mods"
 	| "cosmetics"
 	| "shop"
@@ -30,7 +32,17 @@ export type Screen =
 	| "logs";
 
 /** Ce qui s'ouvre par-dessus l'ecran courant, sans le remplacer. */
-export type Overlay = "none" | "create_profile" | "migrate_profile" | "instance" | "report_bug";
+export type Overlay = "none" | "create_profile" | "report_bug";
+
+/**
+ * Les ecrans qui ne sont pas dans la barre laterale, avec celui qu'elle doit
+ * allumer a leur place: la fiche d'un profil et l'import sont des
+ * prolongements de la liste des profils.
+ */
+export const NAV_PARENT: Partial<Record<Screen, Screen>> = {
+	profile: "versions",
+	import: "versions",
+};
 
 export type NavItem = {
 	screen: Screen;
@@ -42,7 +54,7 @@ export type NavItem = {
 
 export const PRIMARY_NAV: NavItem[] = [
 	{ screen: "home", icon: Home, label: "Accueil" },
-	{ screen: "versions", icon: Layers, label: "Versions" },
+	{ screen: "versions", icon: Layers, label: "Profils" },
 	{ screen: "mods", icon: Puzzle, label: "Mods" },
 	{ screen: "cosmetics", icon: Shirt, label: "Cosmétiques", upcoming: true },
 	{ screen: "shop", icon: Store, label: "Boutique", upcoming: true },

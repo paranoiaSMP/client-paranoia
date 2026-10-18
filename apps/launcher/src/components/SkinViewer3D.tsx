@@ -1,12 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { SkinViewer, IdleAnimation, WalkingAnimation, RunningAnimation } from 'skinview3d';
+import { BreathingAnimation } from './BreathingAnimation';
 
 interface SkinViewer3DProps {
   skinUrl?: string;
   capeUrl?: string;
   className?: string; // Replace hardcoded width/height with Tailwind classes
-  animation?: 'idle' | 'walk' | 'run' | 'none';
+  animation?: 'breathe' | 'idle' | 'walk' | 'run' | 'none';
   paused?: boolean;
+  /**
+   * Fait tourner le personnage lentement.
+   *
+   * <p>Une cape est dans le dos: vu de face, le personnage la cache. Le tour
+   * complet est la seule facon de la voir sans que le joueur ait a saisir le
+   * modele a la souris.
+   */
+  turntable?: boolean;
   /**
    * Distance de la camera. Plus la valeur est basse, plus le personnage est
    * loin -- donc entier.
@@ -35,8 +44,9 @@ export function SkinViewer3D({
   skinUrl = "https://mineskin.eu/skin/Steve",
   capeUrl,
   className = "w-full h-full",
-  animation = 'none',
+  animation = 'breathe',
   paused = false,
+  turntable = false,
   zoom = 0.9
 }: SkinViewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -141,7 +151,9 @@ export function SkinViewer3D({
     const viewer = viewerRef.current;
     if (!viewer) return;
 
-    if (animation === 'idle') {
+    if (animation === 'breathe') {
+      viewer.animation = new BreathingAnimation();
+    } else if (animation === 'idle') {
       viewer.animation = new IdleAnimation();
     } else if (animation === 'walk') {
       viewer.animation = new WalkingAnimation();
@@ -166,6 +178,13 @@ export function SkinViewer3D({
       viewerRef.current.renderPaused = paused;
     }
   }, [paused]);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    viewer.autoRotate = turntable;
+    viewer.autoRotateSpeed = 1.4;
+  }, [turntable]);
 
   return (
     <div ref={containerRef} className={`relative group rounded-2xl overflow-hidden ${className}`}>

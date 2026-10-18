@@ -10,6 +10,7 @@
     "start": "node dist/apps/backend/src/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:preset": "tsx scripts/test-graphics-preset.ts",
+    "test:skins": "tsx scripts/test-skins.ts",
     "test:jvm": "tsx scripts/test-jvm-flags.ts",
     "test:sodium": "tsx scripts/test-sodium-preset.ts",
     "test:versions": "tsx scripts/test-minecraft-versions.ts",

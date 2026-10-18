@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createProfile } from "./profiles.store.js";
 import { importLunarPack } from "./lunar.importer.js";
+import { importArchive } from "./archive.importer.js";
 import { logger } from "../../logger.js";
 
 export async function importProfilesFromPaths(paths: string[]) {
@@ -32,15 +33,10 @@ export async function importProfilesFromPaths(paths: string[]) {
 			logger.info("[Import] Traitement lcpack (Lunar)...");
 			await importLunarPack(filePath);
 		} else if (ext === ".mrpack" || ext === ".zip") {
-            // Lecture ZIP (CurseForge/Modrinth/Prism) à faire avec jszip
-			createProfile({
-				name: path.basename(filePath, ext),
-				minecraftVersion: "1.20.4",
-				profileTypeId: "fabric",
-				graphicsModeId: "fast",
-				ramMb: 4096,
-				resolution: "1920x1080"
-			});
+			const { warnings } = await importArchive(filePath);
+			for (const warning of warnings) {
+				logger.warn({ filePath }, `[Import] ${warning}`);
+			}
 		} else if (fs.statSync(filePath).isDirectory()) {
             // Lunar/Dawn
 			createProfile({

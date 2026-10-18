@@ -3,6 +3,7 @@ import { Check, Infinity as InfinityIcon, Loader2, Lock, X } from "lucide-react"
 
 import { apiRequest } from "../../../shared/api/http";
 import { SkinViewer3D } from "../../../components/SkinViewer3D";
+import { SkinChanger } from "../SkinChanger";
 import { ScreenHeader } from "./ScreenHeader";
 
 /**
@@ -135,6 +136,9 @@ export function CosmeticsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(catalogCache === null);
   const [skinUrl, setSkinUrl] = useState<string | undefined>();
+  // Skin essaye mais pas encore applique: prime sur celui du compte.
+  const [previewSkin, setPreviewSkin] = useState<string | null>(null);
+  const shownSkin = previewSkin ?? skinUrl;
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -254,6 +258,12 @@ export function CosmeticsScreen() {
 
   const detail = selected ? catalog.find((item) => item.id === selected) : null;
 
+  // Une cape qu'on regarde se porte sur le personnage avant d'etre achetee:
+  // c'est le seul moyen de voir son tombe et sa physique. Les autres types n'ont
+  // pas de rendu 3D ici, ils s'affichent en image dans la fiche.
+  const previewing = detail?.type === "cape" && !equipped.has(detail.id) ? detail : null;
+  const shownCape = previewing ? (previewing.textureUrl ?? previewing.previewUrl) : capeTexture;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-6">
       <ScreenHeader
@@ -341,16 +351,16 @@ export function CosmeticsScreen() {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => {
-                          setSelected(item.id);
-                          void act(item);
-                        }}
-                        disabled={working || !affordable}
+                        onClick={() => setSelected(selected === item.id ? null : item.id)}
+                        aria-pressed={selected === item.id}
+                        disabled={working}
                         className={`group relative flex flex-col overflow-hidden rounded-[18px] border-2 bg-gradient-to-br from-[#282141] via-[#1d1d21] to-[#161619] p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                           isWorn
                             ? "border-accent"
-                            : "border-divider hover:border-neutral-700 disabled:hover:border-divider"
-                        } ${!affordable ? "cursor-not-allowed opacity-55" : ""}`}
+                            : selected === item.id
+                              ? "border-accent-700"
+                              : "border-divider hover:border-neutral-700"
+                        } ${!affordable && selected !== item.id ? "opacity-60" : ""}`}
                       >
                         {/* Lueur de rarete, discrete tant que l'objet n'est pas porte */}
                         <span
@@ -413,7 +423,7 @@ export function CosmeticsScreen() {
             </section>
 
             {/* ---- Casier ---- */}
-            <aside className="flex w-[264px] shrink-0 flex-col gap-4 rounded-[18px] border border-well bg-surface p-5">
+            <aside className="flex w-[264px] shrink-0 flex-col gap-4 overflow-y-auto rounded-[18px] border border-well bg-surface p-5">
               <div className="flex items-baseline justify-between">
                 <h3 className="text-sm font-bold tracking-tight text-ink">Casier</h3>
                 {profile && (
@@ -424,19 +434,27 @@ export function CosmeticsScreen() {
               {/* Le personnage porte reellement ce qui est equipe: c'est le
                   seul apercu qui dit la verite sur le rendu en jeu, avec la
                   physique de cape que Minecraft applique. */}
-              <div className="h-[210px] shrink-0 overflow-hidden rounded-[14px] border border-divider bg-gradient-to-b from-[#1c1a24] to-surface">
+              <div className="relative h-[210px] shrink-0 overflow-hidden rounded-[14px] border border-divider bg-gradient-to-b from-[#1c1a24] to-surface">
                 {/* Les props sont posees conditionnellement plutot que
                     passees a undefined: le projet compile avec
                     exactOptionalPropertyTypes, qui distingue « absent » de
                     « present valant undefined ». Ici la distinction sert --
                     absent laisse le composant appliquer ses defauts. */}
                 <SkinViewer3D
-                  {...(skinUrl ? { skinUrl } : {})}
-                  {...(capeTexture ? { capeUrl: capeTexture } : {})}
-                  animation="idle"
+                  {...(shownSkin ? { skinUrl: shownSkin } : {})}
+                  {...(shownCape ? { capeUrl: shownCape } : {})}
+                  animation="breathe"
+                  turntable={!!shownCape}
                   className="h-full w-full"
                 />
+                {previewing && (
+                  <span className="pointer-events-none absolute bottom-2 left-2 rounded-sm bg-ground/80 px-2 py-1 text-[11px] font-medium text-ink">
+                    Aperçu : {previewing.name}
+                  </span>
+                )}
               </div>
+
+              <SkinChanger onPreview={setPreviewSkin} onApplied={setSkinUrl} />
 
               <div className="grid grid-cols-2 gap-3">
                 {SLOTS.map((slot) => {
@@ -446,7 +464,7 @@ export function CosmeticsScreen() {
                   return (
                     <div
                       key={slot.type}
-                      className={`relative flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 p-2 transition-colors ${
+                      className={`relative flex h-[84px] flex-col items-center justify-center gap-1 rounded-[14px] border-2 p-2 transition-colors ${
                         worn
                           ? "border-accent bg-gradient-to-br from-[#3a1a57] via-[#231430] to-[#17151b]"
                           : "border-dashed border-neutral-700 bg-ground"
@@ -489,20 +507,50 @@ export function CosmeticsScreen() {
               </div>
 
               {detail && (
-                <div className="mt-auto rounded-[14px] border border-divider bg-ground p-3.5">
-                  <p className="text-sm font-semibold text-ink">{detail.name}</p>
-                  <p className="mt-0.5 text-xs" style={{ color: RARITY[detail.rarity].color }}>
-                    {RARITY[detail.rarity].label}
-                  </p>
-                  <p className="mt-2 text-xs leading-relaxed text-neutral-400">
-                    {owned.has(detail.id)
+                <div className="sticky bottom-0 mt-auto flex flex-col gap-3 rounded-[14px] border border-divider bg-ground p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="m-0 truncate text-sm font-semibold text-ink">{detail.name}</p>
+                      <p className="m-0 mt-0.5 text-xs" style={{ color: RARITY[detail.rarity].color }}>
+                        {RARITY[detail.rarity].label}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(null)}
+                      aria-label="Fermer l'aperçu"
+                      className="grid size-6 shrink-0 place-items-center rounded-sm text-neutral-400 hover:bg-well hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+
+                  {detail.type !== "cape" && (
+                    <img
+                      src={detail.previewUrl}
+                      alt={`Aperçu de ${detail.name}`}
+                      className="mx-auto max-h-[72px] object-contain"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                  )}
+
+                  <p className="m-0 text-xs leading-relaxed text-neutral-400">
+                    {detail.type === "cape"
                       ? equipped.has(detail.id)
-                        ? "Porte. Clique de nouveau pour le retirer."
-                        : "Possede. Clique pour l'equiper."
-                      : detail.price === 0
-                        ? "Offert. Clique pour l'obtenir."
-                        : `Coute ${detail.price.toLocaleString("fr-FR")} paracoins.`}
+                        ? "Tu portes cette cape."
+                        : "Aperçu sur ton personnage. Rien n'est acheté ni équipé tant que tu ne confirmes pas."
+                      : "Pas d'aperçu 3D pour ce type d'objet : voici son image."}
                   </p>
+
+                  <DetailAction
+                    item={detail}
+                    owned={owned.has(detail.id)}
+                    worn={equipped.has(detail.id)}
+                    balance={profile?.balance ?? 0}
+                    unlimited={profile?.balance === null}
+                    busy={busy === detail.id}
+                    onAct={() => void act(detail)}
+                  />
                 </div>
               )}
 
@@ -514,5 +562,50 @@ export function CosmeticsScreen() {
             </aside>
       </div>
     </div>
+  );
+}
+
+function DetailAction({
+  item,
+  owned,
+  worn,
+  balance,
+  unlimited,
+  busy,
+  onAct,
+}: {
+  item: CosmeticItem;
+  owned: boolean;
+  worn: boolean;
+  balance: number;
+  unlimited: boolean;
+  busy: boolean;
+  onAct: () => void;
+}) {
+  const missing = !owned && !unlimited && balance < item.price;
+  const label = owned
+    ? worn
+      ? "Retirer"
+      : "Équiper"
+    : missing
+      ? `Il manque ${(item.price - balance).toLocaleString("fr-FR")} paracoins`
+      : item.price === 0
+        ? "Obtenir et équiper"
+        : `Acheter pour ${item.price.toLocaleString("fr-FR")} paracoins`;
+
+  return (
+    <button
+      type="button"
+      onClick={onAct}
+      disabled={busy || missing}
+      className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition-[background-color,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        owned && worn
+          ? "border border-divider hover:bg-well"
+          : "bg-accent-700 text-accent-100 hover:bg-accent-600"
+      }`}
+    >
+      {busy && <Loader2 className="size-4 animate-spin" />}
+      {label}
+    </button>
   );
 }

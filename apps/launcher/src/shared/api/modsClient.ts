@@ -1,6 +1,11 @@
+import type { LauncherProfile } from "@paranoia/contracts";
+
 import { apiRequest } from "./http";
 
 export type ContentType = "mod" | "shader" | "resourcepack" | "datapack";
+
+/** Ce qu'on peut chercher: du contenu pour une instance, ou une instance entiere. */
+export type CatalogKind = ContentType | "modpack";
 
 export type ModSearchHit = {
   projectId: string;
@@ -40,7 +45,7 @@ export async function searchMods(opts: {
   query: string;
   gameVersion?: string | undefined;
   loader?: string | undefined;
-  projectType?: ContentType | undefined;
+  projectType?: CatalogKind | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
 }): Promise<{ hits: ModSearchHit[]; total: number }> {
@@ -145,4 +150,17 @@ export async function removeMod(
     `/v1/mods/installed/${encodeURIComponent(profileId)}/${encodeURIComponent(fileName)}?type=${encodeURIComponent(type)}`,
     { method: "DELETE" },
   );
+}
+
+/** Cree une nouvelle instance a partir d'un modpack Modrinth. */
+export async function installModpack(input: {
+  projectId: string;
+  versionId?: string | undefined;
+  /** Nom de l'instance creee: le titre du modpack dans le catalogue. */
+  name?: string | undefined;
+}): Promise<LauncherProfile & { warnings?: string[] }> {
+  return apiRequest("/v1/mods/modpacks/install", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }

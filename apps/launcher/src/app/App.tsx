@@ -11,15 +11,18 @@ import { AccountsScreen } from "./components/screens/AccountsScreen";
 import { CosmeticsScreen } from "./components/screens/CosmeticsScreen";
 import { HomeScreen } from "./components/screens/HomeScreen";
 import { LogsScreen } from "./components/screens/LogsScreen";
+import { ImportScreen } from "./components/screens/ImportScreen";
 import { ModsScreen } from "./components/screens/ModsScreen";
+import { ProfileScreen } from "./components/screens/ProfileScreen";
+import { ProfilesScreen } from "./components/screens/ProfilesScreen";
 import { SettingsScreen } from "./components/screens/SettingsScreen";
 import { ShopScreen } from "./components/screens/ShopScreen";
-import { VersionsScreen } from "./components/screens/VersionsScreen";
 import {
 	BootstrapErrorScreen,
 	LoadingScreen,
 	LoginScreen,
 } from "./components/screens/StatusScreens";
+import type { CatalogKind } from "../shared/api/modsClient";
 import type { Overlay, Screen } from "./navigation";
 
 import { useAppVersion } from "./hooks/useAppVersion";
@@ -52,6 +55,8 @@ export function App() {
 	const [error, setError] = useState<string | null>(null);
 	const [screen, setScreen] = useState<Screen>("home");
 	const [overlay, setOverlay] = useState<Overlay>("none");
+	// Le type de contenu ouvert dans le catalogue: les profils y renvoient, un modpack en tete.
+	const [modsKind, setModsKind] = useState<CatalogKind>("mod");
 	const [bugReportData, setBugReportData] = useState<
 		{ category?: string | undefined; description?: string | undefined } | undefined
 	>(undefined);
@@ -197,16 +202,64 @@ export function App() {
 					)}
 
 					{screen === "versions" && (
-						<VersionsScreen
+						<ProfilesScreen
 							profiles={profiles}
-							selectedId={mainProfile?.id ?? null}
-							onSelect={setSelectedProfileId}
-							onOpenInstance={(id) => {
+							activeId={mainProfile?.id ?? null}
+							running={running}
+							onOpen={(id) => {
 								setSelectedProfileId(id);
-								setOverlay("instance");
+								setScreen("profile");
 							}}
+							onPlay={play}
 							onCreate={openCreation}
-							onMigrate={() => setOverlay("migrate_profile")}
+							onImport={() => setScreen("import")}
+							onBrowseModpacks={() => {
+								setModsKind("modpack");
+								setScreen("mods");
+							}}
+						/>
+					)}
+
+					{screen === "profile" &&
+						(mainProfile ? (
+							<ProfileScreen
+								profile={mainProfile}
+								config={config}
+								running={running}
+								onBack={() => setScreen("versions")}
+								onPlay={() => play(mainProfile)}
+								onFavorite={() => void handleFavoriteProfile(mainProfile.id)}
+								onDelete={() => handleDeleteProfile(mainProfile.id)}
+								onRefresh={refreshProfiles}
+								onBrowse={(kind) => {
+									setModsKind(kind);
+									setScreen("mods");
+								}}
+							/>
+						) : (
+							<ProfilesScreen
+								profiles={profiles}
+								activeId={null}
+								running={running}
+								onOpen={(id) => setSelectedProfileId(id)}
+								onPlay={play}
+								onCreate={openCreation}
+								onImport={() => setScreen("import")}
+								onBrowseModpacks={() => {
+									setModsKind("modpack");
+									setScreen("mods");
+								}}
+							/>
+						))}
+
+					{screen === "import" && (
+						<ImportScreen
+							onBack={() => setScreen("versions")}
+							onRefresh={refreshProfiles}
+							onOpenProfile={(profile) => {
+								setSelectedProfileId(profile.id);
+								setScreen("profile");
+							}}
 						/>
 					)}
 
@@ -215,7 +268,14 @@ export function App() {
 							profiles={profiles}
 							selectedProfileId={selectedProfileId}
 							setSelectedProfileId={setSelectedProfileId}
-							modCount={modCount}
+							kind={modsKind}
+							setKind={setModsKind}
+							refreshProfiles={refreshProfiles}
+							onOpenProfile={(id) => {
+								setSelectedProfileId(id);
+								setScreen("profile");
+							}}
+							onGoProfiles={() => setScreen("versions")}
 							setError={setError}
 						/>
 					)}
@@ -271,16 +331,7 @@ export function App() {
 				onClearError={() => setError(null)}
 				connected={connected}
 				mainProfile={mainProfile}
-				refreshProfiles={refreshProfiles}
-				onFavorite={handleFavoriteProfile}
-				onDelete={handleDeleteProfile}
-				onOpenMods={() => {
-					setOverlay("none");
-					setScreen("mods");
-				}}
-				modCount={modCount}
 				running={running}
-				onPlay={play}
 				creation={creation}
 				isDragging={isDragging}
 				isProcessing={isProcessing}

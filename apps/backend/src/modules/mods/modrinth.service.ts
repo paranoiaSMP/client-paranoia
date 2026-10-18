@@ -113,13 +113,16 @@ async function modrinthGet<T>(
  */
 export type ModContentType = "mod" | "shader" | "resourcepack" | "datapack";
 
+/** Ce qu'on peut chercher: le contenu d'une instance, ou une instance entiere. */
+export type SearchProjectType = ModContentType | "modpack";
+
 export async function searchMods(opts: {
   query: string;
   gameVersion?: string | undefined;
   loader?: string | undefined;
   limit: number;
   offset?: number;
-  projectType?: ModContentType | undefined;
+  projectType?: SearchProjectType | undefined;
 }): Promise<{ hits: ModSearchHit[]; total: number }> {
   const pType = opts.projectType ?? "mod";
   const facets: string[][] = [[`project_type:${pType}`]];

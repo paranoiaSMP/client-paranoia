@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { exportProfile } from "../profiles/profiles.store.js";
+import { ModpackError, installModpack } from "./modpacks.service.js";
 import {
   getProject,
   installMod,
@@ -18,7 +19,7 @@ const searchSchema = z.object({
   query: z.string().max(120).default(""),
   gameVersion: z.string().max(32).optional(),
   loader: z.string().max(32).optional(),
-  projectType: z.enum(["mod", "shader", "resourcepack", "datapack"]).optional(),
+  projectType: z.enum(["mod", "shader", "resourcepack", "datapack", "modpack"]).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).max(1000).default(0),
 });
@@ -74,6 +75,26 @@ modsRouter.post("/install", async (req, res, next) => {
 
     return res.status(201).json(await installMod(body));
   } catch (err) {
+    return next(err);
+  }
+});
+
+const modpackSchema = z.object({
+  projectId: z.string().min(1),
+  versionId: z.string().min(1).optional(),
+  gameVersion: z.string().max(32).optional(),
+  name: z.string().min(1).max(80).optional(),
+});
+
+/** Cree une instance a partir d'un modpack du catalogue. */
+modsRouter.post("/modpacks/install", async (req, res, next) => {
+  try {
+    const { profile, warnings } = await installModpack(modpackSchema.parse(req.body));
+    return res.status(201).json({ ...profile, warnings });
+  } catch (err) {
+    if (err instanceof ModpackError) {
+      return res.status(422).json({ message: err.message });
+    }
     return next(err);
   }
 });

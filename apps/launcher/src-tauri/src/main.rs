@@ -435,12 +435,27 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
         }
     }
 
-    // 6. MultiMC & Forks (Prism Launcher, etc.)
-    let multimc_forks = [
-        ("MultiMC", "MultiMC"),
-        ("PrismLauncher", "Prism Launcher"),
-        ("ATLauncher", "ATLauncher"),
-        ("gdlauncher_next", "GDLauncher"),
+    // 6. MultiMC, ses forks et les autres launchers a dossier d'instances.
+    //
+    // Chaque entree: (dossier du launcher, nom affiche, sous-dossier des
+    // instances). Le sous-dossier change d'un launcher a l'autre -- ATLauncher
+    // ecrit « Instances » avec une majuscule, ce qui compte sous Linux.
+    let instance_launchers = [
+        ("MultiMC", "MultiMC", "instances"),
+        ("PrismLauncher", "Prism Launcher", "instances"),
+        ("PolyMC", "PolyMC", "instances"),
+        ("UltimMC", "UltimMC", "instances"),
+        ("ManyMC", "ManyMC", "instances"),
+        ("FjordLauncher", "Fjord Launcher", "instances"),
+        ("ShatteredPrism", "Shattered Prism", "instances"),
+        ("ATLauncher", "ATLauncher", "Instances"),
+        ("ATLauncher", "ATLauncher", "instances"),
+        ("gdlauncher_next", "GDLauncher", "instances"),
+        ("gdlauncher_carbon", "GDLauncher", "instances"),
+        ("GDLauncher", "GDLauncher", "instances"),
+        (".technic", "Technic", "modpacks"),
+        (".ftba", "FTB App", "instances"),
+        ("ftb-app", "FTB App", "instances"),
     ];
 
     let mut base_dirs = Vec::new();
@@ -450,34 +465,59 @@ async fn get_detected_profiles() -> Result<Vec<DetectedProfile>, String> {
     if !xdg_data.is_empty() {
         base_dirs.push(Path::new(&xdg_data).to_path_buf());
     }
+    if !home.is_empty() {
+        base_dirs.push(Path::new(&home).to_path_buf());
+        base_dirs.push(Path::new(&home).join("Library/Application Support"));
+    }
+    if !userprofile.is_empty() {
+        base_dirs.push(Path::new(&userprofile).to_path_buf());
+    }
 
     for base_dir in &base_dirs {
-        for (dir_name, launcher_name) in multimc_forks.iter() {
-            let instances_dir = base_dir.join(dir_name).join("instances");
-            if instances_dir.exists() {
-                if let Ok(entries) = fs::read_dir(instances_dir) {
-                    for entry in entries.flatten() {
-                        let instance_dir = entry.path();
-                        let mut mc_dir = instance_dir.join(".minecraft");
-                        if !mc_dir.exists() {
-                            mc_dir = instance_dir.clone();
-                        }
+        for (dir_name, launcher_name, instances_sub) in instance_launchers.iter() {
+            let instances_dir = base_dir.join(dir_name).join(instances_sub);
+            if !instances_dir.exists() {
+                continue;
+            }
+            let Ok(entries) = fs::read_dir(&instances_dir) else {
+                continue;
+            };
 
-                        let options_path = mc_dir.join("options.txt");
-                        if options_path.exists() {
-                            let name = entry.file_name().to_string_lossy().into_owned();
-                            let prof_id = format!("{}_{}", dir_name, name);
-                            if !profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
-                                profiles.push(DetectedProfile {
-                                    id: prof_id,
-                                    label: format!("{} : {}", launcher_name, name),
-                                    options_path: options_path.to_string_lossy().into_owned(),
-                                    launcher: launcher_name.to_string(),
-                                });
-                            }
-                        }
-                    }
+            for entry in entries.flatten() {
+                let instance_dir = entry.path();
+                if !instance_dir.is_dir() {
+                    continue;
                 }
+
+                // MultiMC range le jeu dans .minecraft (ou minecraft sur les
+                // anciennes versions); les autres, a la racine de l'instance.
+                let options_path = [".minecraft", "minecraft", ""]
+                    .iter()
+                    .map(|sub| instance_dir.join(sub).join("options.txt"))
+                    .find(|p| p.exists());
+                let Some(options_path) = options_path else {
+                    continue;
+                };
+
+                // Dedoublonnage par chemin et non par identifiant: Prism est
+                // aussi detecte plus haut, sous un autre identifiant, et
+                // s'afficherait deux fois.
+                let path_str = options_path.to_string_lossy().into_owned();
+                if profiles.iter().any(|p: &DetectedProfile| p.options_path == path_str) {
+                    continue;
+                }
+
+                let name = entry.file_name().to_string_lossy().into_owned();
+                let prof_id = format!("{}_{}_{}", dir_name, instances_sub, name);
+                if profiles.iter().any(|p: &DetectedProfile| p.id == prof_id) {
+                    continue;
+                }
+                profiles.push(DetectedProfile {
+                    id: prof_id,
+                    label: format!("{} : {}", launcher_name, name),
+                    options_path: path_str,
+                    launcher: launcher_name.to_string(),
+                });
             }
         }
     }

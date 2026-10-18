@@ -85,3 +85,6 @@ apps/api/data/assets/*
 DESIGN.md
 GEMINI.md
 apps/launcher/.prisma/
+
+# Audits antislop
+anti-slop/

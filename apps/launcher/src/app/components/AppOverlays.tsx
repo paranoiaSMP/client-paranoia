@@ -5,8 +5,6 @@ import type { useProfileCreation } from "../hooks/useProfileCreation";
 import type { Overlay } from "../navigation";
 
 import { Modal } from "./Modal";
-import { MigrationModal } from "./MigrationModal";
-import { InstanceMenu } from "./InstanceMenu";
 import { ProfileCreation } from "./ProfileCreation";
 import { BugReportModal } from "./BugReportModal";
 
@@ -20,14 +18,7 @@ type AppOverlaysProps = {
 	connected: boolean;
 
 	mainProfile: LauncherProfile | null;
-	refreshProfiles: () => Promise<unknown>;
-	onFavorite: (id: string) => void;
-	onDelete: (id: string) => Promise<unknown>;
-	onOpenMods: () => void;
-
-	modCount: number | null;
 	running: boolean;
-	onPlay: (profile: LauncherProfile) => void;
 
 	creation: ReturnType<typeof useProfileCreation>;
 
@@ -43,15 +34,9 @@ type AppOverlaysProps = {
 /**
  * Ce qui s'ouvre par-dessus un ecran sans le remplacer.
  *
- * <p>Il en restait huit; il en reste trois. Les cinq autres -- mods, comptes,
- * parametres, journaux, profils -- etaient des destinations deguisees en
- * fenetres: on y allait pour y rester, et une fenetre qui ne se ferme jamais
- * est un ecran qui s'ignore. Elles sont passees dans la barre laterale.
- *
- * <p>Les trois qui restent meritent leur statut: l'assistant de creation et
- * l'import depuis un autre launcher sont des taches qu'on mene jusqu'au bout ou
- * qu'on abandonne, et la fiche d'instance est une aparte sur une ligne de la
- * liste.
+ * <p>Il n'en reste que deux qui meritent leur statut de fenetre: l'assistant
+ * de creation, une tache qu'on mene jusqu'au bout ou qu'on abandonne, et le
+ * signalement de bug. L'import et la fiche d'une instance sont des ecrans.
  */
 export function AppOverlays({
 	active,
@@ -61,13 +46,7 @@ export function AppOverlays({
 	onClearError,
 	connected,
 	mainProfile,
-	refreshProfiles,
-	onFavorite,
-	onDelete,
-	onOpenMods,
-	modCount,
 	running,
-	onPlay,
 	creation,
 	isDragging,
 	isProcessing,
@@ -114,37 +93,6 @@ export function AppOverlays({
 					handleInstall={creation.install}
 					installState={running ? "running" : "idle"}
 				/>
-			</Modal>
-
-			<Modal isOpen={active === "migrate_profile"} onClose={onClose} title="">
-				<MigrationModal onClose={onClose} onRefresh={refreshProfiles} />
-			</Modal>
-
-			<Modal
-				isOpen={active === "instance" && !!mainProfile}
-				onClose={onClose}
-				title={mainProfile ? mainProfile.name : "Instance"}
-			>
-				{mainProfile && (
-					<InstanceMenu
-						profile={mainProfile}
-						modCount={modCount}
-						running={running}
-						onPlay={() => {
-							onClose();
-							onPlay(mainProfile);
-						}}
-						onOpenMods={onOpenMods}
-						onFavorite={() => onFavorite(mainProfile.id)}
-						onDelete={async () => {
-							await onDelete(mainProfile.id);
-							onClose();
-						}}
-						onRefresh={refreshProfiles}
-						config={config}
-						onClose={onClose}
-					/>
-				)}
 			</Modal>
 
 			{isDragging && !isProcessing && (

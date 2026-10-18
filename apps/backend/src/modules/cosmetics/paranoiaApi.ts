@@ -1,4 +1,6 @@
 import type { StoredAccount } from "../auth/accounts.store.js";
+import { EchecRenouvellement } from "../auth/auth.microsoft.js";
+import { sessionUtilisable } from "../auth/auth.session.js";
 
 /**
  * Client du service heberge, pour le compte du joueur connecte au launcher.
@@ -65,7 +67,22 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
  * <p>Exactement le handshake que fait tout serveur Minecraft en ligne. Sans
  * lui, une requete HTTP suffirait a depenser les paracoins de n'importe qui.
  */
-async function authenticate(account: StoredAccount): Promise<string> {
+async function authenticate(stored: StoredAccount): Promise<string> {
+  // Le jeton Minecraft enregistre expire au bout d'environ un jour: sans
+  // renouvellement, Mojang le refuse et le joueur croit a une panne.
+  let account = stored;
+  try {
+    account = (await sessionUtilisable(stored.id)) ?? stored;
+  } catch (err) {
+    if (err instanceof EchecRenouvellement) {
+      throw new ParanoiaApiError(
+        409,
+        "Session Minecraft expiree. Reconnecte ton compte dans le launcher.",
+      );
+    }
+    throw err;
+  }
+
   const { serverId } = await call<{ serverId: string }>("/v1/auth/begin", { method: "POST" });
 
   const join = await fetch(MOJANG_JOIN_URL, {

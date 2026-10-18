@@ -104,20 +104,25 @@ export function playerState(uuid: string): PlayerState {
  */
 export function mutate(uuid: string, change: (current: PlayerState) => PlayerState): PlayerState {
   const updated = change(playerState(uuid));
-  state.players[uuid] = updated;
+
+  // On ecrit d'abord une copie, et on ne la fait entrer en memoire qu'une fois
+  // sur disque. Sinon un echec d'ecriture laisserait l'achat visible jusqu'au
+  // redemarrage, puis disparu: le joueur aurait cru payer pour rien.
+  const next: State = { players: { ...state.players, [uuid]: updated } };
 
   const path = statePath();
   const temporary = `${path}.tmp`;
 
   try {
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(temporary, JSON.stringify(state, null, 2), "utf8");
+    writeFileSync(temporary, JSON.stringify(next, null, 2), "utf8");
     renameSync(temporary, path);
   } catch (err) {
     logger.error({ err, path }, "Ecriture de l'etat impossible");
     throw err;
   }
 
+  state = next;
   return updated;
 }
 

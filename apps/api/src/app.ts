@@ -1,9 +1,9 @@
 import cors from "cors";
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import { resolve } from "node:path";
 
 import { env } from "./config/env.js";
-import { httpLogger } from "./lib/logger.js";
+import { httpLogger, logger } from "./lib/logger.js";
 import { rateLimit } from "./lib/rateLimit.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { cosmeticsRouter } from "./modules/cosmetics/cosmetics.routes.js";
@@ -90,6 +90,17 @@ export function createApp() {
 
   app.use((_req, res) => {
     res.status(404).json({ error: "Route inconnue" });
+  });
+
+  // Dernier filet: sans lui Express repond une page HTML, que les clients
+  // ne savent pas lire et qui masque la vraie panne derriere « Reponse 500 ».
+  // Le detail reste dans les journaux, jamais dans la reponse.
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    logger.error({ err }, "Erreur non geree");
+    if (res.headersSent) {
+      return;
+    }
+    res.status(500).json({ error: "Erreur interne du service. Reessaie dans un instant." });
   });
 
   return app;

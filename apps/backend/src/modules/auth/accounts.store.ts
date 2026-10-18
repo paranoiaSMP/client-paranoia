@@ -155,3 +155,18 @@ export function isExpired(account: StoredAccount, marginMs = 5 * 60 * 1000) {
   }
   return expiry - marginMs <= Date.now();
 }
+
+/** Memorise la nouvelle peau d'un compte, sans toucher a ses jetons. */
+export function updateAccountSkin(id: string, skinUrl: string): StoredAccount | null {
+  const accounts = readAll();
+  const index = accounts.findIndex((account) => account.id === id);
+  const current = accounts[index];
+  if (!current) {
+    return null;
+  }
+
+  const updated = { ...current, skinUrl };
+  accounts[index] = updated;
+  writeAll(accounts);
+  return updated;
+}

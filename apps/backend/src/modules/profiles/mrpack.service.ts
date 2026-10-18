@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, createWriteStream } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, mkdirSync, createWriteStream, writeFileSync } from "node:fs";
+import { dirname, resolve, sep } from "node:path";
 import AdmZip from "adm-zip";
 import axios from "axios";
 import { createProfile } from "./profiles.store.js";
@@ -7,6 +7,16 @@ import { ensureInstanceLayout, instanceDir } from "../launcher/paths.js";
 import { ensureFabricApi } from "../launcher/fabricApi.js";
 import { pipeline } from "node:stream/promises";
 import { logger } from "../../logger.js";
+
+/**
+ * Joint sans sortir de l'instance: un .mrpack vient d'internet, et un chemin
+ * comme « ../../x » ecrirait hors du dossier (zip-slip).
+ */
+function insideInstance(root: string, relative: string): string | null {
+  const base = resolve(root);
+  const target = resolve(base, relative);
+  return target.startsWith(base + sep) ? target : null;
+}
 
 export async function importMrPack(archivePath: string) {
   if (!existsSync(archivePath)) {
@@ -49,7 +59,11 @@ export async function importMrPack(archivePath: string) {
     for (const file of indexData.files) {
       if (file.downloads && file.downloads.length > 0) {
         const url = file.downloads[0];
-        const targetPath = join(instDir, file.path); // file.path e.g. "mods/sodium.jar"
+        const targetPath = insideInstance(instDir, file.path); // e.g. "mods/sodium.jar"
+        if (!targetPath) {
+          logger.warn(`Chemin suspect ignore dans le mrpack: ${file.path}`);
+          continue;
+        }
         const targetDir = dirname(targetPath);
         
         if (!existsSync(targetDir)) {
@@ -77,17 +91,20 @@ export async function importMrPack(archivePath: string) {
   for (const entry of zipEntries) {
     if (entry.entryName.startsWith(overridesPrefix) && !entry.isDirectory) {
       const relativePath = entry.entryName.substring(overridesPrefix.length);
-      const targetPath = join(instDir, relativePath);
+      const targetPath = insideInstance(instDir, relativePath);
+      if (!targetPath) {
+        logger.warn(`Chemin suspect ignore dans les overrides: ${entry.entryName}`);
+        continue;
+      }
       const targetDir = dirname(targetPath);
-      
+
       if (!existsSync(targetDir)) {
         mkdirSync(targetDir, { recursive: true });
       }
-      
-      const content = entry.getData();
-      import("node:fs").then(fs => {
-        fs.writeFileSync(targetPath, content);
-      });
+
+      // Ecrit avant de rendre la main: la creation du profil promettait une
+      // instance complete alors que ses fichiers de config s'ecrivaient encore.
+      writeFileSync(targetPath, entry.getData());
     }
   }
 

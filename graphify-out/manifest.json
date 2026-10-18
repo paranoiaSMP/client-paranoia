@@ -1,0 +1,2018 @@
+{
+  ".vscode/launch.json": {
+    "mtime": 1790709480.4182148,
+    "seen": 1791819075.2105365,
+    "ast_hash": "97deb2726cb22a2b093d3c08cccec779",
+    "semantic_hash": "97deb2726cb22a2b093d3c08cccec779"
+  },
+  "apps/api/data/cosmetics.example.json": {
+    "mtime": 1790709480.419136,
+    "seen": 1791819075.210541,
+    "ast_hash": "2790c60581ba0ef5a57846eac66455c7",
+    "semantic_hash": "2790c60581ba0ef5a57846eac66455c7"
+  },
+  "apps/api/data/state.json": {
+    "mtime": 1790709480.419136,
+    "seen": 1791819075.210543,
+    "ast_hash": "6b3df786be2c9589bde8b8869ddda518",
+    "semantic_hash": "6b3df786be2c9589bde8b8869ddda518"
+  },
+  "apps/api/data/templates/generer-gabarit.py": {
+    "mtime": 1790709480.4192379,
+    "seen": 1791819075.2105439,
+    "ast_hash": "0cb8e8bcbc8e01a092742ca70d01c070",
+    "semantic_hash": "0cb8e8bcbc8e01a092742ca70d01c070"
+  },
+  "apps/api/data/templates/verifier-cape.mjs": {
+    "mtime": 1790709480.4192379,
+    "seen": 1791819075.2105446,
+    "ast_hash": "3688b84de3e5f69fca363240c91354da",
+    "semantic_hash": "3688b84de3e5f69fca363240c91354da"
+  },
+  "apps/api/package.json": {
+    "mtime": 1791109160.1562295,
+    "seen": 1791819075.210545,
+    "ast_hash": "0cb7d55874e3e33603b142fc09dd9571",
+    "semantic_hash": "0cb7d55874e3e33603b142fc09dd9571"
+  },
+  "apps/api/src/app.ts": {
+    "mtime": 1791799612.4332323,
+    "seen": 1791819075.2105465,
+    "ast_hash": "83c95fc93582340d903b785b154f2c93",
+    "semantic_hash": "83c95fc93582340d903b785b154f2c93"
+  },
+  "apps/api/src/config/env.ts": {
+    "mtime": 1790709480.4195411,
+    "seen": 1791819075.210547,
+    "ast_hash": "cfaa9f8ed4a6ee1122ea653f27a038b0",
+    "semantic_hash": "cfaa9f8ed4a6ee1122ea653f27a038b0"
+  },
+  "apps/api/src/lib/logger.ts": {
+    "mtime": 1790709480.4195411,
+    "seen": 1791819075.2105477,
+    "ast_hash": "d2365fd1c3ee857141ad388cb7798437",
+    "semantic_hash": "d2365fd1c3ee857141ad388cb7798437"
+  },
+  "apps/api/src/lib/rateLimit.ts": {
+    "mtime": 1790709480.4196649,
+    "seen": 1791819075.2105482,
+    "ast_hash": "8be6a6889e2d8fde2a41e625722cd6cf",
+    "semantic_hash": "8be6a6889e2d8fde2a41e625722cd6cf"
+  },
+  "apps/api/src/lib/uuid.ts": {
+    "mtime": 1790709480.4196649,
+    "seen": 1791819075.2105489,
+    "ast_hash": "6e2564442e735256aeab201f6d044e12",
+    "semantic_hash": "6e2564442e735256aeab201f6d044e12"
+  },
+  "apps/api/src/main.ts": {
+    "mtime": 1790709480.4196649,
+    "seen": 1791819075.21055,
+    "ast_hash": "2f51f6170f97eb5912d457b7119bd694",
+    "semantic_hash": "2f51f6170f97eb5912d457b7119bd694"
+  },
+  "apps/api/src/modules/auth/auth.routes.ts": {
+    "mtime": 1790709480.4197712,
+    "seen": 1791819075.2105505,
+    "ast_hash": "0b0e93f9500a480a5a8ab519364639d6",
+    "semantic_hash": "0b0e93f9500a480a5a8ab519364639d6"
+  },
+  "apps/api/src/modules/auth/mojang.ts": {
+    "mtime": 1790709480.4198089,
+    "seen": 1791819075.2105513,
+    "ast_hash": "d134a41219940631b44232c9205e1479",
+    "semantic_hash": "d134a41219940631b44232c9205e1479"
+  },
+  "apps/api/src/modules/auth/requireToken.ts": {
+    "mtime": 1790709480.4198089,
+    "seen": 1791819075.2105517,
+    "ast_hash": "5f12940d05a93f595a2cede511392732",
+    "semantic_hash": "5f12940d05a93f595a2cede511392732"
+  },
+  "apps/api/src/modules/auth/tokens.ts": {
+    "mtime": 1790709480.4198089,
+    "seen": 1791819075.2105522,
+    "ast_hash": "416dce58b94d20fd96a807384d0917ff",
+    "semantic_hash": "416dce58b94d20fd96a807384d0917ff"
+  },
+  "apps/api/src/modules/cosmetics/cosmetics.routes.ts": {
+    "mtime": 1790709480.4198089,
+    "seen": 1791819075.2105532,
+    "ast_hash": "47809df86555b70f6e87f896a3ff0742",
+    "semantic_hash": "47809df86555b70f6e87f896a3ff0742"
+  },
+  "apps/api/src/modules/cosmetics/cosmetics.store.ts": {
+    "mtime": 1790709480.4199739,
+    "seen": 1791819075.2105541,
+    "ast_hash": "a534fa55f80d00b891c04220bae614b5",
+    "semantic_hash": "a534fa55f80d00b891c04220bae614b5"
+  },
+  "apps/api/src/modules/cosmetics/state.store.ts": {
+    "mtime": 1791799599.5977201,
+    "seen": 1791819075.2105548,
+    "ast_hash": "66f7e2461ede7474f76420dff8332dc8",
+    "semantic_hash": "66f7e2461ede7474f76420dff8332dc8"
+  },
+  "apps/api/src/modules/presence/presence.routes.ts": {
+    "mtime": 1790709480.4199739,
+    "seen": 1791819075.2105553,
+    "ast_hash": "6fa8ea4b824f64476b90d26f4afc0bd0",
+    "semantic_hash": "6fa8ea4b824f64476b90d26f4afc0bd0"
+  },
+  "apps/api/src/modules/presence/presence.store.ts": {
+    "mtime": 1790709480.4201481,
+    "seen": 1791819075.2105563,
+    "ast_hash": "4b3929e0374127f9c4fe951b179b6212",
+    "semantic_hash": "4b3929e0374127f9c4fe951b179b6212"
+  },
+  "apps/api/src/modules/users/users.routes.ts": {
+    "mtime": 1790709480.4201481,
+    "seen": 1791819075.210557,
+    "ast_hash": "09b4fb50fd6ed2e4ee14320a3ed43efc",
+    "semantic_hash": "09b4fb50fd6ed2e4ee14320a3ed43efc"
+  },
+  "apps/api/test/api.test.mjs": {
+    "mtime": 1790709480.4201481,
+    "seen": 1791819075.2105577,
+    "ast_hash": "90c5d7a44275ecbf2d516f3e9a495886",
+    "semantic_hash": "90c5d7a44275ecbf2d516f3e9a495886"
+  },
+  "apps/api/tsconfig.json": {
+    "mtime": 1790709480.4201481,
+    "seen": 1791819075.2105584,
+    "ast_hash": "f9203f09b5ff17ad43074b23c72a1bf7",
+    "semantic_hash": "f9203f09b5ff17ad43074b23c72a1bf7"
+  },
+  "apps/backend/package.json": {
+    "mtime": 1791804122.8693452,
+    "seen": 1791819075.2105591,
+    "ast_hash": "3221a1b1d009953707bbc3de5f9776c9",
+    "semantic_hash": "3221a1b1d009953707bbc3de5f9776c9"
+  },
+  "apps/backend/scripts/build-sidecar.mjs": {
+    "mtime": 1791109160.1572297,
+    "seen": 1791819075.21056,
+    "ast_hash": "3ef84889b470f2774bcbf49395c402e3",
+    "semantic_hash": "3ef84889b470f2774bcbf49395c402e3"
+  },
+  "apps/backend/scripts/inject-client-mod.mjs": {
+    "mtime": 1790709480.420562,
+    "seen": 1791819075.2105606,
+    "ast_hash": "2fde4f71e0a7fb9873e340978c8e49b1",
+    "semantic_hash": "2fde4f71e0a7fb9873e340978c8e49b1"
+  },
+  "apps/backend/scripts/test-auth-restore.ts": {
+    "mtime": 1791232190.5764422,
+    "seen": 1791819075.2105613,
+    "ast_hash": "89ec8fbdb684ea8a653e467b8b4a49d9",
+    "semantic_hash": "89ec8fbdb684ea8a653e467b8b4a49d9"
+  },
+  "apps/backend/scripts/test-auth-session.ts": {
+    "mtime": 1791232190.5764422,
+    "seen": 1791819075.210562,
+    "ast_hash": "04ef35b35547b9742ef0e968ea2321f9",
+    "semantic_hash": "04ef35b35547b9742ef0e968ea2321f9"
+  },
+  "apps/backend/scripts/test-graphics-preset.ts": {
+    "mtime": 1790709480.420562,
+    "seen": 1791819075.2105625,
+    "ast_hash": "c7de33cab028022df71c9cd06ebf3be1",
+    "semantic_hash": "c7de33cab028022df71c9cd06ebf3be1"
+  },
+  "apps/backend/scripts/test-java-detect.ts": {
+    "mtime": 1791109160.1572297,
+    "seen": 1791819075.2105637,
+    "ast_hash": "003d78ec34468a66b038d26596f09c7c",
+    "semantic_hash": "003d78ec34468a66b038d26596f09c7c"
+  },
+  "apps/backend/scripts/test-jvm-flags.ts": {
+    "mtime": 1790709480.420562,
+    "seen": 1791819075.2105644,
+    "ast_hash": "749de60361dd8b3b4fd1e2818db94dd4",
+    "semantic_hash": "749de60361dd8b3b4fd1e2818db94dd4"
+  },
+  "apps/backend/scripts/test-minecraft-versions.ts": {
+    "mtime": 1791109160.1572297,
+    "seen": 1791819075.2105649,
+    "ast_hash": "d96607e34a5021332e36cfd13d723916",
+    "semantic_hash": "d96607e34a5021332e36cfd13d723916"
+  },
+  "apps/backend/scripts/test-skins.ts": {
+    "mtime": 1791804116.137307,
+    "seen": 1791819075.2105656,
+    "ast_hash": "f6028fdc03c914a0ce729d62c4d100f6",
+    "semantic_hash": "f6028fdc03c914a0ce729d62c4d100f6"
+  },
+  "apps/backend/scripts/test-sodium-preset.ts": {
+    "mtime": 1790709480.420562,
+    "seen": 1791819075.2105668,
+    "ast_hash": "afbb103bab7f7711f7b06b5583481097",
+    "semantic_hash": "afbb103bab7f7711f7b06b5583481097"
+  },
+  "apps/backend/src/config/env.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105675,
+    "ast_hash": "0f208276caf30653dc11af725293be22",
+    "semantic_hash": "0f208276caf30653dc11af725293be22"
+  },
+  "apps/backend/src/logger.ts": {
+    "mtime": 1790709480.4207911,
+    "seen": 1791819075.2105682,
+    "ast_hash": "bf9014e130936f2109cef6b2efc9048c",
+    "semantic_hash": "bf9014e130936f2109cef6b2efc9048c"
+  },
+  "apps/backend/src/main.ts": {
+    "mtime": 1791804068.4329925,
+    "seen": 1791819075.210569,
+    "ast_hash": "4b8547c89b5cd61aff9c16f373de668d",
+    "semantic_hash": "4b8547c89b5cd61aff9c16f373de668d"
+  },
+  "apps/backend/src/modules/auth/accounts.store.ts": {
+    "mtime": 1791804068.418124,
+    "seen": 1791819075.2105696,
+    "ast_hash": "4f8a255b6e43e88732dedf7a00863955",
+    "semantic_hash": "4f8a255b6e43e88732dedf7a00863955"
+  },
+  "apps/backend/src/modules/auth/auth.microsoft.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105706,
+    "ast_hash": "08a67f772b7ebcceaf2f244a38a9653a",
+    "semantic_hash": "08a67f772b7ebcceaf2f244a38a9653a"
+  },
+  "apps/backend/src/modules/auth/auth.routes.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105713,
+    "ast_hash": "01bd094d6a7035799d4a30730c681a02",
+    "semantic_hash": "01bd094d6a7035799d4a30730c681a02"
+  },
+  "apps/backend/src/modules/auth/auth.session.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105718,
+    "ast_hash": "55355919421fd180624ce0055c1d7c79",
+    "semantic_hash": "55355919421fd180624ce0055c1d7c79"
+  },
+  "apps/backend/src/modules/auth/auth.state.ts": {
+    "mtime": 1790709480.420981,
+    "seen": 1791819075.2105725,
+    "ast_hash": "785a9dbe2970c09fec15ff963db7237d",
+    "semantic_hash": "785a9dbe2970c09fec15ff963db7237d"
+  },
+  "apps/backend/src/modules/catalog/catalog.routes.ts": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.210578,
+    "ast_hash": "df350a7595f6601d4b9a86d017a1947a",
+    "semantic_hash": "df350a7595f6601d4b9a86d017a1947a"
+  },
+  "apps/backend/src/modules/catalog/minecraftVersions.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105787,
+    "ast_hash": "53c93bf0a03046a52e8c36f88f78e542",
+    "semantic_hash": "53c93bf0a03046a52e8c36f88f78e542"
+  },
+  "apps/backend/src/modules/cosmetics/cosmetics.routes.ts": {
+    "mtime": 1790709480.4211857,
+    "seen": 1791819075.2105794,
+    "ast_hash": "be77d10a3a6355a6002f1096c32d3e69",
+    "semantic_hash": "be77d10a3a6355a6002f1096c32d3e69"
+  },
+  "apps/backend/src/modules/cosmetics/paranoiaApi.ts": {
+    "mtime": 1790709480.421291,
+    "seen": 1791819075.21058,
+    "ast_hash": "57b9a6180a7c6132c247af8da2ecafab",
+    "semantic_hash": "57b9a6180a7c6132c247af8da2ecafab"
+  },
+  "apps/backend/src/modules/discord/discord.service.ts": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.210581,
+    "ast_hash": "9a130899afb994432c9b4293c7c9cd83",
+    "semantic_hash": "9a130899afb994432c9b4293c7c9cd83"
+  },
+  "apps/backend/src/modules/launcher/artifactDownloader.ts": {
+    "mtime": 1790709480.421291,
+    "seen": 1791819075.2105815,
+    "ast_hash": "aa8209b9c66a19abec7db6e90b93e89e",
+    "semantic_hash": "aa8209b9c66a19abec7db6e90b93e89e"
+  },
+  "apps/backend/src/modules/launcher/clientMod.ts": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2105823,
+    "ast_hash": "09e3382651ca65312607d8b22e775358",
+    "semantic_hash": "09e3382651ca65312607d8b22e775358"
+  },
+  "apps/backend/src/modules/launcher/fabricApi.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105827,
+    "ast_hash": "c879cefb624a8aced327353477b7a3f5",
+    "semantic_hash": "c879cefb624a8aced327353477b7a3f5"
+  },
+  "apps/backend/src/modules/launcher/fabricDownloader.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105834,
+    "ast_hash": "270c70e59b24de051738391f063efb9d",
+    "semantic_hash": "270c70e59b24de051738391f063efb9d"
+  },
+  "apps/backend/src/modules/launcher/fabricVersions.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105842,
+    "ast_hash": "ab09bff4470f3f12a642ac98c76fc678",
+    "semantic_hash": "ab09bff4470f3f12a642ac98c76fc678"
+  },
+  "apps/backend/src/modules/launcher/graphicsPreset.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105849,
+    "ast_hash": "c9fa762b4c363799596aea24a1fec013",
+    "semantic_hash": "c9fa762b4c363799596aea24a1fec013"
+  },
+  "apps/backend/src/modules/launcher/javaDetect.ts": {
+    "mtime": 1791109160.1582296,
+    "seen": 1791819075.2105856,
+    "ast_hash": "602a37b37e7d48809725e9568e94a606",
+    "semantic_hash": "602a37b37e7d48809725e9568e94a606"
+  },
+  "apps/backend/src/modules/launcher/javaDownloader.ts": {
+    "mtime": 1791124359.3980188,
+    "seen": 1791819075.210586,
+    "ast_hash": "adefffc755e5a132ff2ed529f4979b0c",
+    "semantic_hash": "adefffc755e5a132ff2ed529f4979b0c"
+  },
+  "apps/backend/src/modules/launcher/javaRequirement.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105868,
+    "ast_hash": "81d0d3b66e71340a547ab6942c6ceb3d",
+    "semantic_hash": "81d0d3b66e71340a547ab6942c6ceb3d"
+  },
+  "apps/backend/src/modules/launcher/jvmFlags.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105877,
+    "ast_hash": "536156f3b6fe8dd77e6c2634189a0953",
+    "semantic_hash": "536156f3b6fe8dd77e6c2634189a0953"
+  },
+  "apps/backend/src/modules/launcher/launcher.routes.ts": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2105885,
+    "ast_hash": "2b0573bc246d121faa83feb895a15f84",
+    "semantic_hash": "2b0573bc246d121faa83feb895a15f84"
+  },
+  "apps/backend/src/modules/launcher/launcher.service.ts": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2105892,
+    "ast_hash": "c51b41c66542cb9cbc75427b3c646551",
+    "semantic_hash": "c51b41c66542cb9cbc75427b3c646551"
+  },
+  "apps/backend/src/modules/launcher/paths.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105896,
+    "ast_hash": "8c29aa1db8c3eb8ca5e091224fd9997c",
+    "semantic_hash": "8c29aa1db8c3eb8ca5e091224fd9997c"
+  },
+  "apps/backend/src/modules/launcher/performanceMods.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105904,
+    "ast_hash": "fdcaaf5efbb23b02615498ec56a128a4",
+    "semantic_hash": "fdcaaf5efbb23b02615498ec56a128a4"
+  },
+  "apps/backend/src/modules/launcher/sodiumPreset.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105913,
+    "ast_hash": "f6ce71f742c8dd8bc9f8146dade634e7",
+    "semantic_hash": "f6ce71f742c8dd8bc9f8146dade634e7"
+  },
+  "apps/backend/src/modules/launcher/verifiedDownload.ts": {
+    "mtime": 1790709480.4214835,
+    "seen": 1791819075.2105918,
+    "ast_hash": "3e6f49c91b3e3a97885042746a4106c6",
+    "semantic_hash": "3e6f49c91b3e3a97885042746a4106c6"
+  },
+  "apps/backend/src/modules/mods/modpacks.service.ts": {
+    "mtime": 1791807321.3981912,
+    "seen": 1791819075.2105925,
+    "ast_hash": "e9431eeeb3f279da3ec1dd087a4eaed5",
+    "semantic_hash": "e9431eeeb3f279da3ec1dd087a4eaed5"
+  },
+  "apps/backend/src/modules/mods/modrinth.routes.ts": {
+    "mtime": 1791807321.3983204,
+    "seen": 1791819075.2105932,
+    "ast_hash": "986d1660fea1e073ad983a5c7c78b6ad",
+    "semantic_hash": "986d1660fea1e073ad983a5c7c78b6ad"
+  },
+  "apps/backend/src/modules/mods/modrinth.service.ts": {
+    "mtime": 1791806440.8839648,
+    "seen": 1791819075.210594,
+    "ast_hash": "461dae95dd903edac3a107acb5c5d30c",
+    "semantic_hash": "461dae95dd903edac3a107acb5c5d30c"
+  },
+  "apps/backend/src/modules/news/news.routes.ts": {
+    "mtime": 1790709480.4220617,
+    "seen": 1791819075.210595,
+    "ast_hash": "4fcf311bfa75080b023517f97cab7c4d",
+    "semantic_hash": "4fcf311bfa75080b023517f97cab7c4d"
+  },
+  "apps/backend/src/modules/profiles/archive.importer.ts": {
+    "mtime": 1791803979.4891295,
+    "seen": 1791819075.2105954,
+    "ast_hash": "e2f637ef567e012bcc80925a970059cf",
+    "semantic_hash": "e2f637ef567e012bcc80925a970059cf"
+  },
+  "apps/backend/src/modules/profiles/keybinds.service.ts": {
+    "mtime": 1791803852.830289,
+    "seen": 1791819075.210596,
+    "ast_hash": "6d2db726a026a2f24f62b710e1de0c96",
+    "semantic_hash": "6d2db726a026a2f24f62b710e1de0c96"
+  },
+  "apps/backend/src/modules/profiles/lunar.importer.ts": {
+    "mtime": 1790709480.4220617,
+    "seen": 1791819075.2105968,
+    "ast_hash": "c116fe8761b7df4a66ff5b7685ff13df",
+    "semantic_hash": "c116fe8761b7df4a66ff5b7685ff13df"
+  },
+  "apps/backend/src/modules/profiles/mrpack.service.ts": {
+    "mtime": 1791806453.1304133,
+    "seen": 1791819075.2105973,
+    "ast_hash": "e4bbb862c068c9b7a1c081185fde23b7",
+    "semantic_hash": "e4bbb862c068c9b7a1c081185fde23b7"
+  },
+  "apps/backend/src/modules/profiles/profiles.import.ts": {
+    "mtime": 1791803979.5208573,
+    "seen": 1791819075.2105982,
+    "ast_hash": "b9f63c488aa71b0954dbe6fde9b87b02",
+    "semantic_hash": "b9f63c488aa71b0954dbe6fde9b87b02"
+  },
+  "apps/backend/src/modules/profiles/profiles.routes.ts": {
+    "mtime": 1791807232.1464067,
+    "seen": 1791819075.210599,
+    "ast_hash": "4046ac1938eec06bea451981d702b345",
+    "semantic_hash": "4046ac1938eec06bea451981d702b345"
+  },
+  "apps/backend/src/modules/profiles/profiles.store.ts": {
+    "mtime": 1790709480.4229136,
+    "seen": 1791819075.2105997,
+    "ast_hash": "bfa79a90b8d05fefdbfb87fbb817275b",
+    "semantic_hash": "bfa79a90b8d05fefdbfb87fbb817275b"
+  },
+  "apps/backend/src/modules/profiles/sourceInstance.ts": {
+    "mtime": 1791806465.6263258,
+    "seen": 1791819075.2106004,
+    "ast_hash": "62a1575d8ca1e6ec6fd5529364250a20",
+    "semantic_hash": "62a1575d8ca1e6ec6fd5529364250a20"
+  },
+  "apps/backend/src/modules/reports/reports.routes.ts": {
+    "mtime": 1790709480.4229136,
+    "seen": 1791819075.2106013,
+    "ast_hash": "d6fb7b8482105a89e5e4c197a3321e37",
+    "semantic_hash": "d6fb7b8482105a89e5e4c197a3321e37"
+  },
+  "apps/backend/src/modules/server-status/server-status.routes.ts": {
+    "mtime": 1790709480.4229136,
+    "seen": 1791819075.210602,
+    "ast_hash": "ee319afc77974118c75268194217ba99",
+    "semantic_hash": "ee319afc77974118c75268194217ba99"
+  },
+  "apps/backend/src/modules/settings/settings.routes.ts": {
+    "mtime": 1790709480.4229136,
+    "seen": 1791819075.210603,
+    "ast_hash": "cda114512730fd86358433d3adb46d05",
+    "semantic_hash": "cda114512730fd86358433d3adb46d05"
+  },
+  "apps/backend/src/modules/settings/settings.store.ts": {
+    "mtime": 1790709480.423264,
+    "seen": 1791819075.2106037,
+    "ast_hash": "9408001d89d0a2fcedf2b4d7cbcaadc6",
+    "semantic_hash": "9408001d89d0a2fcedf2b4d7cbcaadc6"
+  },
+  "apps/backend/src/modules/skins/skins.routes.ts": {
+    "mtime": 1791804081.356444,
+    "seen": 1791819075.2106044,
+    "ast_hash": "f708fecf90a50fe35398fb8e84ecc535",
+    "semantic_hash": "f708fecf90a50fe35398fb8e84ecc535"
+  },
+  "apps/backend/src/modules/telemetry/telemetry.routes.ts": {
+    "mtime": 1790709480.423264,
+    "seen": 1791819075.2106051,
+    "ast_hash": "b1688164905cb61b035628d5216d4c90",
+    "semantic_hash": "b1688164905cb61b035628d5216d4c90"
+  },
+  "apps/backend/src/modules/updates/updates.routes.ts": {
+    "mtime": 1790709480.423264,
+    "seen": 1791819075.2106059,
+    "ast_hash": "e47dc9b587ee60703cf4f81d7badfb17",
+    "semantic_hash": "e47dc9b587ee60703cf4f81d7badfb17"
+  },
+  "apps/backend/tsconfig.json": {
+    "mtime": 1790709480.423264,
+    "seen": 1791819075.2106066,
+    "ast_hash": "4d6cdb5bfd73f739dd50aeb5c30c072a",
+    "semantic_hash": "4d6cdb5bfd73f739dd50aeb5c30c072a"
+  },
+  "apps/client-mod/build.gradle": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2106073,
+    "ast_hash": "7c98b106e78829f57367e3ce1bcf4d99",
+    "semantic_hash": "7c98b106e78829f57367e3ce1bcf4d99"
+  },
+  "apps/client-mod/gradlew": {
+    "mtime": 1790709480.4239647,
+    "seen": 1791819075.2106082,
+    "ast_hash": "a43be8432bac3ffd05b3769aa42fe996",
+    "semantic_hash": "a43be8432bac3ffd05b3769aa42fe996"
+  },
+  "apps/client-mod/scripts/check-mixin-targets.mjs": {
+    "mtime": 1790709480.4239647,
+    "seen": 1791819075.2106094,
+    "ast_hash": "036fe82d7d544e6ab5c597e663aa1417",
+    "semantic_hash": "036fe82d7d544e6ab5c597e663aa1417"
+  },
+  "apps/client-mod/scripts/check-own-calls.mjs": {
+    "mtime": 1790709480.4242113,
+    "seen": 1791819075.2106102,
+    "ast_hash": "ab7ac6785c51e172ee6596fd76397dbb",
+    "semantic_hash": "ab7ac6785c51e172ee6596fd76397dbb"
+  },
+  "apps/client-mod/scripts/check-palette.mjs": {
+    "mtime": 1790709480.4242113,
+    "seen": 1791819075.2106109,
+    "ast_hash": "fd187cdf5bbbe186cc7a8491858fd0b3",
+    "semantic_hash": "fd187cdf5bbbe186cc7a8491858fd0b3"
+  },
+  "apps/client-mod/scripts/resolve-fabric-versions.mjs": {
+    "mtime": 1790709480.4242113,
+    "seen": 1791819075.2106118,
+    "ast_hash": "d74277c37759c04bb9ccf2a3e61ea9dc",
+    "semantic_hash": "d74277c37759c04bb9ccf2a3e61ea9dc"
+  },
+  "apps/client-mod/settings.gradle": {
+    "mtime": 1790709480.4242113,
+    "seen": 1791819075.2106125,
+    "ast_hash": "23f3724a4d734196c922feacf5682105",
+    "semantic_hash": "23f3724a4d734196c922feacf5682105"
+  },
+  "apps/client-mod/src/main/java-modern/gg/paranoia/client/menu/ParanoiaMenuScreen.java": {
+    "mtime": 1790709480.4244795,
+    "seen": 1791819075.2106133,
+    "ast_hash": "2f7ad8ad217f5040eb4220c6e971d4e3",
+    "semantic_hash": "2f7ad8ad217f5040eb4220c6e971d4e3"
+  },
+  "apps/client-mod/src/main/java-modern/gg/paranoia/client/mixin/PlayerListEntryMixin.java": {
+    "mtime": 1790709480.4244795,
+    "seen": 1791819075.210614,
+    "ast_hash": "308cb067e04ef8b2d7d1a9764c963456",
+    "semantic_hash": "308cb067e04ef8b2d7d1a9764c963456"
+  },
+  "apps/client-mod/src/main/java-modern/gg/paranoia/client/platform/impl/PlatformImpl.java": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2106144,
+    "ast_hash": "57ac28812becc442ec09a858932348ee",
+    "semantic_hash": "57ac28812becc442ec09a858932348ee"
+  },
+  "apps/client-mod/src/main/java-modern/gg/paranoia/client/platform/impl/VersionEntrypoint.java": {
+    "mtime": 1790709480.4247332,
+    "seen": 1791819075.2106154,
+    "ast_hash": "314eebf8dde8d8bbb135e0eca6825a1b",
+    "semantic_hash": "314eebf8dde8d8bbb135e0eca6825a1b"
+  },
+  "apps/client-mod/src/main/java-modern/gg/paranoia/client/title/ParanoiaTitleScreen.java": {
+    "mtime": 1791381163.4856536,
+    "seen": 1791819075.2106164,
+    "ast_hash": "1b35c141f577d4c5af7378599dc28b2d",
+    "semantic_hash": "1b35c141f577d4c5af7378599dc28b2d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/ParanoiaClient.java": {
+    "mtime": 1791381163.4856536,
+    "seen": 1791819075.2106168,
+    "ast_hash": "9e90a1674ed9cae07632647f1d02ddfd",
+    "semantic_hash": "9e90a1674ed9cae07632647f1d02ddfd"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/combat/CombatTracker.java": {
+    "mtime": 1790709480.4249113,
+    "seen": 1791819075.2106175,
+    "ast_hash": "46d6d5bce6449134ef70d5d477eebba8",
+    "semantic_hash": "46d6d5bce6449134ef70d5d477eebba8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/config/BackgroundStyle.java": {
+    "mtime": 1790709480.4249113,
+    "seen": 1791819075.2106183,
+    "ast_hash": "d888da5add6b940fec45f5e945b7d8dc",
+    "semantic_hash": "d888da5add6b940fec45f5e945b7d8dc"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/config/HudFont.java": {
+    "mtime": 1791381163.4856536,
+    "seen": 1791819075.210619,
+    "ast_hash": "ebf83cd4c78110a2c52b83ce401fac56",
+    "semantic_hash": "ebf83cd4c78110a2c52b83ce401fac56"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/config/HudLayout.java": {
+    "mtime": 1790709480.4250114,
+    "seen": 1791819075.2106197,
+    "ast_hash": "a4bd8155243ab1949396bac6a13d034b",
+    "semantic_hash": "a4bd8155243ab1949396bac6a13d034b"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/config/HudStyle.java": {
+    "mtime": 1790709480.4250114,
+    "seen": 1791819075.2106202,
+    "ast_hash": "846e5e292e560200314e74be09856f7d",
+    "semantic_hash": "846e5e292e560200314e74be09856f7d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/config/ParanoiaConfig.java": {
+    "mtime": 1790709480.4250114,
+    "seen": 1791819075.2106209,
+    "ast_hash": "e8699463727a9dd379c765cc1af13a2f",
+    "semantic_hash": "e8699463727a9dd379c765cc1af13a2f"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/cosmetics/CosmeticCapes.java": {
+    "mtime": 1790709480.4250114,
+    "seen": 1791819075.2106216,
+    "ast_hash": "728808040bd4c098b3243ab594a80dd4",
+    "semantic_hash": "728808040bd4c098b3243ab594a80dd4"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/cosmetics/CosmeticTextures.java": {
+    "mtime": 1790709480.4252818,
+    "seen": 1791819075.2106223,
+    "ast_hash": "77e1e4e4a5d765fc2a177121f03e2bed",
+    "semantic_hash": "77e1e4e4a5d765fc2a177121f03e2bed"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/cosmetics/CosmeticsCatalog.java": {
+    "mtime": 1790709480.4252818,
+    "seen": 1791819075.210623,
+    "ast_hash": "fc4167c9d889f673e36c074372b0d193",
+    "semantic_hash": "fc4167c9d889f673e36c074372b0d193"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/cosmetics/CosmeticsRegistry.java": {
+    "mtime": 1790709480.4252818,
+    "seen": 1791819075.2106237,
+    "ast_hash": "02824218c3567748b5ac6519d58299f0",
+    "semantic_hash": "02824218c3567748b5ac6519d58299f0"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/diag/Rate.java": {
+    "mtime": 1790709480.4252818,
+    "seen": 1791819075.2106245,
+    "ast_hash": "a9e5335014cc756b32ff84b66c2862b6",
+    "semantic_hash": "a9e5335014cc756b32ff84b66c2862b6"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/HudElement.java": {
+    "mtime": 1790709480.4252818,
+    "seen": 1791819075.210625,
+    "ast_hash": "6665babfe53092abcf7f59675bd41dd0",
+    "semantic_hash": "6665babfe53092abcf7f59675bd41dd0"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/HudRegistry.java": {
+    "mtime": 1790709480.4256463,
+    "seen": 1791819075.210626,
+    "ast_hash": "b44bf2589c72a433c401f52273e2a826",
+    "semantic_hash": "b44bf2589c72a433c401f52273e2a826"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/ArmorHud.java": {
+    "mtime": 1790709480.4256463,
+    "seen": 1791819075.2106266,
+    "ast_hash": "039e6e1131a188026b055fb04c63b7ee",
+    "semantic_hash": "039e6e1131a188026b055fb04c63b7ee"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/AttackChargeHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106273,
+    "ast_hash": "225cbd4b9856de01930e2e9e3af13942",
+    "semantic_hash": "225cbd4b9856de01930e2e9e3af13942"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/ComboHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.210628,
+    "ast_hash": "0c671e6184435c55886ade58224d3a9d",
+    "semantic_hash": "0c671e6184435c55886ade58224d3a9d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/CoordinatesHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106285,
+    "ast_hash": "448c8d0bb2e2568fc15740970f7562e5",
+    "semantic_hash": "448c8d0bb2e2568fc15740970f7562e5"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/CpsHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106295,
+    "ast_hash": "deadbb847dd15a0af157c39b549ede85",
+    "semantic_hash": "deadbb847dd15a0af157c39b549ede85"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/DiagnosticsHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106302,
+    "ast_hash": "233cd83f4db2e9138f32d25e94b6aa8a",
+    "semantic_hash": "233cd83f4db2e9138f32d25e94b6aa8a"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/DirectionHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106311,
+    "ast_hash": "12a5afabfa4cb982071f220f84423880",
+    "semantic_hash": "12a5afabfa4cb982071f220f84423880"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/EffectsHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106316,
+    "ast_hash": "d09bde92bd018100b4c8b3e46ea4c087",
+    "semantic_hash": "d09bde92bd018100b4c8b3e46ea4c087"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/FpsHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106326,
+    "ast_hash": "5234c69bcdb456936bb6b258eb3961dc",
+    "semantic_hash": "5234c69bcdb456936bb6b258eb3961dc"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/InfoHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106333,
+    "ast_hash": "a86487fa4709cef02320e72fbc3a34a1",
+    "semantic_hash": "a86487fa4709cef02320e72fbc3a34a1"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/KeystrokesHud.java": {
+    "mtime": 1790709480.4258704,
+    "seen": 1791819075.2106338,
+    "ast_hash": "d326d7fbeaffd23c0c0b14578a6634da",
+    "semantic_hash": "d326d7fbeaffd23c0c0b14578a6634da"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/PingHud.java": {
+    "mtime": 1790709480.4260616,
+    "seen": 1791819075.2106345,
+    "ast_hash": "43fa43a9487eb43d6bf2a924ecdc6ed6",
+    "semantic_hash": "43fa43a9487eb43d6bf2a924ecdc6ed6"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/ReachHud.java": {
+    "mtime": 1790709480.4260616,
+    "seen": 1791819075.2106352,
+    "ast_hash": "5b1979b3117e3e3b3d319fda99188d72",
+    "semantic_hash": "5b1979b3117e3e3b3d319fda99188d72"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/ShieldHud.java": {
+    "mtime": 1790709480.4260616,
+    "seen": 1791819075.2106361,
+    "ast_hash": "7b26938c57ac5e7f934af7ed1f7300a8",
+    "semantic_hash": "7b26938c57ac5e7f934af7ed1f7300a8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/hud/elements/TotemHud.java": {
+    "mtime": 1790709480.4260616,
+    "seen": 1791819075.2106369,
+    "ast_hash": "816dd4832556af8c49a4fc207a66ae3f",
+    "semantic_hash": "816dd4832556af8c49a4fc207a66ae3f"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/HudEditor.java": {
+    "mtime": 1790709480.4260616,
+    "seen": 1791819075.2106373,
+    "ast_hash": "b7ea58cb97cf07a14e7256e93be323c7",
+    "semantic_hash": "b7ea58cb97cf07a14e7256e93be323c7"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/MenuController.java": {
+    "mtime": 1790709480.4267778,
+    "seen": 1791819075.210638,
+    "ast_hash": "ace5d67ed319fa33c2f8c7b49c8148b6",
+    "semantic_hash": "ace5d67ed319fa33c2f8c7b49c8148b6"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/MenuTheme.java": {
+    "mtime": 1790709480.4267778,
+    "seen": 1791819075.2106385,
+    "ast_hash": "5d14fdf1e67f5aff137c1b3e0953c5bd",
+    "semantic_hash": "5d14fdf1e67f5aff137c1b3e0953c5bd"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/ModuleIcons.java": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2106395,
+    "ast_hash": "c721b00efa68e862e5c48f3118753da2",
+    "semantic_hash": "c721b00efa68e862e5c48f3118753da2"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/ModuleWindow.java": {
+    "mtime": 1790709480.4267778,
+    "seen": 1791819075.2106402,
+    "ast_hash": "95e6a252177456e679d8017e6c119600",
+    "semantic_hash": "95e6a252177456e679d8017e6c119600"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/menu/ParanoiaMenu.java": {
+    "mtime": 1790709480.4267778,
+    "seen": 1791819075.2106407,
+    "ast_hash": "f0dcc228f2bde7cbea2a64a1f5daa4b7",
+    "semantic_hash": "f0dcc228f2bde7cbea2a64a1f5daa4b7"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/BlockEntityRendererCullingMixin.java": {
+    "mtime": 1790709480.4267778,
+    "seen": 1791819075.2106414,
+    "ast_hash": "a6c85e5210bdd7ee9e93b7d22d686c95",
+    "semantic_hash": "a6c85e5210bdd7ee9e93b7d22d686c95"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/ClientPlayNetworkHandlerMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.210642,
+    "ast_hash": "26eba8c437cc09db55880e82ff1c4a7d",
+    "semantic_hash": "26eba8c437cc09db55880e82ff1c4a7d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/ClientPlayerInteractionManagerMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.210643,
+    "ast_hash": "241ca6c64b329b13109f33429c98209d",
+    "semantic_hash": "241ca6c64b329b13109f33429c98209d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/EntityRendererCullingMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106438,
+    "ast_hash": "1119ca97852f311fa21579b17c7a3793",
+    "semantic_hash": "1119ca97852f311fa21579b17c7a3793"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/InGameHudMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106442,
+    "ast_hash": "baa6449331432a03cb99816445ccbb49",
+    "semantic_hash": "baa6449331432a03cb99816445ccbb49"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/InactivityFpsLimiterMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.210645,
+    "ast_hash": "1d45a2f51d539492319e974498b8f87d",
+    "semantic_hash": "1d45a2f51d539492319e974498b8f87d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/LightmapTextureManagerMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106454,
+    "ast_hash": "5c2d42f1a6c9606421d52b039eb3de63",
+    "semantic_hash": "5c2d42f1a6c9606421d52b039eb3de63"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/LivingEntityRendererMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106464,
+    "ast_hash": "690cc0256ff6a86101d3600a39f48f52",
+    "semantic_hash": "690cc0256ff6a86101d3600a39f48f52"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/MinecraftClientMixin.java": {
+    "mtime": 1791381163.4856536,
+    "seen": 1791819075.210647,
+    "ast_hash": "662855998d4b5a22148cc7a699fd466b",
+    "semantic_hash": "662855998d4b5a22148cc7a699fd466b"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/ParticleManagerMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106478,
+    "ast_hash": "b1ca1721bf4ae19e4a3cb0840aa53d08",
+    "semantic_hash": "b1ca1721bf4ae19e4a3cb0840aa53d08"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/mixin/PlayerListHudMixin.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.2106483,
+    "ast_hash": "45c703d903032278f16e21a4b8591e4d",
+    "semantic_hash": "45c703d903032278f16e21a4b8591e4d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/BooleanSetting.java": {
+    "mtime": 1790709480.4273298,
+    "seen": 1791819075.210649,
+    "ast_hash": "6e52087cf795941ee965a3b38df94425",
+    "semantic_hash": "6e52087cf795941ee965a3b38df94425"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/ColorSetting.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.21065,
+    "ast_hash": "4d2aea8356211ed60ad8d51ca697dabb",
+    "semantic_hash": "4d2aea8356211ed60ad8d51ca697dabb"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/EnumSetting.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.2106504,
+    "ast_hash": "9b3195dcc80e98d31a1224040daf02f6",
+    "semantic_hash": "9b3195dcc80e98d31a1224040daf02f6"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/KeySetting.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.2106512,
+    "ast_hash": "7a3d40472042360e1821f58fcb79c2c4",
+    "semantic_hash": "7a3d40472042360e1821f58fcb79c2c4"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/Module.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.2106519,
+    "ast_hash": "51f4d0d3bbb7961d585d80192ac564d1",
+    "semantic_hash": "51f4d0d3bbb7961d585d80192ac564d1"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/ModuleCategory.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.2106526,
+    "ast_hash": "81862801366af986fbca7a45553aa2da",
+    "semantic_hash": "81862801366af986fbca7a45553aa2da"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/Setting.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.210653,
+    "ast_hash": "2847e72755e5900080a58bb305ef0201",
+    "semantic_hash": "2847e72755e5900080a58bb305ef0201"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/module/SliderSetting.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.210654,
+    "ast_hash": "4d93c692f1758f8ac859cfd56b3e1282",
+    "semantic_hash": "4d93c692f1758f8ac859cfd56b3e1282"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/BadgeModule.java": {
+    "mtime": 1790709480.4277263,
+    "seen": 1791819075.2106547,
+    "ast_hash": "08698f76bd543701816e7cf6eab93da0",
+    "semantic_hash": "08698f76bd543701816e7cf6eab93da0"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/BlockEntityCullingModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106552,
+    "ast_hash": "6ccbb768ca33bb6b46904c8dcf4f636a",
+    "semantic_hash": "6ccbb768ca33bb6b46904c8dcf4f636a"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/BrightnessModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.210656,
+    "ast_hash": "8052c600d8ef2ac5628146bb25ab501b",
+    "semantic_hash": "8052c600d8ef2ac5628146bb25ab501b"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/ColorHitModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.210657,
+    "ast_hash": "cbf46d6b2f634c6132d5b783f933369d",
+    "semantic_hash": "cbf46d6b2f634c6132d5b783f933369d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/CrosshairModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106574,
+    "ast_hash": "43813c7e63bb8232b55c21004c41fc19",
+    "semantic_hash": "43813c7e63bb8232b55c21004c41fc19"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/CrystalCleanupModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.210658,
+    "ast_hash": "84bc9c758e1d0ce977caae63818654b8",
+    "semantic_hash": "84bc9c758e1d0ce977caae63818654b8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/EntityCullingModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106586,
+    "ast_hash": "01ae491d8849740d5e2efd5044dda3c4",
+    "semantic_hash": "01ae491d8849740d5e2efd5044dda3c4"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/EntityVisibility.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106593,
+    "ast_hash": "9e663bd9d0edd5ff709354d7f510390a",
+    "semantic_hash": "9e663bd9d0edd5ff709354d7f510390a"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/FocusFpsModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.21066,
+    "ast_hash": "523a54008a382aed8a1d2dbf6abb4504",
+    "semantic_hash": "523a54008a382aed8a1d2dbf6abb4504"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/HitIndicatorModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106607,
+    "ast_hash": "05573bd5cf337312af852e602d82fb36",
+    "semantic_hash": "05573bd5cf337312af852e602d82fb36"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/HudAppearanceModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106614,
+    "ast_hash": "c11188eb42408ba24ebe0721c5239c44",
+    "semantic_hash": "c11188eb42408ba24ebe0721c5239c44"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/MenuAccueilModule.java": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.210662,
+    "ast_hash": "677f4775f290ca3e31bafe8b7fa255dc",
+    "semantic_hash": "677f4775f290ca3e31bafe8b7fa255dc"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/MenuKeyModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.2106626,
+    "ast_hash": "ac74f2f1d22672165a850d9137653463",
+    "semantic_hash": "ac74f2f1d22672165a850d9137653463"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/modules/ParticleBudgetModule.java": {
+    "mtime": 1790709480.427988,
+    "seen": 1791819075.210663,
+    "ast_hash": "cda37c506ad131c2ef2d6da1eb2af777",
+    "semantic_hash": "cda37c506ad131c2ef2d6da1eb2af777"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/ModulePolicy.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.210664,
+    "ast_hash": "67ed74512616ec8e7231d652e7f5f26e",
+    "semantic_hash": "67ed74512616ec8e7231d652e7f5f26e"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/ParanoiaApi.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106647,
+    "ast_hash": "b468c9520521cfa102612ff9dafa77a1",
+    "semantic_hash": "b468c9520521cfa102612ff9dafa77a1"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/ParanoiaUsers.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106655,
+    "ast_hash": "6545725a392c3aef56b81e62ba206500",
+    "semantic_hash": "6545725a392c3aef56b81e62ba206500"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/PolicyPayload.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.210666,
+    "ast_hash": "8831a53f7958bb42644c626b2fe88f44",
+    "semantic_hash": "8831a53f7958bb42644c626b2fe88f44"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/PresenceService.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106667,
+    "ast_hash": "0c144adba2c4282010f5a32c213452e8",
+    "semantic_hash": "0c144adba2c4282010f5a32c213452e8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/ServerTpsTracker.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106676,
+    "ast_hash": "fa19695a70e9804f7f51f677b22d80c2",
+    "semantic_hash": "fa19695a70e9804f7f51f677b22d80c2"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/SessionInfo.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106683,
+    "ast_hash": "099bfec7fb7e15130ad73ead50797ca7",
+    "semantic_hash": "099bfec7fb7e15130ad73ead50797ca7"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/net/UsersPayload.java": {
+    "mtime": 1790709480.4280617,
+    "seen": 1791819075.2106698,
+    "ast_hash": "93fefe2b1b16c5b5e601d0ff5d98186d",
+    "semantic_hash": "93fefe2b1b16c5b5e601d0ff5d98186d"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/platform/ClientPlatform.java": {
+    "mtime": 1791381227.4091825,
+    "seen": 1791819075.2106707,
+    "ast_hash": "655c1c869351afab5baf5f53bb9f1bc8",
+    "semantic_hash": "655c1c869351afab5baf5f53bb9f1bc8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/platform/HudRenderer.java": {
+    "mtime": 1790709480.42898,
+    "seen": 1791819075.2106714,
+    "ast_hash": "1fd3358a33a2b66e56c9a983a74f5e8e",
+    "semantic_hash": "1fd3358a33a2b66e56c9a983a74f5e8e"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/platform/Platforms.java": {
+    "mtime": 1791381163.4856536,
+    "seen": 1791819075.2106721,
+    "ast_hash": "c2c45b45546bea6fafff808fc39ad43a",
+    "semantic_hash": "c2c45b45546bea6fafff808fc39ad43a"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/render/CrosshairRenderer.java": {
+    "mtime": 1790709480.42898,
+    "seen": 1791819075.2106729,
+    "ast_hash": "45476c11c869b7a991fbcaf78c1ce7b8",
+    "semantic_hash": "45476c11c869b7a991fbcaf78c1ce7b8"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/render/Shapes.java": {
+    "mtime": 1790709480.4290879,
+    "seen": 1791819075.2106733,
+    "ast_hash": "3ade838ffc78bc92d56655e69afa7aad",
+    "semantic_hash": "3ade838ffc78bc92d56655e69afa7aad"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/title/Panorama.java": {
+    "mtime": 1791381163.4866536,
+    "seen": 1791819075.2106743,
+    "ast_hash": "121c0ee9a63a527b5f75a38cbcdfec65",
+    "semantic_hash": "121c0ee9a63a527b5f75a38cbcdfec65"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/title/Teinte.java": {
+    "mtime": 1791381163.486747,
+    "seen": 1791819075.2106748,
+    "ast_hash": "9c4bcca4baecfb2bc1584844f4776fef",
+    "semantic_hash": "9c4bcca4baecfb2bc1584844f4776fef"
+  },
+  "apps/client-mod/src/main/java/gg/paranoia/client/title/TitleController.java": {
+    "mtime": 1791381227.4101825,
+    "seen": 1791819075.2106755,
+    "ast_hash": "28cd8406125c4fe03df8a6e45f00a82a",
+    "semantic_hash": "28cd8406125c4fe03df8a6e45f00a82a"
+  },
+  "apps/client-mod/src/main/resources/assets/paranoia_client/font/silkscreen.json": {
+    "mtime": 1790709480.4292831,
+    "seen": 1791819075.2106762,
+    "ast_hash": "499ad04e678e7426d9cfc550863a889a",
+    "semantic_hash": "499ad04e678e7426d9cfc550863a889a"
+  },
+  "apps/client-mod/src/main/resources/assets/paranoia_client/lang/en_us.json": {
+    "mtime": 1790709480.4292831,
+    "seen": 1791819075.2106767,
+    "ast_hash": "669b6e5b310aaaf589892ea150034843",
+    "semantic_hash": "669b6e5b310aaaf589892ea150034843"
+  },
+  "apps/client-mod/src/main/resources/assets/paranoia_client/lang/fr_fr.json": {
+    "mtime": 1790709480.4295127,
+    "seen": 1791819075.2106774,
+    "ast_hash": "63018eb81e7ca8e9d5a93ca04a4818d5",
+    "semantic_hash": "63018eb81e7ca8e9d5a93ca04a4818d5"
+  },
+  "apps/client-mod/versions/1.21.10/build.gradle": {
+    "mtime": 1790709480.429541,
+    "seen": 1791819075.2106783,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/1.21.10/src/main/resources/fabric.mod.json": {
+    "mtime": 1790709480.4296143,
+    "seen": 1791819075.210679,
+    "ast_hash": "9679007e40034d2bcd29f8087433129e",
+    "semantic_hash": "9679007e40034d2bcd29f8087433129e"
+  },
+  "apps/client-mod/versions/1.21.10/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1790709480.429659,
+    "seen": 1791819075.2106798,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/client-mod/versions/1.21.11/build.gradle": {
+    "mtime": 1790709480.429659,
+    "seen": 1791819075.2106802,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/1.21.11/src/main/resources/fabric.mod.json": {
+    "mtime": 1790709480.429731,
+    "seen": 1791819075.2106812,
+    "ast_hash": "17c3ed45b0c6d6cee9d858e792c89d0b",
+    "semantic_hash": "17c3ed45b0c6d6cee9d858e792c89d0b"
+  },
+  "apps/client-mod/versions/1.21.11/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1790709480.4297538,
+    "seen": 1791819075.210682,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/client-mod/versions/1.21.8/build.gradle": {
+    "mtime": 1790709480.4297538,
+    "seen": 1791819075.2106824,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/java/gg/paranoia/client/menu/ParanoiaMenuScreen.java": {
+    "mtime": 1790709480.429872,
+    "seen": 1791819075.210683,
+    "ast_hash": "6253b5e2f74853f39c0b49ffd20e4419",
+    "semantic_hash": "6253b5e2f74853f39c0b49ffd20e4419"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/java/gg/paranoia/client/mixin/PlayerListEntryMixin.java": {
+    "mtime": 1790709480.429872,
+    "seen": 1791819075.2106836,
+    "ast_hash": "b04544a54a1ad695d49928cf70ad4ca3",
+    "semantic_hash": "b04544a54a1ad695d49928cf70ad4ca3"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/java/gg/paranoia/client/platform/impl/PlatformImpl.java": {
+    "mtime": 1791381227.4108179,
+    "seen": 1791819075.2106843,
+    "ast_hash": "8e20f398c53cf75825888b89e93b1b4d",
+    "semantic_hash": "8e20f398c53cf75825888b89e93b1b4d"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/java/gg/paranoia/client/platform/impl/VersionEntrypoint.java": {
+    "mtime": 1790709480.429993,
+    "seen": 1791819075.210685,
+    "ast_hash": "8990947d28567a79e99fce39b52bdb58",
+    "semantic_hash": "8990947d28567a79e99fce39b52bdb58"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/java/gg/paranoia/client/title/ParanoiaTitleScreen.java": {
+    "mtime": 1791381163.4996538,
+    "seen": 1791819075.2106857,
+    "ast_hash": "85d07acb0b90eae411f3fd3d83a93d78",
+    "semantic_hash": "85d07acb0b90eae411f3fd3d83a93d78"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/resources/fabric.mod.json": {
+    "mtime": 1790709480.429993,
+    "seen": 1791819075.2106864,
+    "ast_hash": "8cfa9c27aefb9a96b432bb78247fdb75",
+    "semantic_hash": "8cfa9c27aefb9a96b432bb78247fdb75"
+  },
+  "apps/client-mod/versions/1.21.8/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1790709480.4300365,
+    "seen": 1791819075.210687,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/client-mod/versions/26.1.2/build.gradle": {
+    "mtime": 1790709480.4300365,
+    "seen": 1791819075.2106876,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/26.1.2/src/main/resources/fabric.mod.json": {
+    "mtime": 1790709480.4302332,
+    "seen": 1791819075.2106886,
+    "ast_hash": "1262005878aee44a698515896d4bcf29",
+    "semantic_hash": "1262005878aee44a698515896d4bcf29"
+  },
+  "apps/client-mod/versions/26.1.2/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1790709480.4302535,
+    "seen": 1791819075.2106893,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/client-mod/versions/26.2/build.gradle": {
+    "mtime": 1790709480.4302535,
+    "seen": 1791819075.2106898,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/26.2/src/main/resources/fabric.mod.json": {
+    "mtime": 1790709480.4303215,
+    "seen": 1791819075.2106905,
+    "ast_hash": "d33335ad641071fe54030dddf9936880",
+    "semantic_hash": "d33335ad641071fe54030dddf9936880"
+  },
+  "apps/client-mod/versions/26.2/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1790709480.4303505,
+    "seen": 1791819075.2106912,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/client-mod/versions/26.3/build.gradle": {
+    "mtime": 1791109160.1602297,
+    "seen": 1791819075.210692,
+    "ast_hash": "f464d79870a93446700b16763e85eb61",
+    "semantic_hash": "f464d79870a93446700b16763e85eb61"
+  },
+  "apps/client-mod/versions/26.3/src/main/resources/fabric.mod.json": {
+    "mtime": 1791109160.160878,
+    "seen": 1791819075.2106926,
+    "ast_hash": "859c65b3b5b2a17a8610c551b5c6652f",
+    "semantic_hash": "859c65b3b5b2a17a8610c551b5c6652f"
+  },
+  "apps/client-mod/versions/26.3/src/main/resources/paranoia_client.mixins.json": {
+    "mtime": 1791109160.160909,
+    "seen": 1791819075.2106934,
+    "ast_hash": "e2670a1c9c36662086f0e33d181fcdd6",
+    "semantic_hash": "e2670a1c9c36662086f0e33d181fcdd6"
+  },
+  "apps/launcher/package.json": {
+    "mtime": 1791381163.503654,
+    "seen": 1791819075.210694,
+    "ast_hash": "fd87f203faf0caecadaf8081be45014f",
+    "semantic_hash": "fd87f203faf0caecadaf8081be45014f"
+  },
+  "apps/launcher/src-tauri/Cargo.toml": {
+    "mtime": 1791381163.506654,
+    "seen": 1791819075.2106946,
+    "ast_hash": "f6ad60d3f318eb093ff33e2eeacd0d3b",
+    "semantic_hash": "f6ad60d3f318eb093ff33e2eeacd0d3b"
+  },
+  "apps/launcher/src-tauri/build.rs": {
+    "mtime": 1790709480.4600625,
+    "seen": 1791819075.2106955,
+    "ast_hash": "1be34a5c61c2c35365de3dab14298f0b",
+    "semantic_hash": "1be34a5c61c2c35365de3dab14298f0b"
+  },
+  "apps/launcher/src-tauri/capabilities/default.json": {
+    "mtime": 1790709480.4600625,
+    "seen": 1791819075.210696,
+    "ast_hash": "a73c509771e6a71fc048ba51d19f2519",
+    "semantic_hash": "a73c509771e6a71fc048ba51d19f2519"
+  },
+  "apps/launcher/src-tauri/gen/schemas/acl-manifests.json": {
+    "mtime": 1791381227.4108179,
+    "seen": 1791819075.2106967,
+    "ast_hash": "657d0d5662bd2aa63f0f41af84644e49",
+    "semantic_hash": "657d0d5662bd2aa63f0f41af84644e49"
+  },
+  "apps/launcher/src-tauri/gen/schemas/capabilities.json": {
+    "mtime": 1790709480.4616365,
+    "seen": 1791819075.2106974,
+    "ast_hash": "954504fcb19dd7043962c192149381e3",
+    "semantic_hash": "954504fcb19dd7043962c192149381e3"
+  },
+  "apps/launcher/src-tauri/gen/schemas/desktop-schema.json": {
+    "mtime": 1791381227.4121826,
+    "seen": 1791819075.210698,
+    "ast_hash": "a9ded5f673348ede93f90bfd98810d87",
+    "semantic_hash": "a9ded5f673348ede93f90bfd98810d87"
+  },
+  "apps/launcher/src-tauri/gen/schemas/windows-schema.json": {
+    "mtime": 1790709480.4616365,
+    "seen": 1791819075.2106988,
+    "ast_hash": "bd8375246441a658956b9b44e033c839",
+    "semantic_hash": "bd8375246441a658956b9b44e033c839"
+  },
+  "apps/launcher/src-tauri/src/main.rs": {
+    "mtime": 1791803887.7283876,
+    "seen": 1791819075.2106993,
+    "ast_hash": "b2bbb1270bc5f5432e5c90ba217bda51",
+    "semantic_hash": "b2bbb1270bc5f5432e5c90ba217bda51"
+  },
+  "apps/launcher/src-tauri/tauri.conf.json": {
+    "mtime": 1791381163.507197,
+    "seen": 1791819075.2107,
+    "ast_hash": "418ae2462f60c752194dc7634900f106",
+    "semantic_hash": "418ae2462f60c752194dc7634900f106"
+  },
+  "apps/launcher/src/app/App.tsx": {
+    "mtime": 1791806731.9111195,
+    "seen": 1791819075.2107008,
+    "ast_hash": "48d709eace359e19697e1480193f522b",
+    "semantic_hash": "48d709eace359e19697e1480193f522b"
+  },
+  "apps/launcher/src/app/components/AppOverlays.tsx": {
+    "mtime": 1791806731.9113202,
+    "seen": 1791819075.2107015,
+    "ast_hash": "228268a5b30d460fc4449809b3805f37",
+    "semantic_hash": "228268a5b30d460fc4449809b3805f37"
+  },
+  "apps/launcher/src/app/components/BugReportModal.tsx": {
+    "mtime": 1790709480.462647,
+    "seen": 1791819075.2107022,
+    "ast_hash": "7a84592ebd9fe7464477ef433b19bae6",
+    "semantic_hash": "7a84592ebd9fe7464477ef433b19bae6"
+  },
+  "apps/launcher/src/app/components/ExpandableNews.tsx": {
+    "mtime": 1791381163.507654,
+    "seen": 1791819075.210703,
+    "ast_hash": "b7b342bca544388cf8b5a2f776cb86c9",
+    "semantic_hash": "b7b342bca544388cf8b5a2f776cb86c9"
+  },
+  "apps/launcher/src/app/components/InstanceSettings.tsx": {
+    "mtime": 1791807178.0691073,
+    "seen": 1791819075.2107036,
+    "ast_hash": "236cec075468eceb88f48e3207df27f4",
+    "semantic_hash": "236cec075468eceb88f48e3207df27f4"
+  },
+  "apps/launcher/src/app/components/KeybindsImport.tsx": {
+    "mtime": 1791806745.0313282,
+    "seen": 1791819075.210704,
+    "ast_hash": "df3d69152b2973d31893a6b2a52bb5e8",
+    "semantic_hash": "df3d69152b2973d31893a6b2a52bb5e8"
+  },
+  "apps/launcher/src/app/components/Modal.tsx": {
+    "mtime": 1791381163.509654,
+    "seen": 1791819075.2107048,
+    "ast_hash": "1ecdaf9b1ea49cac2063b7f591695a83",
+    "semantic_hash": "1ecdaf9b1ea49cac2063b7f591695a83"
+  },
+  "apps/launcher/src/app/components/ProfileCreation.tsx": {
+    "mtime": 1791109160.1632297,
+    "seen": 1791819075.2107055,
+    "ast_hash": "ea3898fda823cd57ea4d5c9f5a2e774e",
+    "semantic_hash": "ea3898fda823cd57ea4d5c9f5a2e774e"
+  },
+  "apps/launcher/src/app/components/SkinChanger.tsx": {
+    "mtime": 1791804149.9239519,
+    "seen": 1791819075.2107062,
+    "ast_hash": "e220688a49c0b35bd80373c71ed5c28e",
+    "semantic_hash": "e220688a49c0b35bd80373c71ed5c28e"
+  },
+  "apps/launcher/src/app/components/UpdateModal.tsx": {
+    "mtime": 1791381227.4141827,
+    "seen": 1791819075.210707,
+    "ast_hash": "196e9fe2a932b7e9823cf68f691ddf2b",
+    "semantic_hash": "196e9fe2a932b7e9823cf68f691ddf2b"
+  },
+  "apps/launcher/src/app/components/screens/AccountsScreen.tsx": {
+    "mtime": 1790709480.462647,
+    "seen": 1791819075.2107074,
+    "ast_hash": "5ff671ac81bb69580ad8fdf42242ee77",
+    "semantic_hash": "5ff671ac81bb69580ad8fdf42242ee77"
+  },
+  "apps/launcher/src/app/components/screens/CosmeticsScreen.tsx": {
+    "mtime": 1791807785.9049823,
+    "seen": 1791819075.2107081,
+    "ast_hash": "4c407f0deb62dbba156a37d4119ee349",
+    "semantic_hash": "4c407f0deb62dbba156a37d4119ee349"
+  },
+  "apps/launcher/src/app/components/screens/HomeScreen.tsx": {
+    "mtime": 1791381163.5116541,
+    "seen": 1791819075.210709,
+    "ast_hash": "1a62d6c91736637a2babbb9a625f56a6",
+    "semantic_hash": "1a62d6c91736637a2babbb9a625f56a6"
+  },
+  "apps/launcher/src/app/components/screens/ImportScreen.tsx": {
+    "mtime": 1791806712.1235173,
+    "seen": 1791819075.2107098,
+    "ast_hash": "6b3aefc0ff9b92505d05dabf742d4149",
+    "semantic_hash": "6b3aefc0ff9b92505d05dabf742d4149"
+  },
+  "apps/launcher/src/app/components/screens/LogsScreen.tsx": {
+    "mtime": 1790709480.4629636,
+    "seen": 1791819075.2107103,
+    "ast_hash": "9f3fd6a472572f2a99a12ad96d1d187e",
+    "semantic_hash": "9f3fd6a472572f2a99a12ad96d1d187e"
+  },
+  "apps/launcher/src/app/components/screens/ModsScreen.tsx": {
+    "mtime": 1791807321.3986084,
+    "seen": 1791819075.210711,
+    "ast_hash": "2e0d4fa265cc47fec0871a5e0001c987",
+    "semantic_hash": "2e0d4fa265cc47fec0871a5e0001c987"
+  },
+  "apps/launcher/src/app/components/screens/ProfileScreen.tsx": {
+    "mtime": 1791806605.9418387,
+    "seen": 1791819075.2107117,
+    "ast_hash": "4ec017d1f538a346893e2ac95794a343",
+    "semantic_hash": "4ec017d1f538a346893e2ac95794a343"
+  },
+  "apps/launcher/src/app/components/screens/ProfilesScreen.tsx": {
+    "mtime": 1791807083.8350804,
+    "seen": 1791819075.2107127,
+    "ast_hash": "eba4bf5dc4f550adb9d41d1325a7618f",
+    "semantic_hash": "eba4bf5dc4f550adb9d41d1325a7618f"
+  },
+  "apps/launcher/src/app/components/screens/ScreenHeader.tsx": {
+    "mtime": 1790709480.4629636,
+    "seen": 1791819075.2107131,
+    "ast_hash": "5c8ac87d1e2c93b3c901867448e16309",
+    "semantic_hash": "5c8ac87d1e2c93b3c901867448e16309"
+  },
+  "apps/launcher/src/app/components/screens/SettingsScreen.tsx": {
+    "mtime": 1791381227.4141827,
+    "seen": 1791819075.2107139,
+    "ast_hash": "f9548fa7837e9f61a9c36b87da0a8f45",
+    "semantic_hash": "f9548fa7837e9f61a9c36b87da0a8f45"
+  },
+  "apps/launcher/src/app/components/screens/ShopScreen.tsx": {
+    "mtime": 1790709480.4629636,
+    "seen": 1791819075.2107146,
+    "ast_hash": "c3669c2b4ed35ffe8a4bf9cc3391c3f7",
+    "semantic_hash": "c3669c2b4ed35ffe8a4bf9cc3391c3f7"
+  },
+  "apps/launcher/src/app/components/screens/StatusScreens.tsx": {
+    "mtime": 1791232190.5764422,
+    "seen": 1791819075.2107153,
+    "ast_hash": "be9714c3f2541a6efd1fba8d0bbef517",
+    "semantic_hash": "be9714c3f2541a6efd1fba8d0bbef517"
+  },
+  "apps/launcher/src/app/components/shell/Sidebar.tsx": {
+    "mtime": 1791806510.0329251,
+    "seen": 1791819075.2107162,
+    "ast_hash": "f30a34a900c4b7ae56430c3e24110d52",
+    "semantic_hash": "f30a34a900c4b7ae56430c3e24110d52"
+  },
+  "apps/launcher/src/app/components/shell/StatusBar.tsx": {
+    "mtime": 1790709480.4633338,
+    "seen": 1791819075.2107167,
+    "ast_hash": "658a6ddb10568b1b2481c81626b7ae38",
+    "semantic_hash": "658a6ddb10568b1b2481c81626b7ae38"
+  },
+  "apps/launcher/src/app/components/shell/TitleBar.tsx": {
+    "mtime": 1790709480.4633338,
+    "seen": 1791819075.2107174,
+    "ast_hash": "ec1f2e012d5c9014bf9689368169ea48",
+    "semantic_hash": "ec1f2e012d5c9014bf9689368169ea48"
+  },
+  "apps/launcher/src/app/components/tabs/LogsTab.tsx": {
+    "mtime": 1791109160.1652298,
+    "seen": 1791819075.210718,
+    "ast_hash": "6acc5442d51b2ae25a1eca4f5d3fa24c",
+    "semantic_hash": "6acc5442d51b2ae25a1eca4f5d3fa24c"
+  },
+  "apps/launcher/src/app/components/tabs/ModDetailsModal.tsx": {
+    "mtime": 1791381163.5136542,
+    "seen": 1791819075.2107186,
+    "ast_hash": "c088c182eeb8f3b97e1001604abf5c35",
+    "semantic_hash": "c088c182eeb8f3b97e1001604abf5c35"
+  },
+  "apps/launcher/src/app/components/tabs/ParametresTab.tsx": {
+    "mtime": 1791381227.4151661,
+    "seen": 1791819075.2107196,
+    "ast_hash": "dd4af8e382c472a026a5abf446e8bae9",
+    "semantic_hash": "dd4af8e382c472a026a5abf446e8bae9"
+  },
+  "apps/launcher/src/app/hooks/use-outside-click.ts": {
+    "mtime": 1790709480.4634323,
+    "seen": 1791819075.21072,
+    "ast_hash": "a5d5225450663b5f905750e7b152374c",
+    "semantic_hash": "a5d5225450663b5f905750e7b152374c"
+  },
+  "apps/launcher/src/app/hooks/useAppVersion.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.210738,
+    "ast_hash": "91ed7ed1b2eb89480f811c05a8e88a93",
+    "semantic_hash": "91ed7ed1b2eb89480f811c05a8e88a93"
+  },
+  "apps/launcher/src/app/hooks/useAuth.ts": {
+    "mtime": 1791232190.5774424,
+    "seen": 1791819075.2107394,
+    "ast_hash": "4acc032ca7dd6e22735f6c4677795a3e",
+    "semantic_hash": "4acc032ca7dd6e22735f6c4677795a3e"
+  },
+  "apps/launcher/src/app/hooks/useBootstrap.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107408,
+    "ast_hash": "c70fedfed97b8207415837ea76eadb54",
+    "semantic_hash": "c70fedfed97b8207415837ea76eadb54"
+  },
+  "apps/launcher/src/app/hooks/useFileDrop.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107418,
+    "ast_hash": "e5e9837a7520c2746a5afdb9c72abe31",
+    "semantic_hash": "e5e9837a7520c2746a5afdb9c72abe31"
+  },
+  "apps/launcher/src/app/hooks/useLaunch.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107432,
+    "ast_hash": "f53dd1f2ca40ebc51af1f5e19c3c26cd",
+    "semantic_hash": "f53dd1f2ca40ebc51af1f5e19c3c26cd"
+  },
+  "apps/launcher/src/app/hooks/useLobbyCape.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107446,
+    "ast_hash": "7c30fce2eb4648db8ff5c7f77e6cb649",
+    "semantic_hash": "7c30fce2eb4648db8ff5c7f77e6cb649"
+  },
+  "apps/launcher/src/app/hooks/useModCount.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.210746,
+    "ast_hash": "36c62a8e66cb97f02a0b1017d5c9a68f",
+    "semantic_hash": "36c62a8e66cb97f02a0b1017d5c9a68f"
+  },
+  "apps/launcher/src/app/hooks/useModCounts.ts": {
+    "mtime": 1791807083.8348227,
+    "seen": 1791819075.2107472,
+    "ast_hash": "0236f2d5d3e87dd7c3278c87c07aee4b",
+    "semantic_hash": "0236f2d5d3e87dd7c3278c87c07aee4b"
+  },
+  "apps/launcher/src/app/hooks/useProfileCreation.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107482,
+    "ast_hash": "6864e376ccc6ded8fda9bf8106524bea",
+    "semantic_hash": "6864e376ccc6ded8fda9bf8106524bea"
+  },
+  "apps/launcher/src/app/hooks/useProfiles.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107491,
+    "ast_hash": "eb05e19218fa78e9ac10ff36cb9b8702",
+    "semantic_hash": "eb05e19218fa78e9ac10ff36cb9b8702"
+  },
+  "apps/launcher/src/app/hooks/useSettings.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107499,
+    "ast_hash": "5f47d50d2e69bc3354419e8fbefffa30",
+    "semantic_hash": "5f47d50d2e69bc3354419e8fbefffa30"
+  },
+  "apps/launcher/src/app/hooks/useUpdater.ts": {
+    "mtime": 1791381227.4151661,
+    "seen": 1791819075.2107508,
+    "ast_hash": "73a4751fc2bc54c054236f00890fc381",
+    "semantic_hash": "73a4751fc2bc54c054236f00890fc381"
+  },
+  "apps/launcher/src/app/lib/profileFormat.ts": {
+    "mtime": 1791806510.0205212,
+    "seen": 1791819075.2107515,
+    "ast_hash": "b9bc17c04746904edb138cb85c1ead40",
+    "semantic_hash": "b9bc17c04746904edb138cb85c1ead40"
+  },
+  "apps/launcher/src/app/navigation.ts": {
+    "mtime": 1791806510.0324376,
+    "seen": 1791819075.2107522,
+    "ast_hash": "0cd47893edfe6d511607caf100977b5d",
+    "semantic_hash": "0cd47893edfe6d511607caf100977b5d"
+  },
+  "apps/launcher/src/components/BreathingAnimation.ts": {
+    "mtime": 1791803818.4475176,
+    "seen": 1791819075.210753,
+    "ast_hash": "ef2252ef25fa1c41895c528a20766afe",
+    "semantic_hash": "ef2252ef25fa1c41895c528a20766afe"
+  },
+  "apps/launcher/src/components/SkinViewer3D.tsx": {
+    "mtime": 1791807785.90479,
+    "seen": 1791819075.2107537,
+    "ast_hash": "124a4364c62c4b7bf32366f7603c3fba",
+    "semantic_hash": "124a4364c62c4b7bf32366f7603c3fba"
+  },
+  "apps/launcher/src/i18n.ts": {
+    "mtime": 1790709480.4636133,
+    "seen": 1791819075.2107546,
+    "ast_hash": "d47c2530d37b07c0baa1e2bfc6a2833f",
+    "semantic_hash": "d47c2530d37b07c0baa1e2bfc6a2833f"
+  },
+  "apps/launcher/src/locales/en.json": {
+    "mtime": 1791381227.4151661,
+    "seen": 1791819075.2107553,
+    "ast_hash": "b8a5e784076dc7d79ba92e5e8105a636",
+    "semantic_hash": "b8a5e784076dc7d79ba92e5e8105a636"
+  },
+  "apps/launcher/src/locales/fr.json": {
+    "mtime": 1791381227.4151661,
+    "seen": 1791819075.210756,
+    "ast_hash": "722b7a6e563f48905eddea0ad6eb41b7",
+    "semantic_hash": "722b7a6e563f48905eddea0ad6eb41b7"
+  },
+  "apps/launcher/src/main.tsx": {
+    "mtime": 1790709480.4641597,
+    "seen": 1791819075.210757,
+    "ast_hash": "10a52391deb8a218e7f9fb1b51fc6a2a",
+    "semantic_hash": "10a52391deb8a218e7f9fb1b51fc6a2a"
+  },
+  "apps/launcher/src/shared/api/authClient.ts": {
+    "mtime": 1791232190.5774424,
+    "seen": 1791819075.210758,
+    "ast_hash": "de9754f21e76a299e49147b15649bfd2",
+    "semantic_hash": "de9754f21e76a299e49147b15649bfd2"
+  },
+  "apps/launcher/src/shared/api/bugReportClient.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107584,
+    "ast_hash": "9b5b78c8ebcfc76d79eb511f3cdde47a",
+    "semantic_hash": "9b5b78c8ebcfc76d79eb511f3cdde47a"
+  },
+  "apps/launcher/src/shared/api/catalogClient.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107592,
+    "ast_hash": "cd81db2141449d0c11a14983ba95f435",
+    "semantic_hash": "cd81db2141449d0c11a14983ba95f435"
+  },
+  "apps/launcher/src/shared/api/cosmeticsClient.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107599,
+    "ast_hash": "8a35db138784569344b79659add68bfc",
+    "semantic_hash": "8a35db138784569344b79659add68bfc"
+  },
+  "apps/launcher/src/shared/api/http.ts": {
+    "mtime": 1791109160.1682298,
+    "seen": 1791819075.210761,
+    "ast_hash": "3dece40d10587a1eba37834df286c764",
+    "semantic_hash": "3dece40d10587a1eba37834df286c764"
+  },
+  "apps/launcher/src/shared/api/launcherClient.ts": {
+    "mtime": 1791381227.4151661,
+    "seen": 1791819075.2107618,
+    "ast_hash": "d872b0bc37305855da183ef65d596214",
+    "semantic_hash": "d872b0bc37305855da183ef65d596214"
+  },
+  "apps/launcher/src/shared/api/launcherInfoClient.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107627,
+    "ast_hash": "ea2f1863decd77053114fa549a7211b4",
+    "semantic_hash": "ea2f1863decd77053114fa549a7211b4"
+  },
+  "apps/launcher/src/shared/api/modsClient.ts": {
+    "mtime": 1791807321.3984365,
+    "seen": 1791819075.2107635,
+    "ast_hash": "77a859ac861382229ba9e1823a549017",
+    "semantic_hash": "77a859ac861382229ba9e1823a549017"
+  },
+  "apps/launcher/src/shared/api/profilesClient.ts": {
+    "mtime": 1791806655.3293881,
+    "seen": 1791819075.210764,
+    "ast_hash": "b106349f01337f4c0b4c85a20ecceb52",
+    "semantic_hash": "b106349f01337f4c0b4c85a20ecceb52"
+  },
+  "apps/launcher/src/shared/api/settingsClient.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.210765,
+    "ast_hash": "0a54600c764b5d30652822311728923a",
+    "semantic_hash": "0a54600c764b5d30652822311728923a"
+  },
+  "apps/launcher/src/vite-env.d.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107656,
+    "ast_hash": "fdc83df24d74bf12d9198e04e14d3eab",
+    "semantic_hash": "fdc83df24d74bf12d9198e04e14d3eab"
+  },
+  "apps/launcher/tsconfig.json": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107663,
+    "ast_hash": "dcce1a9df793fd63824c0301a512ec72",
+    "semantic_hash": "dcce1a9df793fd63824c0301a512ec72"
+  },
+  "apps/launcher/vite.config.ts": {
+    "mtime": 1790709480.4642463,
+    "seen": 1791819075.2107668,
+    "ast_hash": "faf67ffb82af3d0545711a9cc84ef93f",
+    "semantic_hash": "faf67ffb82af3d0545711a9cc84ef93f"
+  },
+  "design_extract/package.json": {
+    "mtime": 1791367747.6314466,
+    "seen": 1791819075.2107675,
+    "ast_hash": "cf73109a99ef2d7fd78d931a1d586996",
+    "semantic_hash": "cf73109a99ef2d7fd78d931a1d586996"
+  },
+  "design_extract/src/App.tsx": {
+    "mtime": 1791367747.6318076,
+    "seen": 1791819075.2107685,
+    "ast_hash": "6f39dd022798e75f3841984ba8c4c5af",
+    "semantic_hash": "6f39dd022798e75f3841984ba8c4c5af"
+  },
+  "design_extract/src/components/GameUi.tsx": {
+    "mtime": 1791367747.6321347,
+    "seen": 1791819075.2107692,
+    "ast_hash": "a270d3d32b454bff8af39379bc77f5a9",
+    "semantic_hash": "a270d3d32b454bff8af39379bc77f5a9"
+  },
+  "design_extract/src/components/index.ts": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.2107697,
+    "ast_hash": "0c1ac19d61c5913be5cf3590136c07f5",
+    "semantic_hash": "0c1ac19d61c5913be5cf3590136c07f5"
+  },
+  "design_extract/src/main.tsx": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.2107706,
+    "ast_hash": "1de984c2aaf6cfc7c58e215be39a8ed4",
+    "semantic_hash": "1de984c2aaf6cfc7c58e215be39a8ed4"
+  },
+  "design_extract/src/vite-env.d.ts": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.2107716,
+    "ast_hash": "0352474ba2918efe13895edbc3780d94",
+    "semantic_hash": "0352474ba2918efe13895edbc3780d94"
+  },
+  "design_extract/tsconfig.json": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.210772,
+    "ast_hash": "909fb6c25afa33c3516c0b687ff1f007",
+    "semantic_hash": "909fb6c25afa33c3516c0b687ff1f007"
+  },
+  "design_extract/vite.config.ts": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.2107728,
+    "ast_hash": "f977f849d1234b9953817cfe7adccd33",
+    "semantic_hash": "f977f849d1234b9953817cfe7adccd33"
+  },
+  "examples/remote-config/install-catalog.json": {
+    "mtime": 1791109160.17023,
+    "seen": 1791819075.2107735,
+    "ast_hash": "0008a67f3f18e7fe683219f8fac8d40f",
+    "semantic_hash": "0008a67f3f18e7fe683219f8fac8d40f"
+  },
+  "examples/remote-config/stable-config.json": {
+    "mtime": 1791109160.17023,
+    "seen": 1791819075.210774,
+    "ast_hash": "c38f6cd11568bb30c8e603bfd66e557a",
+    "semantic_hash": "c38f6cd11568bb30c8e603bfd66e557a"
+  },
+  "examples/server-plugin/build.gradle": {
+    "mtime": 1790709480.4664104,
+    "seen": 1791819075.210775,
+    "ast_hash": "b8c8d607ae3e97333415d1976df70b0f",
+    "semantic_hash": "b8c8d607ae3e97333415d1976df70b0f"
+  },
+  "examples/server-plugin/gradlew": {
+    "mtime": 1790709480.4666867,
+    "seen": 1791819075.2107756,
+    "ast_hash": "a43be8432bac3ffd05b3769aa42fe996",
+    "semantic_hash": "a43be8432bac3ffd05b3769aa42fe996"
+  },
+  "examples/server-plugin/settings.gradle": {
+    "mtime": 1790709480.4666867,
+    "seen": 1791819075.2107763,
+    "ast_hash": "4c070a8bab34a5b830ca187a84897f1e",
+    "semantic_hash": "4c070a8bab34a5b830ca187a84897f1e"
+  },
+  "examples/server-plugin/src/main/java/gg/paranoia/server/ParanoiaPlugin.java": {
+    "mtime": 1790709480.466798,
+    "seen": 1791819075.2107773,
+    "ast_hash": "4e15b85fee104df2093875ea7d421634",
+    "semantic_hash": "4e15b85fee104df2093875ea7d421634"
+  },
+  "figma-export/package.json": {
+    "mtime": 1791367747.633083,
+    "seen": 1791819075.210778,
+    "ast_hash": "cf73109a99ef2d7fd78d931a1d586996",
+    "semantic_hash": "cf73109a99ef2d7fd78d931a1d586996"
+  },
+  "figma-export/src/App.tsx": {
+    "mtime": 1791367747.6332335,
+    "seen": 1791819075.210779,
+    "ast_hash": "6f39dd022798e75f3841984ba8c4c5af",
+    "semantic_hash": "6f39dd022798e75f3841984ba8c4c5af"
+  },
+  "figma-export/src/components/GameUi.tsx": {
+    "mtime": 1791367747.6336462,
+    "seen": 1791819075.2107794,
+    "ast_hash": "a270d3d32b454bff8af39379bc77f5a9",
+    "semantic_hash": "a270d3d32b454bff8af39379bc77f5a9"
+  },
+  "figma-export/src/components/index.ts": {
+    "mtime": 1791367747.6337752,
+    "seen": 1791819075.2107801,
+    "ast_hash": "0c1ac19d61c5913be5cf3590136c07f5",
+    "semantic_hash": "0c1ac19d61c5913be5cf3590136c07f5"
+  },
+  "figma-export/src/main.tsx": {
+    "mtime": 1791367747.6337752,
+    "seen": 1791819075.2107809,
+    "ast_hash": "1de984c2aaf6cfc7c58e215be39a8ed4",
+    "semantic_hash": "1de984c2aaf6cfc7c58e215be39a8ed4"
+  },
+  "figma-export/src/vite-env.d.ts": {
+    "mtime": 1791367747.6337752,
+    "seen": 1791819075.2107813,
+    "ast_hash": "0352474ba2918efe13895edbc3780d94",
+    "semantic_hash": "0352474ba2918efe13895edbc3780d94"
+  },
+  "figma-export/tsconfig.json": {
+    "mtime": 1791367747.6337752,
+    "seen": 1791819075.2107825,
+    "ast_hash": "909fb6c25afa33c3516c0b687ff1f007",
+    "semantic_hash": "909fb6c25afa33c3516c0b687ff1f007"
+  },
+  "figma-export/vite.config.ts": {
+    "mtime": 1791367747.6337752,
+    "seen": 1791819075.2107832,
+    "ast_hash": "f977f849d1234b9953817cfe7adccd33",
+    "semantic_hash": "f977f849d1234b9953817cfe7adccd33"
+  },
+  "latest.json": {
+    "mtime": 1790709480.4676254,
+    "seen": 1791819075.210784,
+    "ast_hash": "5a882d02580134db59627dad9afdd32c",
+    "semantic_hash": "5a882d02580134db59627dad9afdd32c"
+  },
+  "package.json": {
+    "mtime": 1791381163.5168154,
+    "seen": 1791819075.2107844,
+    "ast_hash": "25e19be4daae8aac9bf5078d6d26371c",
+    "semantic_hash": "25e19be4daae8aac9bf5078d6d26371c"
+  },
+  "packages/config-schema/remote-config.schema.json": {
+    "mtime": 1790709480.4676907,
+    "seen": 1791819075.2107854,
+    "ast_hash": "c22b45549e2129d6fce922d0a6a06ae2",
+    "semantic_hash": "c22b45549e2129d6fce922d0a6a06ae2"
+  },
+  "packages/contracts/package.json": {
+    "mtime": 1790709480.4676907,
+    "seen": 1791819075.210786,
+    "ast_hash": "877289f553d6584eebdc75f0e0963c6e",
+    "semantic_hash": "877289f553d6584eebdc75f0e0963c6e"
+  },
+  "packages/contracts/src/index.ts": {
+    "mtime": 1791109160.17023,
+    "seen": 1791819075.2107868,
+    "ast_hash": "e6e50cc4b255216cc2becd73bd226acf",
+    "semantic_hash": "e6e50cc4b255216cc2becd73bd226acf"
+  },
+  "packages/contracts/tsconfig.json": {
+    "mtime": 1790709480.4677396,
+    "seen": 1791819075.2107873,
+    "ast_hash": "4979e735a94738dd4a48aac03b61790c",
+    "semantic_hash": "4979e735a94738dd4a48aac03b61790c"
+  },
+  "packages/security-rules/baseline-rules.json": {
+    "mtime": 1790709480.4677396,
+    "seen": 1791819075.2107882,
+    "ast_hash": "8bbf6595975f90db0092187d2e54e8ad",
+    "semantic_hash": "8bbf6595975f90db0092187d2e54e8ad"
+  },
+  "scripts/bump-version.mjs": {
+    "mtime": 1790709480.4684083,
+    "seen": 1791819075.210789,
+    "ast_hash": "5d8c7e63f15d9c30c1ed2781e16e5b29",
+    "semantic_hash": "5d8c7e63f15d9c30c1ed2781e16e5b29"
+  },
+  "scripts/dossier/en-docx.py": {
+    "mtime": 1790709480.4685411,
+    "seen": 1791819075.2107897,
+    "ast_hash": "b6f6a5557ec04d987bb24b60013cb838",
+    "semantic_hash": "b6f6a5557ec04d987bb24b60013cb838"
+  },
+  "scripts/dossier/en-html.py": {
+    "mtime": 1790709480.4686234,
+    "seen": 1791819075.2107904,
+    "ast_hash": "a1cfdd9ffa81620cf3e09495733c4e15",
+    "semantic_hash": "a1cfdd9ffa81620cf3e09495733c4e15"
+  },
+  "scripts/test-update-manifest.mjs": {
+    "mtime": 1790709480.4686234,
+    "seen": 1791819075.2107909,
+    "ast_hash": "c14e1f78e8d6f0b35eae2a76e65352d0",
+    "semantic_hash": "c14e1f78e8d6f0b35eae2a76e65352d0"
+  },
+  "scripts/update-manifest.mjs": {
+    "mtime": 1791378571.491161,
+    "seen": 1791819075.2107916,
+    "ast_hash": "bfb1d8f55937b77f47a824658200c5da",
+    "semantic_hash": "bfb1d8f55937b77f47a824658200c5da"
+  },
+  "tsconfig.base.json": {
+    "mtime": 1790709480.4686234,
+    "seen": 1791819075.2107923,
+    "ast_hash": "0bda448a2a0631660c1eb37a5dbb2fd7",
+    "semantic_hash": "0bda448a2a0631660c1eb37a5dbb2fd7"
+  },
+  "README.md": {
+    "mtime": 1791109160.1552296,
+    "seen": 1791819075.2107933,
+    "ast_hash": "8e22ef17f126c682fb6b6d9144bf25cf",
+    "semantic_hash": "8e22ef17f126c682fb6b6d9144bf25cf"
+  },
+  "anti-slop/audit-001-2026-10-12.md": {
+    "mtime": 1791818883.2815392,
+    "seen": 1791819075.2107937,
+    "ast_hash": "aff7bbaf4c2fa67a479b6c1ba3cfcab8",
+    "semantic_hash": "aff7bbaf4c2fa67a479b6c1ba3cfcab8"
+  },
+  "apps/api/README.md": {
+    "mtime": 1790709480.4190626,
+    "seen": 1791819075.2107944,
+    "ast_hash": "49be5725313aaeec132938fd39f9400e",
+    "semantic_hash": "49be5725313aaeec132938fd39f9400e"
+  },
+  "design_extract/README.md": {
+    "mtime": 1791367747.6300504,
+    "seen": 1791819075.210795,
+    "ast_hash": "7c8c39ba30f015d49a0c429961c022bc",
+    "semantic_hash": "7c8c39ba30f015d49a0c429961c022bc"
+  },
+  "doc/anti-cheat-strategy.md": {
+    "mtime": 1790709480.4651566,
+    "seen": 1791819075.210796,
+    "ast_hash": "2687ee5300a0ded78bda774a5ebe6b66",
+    "semantic_hash": "2687ee5300a0ded78bda774a5ebe6b66"
+  },
+  "doc/api/launcher/readme.md": {
+    "mtime": 1790709480.4652681,
+    "seen": 1791819075.2107966,
+    "ast_hash": "e4d673ce5e4d45682d2966fba1e4815f",
+    "semantic_hash": "e4d673ce5e4d45682d2966fba1e4815f"
+  },
+  "doc/api/microsoft-auth/readme.md": {
+    "mtime": 1790709480.4652681,
+    "seen": 1791819075.2107973,
+    "ast_hash": "0099dbf3df7fafcb3fadde3e8d24bce0",
+    "semantic_hash": "0099dbf3df7fafcb3fadde3e8d24bce0"
+  },
+  "docs-site/README.md": {
+    "mtime": 1790709480.4652681,
+    "seen": 1791819075.210798,
+    "ast_hash": "64923594cedb19969c88bf77083c58e3",
+    "semantic_hash": "64923594cedb19969c88bf77083c58e3"
+  },
+  "docs/api/endpoints.md": {
+    "mtime": 1790709480.4654415,
+    "seen": 1791819075.2107985,
+    "ast_hash": "9aad15fbc0a824c630d61256ad47c7f3",
+    "semantic_hash": "9aad15fbc0a824c630d61256ad47c7f3"
+  },
+  "docs/api/microsoft-auth-setup.md": {
+    "mtime": 1790709480.465468,
+    "seen": 1791819075.2107995,
+    "ast_hash": "e82e2cefcc3931cbe19d9303f502d2e3",
+    "semantic_hash": "e82e2cefcc3931cbe19d9303f502d2e3"
+  },
+  "docs/architecture/advanced-features.md": {
+    "mtime": 1790709480.465468,
+    "seen": 1791819075.2108004,
+    "ast_hash": "1b147841281c84aa1f7592d8dad09390",
+    "semantic_hash": "1b147841281c84aa1f7592d8dad09390"
+  },
+  "docs/architecture/cross-platform-strategy.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.210801,
+    "ast_hash": "427eccc1cab58b79211072d08c0e0727",
+    "semantic_hash": "427eccc1cab58b79211072d08c0e0727"
+  },
+  "docs/architecture/first-setup-sequence.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.2108016,
+    "ast_hash": "136312207b2b177ed7d760b9a13dd3c8",
+    "semantic_hash": "136312207b2b177ed7d760b9a13dd3c8"
+  },
+  "docs/architecture/game-launch.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.210802,
+    "ast_hash": "74d2f191ec6ca7c3a611a288975db435",
+    "semantic_hash": "74d2f191ec6ca7c3a611a288975db435"
+  },
+  "docs/architecture/overview.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.210803,
+    "ast_hash": "52d5ab945077e0167cadd5140ac539a3",
+    "semantic_hash": "52d5ab945077e0167cadd5140ac539a3"
+  },
+  "docs/architecture/requirements-mapping.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.2108037,
+    "ast_hash": "bf153bd8ca7ba0d8cde6b31029398903",
+    "semantic_hash": "bf153bd8ca7ba0d8cde6b31029398903"
+  },
+  "docs/dossier-optimisation.md": {
+    "mtime": 1791232190.5774424,
+    "seen": 1791819075.2108042,
+    "ast_hash": "89207566dba9250630d5f258499f2ed0",
+    "semantic_hash": "89207566dba9250630d5f258499f2ed0"
+  },
+  "docs/protocole-badge-utilisateurs.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.210805,
+    "ast_hash": "7d9bacb00033f4328c77e2ac0feeddda",
+    "semantic_hash": "7d9bacb00033f4328c77e2ac0feeddda"
+  },
+  "docs/protocole-politique-modules.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.2108057,
+    "ast_hash": "6aca4ae3195ad214ae6c3091861c2683",
+    "semantic_hash": "6aca4ae3195ad214ae6c3091861c2683"
+  },
+  "docs/security/security-model.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.2108066,
+    "ast_hash": "5abfc4fbabe98b0a788537ee55441cee",
+    "semantic_hash": "5abfc4fbabe98b0a788537ee55441cee"
+  },
+  "docs/tuto-vps-api.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.210807,
+    "ast_hash": "759d1a222cc8df857e5c04422f3bd2bb",
+    "semantic_hash": "759d1a222cc8df857e5c04422f3bd2bb"
+  },
+  "docs/tuto-vps-serveur.md": {
+    "mtime": 1790709480.4655128,
+    "seen": 1791819075.2108078,
+    "ast_hash": "9ee2a73bce33e13fa6569e4462b6438e",
+    "semantic_hash": "9ee2a73bce33e13fa6569e4462b6438e"
+  },
+  "figma-export/README.md": {
+    "mtime": 1791367747.6322818,
+    "seen": 1791819075.2108085,
+    "ast_hash": "7c8c39ba30f015d49a0c429961c022bc",
+    "semantic_hash": "7c8c39ba30f015d49a0c429961c022bc"
+  }
+}

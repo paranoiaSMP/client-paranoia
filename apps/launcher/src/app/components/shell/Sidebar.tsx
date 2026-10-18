@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Plus, Users } from "lucide-react";
 import type { MicrosoftAccount } from "@paranoia/contracts";
 
-import { PRIMARY_NAV, SECONDARY_NAV } from "../../navigation";
+import { NAV_PARENT, PRIMARY_NAV, SECONDARY_NAV } from "../../navigation";
 import type { NavItem, Screen } from "../../navigation";
 
 type SidebarProps = {
@@ -24,6 +24,7 @@ export function Sidebar({
 	onSwitchAccount,
 	onAddAccount,
 }: SidebarProps) {
+	const lit = NAV_PARENT[current] ?? current;
 	const [menuOpen, setMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +52,7 @@ export function Sidebar({
 					<NavButton
 						key={item.screen}
 						item={item}
-						active={current === item.screen}
+						active={lit === item.screen}
 						onClick={() => onNavigate(item.screen)}
 						{...(item.screen === "mods" && modCount !== null
 							? { count: modCount }
@@ -65,7 +66,7 @@ export function Sidebar({
 					<NavButton
 						key={item.screen}
 						item={item}
-						active={current === item.screen}
+						active={lit === item.screen}
 						onClick={() => onNavigate(item.screen)}
 					/>
 				))}
