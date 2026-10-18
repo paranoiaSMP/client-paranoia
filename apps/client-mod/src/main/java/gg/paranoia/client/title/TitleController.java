@@ -63,6 +63,8 @@ public final class TitleController {
         TEINTE,
         PANORAMA,
         QUITTER,
+        /** Allume ou coupe l'habillage d'Halloween. N'existe que pendant la periode. */
+        HALLOWEEN,
     }
 
     /**
@@ -167,6 +169,10 @@ public final class TitleController {
     private final Set<String> signale = new HashSet<>();
 
     private Panorama monte;
+
+    /** La rangee d'icones du bas, pour que les citrouilles l'encadrent. */
+    private int barreX;
+    private int barreL;
     private CubeMapRenderer cube;
     private RotatingCubeMapRenderer panorama;
 
@@ -198,18 +204,31 @@ public final class TitleController {
         this.mouseY = mouseY;
 
         MinecraftClient client = MinecraftClient.getInstance();
-        Teinte teinte = teinte();
+        boolean halloween = Halloween.actif();
+        // Pendant Halloween l'accent est la citrouille, quelle que soit la
+        // teinte choisie: c'est elle qui fait l'habillage. Le choix du joueur
+        // n'est pas touche, il revient tel quel le 3 novembre.
+        int accent = halloween ? Halloween.CITROUILLE : teinte().argb();
+        long ms = System.nanoTime() / 1_000_000L;
 
-        fond(context, client);
+        fond(context, client, halloween);
         dispose();
-        logo(context);
+        if (halloween) {
+            Halloween.arrierePlan(context, width, height, ms);
+        }
+        logo(context, halloween);
 
         for (Bouton bouton : boutons) {
-            dessine(context, bouton, teinte);
+            dessine(context, bouton, accent, halloween);
         }
 
-        pastilleCompte(context, client, teinte);
-        pied(context);
+        if (halloween) {
+            Halloween.compte(context, font, width, height / 2 + 45);
+            Halloween.premierPlan(context, width, height, barreX, barreL, ms);
+        }
+
+        pastilleCompte(context, client, accent, halloween);
+        pied(context, halloween);
     }
 
     /**
@@ -220,12 +239,12 @@ public final class TitleController {
      * n'est pas theorique: c'est par la que le jeu plantait au tout premier
      * lancement.
      */
-    private void fond(DrawContext context, MinecraftClient client) {
+    private void fond(DrawContext context, MinecraftClient client, boolean halloween) {
         if (!panoramaDessine(context, client)) {
-            context.fill(0, 0, width, height, MenuTheme.WINDOW);
+            context.fill(0, 0, width, height, halloween ? Halloween.VOILE_PLEIN : MenuTheme.WINDOW);
             return;
         }
-        context.fill(0, 0, width, height, MenuTheme.BACKDROP);
+        context.fill(0, 0, width, height, halloween ? Halloween.VOILE : MenuTheme.BACKDROP);
     }
 
     /**
@@ -321,14 +340,16 @@ public final class TitleController {
         return panorama;
     }
 
-    private void logo(DrawContext context) {
+    private void logo(DrawContext context, boolean halloween) {
         // Le modele centre son logo 76 au-dessus du milieu de l'ecran.
         int haut = Math.max(4, height / 2 - 76 - LOGO_H / 2);
 
         // Meme reserve que pour le panorama: la texture peut ne pas encore
         // exister a la premiere image. Le nom reste, lui, toujours lisible.
         try {
-            Platforms.get().drawTexture(context, LOGO,
+            // Le logo d'Halloween est un fichier a part et non le meme teinte:
+            // une teinte multiplie, et le violet du C serait devenu brun.
+            Platforms.get().drawTexture(context, halloween ? Halloween.LOGO : LOGO,
                 (width - LOGO_L) / 2, haut, LOGO_L, LOGO_H,
                 LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
@@ -338,7 +359,7 @@ public final class TitleController {
         }
     }
 
-    private void dessine(DrawContext context, Bouton bouton, Teinte teinte) {
+    private void dessine(DrawContext context, Bouton bouton, int accent, boolean halloween) {
         boolean survole = MenuTheme.inside(
             mouseX, mouseY, bouton.x(), bouton.y(), bouton.w(), bouton.h());
 
@@ -351,20 +372,29 @@ public final class TitleController {
                 MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
                     MenuTheme.ROW_HOVER);
             }
-            dessineIcone(context, bouton.icone(),
-                bouton.x() + (bouton.w() - ICONE) / 2,
-                bouton.y() + (bouton.h() - ICONE) / 2,
-                survole ? teinte.argb() : MenuTheme.TEXT);
+            int x = bouton.x() + (bouton.w() - ICONE) / 2;
+            int y = bouton.y() + (bouton.h() - ICONE) / 2;
+            if (bouton.action() == Action.HALLOWEEN) {
+                // Citrouille orange quand l'habillage est allume, grise sinon:
+                // l'icone dit l'etat, comme un interrupteur.
+                dessineTexture(context, Halloween.ICONE, x, y,
+                    halloween ? accent : (survole ? MenuTheme.TEXT : MenuTheme.TEXT_DIM));
+                return;
+            }
+            dessineIcone(context, bouton.icone(), x, y,
+                survole ? accent : (halloween ? Halloween.ENCRE : MenuTheme.TEXT));
             return;
         }
 
         int fond = bouton.boutique()
             ? (survole ? VERT_FOND_SURVOL : VERT_FOND)
-            : (survole ? BARRE_SURVOL : BARRE);
+            : halloween
+                ? (survole ? Halloween.BARRE_SURVOL : Halloween.BARRE)
+                : (survole ? BARRE_SURVOL : BARRE);
         int bord = bouton.boutique()
             ? VERT_BORD
-            : (survole ? teinte.argb() : BARRE_BORD);
-        int encre = bouton.boutique() ? VERT : MenuTheme.TEXT;
+            : (survole ? accent : (halloween ? Halloween.BARRE_BORD : BARRE_BORD));
+        int encre = bouton.boutique() ? VERT : (halloween ? Halloween.ENCRE : MenuTheme.TEXT);
 
         MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), fond);
         MenuTheme.outline(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), bord);
@@ -387,8 +417,12 @@ public final class TitleController {
      * de l'ecran.
      */
     private void dessineIcone(DrawContext context, String nom, int x, int y, int couleur) {
+        dessineTexture(context, icone(nom), x, y, couleur);
+    }
+
+    private void dessineTexture(DrawContext context, Identifier texture, int x, int y, int couleur) {
         try {
-            Platforms.get().drawTexture(context, icone(nom), x, y, ICONE, ICONE,
+            Platforms.get().drawTexture(context, texture, x, y, ICONE, ICONE,
                 ICONE_TEXTURE, ICONE_TEXTURE, couleur);
         } catch (RuntimeException echec) {
             signale("icones pas encore pretes", echec);
@@ -396,17 +430,27 @@ public final class TitleController {
     }
 
     /** Qui est connecte, en haut a gauche, comme dans le launcher. */
-    private void pastilleCompte(DrawContext context, MinecraftClient client, Teinte teinte) {
+    private void pastilleCompte(DrawContext context, MinecraftClient client, int accent, boolean halloween) {
         String pseudo = client.getSession().getUsername();
         int largeur = Math.min(140, font.getWidth(pseudo) + 16);
-        MenuTheme.panel(context, 8, 8, largeur, 18, MenuTheme.CARD);
-        MenuTheme.outline(context, 8, 8, largeur, 18, MenuTheme.CARD_BORDER);
-        context.fill(13, 15, 17, 19, teinte.argb());
+        MenuTheme.panel(context, 8, 8, largeur, 18, halloween ? Halloween.BARRE : MenuTheme.CARD);
+        MenuTheme.outline(context, 8, 8, largeur, 18,
+            halloween ? Halloween.BARRE_BORD : MenuTheme.CARD_BORDER);
+        context.fill(13, 15, 17, 19, accent);
         MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
-            21, 13, MenuTheme.TEXT);
+            21, 13, halloween ? Halloween.ENCRE : MenuTheme.TEXT);
     }
 
-    private void pied(DrawContext context) {
+    private void pied(DrawContext context, boolean halloween) {
+        if (halloween) {
+            // Le gris bleute de Nocturne, vire a la prune avec le reste.
+            MenuTheme.text(context, font,
+                "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
+                8, height - 10, 0xFFA2939C);
+            MenuTheme.right(context, font, "Non affilie a Mojang",
+                0, width - 8, height - 10, 0xFFA2939C);
+            return;
+        }
         MenuTheme.text(context, font,
             "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
             8, height - 10, MenuTheme.TEXT_DIM);
@@ -446,15 +490,24 @@ public final class TitleController {
 
         // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
         // y commence a 17 du bord, et deux centres voisins sont distants de 23.
-        Action[] carres = {
-            Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA, Action.QUITTER,
-        };
-        String[] icones = {
-            "titre-options", "titre-paranoia", "titre-teinte", "titre-panorama", "titre-quitter",
-        };
+        // La citrouille ne s'ajoute que pendant la periode: hors d'elle, il n'y
+        // a rien a allumer, et un bouton qui ne fait rien n'a pas sa place.
+        boolean periode = Halloween.enPeriode();
+        Action[] carres = periode
+            ? new Action[] {Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA,
+                Action.HALLOWEEN, Action.QUITTER}
+            : new Action[] {Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA,
+                Action.QUITTER};
+        String[] icones = periode
+            ? new String[] {"titre-options", "titre-paranoia", "titre-teinte", "titre-panorama",
+                null, "titre-quitter"}
+            : new String[] {"titre-options", "titre-paranoia", "titre-teinte", "titre-panorama",
+                "titre-quitter"};
 
         int total = (carres.length - 1) * PAS_CARRE + CARRE;
         int x = (width - total) / 2;
+        barreX = x;
+        barreL = total;
         int bas = height - 17 - (CARRE - ICONE) / 2;
         for (int i = 0; i < carres.length; i++) {
             boutons.add(new Bouton(carres[i], null, icones[i], x, bas, CARRE, CARRE, false));
@@ -504,6 +557,12 @@ public final class TitleController {
                 }
             }
             case QUITTER -> client.scheduleStop();
+            case HALLOWEEN -> {
+                MenuAccueilModule reglages = MenuAccueilModule.instance();
+                if (reglages != null) {
+                    reglages.basculeHalloween();
+                }
+            }
         }
     }
 

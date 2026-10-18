@@ -1,5 +1,6 @@
 package gg.paranoia.client.modules;
 
+import gg.paranoia.client.module.BooleanSetting;
 import gg.paranoia.client.module.EnumSetting;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
@@ -26,6 +27,13 @@ public final class MenuAccueilModule extends Module {
         "panorama", "Panorama", Panorama.SPAWN, Panorama.values(), Panorama::label));
     private final EnumSetting<Teinte> teinte = add(new EnumSetting<>(
         "teinte", "Teinte", Teinte.AMETHYSTE, Teinte.values(), Teinte::label));
+    /**
+     * L'habillage d'Halloween, du 15 octobre au 2 novembre. Allume par defaut:
+     * c'est un evenement, pas une option qu'on irait chercher. Mais il se
+     * coupe, depuis la citrouille de la barre du bas ou d'ici.
+     */
+    private final BooleanSetting halloween = add(new BooleanSetting(
+        "halloween", "Theme Halloween (15 oct. - 2 nov.)", true));
 
     public MenuAccueilModule() {
         super("menu-accueil", "Ecran d'accueil", ModuleCategory.VISUEL, true);
@@ -52,5 +60,13 @@ public final class MenuAccueilModule extends Module {
 
     public void teinteSuivante() {
         teinte.cycle(1);
+    }
+
+    public boolean halloween() {
+        return halloween.get();
+    }
+
+    public void basculeHalloween() {
+        halloween.toggle();
     }
 }
