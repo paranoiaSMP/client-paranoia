@@ -16,6 +16,7 @@ import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.util.Identifier;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -61,54 +62,75 @@ public final class TitleController {
         OPTIONS,
         TEINTE,
         PANORAMA,
+        HALLOWEEN,
         QUITTER,
+    }
+
+    /** Un titre de la colonne de gauche, ou un outil de la barre du bas. */
+    private enum Genre {
+        TITRE,
+        OUTIL,
     }
 
     /**
      * Un bouton pose: sa place, ce qu'il montre, et ce qu'il fait.
      *
-     * <p>Une barre porte une icone <em>et</em> un texte, centres ensemble --
-     * c'est la disposition du modele. Un carre du bas ne porte qu'une icone,
-     * et son {@code label} est nul.
+     * <p>Les deux genres partagent le meme enregistrement et la meme liste
+     * parce qu'ils partagent surtout le meme clic: une seule boucle les teste,
+     * et il n'y a donc pas deux endroits d'ou une zone cliquable pourrait
+     * deriver de son dessin.
      */
     private record Bouton(
-        Action action, String label, String icone,
-        int x, int y, int w, int h, boolean boutique) {
+        Action action, Genre genre, String label, String icone,
+        float echelle, int x, int y, int w, int h, boolean boutique) {
     }
 
     /*
-     * Les mesures, relevees sur le modele plutot qu'approchees a l'oeil.
+     * Les mesures, relevees sur la maquette plutot qu'approchees a l'oeil. Elle
+     * fait 1920 de large pour une interface a l'echelle 2: tout ce qui suit est
+     * donc la moitie de ce qu'on y mesure.
      *
-     * <p>La capture fait 1917 de large pour une interface a l'echelle 2: tout
-     * ce qui suit est donc la moitie de ce qu'on y mesure. La barre y fait 398
-     * sur 40 avec 8 d'ecart, soit 200 sur 20 avec 4 -- exactement les
-     * dimensions d'un bouton de Minecraft. Le modele ne les a pas inventees,
-     * il les a rhabillees, et il n'y a aucune raison de s'en ecarter.
+     * <p>La colonne est ancree au bas de l'ecran et non a son milieu. C'est la
+     * que la maquette la pose, et c'est surtout ce qui garde constante la
+     * distance entre le dernier titre et la barre d'outils: ancres l'un au
+     * milieu et l'autre au bas, les deux se seraient croises sur une fenetre
+     * basse.
      */
 
-    /** Barre pleine largeur: Solo, Multijoueur. */
-    private static final int BARRE_L = 200;
-    private static final int BARRE_H = 20;
-    /** Ecart vertical entre deux barres, et horizontal entre les deux demies. */
-    private static final int ECART = 4;
-    /** Demi-barre: la rangee du bas en porte deux. */
-    private static final int DEMI_L = (BARRE_L - ECART) / 2;
-    /** Cote de la zone cliquable d'un carre du bas, et pas entre deux centres. */
-    private static final int CARRE = 20;
-    private static final int PAS_CARRE = 23;
+    /** Le rail vertical qui longe la colonne, et le bord gauche des titres. */
+    private static final int RAIL_X = 24;
+    private static final int TITRE_X = 36;
+
+    /** Hauteur du premier titre au-dessus du bas de l'ecran. */
+    private static final int COLONNE_FOND = 168;
+    /** Blanc entre deux titres, en plus de la hauteur du texte. */
+    private static final int TITRE_ECART = 10;
+    /** Ce qui separe le bas du logo du haut du premier titre. */
+    private static final int LOGO_ECART = 17;
+
+    /*
+     * Jouer est plus gros que les autres, au repos comme au survol: c'est la
+     * seule action que l'ecran recommande, et l'echelle le dit mieux qu'une
+     * couleur -- qui est deja prise par le survol.
+     */
+    private static final float ECHELLE_JOUER = 2.0f;
+    private static final float ECHELLE_TITRE = 1.5f;
+    /** Ce que le survol ajoute: assez pour se voir, pas assez pour bousculer. */
+    private static final float ECHELLE_SURVOL = 1.18f;
+
+    /** La barre d'outils du bas: un libelle, puis son icone. */
+    private static final int OUTIL_H = 16;
+    private static final int OUTIL_ICONE = 12;
+    private static final int OUTIL_ECART = 14;
+    /** Hauteur de la barre d'outils au-dessus du bas de l'ecran. */
+    private static final int OUTIL_FOND = 30;
 
     /*
      * Les couleurs, relevees elles aussi. Le fond d'une barre rend (19, 21, 27)
      * au-dessus d'un panorama clair comme au-dessus d'un panorama sombre: il
      * est donc opaque, et non un noir translucide comme on pourrait le croire.
      */
-    private static final int BARRE = 0xFF13151B;
-    private static final int BARRE_SURVOL = 0xFF1E2129;
-    private static final int BARRE_BORD = 0x1FE9E9ED;
     /** La boutique garde sa couleur propre: c'est ce qui la distingue. */
-    private static final int VERT_FOND = 0xFF101E12;
-    private static final int VERT_FOND_SURVOL = 0xFF17301C;
-    private static final int VERT_BORD = 0xFF2A4A38;
     private static final int VERT = 0xFF5BD98A;
 
     /**
@@ -142,7 +164,6 @@ public final class TitleController {
 
     /** Les icones, un fichier par dessin, au double de leur taille a l'ecran. */
     private static final int ICONE_TEXTURE = 32;
-    private static final int ICONE = ICONE_TEXTURE / 2;
     private static final int BLANC = 0xFFFFFFFF;
 
     private static Identifier icone(String nom) {
@@ -159,8 +180,9 @@ public final class TitleController {
     private int mouseX;
     private int mouseY;
 
-    /** Largeur de la pastille de compte, relevee au dessin pour le clic. */
+    /** Place de la pastille de compte, relevee au dessin pour le clic. */
     private int largeurPastille;
+    private int gauchePastille;
 
     /**
      * La liste des comptes du launcher, depliee sous la pastille.
@@ -208,17 +230,31 @@ public final class TitleController {
         this.mouseY = mouseY;
 
         MinecraftClient client = MinecraftClient.getInstance();
-        Teinte teinte = teinte();
+        Saison saison = saison();
+        int accent = accent(saison);
 
         fond(context);
-        dispose();
-        logo(context);
 
-        for (Bouton bouton : boutons) {
-            dessine(context, bouton, teinte);
+        // Le decor de saison encadre l'interface: le ciel derriere elle, le sol
+        // devant. Une chauve-souris qui passerait par-dessus les titres les
+        // rendrait illisibles une seconde sur trois, pour rien.
+        if (saison == Saison.HALLOWEEN) {
+            Decor.arriere(context, width, height);
         }
 
-        pastilleCompte(context, client, teinte);
+        dispose(saison);
+        logo(context);
+        rail(context);
+
+        for (Bouton bouton : boutons) {
+            dessine(context, bouton, accent);
+        }
+
+        if (saison == Saison.HALLOWEEN) {
+            Decor.avant(context, width, height);
+        }
+
+        pastilleCompte(context, client, accent, saison);
         pied(context);
     }
 
@@ -287,62 +323,109 @@ public final class TitleController {
             x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
     }
 
+    /** Le haut du logo, pose au-dessus de la colonne et aligne sur elle. */
+    private int hautLogo() {
+        return Math.max(4, height - COLONNE_FOND - LOGO_ECART - LOGO_H);
+    }
+
     private void logo(DrawContext context) {
-        // Le modele centre son logo 76 au-dessus du milieu de l'ecran.
-        int haut = Math.max(4, height / 2 - 76 - LOGO_H / 2);
+        int haut = hautLogo();
 
         // Meme reserve que pour le panorama: la texture peut ne pas encore
         // exister a la premiere image. Le nom reste, lui, toujours lisible.
         try {
             Platforms.get().drawTexture(context, LOGO,
-                (width - LOGO_L) / 2, haut, LOGO_L, LOGO_H,
+                TITRE_X - 4, haut, LOGO_L, LOGO_H,
                 LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
             signale("logo pas encore pret", echec);
-            MenuTheme.centered(context, font, "PARANOIA", 0, width,
-                haut + LOGO_H / 2, MenuTheme.TEXT);
+            MenuTheme.text(context, font, "PARANOIA",
+                TITRE_X, haut + LOGO_H / 2, MenuTheme.TEXT);
         }
     }
 
-    private void dessine(DrawContext context, Bouton bouton, Teinte teinte) {
+    private void dessine(DrawContext context, Bouton bouton, int accent) {
         boolean survole = MenuTheme.inside(
             mouseX, mouseY, bouton.x(), bouton.y(), bouton.w(), bouton.h());
 
-        // Un carre du bas n'a pas de fond au repos: sur le modele, seules les
-        // icones flottent au-dessus du panorama. Le fond n'apparait qu'au
-        // survol, et c'est lui qui dit que la zone cliquable est plus large
-        // que l'icone.
-        if (bouton.label() == null) {
-            if (survole) {
-                MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(),
-                    MenuTheme.ROW_HOVER);
-            }
-            dessineIcone(context, bouton.icone(),
-                bouton.x() + (bouton.w() - ICONE) / 2,
-                bouton.y() + (bouton.h() - ICONE) / 2,
-                survole ? teinte.argb() : MenuTheme.TEXT);
-            return;
+        if (bouton.genre() == Genre.TITRE) {
+            dessineTitre(context, bouton, accent, survole);
+        } else {
+            dessineOutil(context, bouton, accent, survole);
+        }
+    }
+
+    /**
+     * Un titre de la colonne, grossi et colore au survol.
+     *
+     * <p>Il grossit autour du milieu de sa ligne et non de son coin haut
+     * gauche: ancre en haut, il descendrait sur le titre suivant a chaque
+     * survol, et la colonne entiere paraitrait bouger pour un seul mot.
+     *
+     * <p>La zone cliquable, elle, garde la taille du repos. Si elle suivait la
+     * taille dessinee, le titre deborderait sous le curseur et le survol se
+     * mettrait a battre sur son bord -- il grandit, donc il reste survole, donc
+     * il grandit.
+     */
+    private void dessineTitre(DrawContext context, Bouton bouton, int accent, boolean survole) {
+        int centreY = bouton.y() + bouton.h() / 2;
+
+        // La boutique garde son vert jusque dans le survol: c'est ce qui la
+        // distingue des autres, et l'accent le lui prendrait.
+        int encre = bouton.boutique() ? VERT : (survole ? accent : MenuTheme.TEXT);
+
+        if (survole) {
+            // Le repere du rail. Sans lui le trait ne sert a rien; avec lui, il
+            // dit lequel des titres repond.
+            context.fill(RAIL_X - 1, centreY - 4, RAIL_X + 2, centreY + 4, accent);
         }
 
-        int fond = bouton.boutique()
-            ? (survole ? VERT_FOND_SURVOL : VERT_FOND)
-            : (survole ? BARRE_SURVOL : BARRE);
-        int bord = bouton.boutique()
-            ? VERT_BORD
-            : (survole ? teinte.argb() : BARRE_BORD);
-        int encre = bouton.boutique() ? VERT : MenuTheme.TEXT;
+        float echelle = survole ? bouton.echelle() * ECHELLE_SURVOL : bouton.echelle();
+        Platforms.get().pushScale(context, echelle, bouton.x(), centreY);
+        try {
+            // Les coordonnees sont desormais relatives au pivot et a l'echelle:
+            // zero est le bord gauche du titre, et la demi-hauteur du texte
+            // remontee le recentre sur sa ligne.
+            MenuTheme.text(context, font, bouton.label(), 0, -font.fontHeight / 2, encre);
+        } finally {
+            Platforms.get().popScale(context);
+        }
+    }
 
-        MenuTheme.panel(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), fond);
-        MenuTheme.outline(context, bouton.x(), bouton.y(), bouton.w(), bouton.h(), bord);
+    /** Un outil de la barre du bas: son libelle, puis son icone. */
+    private void dessineOutil(DrawContext context, Bouton bouton, int accent, boolean survole) {
+        int encre = survole ? accent : MenuTheme.TEXT_DIM;
 
-        // Icone et texte centres ensemble, et non le texte seul: c'est la
-        // disposition du modele, ou le couple se lit comme un seul bloc.
-        int bloc = ICONE + 4 + font.getWidth(bouton.label());
-        int x = bouton.x() + (bouton.w() - bloc) / 2;
+        MenuTheme.text(context, font, bouton.label(),
+            bouton.x(), bouton.y() + (OUTIL_H - font.fontHeight) / 2, encre);
+        dessineIcone(context, bouton.icone(),
+            bouton.x() + font.getWidth(bouton.label()) + 4,
+            bouton.y() + (OUTIL_H - OUTIL_ICONE) / 2, OUTIL_ICONE, encre);
+    }
 
-        dessineIcone(context, bouton.icone(), x, bouton.y() + (bouton.h() - ICONE) / 2, encre);
-        MenuTheme.text(context, font, bouton.label(), x + ICONE + 4,
-            bouton.y() + (bouton.h() - font.fontHeight) / 2 + 1, encre);
+    /**
+     * Le trait vertical qui longe la colonne.
+     *
+     * <p>Mesure sur les titres eux-memes plutot que pose a une hauteur fixe: la
+     * colonne suit le bas de la fenetre, et un trait fixe s'en serait decroche
+     * a la premiere redimension.
+     */
+    private void rail(DrawContext context) {
+        int haut = Integer.MAX_VALUE;
+        int bas = Integer.MIN_VALUE;
+
+        for (Bouton bouton : boutons) {
+            if (bouton.genre() != Genre.TITRE) {
+                continue;
+            }
+            haut = Math.min(haut, bouton.y());
+            bas = Math.max(bas, bouton.y() + bouton.h());
+        }
+
+        if (haut > bas) {
+            return;
+        }
+        context.fill(RAIL_X, haut - 6, RAIL_X + 1, bas + 6, MenuTheme.CARD_BORDER);
     }
 
     /**
@@ -352,45 +435,79 @@ public final class TitleController {
      * qui evite un fichier par etat et garde le survol d'accord avec le reste
      * de l'ecran.
      */
-    private void dessineIcone(DrawContext context, String nom, int x, int y, int couleur) {
+    private void dessineIcone(
+        DrawContext context, String nom, int x, int y, int taille, int couleur) {
         try {
-            Platforms.get().drawTexture(context, icone(nom), x, y, ICONE, ICONE,
+            Platforms.get().drawTexture(context, icone(nom), x, y, taille, taille,
                 ICONE_TEXTURE, ICONE_TEXTURE, couleur);
         } catch (RuntimeException echec) {
             signale("icones pas encore pretes", echec);
         }
     }
 
-    /** Qui est connecte, en haut a gauche, comme dans le launcher. */
-    private void pastilleCompte(DrawContext context, MinecraftClient client, Teinte teinte) {
+    /** Qui est connecte, en haut a droite, comme sur la maquette. */
+    private void pastilleCompte(
+        DrawContext context, MinecraftClient client, int accent, Saison saison) {
         String pseudo = client.getSession().getUsername();
         int largeur = Math.min(140, font.getWidth(pseudo) + 16);
         largeurPastille = largeur;
+        int x = width - 8 - largeur;
+        gauchePastille = x;
+
         boolean cliquable = etatPresence() == PresenceService.Etat.HORS_LIGNE;
-        boolean survole = cliquable && MenuTheme.inside(mouseX, mouseY, 8, 8, largeur, 18);
+        boolean survole = cliquable && MenuTheme.inside(mouseX, mouseY, x, 8, largeur, 18);
 
-        MenuTheme.panel(context, 8, 8, largeur, 18,
+        MenuTheme.panel(context, x, 8, largeur, 18,
             survole ? MenuTheme.CARD_HOVER : MenuTheme.CARD);
-        MenuTheme.outline(context, 8, 8, largeur, 18,
-            survole ? teinte.argb() : MenuTheme.CARD_BORDER);
+        MenuTheme.outline(context, x, 8, largeur, 18,
+            survole ? accent : MenuTheme.CARD_BORDER);
 
-        // Le carre disait la teinte choisie, c'est-a-dire rien. Il dit
-        // maintenant si le service Paranoia repond: vert quand la session est
+        // Le carre dit si le service Paranoia repond: vert quand la session est
         // valide, rouge quand le dernier cycle a echoue, neutre tant que le
-        // premier n'est pas passe. C'est la seule chose qu'on puisse
-        // reellement savoir d'ici, et c'est ce qui manquait.
-        context.fill(13, 15, 17, 19, couleurEtat());
+        // premier n'est pas passe.
+        context.fill(x + 5, 15, x + 9, 19, couleurEtat());
         MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
-            21, 13, MenuTheme.TEXT);
+            x + 13, 13, MenuTheme.TEXT);
 
+        int y = 30;
         String dit = libelleEtat();
         if (dit != null) {
-            MenuTheme.text(context, font, dit, 8, 30,
-                cliquable ? teinte.argb() : MenuTheme.TEXT_DIM);
+            MenuTheme.right(context, font, dit, 0, width - 8, y,
+                cliquable ? accent : MenuTheme.TEXT_DIM);
+            y += 12;
         }
 
-        listeDesComptes(context, teinte, dit == null ? 30 : 42);
+        // Le compte a rebours sous le pseudonyme, la ou la maquette le pose.
+        if (saison == Saison.HALLOWEEN) {
+            MenuTheme.right(context, font, Saison.bandeau(LocalDate.now()),
+                0, width - 8, y, accent);
+        }
+
+        listeDesComptes(context, accent, hautListeComptes());
     }
+
+    /**
+     * Le haut de la liste des comptes.
+     *
+     * <p>Une seule source pour le dessin et pour le clic. La liste est posee
+     * sous deux lignes facultatives -- l'etat du service, le compte a rebours
+     * de la saison -- ce qui fait deux occasions de diverger si les deux
+     * cotes comptaient chacun de leur cote. C'est ainsi qu'une zone cliquable
+     * finit ailleurs que ce qu'elle doit atteindre.
+     */
+    private int hautListeComptes() {
+        int y = 30;
+        if (libelleEtat() != null) {
+            y += 12;
+        }
+        if (saison() == Saison.HALLOWEEN) {
+            y += 12;
+        }
+        return y;
+    }
+
+    /** Largeur de la liste des comptes, au dessin comme au clic. */
+    private static final int LISTE_L = 140;
 
     /**
      * Les comptes enregistres par le launcher, sous la pastille.
@@ -400,34 +517,41 @@ public final class TitleController {
      * la session de Minecraft est fixee au demarrage -- mais le launcher
      * relira ce choix au lancement suivant, et c'est dit sous la liste.
      */
-    private void listeDesComptes(DrawContext context, Teinte teinte, int haut) {
+    private void listeDesComptes(DrawContext context, int accent, int haut) {
         if (!comptesDeplies) {
             return;
         }
 
+        int x = width - 8 - LISTE_L;
         List<Comptes.Compte> comptes = Comptes.connus();
         if (comptes.isEmpty()) {
-            MenuTheme.text(context, font, "Launcher injoignable", 8, haut, MenuTheme.TEXT_DIM);
+            MenuTheme.right(context, font, "Launcher injoignable",
+                0, width - 8, haut, MenuTheme.TEXT_DIM);
             return;
         }
 
-        int largeur = 140;
         int ligne = 16;
         int y = haut;
 
         for (Comptes.Compte compte : comptes) {
-            boolean survole = MenuTheme.inside(mouseX, mouseY, 8, y, largeur, ligne);
+            boolean survole = MenuTheme.inside(mouseX, mouseY, x, y, LISTE_L, ligne);
             if (survole || compte.actif()) {
-                MenuTheme.panel(context, 8, y, largeur, ligne,
-                    compte.actif() ? teinte.voile() : MenuTheme.CARD_HOVER);
+                MenuTheme.panel(context, x, y, LISTE_L, ligne,
+                    compte.actif() ? voile(accent) : MenuTheme.CARD_HOVER);
             }
             MenuTheme.text(context, font,
-                MenuTheme.fit(font, compte.pseudonyme(), largeur - 10),
-                13, y + 4, compte.actif() ? teinte.argb() : MenuTheme.TEXT);
+                MenuTheme.fit(font, compte.pseudonyme(), LISTE_L - 10),
+                x + 5, y + 4, compte.actif() ? accent : MenuTheme.TEXT);
             y += ligne + 2;
         }
 
-        MenuTheme.text(context, font, "Au prochain lancement", 8, y + 2, MenuTheme.TEXT_DIM);
+        MenuTheme.right(context, font, "Au prochain lancement",
+            0, width - 8, y + 2, MenuTheme.TEXT_DIM);
+    }
+
+    /** La meme couleur, assez transparente pour servir de fond a une ligne. */
+    private static int voile(int argb) {
+        return (argb & 0x00FFFFFF) | 0x55000000;
     }
 
     private PresenceService.Etat etatPresence() {
@@ -457,11 +581,17 @@ public final class TitleController {
         };
     }
 
+    /**
+     * Le pied, reuni dans le coin bas droit comme sur la maquette.
+     *
+     * <p>Les deux moities disaient la meme chose au meme moment depuis les deux
+     * coins opposes, et celle de gauche tombait desormais sous la barre
+     * d'outils.
+     */
     private void pied(DrawContext context) {
-        MenuTheme.text(context, font,
-            "Paranoia Client - Minecraft " + Platforms.get().minecraftVersion(),
-            8, height - 10, MenuTheme.TEXT_DIM);
-        MenuTheme.right(context, font, "Non affilie a Mojang",
+        MenuTheme.right(context, font,
+            "PARANOIA CLIENT - MINECRAFT " + Platforms.get().minecraftVersion()
+                + " - NON AFFILIE A MOJANG",
             0, width - 8, height - 10, MenuTheme.TEXT_DIM);
     }
 
@@ -474,43 +604,62 @@ public final class TitleController {
      * disposition calculee une seule fois laisserait les zones cliquables la ou
      * les boutons ne sont plus.
      */
-    private void dispose() {
+    private void dispose(Saison saison) {
         boutons.clear();
 
-        int gauche = (width - BARRE_L) / 2;
-        // La premiere barre tombe 31 au-dessus du milieu de l'ecran sur le
-        // modele (236 contre 266 en coordonnees d'interface). Trois rangees
-        // suivent, au pas de BARRE_H + ECART.
-        int y = height / 2 - 31;
+        int hauteurJouer = (int) (font.fontHeight * ECHELLE_JOUER);
+        int hauteurTitre = (int) (font.fontHeight * ECHELLE_TITRE);
 
-        boutons.add(new Bouton(Action.SOLO, "Solo", "solo",
-            gauche, y, BARRE_L, BARRE_H, false));
-        y += BARRE_H + ECART;
-        boutons.add(new Bouton(Action.MULTI, "Multijoueur", "multi",
-            gauche, y, BARRE_L, BARRE_H, false));
-        y += BARRE_H + ECART;
+        // Le bloc ne monte jamais dans le logo: sur une fenetre basse il
+        // descend avec lui plutot que de lui passer dessus.
+        int y = Math.max(hautLogo() + LOGO_H + LOGO_ECART, height - COLONNE_FOND);
 
-        boutons.add(new Bouton(Action.PARANOIA, "Paranoia", "paranoia",
-            gauche, y, DEMI_L, BARRE_H, false));
-        boutons.add(new Bouton(Action.BOUTIQUE, "Boutique", "boutique",
-            gauche + DEMI_L + ECART, y, BARRE_L - DEMI_L - ECART, BARRE_H, true));
+        y = titre(Action.SOLO, "JOUER", ECHELLE_JOUER, hauteurJouer, y, false);
+        y = titre(Action.MULTI, "MULTIJOUEUR", ECHELLE_TITRE, hauteurTitre, y, false);
+        y = titre(Action.PARANOIA, "PARANOIA", ECHELLE_TITRE, hauteurTitre, y, false);
+        y = titre(Action.BOUTIQUE, "BOUTIQUE", ECHELLE_TITRE, hauteurTitre, y, true);
+        titre(Action.QUITTER, "QUITTER", ECHELLE_TITRE, hauteurTitre, y, false);
 
-        // Les carres, colles au bas de l'ecran comme sur le modele: leur rangee
-        // y commence a 17 du bord, et deux centres voisins sont distants de 23.
-        Action[] carres = {
-            Action.OPTIONS, Action.PARANOIA, Action.TEINTE, Action.PANORAMA, Action.QUITTER,
-        };
-        String[] icones = {
-            "options", "paranoia", "teinte", "panorama", "quitter",
-        };
+        outils(saison);
+    }
 
-        int total = (carres.length - 1) * PAS_CARRE + CARRE;
-        int x = (width - total) / 2;
-        int bas = height - 17 - (CARRE - ICONE) / 2;
-        for (int i = 0; i < carres.length; i++) {
-            boutons.add(new Bouton(carres[i], null, icones[i], x, bas, CARRE, CARRE, false));
-            x += PAS_CARRE;
+    /**
+     * Pose un titre, et rend le haut du suivant.
+     *
+     * <p>La largeur est celle du texte a son echelle de repos: c'est la zone
+     * cliquable, et elle ne doit pas suivre le grossissement du survol.
+     */
+    private int titre(
+        Action action, String label, float echelle, int hauteur, int y, boolean boutique) {
+        int largeur = (int) (font.getWidth(label) * echelle);
+        boutons.add(new Bouton(action, Genre.TITRE, label, null,
+            echelle, TITRE_X, y, largeur, hauteur, boutique));
+        return y + hauteur + TITRE_ECART;
+    }
+
+    /** La barre du bas: ce qui se regle sans quitter l'ecran. */
+    private void outils(Saison saison) {
+        int x = TITRE_X - 2;
+        int y = height - OUTIL_FOND;
+
+        x = outil(Action.OPTIONS, "OPTIONS", "options", x, y);
+        x = outil(Action.TEINTE, "TEINTE", "teinte", x, y);
+        x = outil(Action.PANORAMA, "PANORAMA", "panorama", x, y);
+
+        // Le bouton de saison n'apparait que lorsqu'il a quelque chose a dire:
+        // pendant la fenetre d'Halloween, ou quand le joueur l'a forcee hors
+        // saison pour pouvoir la couper. Le reste de l'annee la barre est celle
+        // de toujours, et rien n'annonce une saison qui n'est pas la.
+        if (saison == Saison.HALLOWEEN || Saison.estLaSaison(LocalDate.now())) {
+            outil(Action.HALLOWEEN, "HALLOWEEN", "halloween", x, y);
         }
+    }
+
+    private int outil(Action action, String label, String icone, int x, int y) {
+        int largeur = font.getWidth(label) + 4 + OUTIL_ICONE;
+        boutons.add(new Bouton(action, Genre.OUTIL, label, icone,
+            1.0f, x, y, largeur, OUTIL_H, false));
+        return x + largeur + OUTIL_ECART;
     }
 
     // ----------------------------------------------------------------- souris
@@ -523,7 +672,7 @@ public final class TitleController {
         // La pastille de compte et sa liste sont dessinees a part des autres
         // boutons -- elles portent des pseudonymes, pas des libelles -- donc
         // leurs clics se traitent a part.
-        if (MenuTheme.inside(mouseX, mouseY, 8, 8, largeurPastille, 18)) {
+        if (MenuTheme.inside(mouseX, mouseY, gauchePastille, 8, largeurPastille, 18)) {
             // Un service injoignable: le clic sert d'abord a reessayer. C'est
             // ce que le joueur veut a cet instant, et le libelle rouge le dit.
             if (etatPresence() == PresenceService.Etat.HORS_LIGNE) {
@@ -567,10 +716,10 @@ public final class TitleController {
             return false;
         }
 
-        int haut = libelleEtat() == null ? 30 : 42;
-        int y = haut;
+        int x = width - 8 - LISTE_L;
+        int y = hautListeComptes();
         for (Comptes.Compte compte : comptes) {
-            if (MenuTheme.inside(mouseX, mouseY, 8, y, 140, 16)) {
+            if (MenuTheme.inside(mouseX, mouseY, x, y, LISTE_L, 16)) {
                 Comptes.choisit(compte.id());
                 return true;
             }
@@ -602,6 +751,12 @@ public final class TitleController {
                 MenuAccueilModule reglages = MenuAccueilModule.instance();
                 if (reglages != null) {
                     reglages.panoramaSuivant();
+                }
+            }
+            case HALLOWEEN -> {
+                MenuAccueilModule reglages = MenuAccueilModule.instance();
+                if (reglages != null) {
+                    reglages.saisonSuivante();
                 }
             }
             case QUITTER -> client.scheduleStop();
@@ -641,5 +796,24 @@ public final class TitleController {
     private Panorama panoramaChoisi() {
         MenuAccueilModule reglages = MenuAccueilModule.instance();
         return reglages == null ? Panorama.SPAWN : reglages.panorama();
+    }
+
+    /** La saison reellement dessinee, preference du joueur comprise. */
+    private Saison saison() {
+        MenuAccueilModule reglages = MenuAccueilModule.instance();
+        Saison choix = reglages == null ? Saison.AUTO : reglages.saison();
+        return choix.resolue(LocalDate.now());
+    }
+
+    /**
+     * La couleur d'accent de l'ecran.
+     *
+     * <p>Halloween impose la sienne et suspend la teinte choisie. C'est le seul
+     * endroit ou une saison prend le pas sur un reglage, et il se defend: une
+     * saison qui laisserait l'accent violet ne serait plus une saison. Le bouton
+     * HALLOWEEN de la barre sert a la couper, et la teinte revient avec.
+     */
+    private int accent(Saison saison) {
+        return saison == Saison.HALLOWEEN ? Decor.ORANGE : teinte().argb();
     }
 }

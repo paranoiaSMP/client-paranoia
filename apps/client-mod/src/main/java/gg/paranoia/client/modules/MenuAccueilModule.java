@@ -4,15 +4,16 @@ import gg.paranoia.client.module.EnumSetting;
 import gg.paranoia.client.module.Module;
 import gg.paranoia.client.module.ModuleCategory;
 import gg.paranoia.client.title.Panorama;
+import gg.paranoia.client.title.Saison;
 import gg.paranoia.client.title.Teinte;
 
 /**
  * L'ecran d'accueil Paranoia, a la place de l'ecran-titre de Minecraft.
  *
- * <p>Le module porte les trois choses que le joueur peut changer, et il les
- * porte parce qu'un module est deja ce qui sait se relire au demarrage
- * suivant: un panorama choisi qui redeviendrait celui par defaut a chaque
- * lancement ne serait pas un reglage, seulement un effet.
+ * <p>Le module porte les choses que le joueur peut changer, et il les porte
+ * parce qu'un module est deja ce qui sait se relire au demarrage suivant: un
+ * panorama choisi qui redeviendrait celui par defaut a chaque lancement ne
+ * serait pas un reglage, seulement un effet.
  *
  * <p>Le desactiver rend l'ecran-titre d'origine, entier. C'est voulu: on
  * remplace un ecran que le joueur connait depuis toujours, et lui laisser le
@@ -26,6 +27,14 @@ public final class MenuAccueilModule extends Module {
         "panorama", "Panorama", Panorama.SPAWN, Panorama.values(), Panorama::label));
     private final EnumSetting<Teinte> teinte = add(new EnumSetting<>(
         "teinte", "Teinte", Teinte.AMETHYSTE, Teinte.values(), Teinte::label));
+
+    /*
+     * La saison est « automatique » par defaut, c'est-a-dire decidee par la
+     * date. Les deux autres valeurs sont des recours: la couper pour qui la
+     * trouve genante, la forcer pour qui veut la voir en mars.
+     */
+    private final EnumSetting<Saison> saison = add(new EnumSetting<>(
+        "saison", "Saison", Saison.AUTO, Saison.values(), Saison::label));
 
     public MenuAccueilModule() {
         super("menu-accueil", "Ecran d'accueil", ModuleCategory.VISUEL, true);
@@ -52,5 +61,13 @@ public final class MenuAccueilModule extends Module {
 
     public void teinteSuivante() {
         teinte.cycle(1);
+    }
+
+    public Saison saison() {
+        return saison.get();
+    }
+
+    public void saisonSuivante() {
+        saison.cycle(1);
     }
 }
