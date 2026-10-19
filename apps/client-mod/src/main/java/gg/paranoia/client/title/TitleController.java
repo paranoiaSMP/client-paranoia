@@ -101,12 +101,28 @@ public final class TitleController {
     private static final int RAIL_X = 24;
     private static final int TITRE_X = 36;
 
-    /** Hauteur du premier titre au-dessus du bas de l'ecran. */
-    private static final int COLONNE_FOND = 168;
+    /*
+     * Hauteur du premier titre au-dessus du bas de l'ecran: le plancher releve
+     * sur la maquette, et au-dela une part de la hauteur.
+     *
+     * <p>Les deux, parce qu'aucun des deux ne suffit. Un nombre fixe de pixels
+     * n'est juste qu'a une seule taille de fenetre: sur un ecran haut, ou a une
+     * autre echelle d'interface, la colonne se colle au bas et tout le reste
+     * paraait vide. Une part seule laisserait la colonne descendre sur la barre
+     * d'outils des que la fenetre devient basse, parce que la hauteur du texte,
+     * elle, ne suit pas -- elle tient a l'echelle de la police.
+     *
+     * <p>0,307 est ce que la maquette donne: le premier titre y commence a
+     * 373 sur 538, soit 165 du bas. Les deux valeurs se rejoignent donc a la
+     * taille de reference, et le plancher ne prend la main que plus bas.
+     */
+    private static final int COLONNE_FOND = 165;
+    private static final float COLONNE_PART = 0.307f;
+
     /** Blanc entre deux titres, en plus de la hauteur du texte. */
     private static final int TITRE_ECART = 10;
     /** Ce qui separe le bas du logo du haut du premier titre. */
-    private static final int LOGO_ECART = 17;
+    private static final int LOGO_ECART = 21;
 
     /*
      * Jouer est plus gros que les autres, au repos comme au survol: c'est la
@@ -123,7 +139,10 @@ public final class TitleController {
     private static final int OUTIL_ICONE = 12;
     private static final int OUTIL_ECART = 14;
     /** Hauteur de la barre d'outils au-dessus du bas de l'ecran. */
-    private static final int OUTIL_FOND = 30;
+    private static final int OUTIL_FOND = 26;
+
+    /** Corps de la mention legale du pied, par rapport a la police du jeu. */
+    private static final float PIED_ECHELLE = 0.7f;
 
     /*
      * Les couleurs, relevees elles aussi. Le fond d'une barre rend (19, 21, 27)
@@ -144,6 +163,17 @@ public final class TitleController {
     private static final Identifier LOGO =
         Identifier.of("paranoia_client", "textures/gui/title/logo.png");
 
+    /**
+     * Le meme logo, le « C » passe a l'orange.
+     *
+     * <p>Un second fichier et non une teinte: la teinte s'applique au dessin
+     * entier, et elle aurait colore le « P » blanc avec. Celui-ci est derive du
+     * premier en ne remplacant que les pixels violets, clarte conservee -- les
+     * bords adoucis du « C » le restent au lieu de devenir un aplat dentele.
+     */
+    private static final Identifier LOGO_SAISON =
+        Identifier.of("paranoia_client", "textures/gui/title/logo-halloween.png");
+
     /*
      * Le logo fait exactement le double de sa taille a l'ecran.
      *
@@ -159,8 +189,21 @@ public final class TitleController {
      */
     private static final int LOGO_TEXTURE_L = 176;
     private static final int LOGO_TEXTURE_H = 100;
-    private static final int LOGO_L = LOGO_TEXTURE_L / 2;
-    private static final int LOGO_H = LOGO_TEXTURE_H / 2;
+
+    /*
+     * Releve sur la maquette: le logo y fait 61 de haut en coordonnees
+     * d'interface, pas 50. La moitie exacte de la texture donnait un dessin net
+     * -- deux texels pour deux pixels -- mais un bloc plus court que le modele
+     * de dix pixels, pris entierement sur le haut.
+     *
+     * On suit la maquette et on perd l'echantillonnage exact. C'est un logo
+     * fait de larges aplats et d'arcs: il supporte le leger agrandissement, la
+     * ou la toile ou une chauve-souris ne le supporteraient pas -- elles sont
+     * dessinees pixel par pixel, et c'est pour elles que la regle du multiple
+     * entier existe.
+     */
+    private static final int LOGO_H = 60;
+    private static final int LOGO_L = LOGO_TEXTURE_L * LOGO_H / LOGO_TEXTURE_H;
 
     /** Les icones, un fichier par dessin, au double de leur taille a l'ecran. */
     private static final int ICONE_TEXTURE = 32;
@@ -243,8 +286,8 @@ public final class TitleController {
         }
 
         dispose(saison);
-        logo(context);
-        rail(context);
+        logo(context, saison);
+        rail(context, saison);
 
         for (Bouton bouton : boutons) {
             dessine(context, bouton, accent);
@@ -323,18 +366,30 @@ public final class TitleController {
             x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
     }
 
-    /** Le haut du logo, pose au-dessus de la colonne et aligne sur elle. */
-    private int hautLogo() {
-        return Math.max(4, height - COLONNE_FOND - LOGO_ECART - LOGO_H);
+    /**
+     * Le haut du premier titre.
+     *
+     * <p>Une seule source pour la colonne et pour le logo qui la coiffe: ils se
+     * suivent, et deux calculs paralleles finiraient par se decoller l'un de
+     * l'autre a la premiere retouche.
+     */
+    private int hautColonne() {
+        return height - Math.max(COLONNE_FOND, (int) (height * COLONNE_PART));
     }
 
-    private void logo(DrawContext context) {
+    /** Le haut du logo, pose au-dessus de la colonne et aligne sur elle. */
+    private int hautLogo() {
+        return Math.max(4, hautColonne() - LOGO_ECART - LOGO_H);
+    }
+
+    private void logo(DrawContext context, Saison saison) {
         int haut = hautLogo();
 
         // Meme reserve que pour le panorama: la texture peut ne pas encore
         // exister a la premiere image. Le nom reste, lui, toujours lisible.
         try {
-            Platforms.get().drawTexture(context, LOGO,
+            Platforms.get().drawTexture(
+                context, saison == Saison.HALLOWEEN ? LOGO_SAISON : LOGO,
                 TITRE_X - 4, haut, LOGO_L, LOGO_H,
                 LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
@@ -410,7 +465,7 @@ public final class TitleController {
      * colonne suit le bas de la fenetre, et un trait fixe s'en serait decroche
      * a la premiere redimension.
      */
-    private void rail(DrawContext context) {
+    private void rail(DrawContext context, Saison saison) {
         int haut = Integer.MAX_VALUE;
         int bas = Integer.MIN_VALUE;
 
@@ -425,7 +480,29 @@ public final class TitleController {
         if (haut > bas) {
             return;
         }
-        context.fill(RAIL_X, haut - 6, RAIL_X + 1, bas + 6, MenuTheme.CARD_BORDER);
+
+        boolean saisonniere = saison == Saison.HALLOWEEN;
+        int pied = bas + 10;
+
+        // Le trait est un aplat et non une texture: toutes ses rangees sont
+        // identiques, donc l'etirer ne le deforme pas -- mais le dessin fourni
+        // fait une hauteur fixe, alors que la colonne suit celle de la fenetre.
+        // Seul le pied, qui lui ne s'etire pas, vaut d'etre une image.
+        context.fill(RAIL_X, haut - 6, RAIL_X + 1, pied,
+            saisonniere ? Decor.RAIL_SAISON : MenuTheme.CARD_BORDER);
+
+        if (saisonniere) {
+            Decor.railPied(context, RAIL_X, pied);
+            return;
+        }
+
+        // Hors saison le pied est trace, faute d'un dessin pour la gamme
+        // Nocturne: le meme carre creux prolonge d'un ergot.
+        int cote = 5;
+        int gauche = RAIL_X - cote / 2;
+        MenuTheme.outline(context, gauche, pied, cote, cote, 0, MenuTheme.CARD_BORDER);
+        context.fill(gauche + cote, pied + cote / 2, gauche + cote + 7, pied + cote / 2 + 1,
+            MenuTheme.CARD_BORDER);
     }
 
     /**
@@ -589,10 +666,24 @@ public final class TitleController {
      * d'outils.
      */
     private void pied(DrawContext context) {
-        MenuTheme.right(context, font,
-            "PARANOIA CLIENT - MINECRAFT " + Platforms.get().minecraftVersion()
-                + " - NON AFFILIE A MOJANG",
-            0, width - 8, height - 10, MenuTheme.TEXT_DIM);
+        String mention = "PARANOIA CLIENT - MINECRAFT " + Platforms.get().minecraftVersion()
+            + " - NON AFFILIE A MOJANG";
+
+        // Reduit, parce que la police du jeu n'a qu'une taille et que celle-ci
+        // est celle des titres. Sur la maquette la mention fait a peine plus de
+        // la moitie du corps de texte: c'est une mention legale, elle doit etre
+        // lisible et rien de plus. Reunie en une seule ligne elle occupait en
+        // plus toute la largeur du bas.
+        Platforms.get().pushScale(context, PIED_ECHELLE, width - 8, height - 8);
+        try {
+            // Coordonnees relatives au pivot: le texte remonte de sa propre
+            // hauteur et recule de sa propre largeur pour que son coin bas
+            // droit tombe sur le point d'ancrage.
+            MenuTheme.text(context, font, mention,
+                -font.getWidth(mention), -font.fontHeight, MenuTheme.TEXT_DIM);
+        } finally {
+            Platforms.get().popScale(context);
+        }
     }
 
     // --------------------------------------------------------------- position
@@ -612,7 +703,7 @@ public final class TitleController {
 
         // Le bloc ne monte jamais dans le logo: sur une fenetre basse il
         // descend avec lui plutot que de lui passer dessus.
-        int y = Math.max(hautLogo() + LOGO_H + LOGO_ECART, height - COLONNE_FOND);
+        int y = Math.max(hautLogo() + LOGO_H + LOGO_ECART, hautColonne());
 
         y = titre(Action.SOLO, "JOUER", ECHELLE_JOUER, hauteurJouer, y, false);
         y = titre(Action.MULTI, "MULTIJOUEUR", ECHELLE_TITRE, hauteurTitre, y, false);
