@@ -80,6 +80,8 @@ function verifie(condition, message) {
 const MAQUETTE = {
   hauteur: 538,
   logo: 291,
+  // Bas du logo (291 + 61) au haut du premier titre (373).
+  ecartLogo: 21,
   titres: [373, 401.5, 424.5, 447.5, 470.5],
   outils: 512,
 };
@@ -89,7 +91,20 @@ console.log("--- les proportions de la maquette, a la taille de reference");
   const { logo, titres, outils } = pose(MAQUETTE.hauteur);
   const pres = (a, b, marge) => Math.abs(a - b) <= marge;
 
-  verifie(pres(logo, MAQUETTE.logo, 2), `le logo commence a ${logo} (maquette ${MAQUETTE.logo})`);
+  // Le haut du logo ne se compare plus a la maquette: le logo a ete reduit de
+  // dix pour cent sur demande, donc il commence plus bas qu'elle, et c'est
+  // voulu. Ce qui doit tenir, c'est l'ecart au premier titre -- c'est lui qui
+  // fait que le bloc se lit d'un tenant -- et le fait que le logo reste a
+  // l'ecran.
+  // Compare a la MESURE et non a la constante qui la produit. Confronter
+  // l'ecart calcule a LOGO_ECART serait vrai par construction -- la
+  // verification passerait quelle que soit la valeur, y compris absurde.
+  const ecart = titres[0].haut - (logo + LOGO_H);
+  verifie(
+    ecart === MAQUETTE.ecartLogo,
+    `le logo s'arrete a ${ecart} du premier titre (maquette ${MAQUETTE.ecartLogo})`,
+  );
+  verifie(logo >= 4, `le logo commence a ${logo}, dans l'ecran`);
   MAQUETTE.titres.forEach((attendu, i) => {
     verifie(
       pres(titres[i].haut, attendu, 1),

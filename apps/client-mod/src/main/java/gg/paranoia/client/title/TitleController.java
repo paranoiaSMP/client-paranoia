@@ -133,10 +133,21 @@ public final class TitleController {
     private static final float ECHELLE_TITRE = 1.5f;
     /** Ce que le survol ajoute: assez pour se voir, pas assez pour bousculer. */
     private static final float ECHELLE_SURVOL = 1.18f;
+    /** Ce dont le titre survole s'ecarte du rail, en plus de grossir. */
+    private static final int SURVOL_DECALAGE = 6;
 
     /** La barre d'outils du bas: un libelle, puis son icone. */
     private static final int OUTIL_H = 16;
-    private static final int OUTIL_ICONE = 12;
+    /*
+     * Seize, et non douze. La source fait 32: a douze le facteur valait 0,38,
+     * donc le jeu gardait deux texels sur cinq et en doublait d'autres au
+     * hasard -- exactement ce qui faisait des icones de la barre des taches
+     * grises. La moitie exacte retombe sur un texel pour un pixel.
+     *
+     * Ca tombe bien: la consigne demandait a peu pres 1,8 fois la hauteur du
+     * texte, soit seize pour une police qui en fait neuf.
+     */
+    private static final int OUTIL_ICONE = 16;
     private static final int OUTIL_ECART = 14;
     /** Hauteur de la barre d'outils au-dessus du bas de l'ecran. */
     private static final int OUTIL_FOND = 26;
@@ -202,7 +213,7 @@ public final class TitleController {
      * dessinees pixel par pixel, et c'est pour elles que la regle du multiple
      * entier existe.
      */
-    private static final int LOGO_H = 60;
+    private static final int LOGO_H = 54;
     private static final int LOGO_L = LOGO_TEXTURE_L * LOGO_H / LOGO_TEXTURE_H;
 
     /** Les icones, un fichier par dessin, au double de leur taille a l'ecran. */
@@ -277,6 +288,7 @@ public final class TitleController {
         int accent = accent(saison);
 
         fond(context);
+        vignette(context);
 
         // Le decor de saison encadre l'interface: le ciel derriere elle, le sol
         // devant. Une chauve-souris qui passerait par-dessus les titres les
@@ -294,11 +306,39 @@ public final class TitleController {
         }
 
         if (saison == Saison.HALLOWEEN) {
+            Decor.braises(context, width, height);
             Decor.avant(context, width, height);
         }
 
         pastilleCompte(context, client, accent, saison);
         pied(context);
+    }
+
+    /**
+     * Le vignettage: les bords assombris, et un fond chaud dans le coin bas
+     * gauche.
+     *
+     * <p>Des bandes de un pixel et non un degrade: {@code fill} ne sait poser
+     * que des aplats, et c'est la seule primitive dont la signature n'a pas
+     * bouge sur les versions ciblees. Trente-deux bandes a l'opacite
+     * decroissante suffisent a ce que l'oeil ne voie plus les marches.
+     *
+     * <p>Ce n'est pas un flou. Le panorama ne peut pas etre floute par ce
+     * chemin de rendu -- il faudrait une passe d'ecran et un shader, c'est-a-dire
+     * exactement le genre de chemin qui a fait echouer le cubemap trois fois.
+     * L'assombrissement fait l'essentiel de ce qu'on attendait du flou: ramener
+     * le fond derriere le texte.
+     */
+    private void vignette(DrawContext context) {
+        int bandes = 32;
+        for (int i = 0; i < bandes; i++) {
+            int alpha = (int) (86.0 * (bandes - i) / bandes);
+            int couleur = (alpha << 24) | (MenuTheme.WINDOW & 0x00FFFFFF);
+            context.fill(0, i, width, i + 1, couleur);
+            context.fill(0, height - i - 1, width, height - i, couleur);
+            context.fill(i, 0, i + 1, height, couleur);
+            context.fill(width - i - 1, 0, width - i, height, couleur);
+        }
     }
 
     /**
@@ -436,7 +476,8 @@ public final class TitleController {
         }
 
         float echelle = survole ? bouton.echelle() * ECHELLE_SURVOL : bouton.echelle();
-        Platforms.get().pushScale(context, echelle, bouton.x(), centreY);
+        int x = survole ? bouton.x() + SURVOL_DECALAGE : bouton.x();
+        Platforms.get().pushScale(context, echelle, x, centreY);
         try {
             // Les coordonnees sont desormais relatives au pivot et a l'echelle:
             // zero est le bord gauche du titre, et la demi-hauteur du texte
@@ -525,7 +566,10 @@ public final class TitleController {
     /** Qui est connecte, en haut a droite, comme sur la maquette. */
     private void pastilleCompte(
         DrawContext context, MinecraftClient client, int accent, Saison saison) {
-        String pseudo = client.getSession().getUsername();
+        // En majuscules comme sur la maquette. L'orthographe, elle, est celle
+        // du compte Mojang et ne se corrige pas d'ici: si le jeu affiche
+        // « Phoorealc », c'est le nom du compte avec lequel il a demarre.
+        String pseudo = client.getSession().getUsername().toUpperCase(java.util.Locale.ROOT);
         int largeur = Math.min(140, font.getWidth(pseudo) + 16);
         largeurPastille = largeur;
         int x = width - 8 - largeur;
@@ -536,13 +580,14 @@ public final class TitleController {
 
         MenuTheme.panel(context, x, 8, largeur, 18,
             survole ? MenuTheme.CARD_HOVER : MenuTheme.CARD);
-        MenuTheme.outline(context, x, 8, largeur, 18,
-            survole ? accent : MenuTheme.CARD_BORDER);
+        // Bordure d'accent en permanence, et non au seul survol: c'est ce que
+        // montre la maquette, et c'est ce qui rattache la pastille au reste.
+        MenuTheme.outline(context, x, 8, largeur, 18, accent);
 
         // Le carre dit si le service Paranoia repond: vert quand la session est
         // valide, rouge quand le dernier cycle a echoue, neutre tant que le
         // premier n'est pas passe.
-        context.fill(x + 5, 15, x + 9, 19, couleurEtat());
+        losange(context, x + 7, 17, 3, couleurEtat(accent));
         MenuTheme.text(context, font, MenuTheme.fit(font, pseudo, largeur - 16),
             x + 13, 13, MenuTheme.TEXT);
 
@@ -636,9 +681,33 @@ public final class TitleController {
         return presence == null ? PresenceService.Etat.EN_COURS : presence.etat();
     }
 
-    private int couleurEtat() {
+    /**
+     * Un petit losange, pose sur son centre.
+     *
+     * <p>Fait de rangees de plus en plus larges puis de plus en plus etroites:
+     * {@code fill} ne sait tracer que des rectangles, et c'est l'escalier qui
+     * fait le losange -- la meme esthetique que le reste du jeu.
+     */
+    private static void losange(DrawContext context, int cx, int cy, int rayon, int couleur) {
+        for (int dy = -rayon; dy <= rayon; dy++) {
+            int demi = rayon - Math.abs(dy);
+            context.fill(cx - demi, cy + dy, cx + demi + 1, cy + dy + 1, couleur);
+        }
+    }
+
+    /**
+     * La couleur du losange de la pastille.
+     *
+     * <p>La maquette le montre orange en toute circonstance. Il reste pourtant
+     * variable, et c'est un ecart assume: ce repere a ete ajoute precisement
+     * pour dire si le service Paranoia repond, et un losange toujours orange ne
+     * dirait plus rien. Il prend donc l'accent quand tout va bien -- donc
+     * l'orange en saison, ce que la maquette montre -- et ne s'en ecarte que
+     * pour signaler un probleme.
+     */
+    private int couleurEtat(int accent) {
         return switch (etatPresence()) {
-            case CONNECTE -> VERT;
+            case CONNECTE -> accent;
             case HORS_LIGNE -> MenuTheme.STATE_OFF;
             case EN_COURS -> MenuTheme.TEXT_DIM;
         };

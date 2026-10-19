@@ -49,6 +49,7 @@ public final class Decor {
     private static final int TEL_QUEL = 0xFFFFFFFF;
 
     private static final Identifier TOILE = decor("toile");
+    private static final Identifier ARAIGNEE = decor("araignee");
     private static final Identifier LUNE = decor("lune");
     private static final Identifier CITROUILLE = decor("citrouille");
     private static final Identifier RAIL_PIED = decor("rail-pied");
@@ -69,6 +70,12 @@ public final class Decor {
     /** Duree d'une etape du battement d'ailes. */
     private static final long BATTEMENT = 160L;
 
+    /** Ce qui separe le bas des citrouilles du bas de l'ecran. */
+    private static final int CITROUILLE_BAS = 18;
+
+    private static final int BRAISES = 26;
+    private static final int ETINCELLES = 9;
+
     private Decor() {
     }
 
@@ -86,6 +93,7 @@ public final class Decor {
      */
     public static void arriere(DrawContext context, int width, int height) {
         pose(context, TOILE, 0, 0, 64, 64, CARRE_32, CARRE_32, TEL_QUEL);
+        araignee(context);
 
         // La lune est posee sous le bandeau de saison et non a sa hauteur: les
         // deux tirent vers le coin haut droit, et le texte doit rester lisible.
@@ -106,8 +114,79 @@ public final class Decor {
      * bas, la barre d'outils est a l'autre bout.
      */
     public static void avant(DrawContext context, int width, int height) {
-        pose(context, CITROUILLE, width - 64, height - 46, 32, 32, CARRE_16, CARRE_16, TEL_QUEL);
-        pose(context, CITROUILLE, width - 28, height - 30, 16, 16, CARRE_16, CARRE_16, TEL_QUEL);
+        // Deux citrouilles de meme taille, cote a cote, et POSEES AU-DESSUS de
+        // la mention legale. Elles la chevauchaient: la grande descendait a
+        // seize pixels du bas quand la mention commence a treize.
+        int bas = height - CITROUILLE_BAS;
+        pose(context, CITROUILLE, width - 70, bas - 32, 32, 32, CARRE_16, CARRE_16, TEL_QUEL);
+        pose(context, CITROUILLE, width - 34, bas - 32, 32, 32, CARRE_16, CARRE_16, TEL_QUEL);
+    }
+
+    /**
+     * L'araignee, pendue a son fil sous la toile.
+     *
+     * <p>Elle descend et remonte lentement. Le fil est redessine a chaque image
+     * jusqu'a elle plutot que d'une longueur fixe: un fil qui ne suit pas la
+     * bestiole la laisse flotter sous son extremite.
+     */
+    private static void araignee(DrawContext context) {
+        double phase = System.currentTimeMillis() % 9_000L * 2 * Math.PI / 9_000.0;
+        int y = 52 + (int) Math.round((Math.sin(phase) + 1) * 9);
+
+        context.fill(45, 30, 46, y, 0x66E9E9ED);
+        pose(context, ARAIGNEE, 41, y, 16, 16, 8, 8, TEL_QUEL);
+    }
+
+    /**
+     * Les braises et les etincelles.
+     *
+     * <p>Aucun etat garde d'une image a l'autre: la position de chaque braise
+     * est une fonction du temps et de son numero. Une liste de particules
+     * vivantes aurait demande un tick -- que cet ecran n'a pas -- et aurait
+     * grossi tant que l'ecran reste ouvert.
+     */
+    public static void braises(DrawContext context, int width, int height) {
+        long t = System.currentTimeMillis();
+
+        for (int i = 0; i < BRAISES; i++) {
+            // Deux nombres premiers differents par braise: les colonnes ne se
+            // rangent pas, et les montees ne se synchronisent pas.
+            int colonne = (i * 977) % Math.max(1, width);
+            long duree = 7_000L + (i * 613L) % 5_000L;
+            double part = ((t + i * 1_237L) % duree) / (double) duree;
+
+            int y = height - (int) (part * (height * 0.55));
+            int x = colonne + (int) Math.round(Math.sin(part * 6.3 + i) * 6);
+
+            // Elle s'eteint en montant: une braise qui garde son eclat jusqu'en
+            // haut de l'ecran ressemble a une poussiere, pas a une flammeche.
+            int alpha = (int) (200 * (1 - part));
+            if (alpha < 12) {
+                continue;
+            }
+            int couleur = (alpha << 24) | (ORANGE & 0x00FFFFFF);
+            context.fill(x, y, x + 1 + (i % 2), y + 1 + (i % 2), couleur);
+        }
+
+        for (int i = 0; i < ETINCELLES; i++) {
+            long cycle = 2_600L + (i * 431L) % 1_900L;
+            double part = ((t + i * 877L) % cycle) / (double) cycle;
+
+            // Un scintillement, pas un clignotement: l'eclat monte puis
+            // redescend, et l'etincelle passe la moitie du cycle invisible.
+            double eclat = Math.sin(part * Math.PI);
+            if (eclat < 0.35) {
+                continue;
+            }
+            int x = (i * 1_361) % Math.max(1, width);
+            int y = 40 + (i * 523) % Math.max(1, (int) (height * 0.6));
+            int couleur = ((int) (235 * eclat) << 24) | 0x00FFE2B0;
+
+            // Une petite croix: deux traits d'un pixel. Un carre se lirait
+            // comme une braise de plus.
+            context.fill(x - 2, y, x + 3, y + 1, couleur);
+            context.fill(x, y - 2, x + 1, y + 3, couleur);
+        }
     }
 
     /**
