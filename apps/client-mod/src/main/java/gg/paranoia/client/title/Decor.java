@@ -101,7 +101,6 @@ public final class Decor {
     private static final int MARCHES = 6;
 
     private static final int BRAISES = 26;
-    private static final int ETINCELLES = 9;
 
     private Decor() {
     }
@@ -170,7 +169,7 @@ public final class Decor {
     }
 
     /**
-     * Les braises et les etincelles.
+     * Les braises.
      *
      * <p>Aucun etat garde d'une image a l'autre: la position de chaque braise
      * est une fonction du temps et de son numero. Une liste de particules
@@ -198,26 +197,6 @@ public final class Decor {
             }
             int couleur = (alpha << 24) | (ORANGE & 0x00FFFFFF);
             context.fill(x, y, x + 1 + (i % 2), y + 1 + (i % 2), couleur);
-        }
-
-        for (int i = 0; i < ETINCELLES; i++) {
-            long cycle = 2_600L + (i * 431L) % 1_900L;
-            double part = ((t + i * 877L) % cycle) / (double) cycle;
-
-            // Un scintillement, pas un clignotement: l'eclat monte puis
-            // redescend, et l'etincelle passe la moitie du cycle invisible.
-            double eclat = Math.sin(part * Math.PI);
-            if (eclat < 0.35) {
-                continue;
-            }
-            int x = (i * 1_361) % Math.max(1, width);
-            int y = 40 + (i * 523) % Math.max(1, (int) (height * 0.6));
-            int couleur = ((int) (235 * eclat) << 24) | 0x00FFE2B0;
-
-            // Une petite croix: deux traits d'un pixel. Un carre se lirait
-            // comme une braise de plus.
-            context.fill(x - 2, y, x + 3, y + 1, couleur);
-            context.fill(x, y - 2, x + 1, y + 3, couleur);
         }
     }
 
