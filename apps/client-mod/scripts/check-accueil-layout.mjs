@@ -48,6 +48,21 @@ const ECHELLE_TITRE = constante("ECHELLE_TITRE");
 /** Hauteur d'une ligne de la police du jeu. Elle ne bouge pas d'une version a l'autre. */
 const POLICE = 9;
 
+/**
+ * Les titres de la colonne, LUS dans dispose() plutot que recopies.
+ *
+ * <p>La colonne en portait cinq, elle en porte six depuis l'ajout de
+ * « Cosmetiques ». Une liste figee ici aurait continue d'en eprouver cinq, donc
+ * de rendre vert un ecran dont la sixieme ligne tombe ou elle veut.
+ */
+const TITRES = [...java.matchAll(/titre\(Action\.(\w+), "([^"]+)", (\w+),/g)].map(
+  ([, action, label, echelle]) => ({ action, label, echelle: constante(echelle) }),
+);
+
+if (TITRES.length === 0) {
+  throw new Error("aucun titre trouve dans dispose()");
+}
+
 /** Reproduit `hautColonne`, `hautLogo` et `dispose` pour une hauteur donnee. */
 function pose(hauteur) {
   const colonne =
@@ -56,9 +71,9 @@ function pose(hauteur) {
 
   let y = Math.max(logo + LOGO_H + LOGO_ECART, colonne);
   const titres = [];
-  for (const echelle of [ECHELLE_JOUER, ECHELLE_TITRE, ECHELLE_TITRE, ECHELLE_TITRE, ECHELLE_TITRE]) {
+  for (const { label, echelle } of TITRES) {
     const boite = Math.trunc(POLICE * echelle);
-    titres.push({ haut: y, boite });
+    titres.push({ label, haut: y, boite });
     y += boite + TITRE_ECART;
   }
   return { logo, titres, outils: hauteur - OUTIL_FOND };
@@ -82,7 +97,11 @@ const MAQUETTE = {
   logo: 291,
   // Bas du logo (291 + 61) au haut du premier titre (373).
   ecartLogo: 21,
-  titres: [373, 401.5, 424.5, 447.5, 470.5],
+  // Les PAS entre titres, et non leurs positions absolues. La maquette porte
+  // cinq lignes, l'ecran en porte six: comparer les positions reviendrait a
+  // exiger que la sixieme n'existe pas. Les pas, eux, restent ce qui a ete
+  // mesure -- 28 sous « Jouer », qui est plus gros, puis 23.
+  pas: [28, 23],
   outils: 512,
 };
 
@@ -105,12 +124,19 @@ console.log("--- les proportions de la maquette, a la taille de reference");
     `le logo s'arrete a ${ecart} du premier titre (maquette ${MAQUETTE.ecartLogo})`,
   );
   verifie(logo >= 4, `le logo commence a ${logo}, dans l'ecran`);
-  MAQUETTE.titres.forEach((attendu, i) => {
+  const [sousJouer, entreAutres] = MAQUETTE.pas;
+  verifie(
+    titres[1].haut - titres[0].haut === sousJouer,
+    `le pas sous « ${titres[0].label} » vaut ${titres[1].haut - titres[0].haut}`
+      + ` (maquette ${sousJouer})`,
+  );
+  for (let i = 2; i < titres.length; i++) {
     verifie(
-      pres(titres[i].haut, attendu, 1),
-      `titre ${i + 1} a ${titres[i].haut} (maquette ${attendu})`,
+      titres[i].haut - titres[i - 1].haut === entreAutres,
+      `le pas avant « ${titres[i].label} » vaut ${titres[i].haut - titres[i - 1].haut}`
+        + ` (maquette ${entreAutres})`,
     );
-  });
+  }
   verifie(pres(outils, MAQUETTE.outils, 1), `la barre d'outils a ${outils} (maquette ${MAQUETTE.outils})`);
 }
 
