@@ -125,6 +125,9 @@ public final class TitleController {
     /** Hauteur de la barre d'outils au-dessus du bas de l'ecran. */
     private static final int OUTIL_FOND = 30;
 
+    /** Corps de la mention legale du pied, par rapport a la police du jeu. */
+    private static final float PIED_ECHELLE = 0.7f;
+
     /*
      * Les couleurs, relevees elles aussi. Le fond d'une barre rend (19, 21, 27)
      * au-dessus d'un panorama clair comme au-dessus d'un panorama sombre: il
@@ -425,7 +428,18 @@ public final class TitleController {
         if (haut > bas) {
             return;
         }
-        context.fill(RAIL_X, haut - 6, RAIL_X + 1, bas + 6, MenuTheme.CARD_BORDER);
+
+        int pied = bas + 10;
+        context.fill(RAIL_X, haut - 6, RAIL_X + 1, pied, MenuTheme.CARD_BORDER);
+
+        // Le trait ne s'arrete pas dans le vide: il bute sur un petit carre
+        // creux prolonge d'un ergot, comme sur la maquette. Sans cette butee il
+        // a l'air coupe plutot que termine.
+        int cote = 5;
+        int gauche = RAIL_X - cote / 2;
+        MenuTheme.outline(context, gauche, pied, cote, cote, 0, MenuTheme.CARD_BORDER);
+        context.fill(gauche + cote, pied + cote / 2, gauche + cote + 7, pied + cote / 2 + 1,
+            MenuTheme.CARD_BORDER);
     }
 
     /**
@@ -589,10 +603,24 @@ public final class TitleController {
      * d'outils.
      */
     private void pied(DrawContext context) {
-        MenuTheme.right(context, font,
-            "PARANOIA CLIENT - MINECRAFT " + Platforms.get().minecraftVersion()
-                + " - NON AFFILIE A MOJANG",
-            0, width - 8, height - 10, MenuTheme.TEXT_DIM);
+        String mention = "PARANOIA CLIENT - MINECRAFT " + Platforms.get().minecraftVersion()
+            + " - NON AFFILIE A MOJANG";
+
+        // Reduit, parce que la police du jeu n'a qu'une taille et que celle-ci
+        // est celle des titres. Sur la maquette la mention fait a peine plus de
+        // la moitie du corps de texte: c'est une mention legale, elle doit etre
+        // lisible et rien de plus. Reunie en une seule ligne elle occupait en
+        // plus toute la largeur du bas.
+        Platforms.get().pushScale(context, PIED_ECHELLE, width - 8, height - 8);
+        try {
+            // Coordonnees relatives au pivot: le texte remonte de sa propre
+            // hauteur et recule de sa propre largeur pour que son coin bas
+            // droit tombe sur le point d'ancrage.
+            MenuTheme.text(context, font, mention,
+                -font.getWidth(mention), -font.fontHeight, MenuTheme.TEXT_DIM);
+        } finally {
+            Platforms.get().popScale(context);
+        }
     }
 
     // --------------------------------------------------------------- position
