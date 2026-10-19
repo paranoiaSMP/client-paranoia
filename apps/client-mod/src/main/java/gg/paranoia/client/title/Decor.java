@@ -45,6 +45,15 @@ public final class Decor {
      */
     public static final int RAIL_SAISON = 0x80FC8731;
 
+    /**
+     * L'orange de la lueur du bas.
+     *
+     * <p>Plus sombre et plus rouge que l'accent: une lueur a la couleur du
+     * texte d'accent remonterait au premier plan au lieu de rester un fond, et
+     * c'est un fond qu'on veut -- ce dont les braises ont l'air de sortir.
+     */
+    private static final int ORANGE_PROFOND = 0xFF8A3B10;
+
     /** Les dessins sont deja colores: rien a teinter. */
     private static final int TEL_QUEL = 0xFFFFFFFF;
 
@@ -73,6 +82,24 @@ public final class Decor {
     /** Ce qui separe le bas des citrouilles du bas de l'ecran. */
     private static final int CITROUILLE_BAS = 18;
 
+    /** Ce qui separe le bord droit de la lune du bord de l'ecran. */
+    public static final int LUNE_DROITE = 116;
+    /** Le bas du disque: c'est sous lui que le bandeau de saison se pose. */
+    public static final int LUNE_BAS = 68;
+
+    /**
+     * Part de la hauteur de l'ecran que la lueur occupe.
+     *
+     * <p>Montait a 0,42 et debordait sous la colonne de titres. Elle doit rester
+     * sous le menu: c'est un sol, pas un rideau.
+     */
+    private static final float LUEUR_PART = 0.30f;
+
+    /** Epaisseur d'une bande de la lueur: deux pixels suffisent a la lisser. */
+    private static final int BANDE = 2;
+    /** Marches de la rampe horizontale du renfort de gauche. */
+    private static final int MARCHES = 6;
+
     private static final int BRAISES = 26;
     private static final int ETINCELLES = 9;
 
@@ -95,9 +122,14 @@ public final class Decor {
         pose(context, TOILE, 0, 0, 64, 64, CARRE_32, CARRE_32, TEL_QUEL);
         araignee(context);
 
-        // La lune est posee sous le bandeau de saison et non a sa hauteur: les
-        // deux tirent vers le coin haut droit, et le texte doit rester lisible.
-        pose(context, LUNE, width - 150, 46, 64, 64, CARRE_32, CARRE_32, TEL_QUEL);
+        // La lune passe DERRIERE la pastille du pseudonyme. Le fond de la
+        // pastille est opaque, donc elle y decoupe un rectangle net au lieu de
+        // laisser le texte flotter sur un disque clair -- c'est ce qui rend la
+        // superposition lisible plutot que brouillonne.
+        //
+        // Le bandeau de saison, lui, descend sous le disque: il est ecrit en
+        // orange et serait illisible sur une lune creme.
+        pose(context, LUNE, width - LUNE_DROITE, 4, 64, 64, CARRE_32, CARRE_32, TEL_QUEL);
 
         // Trois traversees desynchronisees, a deux tailles. A l'unisson elles
         // feraient un logo, pas un vol.
@@ -230,6 +262,58 @@ public final class Decor {
 
         int etape = (int) (((maintenant + decalage) / BATTEMENT + x) % CHAUVE_SOURIS.length);
         pose(context, CHAUVE_SOURIS[etape], x, y, larg, haut, BAT_L, BAT_H, TEL_QUEL);
+    }
+
+    /**
+     * La lueur orange d'ou montent les braises.
+     *
+     * <p>Transparente en haut, soutenue en bas, et plus dense a gauche: les
+     * braises partent du bas de l'ecran, et une lueur uniforme les ferait
+     * paraitre surgir de nulle part.
+     *
+     * <p>A poser AVANT tout le reste, avec le vignettage. Elle etait appelee
+     * depuis {@code braises}, c'est-a-dire apres les titres et la barre
+     * d'outils: le degrade lavait la colonne entiere d'orange, jusqu'a plus de
+     * la moitie d'opacite dans le coin bas gauche ou le menu se trouve
+     * justement. C'est un fond, il passe derriere.
+     *
+     * <p>Des bandes d'un pixel, comme le vignettage: {@code fill} ne pose que
+     * des aplats. L'opacite croit avec le CARRE de la hauteur plutot que
+     * lineairement -- un degrade lineaire garde une arete visible la ou il
+     * commence, parce que l'oeil lit mal les premiers pour cent d'opacite mais
+     * tres bien leur arrivee d'un coup.
+     */
+    public static void lueur(DrawContext context, int width, int height) {
+        int hauteur = Math.max(1, (int) (height * LUEUR_PART));
+        int depart = height - hauteur;
+        int teinte = ORANGE_PROFOND & 0x00FFFFFF;
+
+        for (int i = 0; i < hauteur; i += BANDE) {
+            double part = Math.min(1.0, (i + BANDE) / (double) hauteur);
+            int alpha = (int) (104 * part * part);
+            if (alpha <= 0) {
+                continue;
+            }
+            int y = depart + i;
+            int bas = Math.min(height, y + BANDE);
+            context.fill(0, y, width, bas, (alpha << 24) | teinte);
+
+            // Le renfort de gauche, en marches de largeur decroissante.
+            //
+            // D'un seul rectangle, il laissait une arete verticale franche au
+            // tiers de l'ecran -- un bord net au milieu d'un degrade se voit
+            // plus que le degrade lui-meme. Empilees, les marches donnent une
+            // rampe horizontale dont chacune ne porte qu'un sixieme de
+            // l'opacite: aucune n'a de bord visible.
+            int renfort = (int) (alpha * 0.55);
+            if (renfort < MARCHES) {
+                continue;
+            }
+            for (int k = 1; k <= MARCHES; k++) {
+                context.fill(0, y, width * k / (3 * MARCHES), bas,
+                    ((renfort / MARCHES) << 24) | teinte);
+            }
+        }
     }
 
     private static void pose(

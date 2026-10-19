@@ -53,11 +53,26 @@ public final class TitleController {
     private static final String BOUTIQUE =
         System.getProperty("paranoia.boutique", "https://paranoiastudio.fr/shop").trim();
 
+    /**
+     * Les cosmetiques, sur le site.
+     *
+     * <p>Une ancre et non une page a part: si elle n'existe pas, le navigateur
+     * ouvre la boutique, ce qui reste juste. Une URL inventee aurait rendu une
+     * erreur.
+     *
+     * <p>C'est une destination d'attente. Le mod sait deja ce que chacun porte
+     * et ce que le catalogue contient -- il faudrait un ecran pour le montrer,
+     * et c'est un autre chantier que cette ligne de menu.
+     */
+    private static final String COSMETIQUES =
+        System.getProperty("paranoia.cosmetiques", BOUTIQUE + "#cosmetiques").trim();
+
     /** Ce qu'un bouton declenche. */
     public enum Action {
         SOLO,
         MULTI,
         PARANOIA,
+        COSMETIQUES,
         BOUTIQUE,
         OPTIONS,
         TEINTE,
@@ -116,8 +131,14 @@ public final class TitleController {
      * 373 sur 538, soit 165 du bas. Les deux valeurs se rejoignent donc a la
      * taille de reference, et le plancher ne prend la main que plus bas.
      */
-    private static final int COLONNE_FOND = 165;
-    private static final float COLONNE_PART = 0.307f;
+    /*
+     * Releves pour CINQ titres: 165 du bas, soit 0,307 de la hauteur. La
+     * colonne en porte six depuis l'ajout de « Cosmetiques », donc elle monte
+     * d'un pas -- hauteur d'un titre plus son ecart, vingt-trois pixels --
+     * pour que son bas reste a la meme distance de la barre d'outils.
+     */
+    private static final int COLONNE_FOND = 188;
+    private static final float COLONNE_PART = 0.349f;
 
     /** Blanc entre deux titres, en plus de la hauteur du texte. */
     private static final int TITRE_ECART = 10;
@@ -289,6 +310,9 @@ public final class TitleController {
 
         fond(context);
         vignette(context);
+        if (saison == Saison.HALLOWEEN) {
+            Decor.lueur(context, width, height);
+        }
 
         // Le decor de saison encadre l'interface: le ciel derriere elle, le sol
         // devant. Une chauve-souris qui passerait par-dessus les titres les
@@ -599,10 +623,12 @@ public final class TitleController {
             y += 12;
         }
 
-        // Le compte a rebours sous le pseudonyme, la ou la maquette le pose.
+        // En saison le bandeau descend SOUS la lune, qui passe desormais
+        // derriere la pastille: ecrit en orange sur un disque creme, il ne se
+        // lirait plus. Hors saison il n'y a pas de lune et rien ne bouge.
         if (saison == Saison.HALLOWEEN) {
             MenuTheme.right(context, font, Saison.bandeau(LocalDate.now()),
-                0, width - 8, y, accent);
+                0, width - 8, Math.max(y, Decor.LUNE_BAS + 4), accent);
         }
 
         listeDesComptes(context, accent, hautListeComptes());
@@ -623,7 +649,9 @@ public final class TitleController {
             y += 12;
         }
         if (saison() == Saison.HALLOWEEN) {
-            y += 12;
+            // Le bandeau est pousse sous la lune: la liste le suit, sinon elle
+            // lui passerait dessus.
+            y = Math.max(y, Decor.LUNE_BAS + 4) + 12;
         }
         return y;
     }
@@ -777,6 +805,7 @@ public final class TitleController {
         y = titre(Action.SOLO, "JOUER", ECHELLE_JOUER, hauteurJouer, y, false);
         y = titre(Action.MULTI, "MULTIJOUEUR", ECHELLE_TITRE, hauteurTitre, y, false);
         y = titre(Action.PARANOIA, "PARANOIA", ECHELLE_TITRE, hauteurTitre, y, false);
+        y = titre(Action.COSMETIQUES, "COSMETIQUES", ECHELLE_TITRE, hauteurTitre, y, false);
         y = titre(Action.BOUTIQUE, "BOUTIQUE", ECHELLE_TITRE, hauteurTitre, y, true);
         titre(Action.QUITTER, "QUITTER", ECHELLE_TITRE, hauteurTitre, y, false);
 
@@ -897,6 +926,7 @@ public final class TitleController {
             case PARANOIA -> client.setScreen(
                 Platforms.get().createMenuScreen(ParanoiaClient.controller()));
             case BOUTIQUE -> ConfirmLinkScreen.open(ecran, BOUTIQUE, true);
+            case COSMETIQUES -> ConfirmLinkScreen.open(ecran, COSMETIQUES, true);
             case OPTIONS -> client.setScreen(new OptionsScreen(ecran, client.options));
             // Les deux seuls boutons qui ne quittent pas l'ecran: ils changent
             // ce qu'on est en train de regarder, et le resultat se voit sur
