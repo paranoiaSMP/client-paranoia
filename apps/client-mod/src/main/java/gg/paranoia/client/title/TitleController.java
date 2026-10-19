@@ -147,6 +147,17 @@ public final class TitleController {
     private static final Identifier LOGO =
         Identifier.of("paranoia_client", "textures/gui/title/logo.png");
 
+    /**
+     * Le meme logo, le « C » passe a l'orange.
+     *
+     * <p>Un second fichier et non une teinte: la teinte s'applique au dessin
+     * entier, et elle aurait colore le « P » blanc avec. Celui-ci est derive du
+     * premier en ne remplacant que les pixels violets, clarte conservee -- les
+     * bords adoucis du « C » le restent au lieu de devenir un aplat dentele.
+     */
+    private static final Identifier LOGO_SAISON =
+        Identifier.of("paranoia_client", "textures/gui/title/logo-halloween.png");
+
     /*
      * Le logo fait exactement le double de sa taille a l'ecran.
      *
@@ -246,8 +257,8 @@ public final class TitleController {
         }
 
         dispose(saison);
-        logo(context);
-        rail(context);
+        logo(context, saison);
+        rail(context, saison);
 
         for (Bouton bouton : boutons) {
             dessine(context, bouton, accent);
@@ -331,13 +342,14 @@ public final class TitleController {
         return Math.max(4, height - COLONNE_FOND - LOGO_ECART - LOGO_H);
     }
 
-    private void logo(DrawContext context) {
+    private void logo(DrawContext context, Saison saison) {
         int haut = hautLogo();
 
         // Meme reserve que pour le panorama: la texture peut ne pas encore
         // exister a la premiere image. Le nom reste, lui, toujours lisible.
         try {
-            Platforms.get().drawTexture(context, LOGO,
+            Platforms.get().drawTexture(
+                context, saison == Saison.HALLOWEEN ? LOGO_SAISON : LOGO,
                 TITRE_X - 4, haut, LOGO_L, LOGO_H,
                 LOGO_TEXTURE_L, LOGO_TEXTURE_H, BLANC);
         } catch (RuntimeException echec) {
@@ -413,7 +425,7 @@ public final class TitleController {
      * colonne suit le bas de la fenetre, et un trait fixe s'en serait decroche
      * a la premiere redimension.
      */
-    private void rail(DrawContext context) {
+    private void rail(DrawContext context, Saison saison) {
         int haut = Integer.MAX_VALUE;
         int bas = Integer.MIN_VALUE;
 
@@ -429,12 +441,23 @@ public final class TitleController {
             return;
         }
 
+        boolean saisonniere = saison == Saison.HALLOWEEN;
         int pied = bas + 10;
-        context.fill(RAIL_X, haut - 6, RAIL_X + 1, pied, MenuTheme.CARD_BORDER);
 
-        // Le trait ne s'arrete pas dans le vide: il bute sur un petit carre
-        // creux prolonge d'un ergot, comme sur la maquette. Sans cette butee il
-        // a l'air coupe plutot que termine.
+        // Le trait est un aplat et non une texture: toutes ses rangees sont
+        // identiques, donc l'etirer ne le deforme pas -- mais le dessin fourni
+        // fait une hauteur fixe, alors que la colonne suit celle de la fenetre.
+        // Seul le pied, qui lui ne s'etire pas, vaut d'etre une image.
+        context.fill(RAIL_X, haut - 6, RAIL_X + 1, pied,
+            saisonniere ? Decor.RAIL_SAISON : MenuTheme.CARD_BORDER);
+
+        if (saisonniere) {
+            Decor.railPied(context, RAIL_X, pied);
+            return;
+        }
+
+        // Hors saison le pied est trace, faute d'un dessin pour la gamme
+        // Nocturne: le meme carre creux prolonge d'un ergot.
         int cote = 5;
         int gauche = RAIL_X - cote / 2;
         MenuTheme.outline(context, gauche, pied, cote, cote, 0, MenuTheme.CARD_BORDER);
