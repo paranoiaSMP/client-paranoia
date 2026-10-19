@@ -101,12 +101,28 @@ public final class TitleController {
     private static final int RAIL_X = 24;
     private static final int TITRE_X = 36;
 
-    /** Hauteur du premier titre au-dessus du bas de l'ecran. */
-    private static final int COLONNE_FOND = 168;
+    /*
+     * Hauteur du premier titre au-dessus du bas de l'ecran: le plancher releve
+     * sur la maquette, et au-dela une part de la hauteur.
+     *
+     * <p>Les deux, parce qu'aucun des deux ne suffit. Un nombre fixe de pixels
+     * n'est juste qu'a une seule taille de fenetre: sur un ecran haut, ou a une
+     * autre echelle d'interface, la colonne se colle au bas et tout le reste
+     * paraait vide. Une part seule laisserait la colonne descendre sur la barre
+     * d'outils des que la fenetre devient basse, parce que la hauteur du texte,
+     * elle, ne suit pas -- elle tient a l'echelle de la police.
+     *
+     * <p>0,307 est ce que la maquette donne: le premier titre y commence a
+     * 373 sur 538, soit 165 du bas. Les deux valeurs se rejoignent donc a la
+     * taille de reference, et le plancher ne prend la main que plus bas.
+     */
+    private static final int COLONNE_FOND = 165;
+    private static final float COLONNE_PART = 0.307f;
+
     /** Blanc entre deux titres, en plus de la hauteur du texte. */
     private static final int TITRE_ECART = 10;
     /** Ce qui separe le bas du logo du haut du premier titre. */
-    private static final int LOGO_ECART = 17;
+    private static final int LOGO_ECART = 21;
 
     /*
      * Jouer est plus gros que les autres, au repos comme au survol: c'est la
@@ -123,7 +139,7 @@ public final class TitleController {
     private static final int OUTIL_ICONE = 12;
     private static final int OUTIL_ECART = 14;
     /** Hauteur de la barre d'outils au-dessus du bas de l'ecran. */
-    private static final int OUTIL_FOND = 30;
+    private static final int OUTIL_FOND = 26;
 
     /** Corps de la mention legale du pied, par rapport a la police du jeu. */
     private static final float PIED_ECHELLE = 0.7f;
@@ -173,8 +189,21 @@ public final class TitleController {
      */
     private static final int LOGO_TEXTURE_L = 176;
     private static final int LOGO_TEXTURE_H = 100;
-    private static final int LOGO_L = LOGO_TEXTURE_L / 2;
-    private static final int LOGO_H = LOGO_TEXTURE_H / 2;
+
+    /*
+     * Releve sur la maquette: le logo y fait 61 de haut en coordonnees
+     * d'interface, pas 50. La moitie exacte de la texture donnait un dessin net
+     * -- deux texels pour deux pixels -- mais un bloc plus court que le modele
+     * de dix pixels, pris entierement sur le haut.
+     *
+     * On suit la maquette et on perd l'echantillonnage exact. C'est un logo
+     * fait de larges aplats et d'arcs: il supporte le leger agrandissement, la
+     * ou la toile ou une chauve-souris ne le supporteraient pas -- elles sont
+     * dessinees pixel par pixel, et c'est pour elles que la regle du multiple
+     * entier existe.
+     */
+    private static final int LOGO_H = 60;
+    private static final int LOGO_L = LOGO_TEXTURE_L * LOGO_H / LOGO_TEXTURE_H;
 
     /** Les icones, un fichier par dessin, au double de leur taille a l'ecran. */
     private static final int ICONE_TEXTURE = 32;
@@ -337,9 +366,20 @@ public final class TitleController {
             x, 0, cote, cote, choisi.tailleFace(), choisi.tailleFace(), BLANC);
     }
 
+    /**
+     * Le haut du premier titre.
+     *
+     * <p>Une seule source pour la colonne et pour le logo qui la coiffe: ils se
+     * suivent, et deux calculs paralleles finiraient par se decoller l'un de
+     * l'autre a la premiere retouche.
+     */
+    private int hautColonne() {
+        return height - Math.max(COLONNE_FOND, (int) (height * COLONNE_PART));
+    }
+
     /** Le haut du logo, pose au-dessus de la colonne et aligne sur elle. */
     private int hautLogo() {
-        return Math.max(4, height - COLONNE_FOND - LOGO_ECART - LOGO_H);
+        return Math.max(4, hautColonne() - LOGO_ECART - LOGO_H);
     }
 
     private void logo(DrawContext context, Saison saison) {
@@ -663,7 +703,7 @@ public final class TitleController {
 
         // Le bloc ne monte jamais dans le logo: sur une fenetre basse il
         // descend avec lui plutot que de lui passer dessus.
-        int y = Math.max(hautLogo() + LOGO_H + LOGO_ECART, height - COLONNE_FOND);
+        int y = Math.max(hautLogo() + LOGO_H + LOGO_ECART, hautColonne());
 
         y = titre(Action.SOLO, "JOUER", ECHELLE_JOUER, hauteurJouer, y, false);
         y = titre(Action.MULTI, "MULTIJOUEUR", ECHELLE_TITRE, hauteurTitre, y, false);
