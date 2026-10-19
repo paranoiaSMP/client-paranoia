@@ -1,6 +1,6 @@
 {
   "name": "@paranoia/launcher",
-  "version": "0.7.37",
+  "version": "0.7.39",
   "private": true,
   "type": "module",
   "scripts": {
