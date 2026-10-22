@@ -53,6 +53,121 @@ export function clearGameLogs(): void {
 	gameLogs = [];
 }
 
+export type LiteralLogFile = {
+	fileName: string;
+	content: string;
+	linesCount: number;
+	source: "crash-report" | "latest.log" | "launcher.log" | "memory";
+	filePath?: string;
+};
+
+/**
+ * Récupère le contenu littéral du fichier de log sur le disque :
+ * 1. Rapport de crash dans crash-reports/ si présent
+ * 2. latest.log dans le dossier logs/ de l'instance
+ * 3. launcher.log à la racine des données
+ * 4. Repli sur le tampon en mémoire
+ */
+export function getLiteralLogFile(profileId?: string): LiteralLogFile {
+	const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo max pour éviter de saturer la mémoire
+
+	const readSafe = (filePath: string): string => {
+		try {
+			const stat = fs.statSync(filePath);
+			if (stat.size > MAX_LOG_SIZE_BYTES) {
+				const fd = fs.openSync(filePath, "r");
+				const buffer = Buffer.alloc(MAX_LOG_SIZE_BYTES);
+				fs.readSync(fd, buffer, 0, MAX_LOG_SIZE_BYTES, stat.size - MAX_LOG_SIZE_BYTES);
+				fs.closeSync(fd);
+				return `... [Début du fichier tronqué : affichage des 5 derniers Mo] ...\n${buffer.toString("utf-8")}`;
+			}
+			return fs.readFileSync(filePath, "utf-8");
+		} catch (e) {
+			console.warn(`[Launcher] Erreur lecture fichier log ${filePath}:`, e);
+			return "";
+		}
+	};
+
+	// 1. Recherche dans l'instance ciblée
+	if (profileId) {
+		try {
+			const gameDir = instanceDir(profileId);
+
+			// A. Chercher le dernier rapport de crash
+			const crashDir = path.join(gameDir, "crash-reports");
+			if (fs.existsSync(crashDir)) {
+				const crashFiles = fs
+					.readdirSync(crashDir)
+					.filter((f) => f.startsWith("crash-") && f.endsWith(".txt"))
+					.map((f) => ({
+						name: f,
+						time: fs.statSync(path.join(crashDir, f)).mtimeMs,
+					}))
+					.sort((a, b) => b.time - a.time);
+
+				if (crashFiles.length > 0 && crashFiles[0]) {
+					const targetPath = path.join(crashDir, crashFiles[0].name);
+					const content = readSafe(targetPath);
+					if (content.trim()) {
+						return {
+							fileName: crashFiles[0].name,
+							content,
+							linesCount: content.split("\n").length,
+							source: "crash-report",
+							filePath: targetPath,
+						};
+					}
+				}
+			}
+
+			// B. Chercher logs/latest.log
+			const latestLogPath = path.join(gameDir, "logs", "latest.log");
+			if (fs.existsSync(latestLogPath)) {
+				const content = readSafe(latestLogPath);
+				if (content.trim()) {
+					return {
+						fileName: "latest.log",
+						content,
+						linesCount: content.split("\n").length,
+						source: "latest.log",
+						filePath: latestLogPath,
+					};
+				}
+			}
+		} catch (err) {
+			console.warn("[Launcher] Erreur lors de l'accès aux logs d'instance:", err);
+		}
+	}
+
+	// 2. Chercher launcher.log
+	try {
+		const launcherLogPath = path.join(paranoiaDataDir(), "launcher.log");
+		if (fs.existsSync(launcherLogPath)) {
+			const content = readSafe(launcherLogPath);
+			if (content.trim()) {
+				return {
+					fileName: "launcher.log",
+					content,
+					linesCount: content.split("\n").length,
+					source: "launcher.log",
+					filePath: launcherLogPath,
+				};
+			}
+		}
+	} catch (err) {
+		console.warn("[Launcher] Erreur lors de l'accès au launcher.log:", err);
+	}
+
+	// 3. Repli en mémoire
+	const memContent = gameLogs.join("\n");
+	return {
+		fileName: "session.log",
+		content: memContent,
+		linesCount: gameLogs.length,
+		source: "memory",
+	};
+}
+
 function addLog(msg: string) {
 	const timestamp = new Date().toLocaleTimeString();
 	gameLogs.push(`[${timestamp}] ${msg}`);
@@ -356,9 +471,36 @@ export async function launchMinecraft(
 			} catch (err) {
 				console.warn("[Launcher] loader Fabric introuvable:", err);
 			}
+
+			// Si Fabric n'a pas pu être résolu en ligne, réutiliser une installation locale existante
+			if (!loaderVersion) {
+				const versionsDir = path.join(rootPath, "versions");
+				if (fs.existsSync(versionsDir)) {
+					try {
+						const entries = fs.readdirSync(versionsDir);
+						const prefix = "fabric-loader-";
+						const suffix = `-${manifest.minecraftVersion}`;
+						const found = entries.find(
+							(name) =>
+								name.startsWith(prefix) &&
+								name.endsWith(suffix) &&
+								fs.existsSync(path.join(versionsDir, name, `${name}.json`)),
+						);
+						if (found) {
+							customVersionName = found;
+							console.log(`[Launcher] Loader Fabric local réutilisé hors ligne : ${found}`);
+							addLog(`[Launcher] Loader Fabric local réutilisé hors ligne : ${found}`);
+						}
+					} catch (e) {
+						console.warn("[Launcher] Erreur lecture versions locales :", e);
+					}
+				}
+			}
 		}
 
-		if (loaderVersion) {
+		if (customVersionName) {
+			// Loader Fabric local déjà présent et validé
+		} else if (loaderVersion) {
 			// On passe le Java qu'on vient d'installer: l'installateur s'appuyait sur
 			// un `java` present dans le PATH, ce qui echouait sur une machine sans JDK.
 			customVersionName = await ensureFabric(
@@ -384,21 +526,26 @@ export async function launchMinecraft(
 		}
 
 		// 3. Telecharger les artefacts du manifeste dans le dossier du profil
-		const fs = await import("node:fs");
-		await fs.promises.mkdir(gameDir, { recursive: true });
+		const fsMod = await import("node:fs");
+		await fsMod.promises.mkdir(gameDir, { recursive: true });
 
 		if (manifest.artifacts.length > 0) {
-			await downloadArtifacts(
-				gameDir,
-				manifest.artifacts,
-				(text, percentage) => {
-					updateStatus({
-						state: "downloading_assets",
-						progress: percentage,
-						text,
-					});
-				},
-			);
+			try {
+				await downloadArtifacts(
+					gameDir,
+					manifest.artifacts,
+					(text, percentage) => {
+						updateStatus({
+							state: "downloading_assets",
+							progress: percentage,
+							text,
+						});
+					},
+				);
+			} catch (err) {
+				console.warn("[Launcher] Téléchargement d'artefacts ignoré (lancement hors-ligne) :", err);
+				addLog(`[Launcher] Téléchargement d'artefacts ignoré (hors-ligne) : ${err instanceof Error ? err.message : String(err)}`);
+			}
 		}
 
 		if (cancelFlags.get(profileId)) throw new Error("Lancement annulé");
@@ -456,7 +603,6 @@ export async function launchMinecraft(
 						text,
 					});
 				},
-				manifest.minecraftVersion,
 			);
 		} catch (err) {
 			clientModError = err instanceof Error ? err.message : String(err);
@@ -625,6 +771,8 @@ export async function launchMinecraft(
 		// `-XX:Flag=valeur` repete, c'est le dernier qui gagne. Il peut donc
 		// corriger n'importe lequel des notres sans qu'on ait a prevoir le cas.
 		const extraJvmArgs = [
+			// GLFW exige le fil principal sur macOS, sinon le jeu plante au demarrage.
+			...(process.platform === "darwin" ? ["-XstartOnFirstThread"] : []),
 			...tuningFlags(javaMajor),
 			...settings.jvmArgs
 				.split(/\s+/)
@@ -693,13 +841,42 @@ export async function launchMinecraft(
 			activeLaunchers.delete(profileId);
 			activeProcesses.delete(profileId);
 			if (banCheckInterval) clearInterval(banCheckInterval);
-			
-			// Si on n'est pas déjà en erreur (ex: ban en cours de jeu), on remet en idle
-			if (launchStatuses.get(profileId)?.state !== "error") {
+
+			const isCanceled = cancelFlags.get(profileId);
+			const isCrash = e !== 0 && !isCanceled;
+
+			if (isCrash) {
+				const errorMsg = `Le jeu a planté (code de sortie ${e})`;
+				updateStatus({
+					state: "error",
+					progress: 0,
+					text: errorMsg,
+				});
+				addLog(`[💥 CRASH DÉTECTÉ] ${errorMsg}`);
+
+				// Récupérer et journaliser littéralement le rapport de crash ou latest.log
+				try {
+					const crashInfo = getLiteralLogFile(profileId);
+					if (crashInfo.source === "crash-report") {
+						addLog(`[💥 RAPPORT DE CRASH (${crashInfo.fileName}) :]`);
+						for (const line of crashInfo.content.split(/\r?\n/)) {
+							if (line.trim()) addLog(`[Crash] ${line}`);
+						}
+					} else if (crashInfo.source === "latest.log") {
+						const lastLines = crashInfo.content.split(/\r?\n/).slice(-60);
+						addLog(`[📝 Dernières lignes de latest.log :]`);
+						for (const line of lastLines) {
+							if (line.trim()) addLog(line);
+						}
+					}
+				} catch (logErr) {
+					console.warn("[Launcher] Erreur lecture crash log:", logErr);
+				}
+			} else if (launchStatuses.get(profileId)?.state !== "error") {
 				updateStatus({ state: "idle", progress: 0, text: "" });
+				addLog(`[Launcher] Jeu fermé avec le code de sortie ${e}`);
 			}
 			setIdlePresence();
-			addLog(`[Launcher] Jeu fermé avec le code de sortie ${e}`);
 		});
 
 		const startMsg = `Starting Minecraft ${minecraftVersion} for ${account.minecraftUsername} at ${rootPath} with Java ${javaMajor} (${javaExecutable})`;
